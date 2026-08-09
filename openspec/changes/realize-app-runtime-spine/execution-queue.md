@@ -6,9 +6,16 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 ## Ground
 
-- Canonical Habitat ground and current foundation release source:
-  `main@85b0e49eb5385dfae3a1a1522e7c50df04e06580`, tagged
-  `habitat-cli-v0.5.10`.
+- The `habitat-cli-v0.5.10` foundation release remains fixed at
+  `85b0e49eb5385dfae3a1a1522e7c50df04e06580`, while the landed Habitat owner
+  qualification proof has advanced cumulatively through catalog
+  `e9d545c4783ef270d4a86b410efa6ef2ff824f63`, package-output
+  `cdf21be1f8f47879d34e29bd442a3beabe337c58`, content-workspace
+  `a799e1fd998a5c0556252d735505355ae4d7e4c8`, native-agent-provider
+  `5772a4b8007fbae5d8da86e308d908359e7dc5b5`, and versioned-content
+  `443c146920795786b850188e2b6179bd29a6bd19`, then agent-plugin lifecycle
+  `a397eb7cde1c668b430a6e54203c9d97e1e7a8d9`. Task 2.10 is sealed by those
+  exact-main owner receipts.
 - Gates A through C and Rawr's finite owner transfer are sealed. The first
   active source container is Habitat platform separation.
 - The accepted pre-Gate-A semantic sieve removes only closures already
@@ -58,21 +65,25 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   transferred or rejected predecessor, rename the workspace, and pass the
   cumulative absence gate.
 
-Task 2.10 drains through one straight owner lineage before the deletion gate:
+The active separation queue now has two bounded nodes:
 
-1. establish `services/catalog` as `@habitat-ai/catalog-service`;
-2. qualify package-output, content-workspace, native-provider, and
-   versioned-content resource families with their existing provider projects;
-3. qualify `@habitat-ai/agent-plugin-lifecycle-service` and its public-client
-   readers;
-4. move native Oclif mechanics to `@habitat-ai/cli` and the lifecycle command
-   projections to `plugins/cli/topics/agent-plugins` as
-   `@habitat-ai/plugin-agent-plugins`;
-5. move the complete development vertical to `@habitat-ai/dev-service` and
-   `plugins/cli/topics/dev`, then delete `packages/dev-node` and its readers;
-6. move retained generator mechanics and indispensable fixtures beside their
-   Habitat owners; and
-7. run the cumulative task-2.10 graph, behavior, and predecessor-reader oracle.
+1. land task 2.10a, moving `@oclif/plugin-plugins` dependency/configuration and
+   the complete installed native plugin-management roundtrip from `apps/cli` to
+   `@habitat-ai/cli` with one owner-local prebuilt package fixture and receipt,
+   while deleting the obsolete product-bound Oclif-app packet and applications;
+   and
+2. land task 2.11 only after that receipt: freeze the exact pre-deletion source
+   commit/tree, delete `apps/cli`, the product-bound Oclif-command-plugin packet,
+   and the exact task-2.11 predecessor inventory while retaining mixed
+   `@habitat-ai/rawr-core` / `packages/core` for task 3.3, then pass the
+   checkpoint-aware cumulative product-separation absence gate.
+
+These nodes do not realize the final agent-plugin topic/overlay/profile,
+development vertical, generators, authoring topic, private CLI source-bundle
+contract, or final generic Oclif laws. Task 11.4 owns the foundation/source
+bundle/law vertical; task 11.6 owns native generator mechanics; and tasks 12.1
+through 12.3 own the agent-plugin, development, and authoring topic verticals
+respectively.
 
 - [ ] **Runtime**: realize the private runtime owners in specification order,
   one green owner and its readers at a time; keep process-owned Effect
