@@ -21,12 +21,21 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   native external-extension management, while the Rawr dependency/configuration,
   production hello fixture, and obsolete product-bound Oclif-app packet are
   absent. No replacement Oclif-app or CLI-topic law is active.
-- Gates A through C and Rawr's finite owner transfer are sealed. The first
-  active source container is Habitat platform separation.
+- The exact-main `0.5.14` bounded foundation-continuation publication is sealed
+  by its [release receipt](foundation-continuation-release-receipt.json). Task
+  2.10b is the current source-adoption node: it moves the root to the released
+  CLI/SDK pair and advances only the eight retained Habitat service/resource
+  owners to the immutable v2 acquisition successors. It remains open until the
+  landed adoption commit/tree and checks are recorded separately. Providers
+  remain at v1, and every transferred or deleted instance remains untouched for
+  task 2.11.
+- Gates A through C and Rawr's finite owner transfer are sealed. The current
+  source container is the bounded Habitat `0.5.14` adoption; platform separation
+  follows its exact-main receipt.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
-- The root is bootstrapped by registry `@habitat-ai/cli@0.5.6` while
+- The root is bootstrapped by registry `@habitat-ai/cli@0.5.14` while
   `apps/habitat` remains outside the Bun workspaces. Bun 1.3.14 keeps a valid
   frozen lock; the released CLI is not added as a `file:`, `link:`, or
   duplicate workspace dependency.
@@ -66,13 +75,21 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   reconciled Session Metrics, and retired Hyperresearch production fixtures.
   Canonical Rawr `main@a1a4fe7ed051ff405605c82c09ccd73332595383`
   owns the accepted product closure.
+- [ ] **Foundation continuation**: exact `@habitat-ai/cli` /
+  `@habitat-ai/sdk` `0.5.14` is published and registry-smoked. The current node
+  migrates the Habitat root and selects `service@2` / `resource@2` only for
+  retained platform owners. This remains inside the first functional checkpoint,
+  not another package cohort or runtime release. Land the source adoption, then
+  record its exact-main receipt before marking this container complete.
 - [ ] **Separation**: retain and rename Habitat platform owners, delete every
   transferred or rejected predecessor, rename the workspace, and pass the
   cumulative absence gate.
 
-The active separation queue now has one bounded node:
+The active queue has two serial bounded nodes:
 
-1. land task 2.11 after the sealed task 2.10a receipt: freeze the exact
+1. land the task 2.10b source adoption and record its exact-main commit/tree plus
+   the named policy and no-fallback checks in a distinct adoption receipt;
+2. land task 2.11 after the sealed task 2.10a and 2.10b receipts: freeze the exact
    pre-deletion source commit/tree, delete `apps/cli`, the product-bound
    Oclif-command-plugin packet, and the exact task-2.11 predecessor inventory
    while retaining mixed `@habitat-ai/rawr-core` / `packages/core` for task 3.3,

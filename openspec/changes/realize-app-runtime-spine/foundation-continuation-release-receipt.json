@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "releaseGroup": "habitat-cli",
+  "version": "0.5.14",
+  "source": {
+    "commit": "9e650107ac8c292ca13be5edc2390b870b952c68",
+    "tag": "habitat-cli-v0.5.14",
+    "tagObject": "90a44f72475185b7be29cb142541f724d1a0d0ce",
+    "tree": "3670c5af5a80e822cc8147fd531abeb2e1d96e9c"
+  },
+  "policyPack": {
+    "package": "@habitat-ai/sdk",
+    "protocolVersion": 1,
+    "digestFormat": "habitat-policy-pack-source-v1",
+    "digest": "sha256:8e04d389793f49ef796553540e667a18346d0d9dbec32ba8f70abdf9873b7976",
+    "blueprints": [
+      {
+        "id": "app",
+        "version": 1,
+        "path": "dist/blueprints/app/blueprint.toml"
+      },
+      {
+        "id": "package",
+        "version": 1,
+        "path": "dist/blueprints/package/blueprint.toml"
+      },
+      {
+        "id": "plugin",
+        "version": 1,
+        "path": "dist/blueprints/plugin/blueprint.toml"
+      },
+      {
+        "id": "plugin-nx",
+        "version": 1,
+        "path": "dist/blueprints/plugin-nx/blueprint.toml"
+      },
+      {
+        "id": "provider",
+        "version": 1,
+        "path": "dist/blueprints/provider/blueprint.toml"
+      },
+      {
+        "id": "resource",
+        "version": 1,
+        "path": "dist/blueprints/resource/blueprint.toml"
+      },
+      {
+        "id": "resource",
+        "version": 2,
+        "path": "dist/blueprints/resource/versions/2/blueprint.toml"
+      },
+      {
+        "id": "service",
+        "version": 1,
+        "path": "dist/blueprints/service/blueprint.toml"
+      },
+      {
+        "id": "service",
+        "version": 2,
+        "path": "dist/blueprints/service/versions/2/blueprint.toml"
+      }
+    ]
+  },
+  "packages": [
+    {
+      "name": "@habitat-ai/cli",
+      "version": "0.5.14",
+      "integrity": "sha512-G3lesRaqVni7ioqaKcxnZPE0v+Nob3trs0rMfnxu12JOqoS+sKtAGa9HUORthyEP6dqYdQr+bgc6wEurPvysCw==",
+      "provenance": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@habitat-ai%2fcli@0.5.14",
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    },
+    {
+      "name": "@habitat-ai/sdk",
+      "version": "0.5.14",
+      "integrity": "sha512-ZFy2oBmjDMvz2f/NoSQOfUaiotHgwORsLTUUm2YObjWcCwQcWgw2vgbnlozf9DoOBmTAV3r01QI1fVFeaBT8Fw==",
+      "provenance": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@habitat-ai%2fsdk@0.5.14",
+        "predicateType": "https://slsa.dev/provenance/v1"
+      }
+    }
+  ],
+  "acceptance": {
+    "workflow": "Publish Habitat",
+    "runId": 31311235419,
+    "runAttempt": 1,
+    "target": "@habitat-ai/cli:acceptance:oclif-installed-package",
+    "registry": "https://registry.npmjs.org",
+    "conclusion": "success"
+  }
+}

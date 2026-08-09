@@ -191,7 +191,34 @@
   Rewrite no archive or quarantine history. This transfer
   adds no agent-plugin topic or profile, app/provider selection, runtime owner,
   final Oclif-app or CLI-topic law, or private CLI source-bundle contract.
-- [ ] 2.11 Only after the task 2.10a installed receipt exists, record the exact
+- [ ] 2.10b Before task 2.11 freezes the pre-deletion tree, adopt the latest
+  exact-main bounded foundation-continuation release inside the sealed first
+  functional checkpoint.
+  Require `habitat-cli-v0.5.14` at
+  `9e650107ac8c292ca13be5edc2390b870b952c68` and Publish Habitat run
+  `31311235419`; migrate the root to exact registry
+  `@habitat-ai/cli@0.5.14`, retain the producer SDK as `workspace:*`, lock the
+  CLI's exact paired registry `@habitat-ai/sdk@0.5.14`, and apply no source
+  link, fallback, or package-local migration because the release declares none.
+  Change only `blueprintVersion` in retained instance manifests, preserving
+  `schemaVersion`, id, `ownerProject`, roots, and selections: select
+  `service@2` only for the retained catalog and
+  agent-plugin-lifecycle services, and select `resource@2` only for the retained
+  source-inventory, rule-evaluation, agent-plugin-package-output,
+  content-workspace, native-agent-provider, and versioned-content resources.
+  Keep provider selections at `provider@1`; leave the four transferred/deleted
+  service instances and deleted agent-plugin-export-destination resource at
+  version 1 until task 2.11 removes them. Prove the frozen lock, exact-version
+  catalog/Nx projection, bounded nonparallel policy execution, and all eight
+  retained owner policy checks without app/profile provider selection, runtime
+  realization, compatibility, or product behavior changes. Record the exact
+  package integrity, provenance, exact nine-member policy-pack inventory,
+  policy-pack digest, and installed acceptance in
+  [[foundation-continuation-release-receipt]]. After the source adoption lands,
+  record its exact-main commit/tree and these named local checks in
+  [[foundation-continuation-adoption-receipt]] before checking this task.
+- [ ] 2.11 Only after the task 2.10a installed receipt and the task 2.10b
+  [[foundation-continuation-adoption-receipt]] is sealed, record the exact
   source commit and whole-tree identity immediately before deletion as frozen
   provenance and later owner-local test oracles, then land the Habitat deletion
   boundary. Rename the root package and Nx project exactly to the private

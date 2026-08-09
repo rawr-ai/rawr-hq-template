@@ -98,6 +98,9 @@ The exact sectional source ledger is [[authority-amendment]].
 
 ### Modified Capabilities
 
+- `habitat-shared-blueprint-resolution`: Exact blueprint versions coexist as
+  immutable complete closures; successor selection never inherits or falls back
+  across versions.
 - `repository-ratchet-runtime`: Subprocess acceptance moves from the deleted
   generic test-utils package to the CLI or semantic owner whose behavior it
   proves.

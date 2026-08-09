@@ -490,6 +490,40 @@ describe("Habitat catalog resolve", () => {
     ]);
   });
 
+  test("rejects a successor missing its own asset without borrowing from version 1", async () => {
+    const result = await resolveFixture({
+      files: {
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml({
+          version: 1,
+          ruleId: "package_v1_structure",
+        }),
+        ".habitat/blueprints/package/structure.toml": structureToml(),
+        ".habitat/blueprints/package/versions/2/blueprint.toml": blueprintToml({
+          version: 2,
+          ruleId: "package_v2_structure",
+        }),
+        "packages/v2/habitat.toml": instanceToml({
+          id: "package-v2",
+          ownerProject: "@fixture/package-v2",
+          project: "packages/v2",
+          blueprintVersion: 2,
+        }),
+        "packages/v2/test/contract/api.typecheck.ts": "export {};\n",
+      },
+      directories: ["packages/v2/src"],
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-path-missing",
+          path: ".habitat/blueprints/package/versions/2/blueprint.toml",
+        },
+      ],
+    });
+  });
+
   test("rejects non-canonical and mismatched successor blueprint locators", async () => {
     for (const locatorVersion of ["1", "02", "v2"]) {
       const definitionVersion = locatorVersion === "1" ? 1 : 2;
