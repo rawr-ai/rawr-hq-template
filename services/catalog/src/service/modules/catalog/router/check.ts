@@ -52,6 +52,14 @@ const ROOT_PATTERN_PICOMATCH_OPTIONS: Readonly<picomatch.PicomatchOptions> = Obj
   strictBrackets: true,
   strictSlashes: true,
 });
+const COMPATIBILITY_COVERAGE_PICOMATCH_OPTIONS: Readonly<picomatch.PicomatchOptions> =
+  Object.freeze({
+    contains: false,
+    dot: false,
+    nonegate: true,
+    strictBrackets: true,
+    strictSlashes: true,
+  });
 
 type StructureCheckApplicationReport = Extract<CheckApplicationReport, { runner: "habitat" }>;
 type StructurePreparation =
@@ -222,7 +230,7 @@ export const check = module.check.effect(function* ({ context, input }) {
       (prepared.kind === "structure" &&
         prepared.preparation.kind === "admitted" &&
         prepared.preparation.value.scopes.length > 0) ||
-      (prepared.kind === "grit" && hasRootPatternEntries(prepared.application))
+      (prepared.kind === "grit" && requiresSourceInventory(prepared.application))
   );
   let inventoryPreparation: SourceInventoryPreparation = { kind: "not-required" };
   if (needsInventory) {
@@ -317,7 +325,7 @@ export const check = module.check.effect(function* ({ context, input }) {
       continue;
     }
 
-    if (hasRootPatternEntries(application) && inventoryPreparation.kind === "failed") {
+    if (requiresSourceInventory(application) && inventoryPreparation.kind === "failed") {
       reports[applicationIndex] = failedApplication(
         application,
         "SetupFailed",
@@ -325,9 +333,9 @@ export const check = module.check.effect(function* ({ context, input }) {
       );
       continue;
     }
-    if (hasRootPatternEntries(application) && inventoryPreparation.kind === "not-required") {
+    if (requiresSourceInventory(application) && inventoryPreparation.kind === "not-required") {
       return yield* Effect.die(
-        new Error("Source inventory was not prepared for root-pattern acquisition.")
+        new Error("Source inventory was not prepared for Grit acquisition.")
       );
     }
 
@@ -444,10 +452,6 @@ function isNotFound(error: PlatformError.PlatformError): boolean {
   return error.reason._tag === "NotFound";
 }
 
-function stablePaths(paths: readonly string[]): string[] {
-  return [...new Set(paths)].sort((left, right) => (left < right ? -1 : left > right ? 1 : 0));
-}
-
 function toRepositoryPath(value: string, separator: string): string {
   return separator === "/" ? value : value.split(separator).join("/");
 }
@@ -539,6 +543,13 @@ function prepareGritSubjects(
   }
 
   return Effect.gen(function* () {
+    if (inventory === undefined) {
+      return {
+        kind: "failed" as const,
+        detail: "Source inventory is unavailable for compatibility exact-path acquisition.",
+      };
+    }
+
     const workspaceRealPath = yield* Effect.result(fileSystem.realPath(workspaceRoot));
     if (workspaceRealPath._tag === "Failure") {
       return {
@@ -577,70 +588,48 @@ function prepareGritSubjects(
       }
     }
 
-    const resolvedCoveragePatterns = application.coveragePatterns.map((pattern) =>
-      path.resolve(workspaceRoot, pattern)
-    );
-    const compatibilityExcludes = [...excludedRepositoryDirectorySegments].map((segment) =>
-      path.resolve(workspaceRoot, `**/${segment}/**`)
-    );
-    const globAttempts = yield* Effect.all(
-      resolvedCoveragePatterns.map((pattern) =>
-        Effect.result(fileSystem.glob(pattern, { exclude: compatibilityExcludes }))
-      )
-    );
-    const failedGlob = globAttempts.find((attempt) => attempt._tag === "Failure");
-    if (failedGlob?._tag === "Failure") {
+    let coverageMatchers: readonly ((candidate: string) => boolean)[];
+    try {
+      coverageMatchers = application.coveragePatterns.map((pattern) =>
+        picomatch(pattern, COMPATIBILITY_COVERAGE_PICOMATCH_OPTIONS)
+      );
+    } catch {
       return {
         kind: "failed" as const,
-        detail: "Unable to enumerate compatibility exact-path coverage.",
+        detail: "Compatibility exact-path acquisition contains an invalid glob.",
       };
     }
 
-    const directAttempts = yield* Effect.all(
-      resolvedCoveragePatterns.map((pattern) => Effect.result(fileSystem.stat(pattern)))
-    );
-    const failedDirect = directAttempts.find(
-      (attempt) => attempt._tag === "Failure" && !isNotFound(attempt.failure)
-    );
-    if (failedDirect?._tag === "Failure") {
-      return {
-        kind: "failed" as const,
-        detail: "Unable to inspect compatibility exact-path coverage.",
-      };
-    }
-
-    const candidates = stablePaths(
-      [
-        ...globAttempts.flatMap((attempt) =>
-          attempt._tag === "Success"
-            ? attempt.success.map((candidate) =>
-                path.isAbsolute(candidate)
-                  ? path.resolve(candidate)
-                  : path.resolve(workspaceRoot, candidate)
-              )
-            : []
-        ),
-        ...directAttempts.flatMap((attempt, index) =>
-          attempt._tag === "Success" && attempt.success.type === "File"
-            ? [resolvedCoveragePatterns[index]]
-            : []
-        ),
-      ].filter((candidate): candidate is string => candidate !== undefined)
-    ).filter(
-      (candidate) =>
-        !isCompatibilityProtectedSubject(candidate, workspaceRoot, path) &&
-        authority.some((root) =>
+    const trackedNonFiles = new Set(inventory.trackedNonFilePaths);
+    const candidates: string[] = [];
+    for (const relativePath of inventory.paths) {
+      if (
+        isTrackedNonFileOrDescendant(relativePath, trackedNonFiles) ||
+        !coverageMatchers.some((matches) => matches(relativePath))
+      ) {
+        continue;
+      }
+      const candidate = path.resolve(workspaceRoot, relativePath);
+      if (
+        isCompatibilityProtectedSubject(candidate, workspaceRoot, path) ||
+        !authority.some((root) =>
           root.kind === "file"
             ? candidate === root.absolutePath
             : isContained(root.absolutePath, candidate, path)
         )
-    );
+      ) {
+        continue;
+      }
+      candidates.push(candidate);
+    }
 
     const subjects: ResolvedSubject[] = [];
     for (const candidate of candidates) {
       const canonical = yield* Effect.result(fileSystem.realPath(candidate));
       if (canonical._tag === "Failure") {
-        if (isNotFound(canonical.failure)) continue;
+        if (isNotFound(canonical.failure) || hasExactCauseCode(canonical.failure, "ENOTDIR")) {
+          continue;
+        }
         return {
           kind: "failed" as const,
           detail: `Unable to canonicalize compatibility subject "${toRepositoryPath(
@@ -667,7 +656,7 @@ function prepareGritSubjects(
       }
       const stat = yield* Effect.result(fileSystem.stat(canonical.success));
       if (stat._tag === "Failure") {
-        if (isNotFound(stat.failure)) continue;
+        if (isNotFound(stat.failure) || hasExactCauseCode(stat.failure, "ENOTDIR")) continue;
         return {
           kind: "failed" as const,
           detail: `Unable to inspect compatibility subject "${toRepositoryPath(
@@ -719,6 +708,10 @@ function resolvedSubjects(
 
 function hasRootPatternEntries(application: GritCheckApplication): boolean {
   return application.runner.acquisition.entries.some(isRootPatternEntry);
+}
+
+function requiresSourceInventory(application: GritCheckApplication): boolean {
+  return isCompatibilityRule(application) || hasRootPatternEntries(application);
 }
 
 function isRootPatternEntry(entry: GritAcquisitionEntry): entry is RootPatternAcquisitionEntry {

@@ -391,6 +391,16 @@ and proves only the affected leaf work invalidates. The composition target never
 executes a Habitat command, and the underlying command of any restored cacheable
 leaf must not execute.
 
+The catalog observes one Git-visible source inventory per selected owner check.
+Version-2 compatibility coverage and version-3 root patterns filter that shared
+inventory before any final canonical-file observation; neither may recursively
+glob the live repository. This makes ignored local evidence inert and keeps
+subject acquisition proportional to repository authority rather than to
+filesystem residue. Version-3 root-pattern subject and command-line bounds stay
+specific to that authoring surface; version-2 compatibility coverage retains
+the source-inventory contract's repository bound until a separately admitted
+chunking contract exists.
+
 `schema`, `definition`, and `derivation` are the upstream private owners
 consumed by later runtime phases. The terminal SDK exposes only the stable
 public subpaths and assembles the reachable runtime closure into the SDK package
@@ -916,7 +926,7 @@ fixed Nx Release group and both containing only `@habitat-ai/sdk` and
    main commit exclusively authorizes that second release.
 
 Exact-main bounded foundation-continuation tags inside the first checkpoint do
-not create a third functional checkpoint. Releases `0.5.7` through `0.5.14`
+not create a third functional checkpoint. Releases `0.5.7` through `0.5.15`
 continue the original Gate B `0.5.6` pair while admitting only the already
 sequenced foundation corrections and owner transfers. Each must publish the
 same two-package Nx release group and carry its own installed-registry receipt.
@@ -927,6 +937,13 @@ Habitat adopts that exact pair and advances only retained platform instances
 before task 2.11. Transferred or deleted instances remain at version 1 until
 their already-authorized removal, so continuation never becomes normalization
 of condemned substrate.
+
+The task-3.2a `0.5.15` continuation carries only the already-qualified
+declarative telemetry SDK face plus the catalog's Git-visible
+compatibility-acquisition correction. It adds no package, runtime owner,
+provider acquisition, app/profile selection, mount, instrumentation bootstrap,
+or product behavior. Habitat must adopt the exact released pair before task 3.3
+resumes.
 
 Before each public checkpoint, installed-package acceptance publishes the local
 candidate pair only to an isolated registry and passes the one-operation

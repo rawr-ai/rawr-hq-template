@@ -33,7 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.14";
+const CANDIDATE_VERSION = "0.5.15";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -598,6 +598,9 @@ describe("installed Habitat products", () => {
     const consumerBlueprintInventory = [
       "grit-acceptance/blueprint.toml",
       "grit-acceptance/no-forbidden.md",
+      "grit-pattern/require_grit_compatibility_inventory_acceptance/baseline.json",
+      "grit-pattern/require_grit_compatibility_inventory_acceptance/pattern.md",
+      "grit-pattern/require_grit_compatibility_inventory_acceptance/rule.json",
       "root-pattern-acceptance/blueprint.toml",
       "root-pattern-acceptance/no-forbidden.md",
     ];
@@ -717,9 +720,10 @@ describe("installed Habitat products", () => {
         'const sdk = await import("@habitat-ai/sdk");',
         'const service = await import("@habitat-ai/sdk/service");',
         'const schema = await import("@habitat-ai/sdk/service/schema");',
+        'const telemetry = await import("@habitat-ai/sdk/telemetry");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
         'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
-        "console.log(JSON.stringify({ sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service) }));",
+        "console.log(JSON.stringify({ sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service), telemetry: Object.keys(telemetry).sort() }));",
       ].join("\n"),
       "utf8"
     );
@@ -738,6 +742,24 @@ describe("installed Habitat products", () => {
         "getProcedureMetadata",
         "procedureMetadata",
       ]),
+      telemetry: [
+        "DisabledOpenTelemetryNodeConfigSchema",
+        "EmitTechnicalLogInputSchema",
+        "EnabledOpenTelemetryNodeConfigSchema",
+        "FlushTelemetryInputSchema",
+        "FlushTelemetryResultSchema",
+        "OpenTelemetryNodeConfigSchema",
+        "TelemetryAttributeKeySchema",
+        "TelemetryAttributesSchema",
+        "TelemetryAvailabilitySchema",
+        "TelemetryDiagnosticSchema",
+        "TelemetryDiagnosticStageSchema",
+        "TelemetryDiagnosticsSchema",
+        "TelemetryExportCallbackAccountingSchema",
+        "TelemetryIdentityTextSchema",
+        "TelemetryLogSeveritySchema",
+        "TelemetryProcessIdentitySchema",
+      ],
     });
 
     expect(await readFile(path.join(installedCliRoot, "dist/command.js"))).toEqual(
@@ -973,6 +995,18 @@ describe("installed Habitat products", () => {
         }),
       ])
     );
+    expect(resolvedCatalog.catalog.compatibility.rules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ownerProject: "habitat",
+          ruleId: "require_grit_compatibility_inventory_acceptance",
+          runner: expect.objectContaining({ name: "grit" }),
+        }),
+      ])
+    );
+    expect(resolvedCatalog.catalog.compatibility.ownerRoots).toEqual({
+      habitat: "scripts/habitat",
+    });
 
     const checked = await run(habitat, ["check"], { cwd: consumerRoot });
     expect(checked, checked.stderr || checked.stdout).toMatchObject({
@@ -982,6 +1016,14 @@ describe("installed Habitat products", () => {
     expect(JSON.parse(checked.stdout)).toMatchObject({
       _tag: "Completed",
       applications: expect.arrayContaining([
+        expect.objectContaining({
+          instanceId: null,
+          ownerProject: "habitat",
+          ruleId: "require_grit_compatibility_inventory_acceptance",
+          runner: "grit",
+          status: "pass",
+          disposition: { kind: "evaluated" },
+        }),
         expect.objectContaining({
           instanceId: "grit-acceptance",
           ruleId: "grit_acceptance_no_forbidden",
@@ -1455,11 +1497,22 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   );
   expect(structureInputs).toEqual([serviceRootInput, `${serviceRootInput}/**/*`]);
 
+  const telemetryTypeConsumerPath = path.join(serviceRoot, "src/telemetry-type-consumer.ts");
+  await writeFile(
+    telemetryTypeConsumerPath,
+    [
+      'import { TelemetryAvailabilitySchema, type TelemetryAvailability } from "@habitat-ai/sdk/telemetry";',
+      'export const telemetryAvailability: TelemetryAvailability = "disabled";',
+      "void TelemetryAvailabilitySchema;",
+      "",
+    ].join("\n")
+  );
   const typechecked = await run(
     nx,
     ["run", "@fixture/greeting-service:typecheck", "--outputStyle=static"],
     { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
   );
+  await rm(telemetryTypeConsumerPath);
   expect(typechecked, `${typechecked.stdout}\n${typechecked.stderr}`).toMatchObject({
     exitCode: 0,
   });
@@ -1678,18 +1731,37 @@ async function createConsumer(): Promise<void> {
   const relativeSubjectPaths = subjectIds.map(
     (subjectId) => `packages/grit-acceptance/src/${subjectId}.ts`
   );
+  const ignoredCompatibilitySubjectPath = "packages/grit-compatibility/src/ignored.ts";
   gritSubjectPaths = relativeSubjectPaths.map((relativePath) =>
     path.join(consumerRoot, relativePath)
   );
   const files: Readonly<Record<string, string>> = {
-    ".gitignore": ["node_modules/", "dist/", ".nx/", ".habitat/cache/", ""].join("\n"),
+    ".gitignore": [
+      "node_modules/",
+      "dist/",
+      ".nx/",
+      ".habitat/cache/",
+      ignoredCompatibilitySubjectPath,
+      "",
+    ].join("\n"),
     ".habitat/blueprints/grit-acceptance/blueprint.toml": gritAcceptanceBlueprintToml(),
     ".habitat/blueprints/grit-acceptance/no-forbidden.md":
       "# No forbidden calls\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
+    ".habitat/blueprints/grit-pattern/require_grit_compatibility_inventory_acceptance/baseline.json":
+      "[]\n",
+    ".habitat/blueprints/grit-pattern/require_grit_compatibility_inventory_acceptance/pattern.md":
+      "# Require Grit Compatibility Inventory Acceptance\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
+    ".habitat/blueprints/grit-pattern/require_grit_compatibility_inventory_acceptance/rule.json":
+      gritCompatibilityInventoryAcceptanceRuleJson(),
     ".habitat/blueprints/root-pattern-acceptance/blueprint.toml":
       rootPatternAcceptanceBlueprintToml(),
     ".habitat/blueprints/root-pattern-acceptance/no-forbidden.md":
       "# No forbidden calls\n\n```grit\nlanguage js(typescript)\n`forbidden()`\n```\n",
+    ".habitat/index.json": `${JSON.stringify(
+      { schemaVersion: 2, ownerRoots: { habitat: "scripts/habitat" } },
+      null,
+      2
+    )}\n`,
     "hook-check.mjs": `import { execFileSync } from "node:child_process";
 import { mkdirSync } from "node:fs";
 
@@ -1756,6 +1828,22 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       null,
       2
     )}\n`,
+    "packages/grit-compatibility/package.json": `${JSON.stringify(
+      { name: "@fixture/grit-compatibility", private: true, version: "0.0.0" },
+      null,
+      2
+    )}\n`,
+    "packages/grit-compatibility/project.json": `${JSON.stringify(
+      {
+        name: "@fixture/grit-compatibility",
+        projectType: "library",
+        sourceRoot: "packages/grit-compatibility/src",
+      },
+      null,
+      2
+    )}\n`,
+    [ignoredCompatibilitySubjectPath]: "forbidden();\n",
+    "packages/grit-compatibility/src/visible.ts": "allowed();\n",
     "packages/root-pattern-acceptance/habitat.toml": rootPatternAcceptanceInstanceToml(),
     "packages/root-pattern-acceptance/package.json": `${JSON.stringify(
       { name: "@fixture/root-pattern-acceptance", private: true, version: "0.0.0" },
@@ -2017,6 +2105,38 @@ project = "packages/grit-acceptance"
 [selections]
 subjects = ${JSON.stringify(subjectIds)}
 `;
+}
+
+function gritCompatibilityInventoryAcceptanceRuleJson(): string {
+  const ruleRoot =
+    ".habitat/blueprints/grit-pattern/require_grit_compatibility_inventory_acceptance";
+  return `${JSON.stringify(
+    {
+      schemaVersion: 2,
+      id: "require_grit_compatibility_inventory_acceptance",
+      title: "Require Grit Compatibility Inventory Acceptance",
+      placement: { niche: "habitat", blueprint: "grit-pattern", category: "quality" },
+      operation: { kind: "check" },
+      ownerProject: "habitat",
+      lane: "enforced",
+      forbids: "an ignored compatibility subject entering Grit evaluation",
+      why: "Compatibility acquisition must use the repository's Git-visible source inventory.",
+      remediate:
+        "Exclude ignored subjects by acquiring compatibility coverage from source inventory.",
+      message: "Ignored compatibility subjects must not enter Grit evaluation.",
+      pathCoverage: [{ kind: "exact-path", patterns: ["packages/grit-compatibility/src/*.ts"] }],
+      hookCheck: true,
+      supportFiles: { baseline: `${ruleRoot}/baseline.json` },
+      runner: {
+        name: "grit",
+        files: { pattern: `${ruleRoot}/pattern.md` },
+        patternName: "require_grit_compatibility_inventory_acceptance",
+        acquisition: { kind: "check", roots: ["packages/grit-compatibility"] },
+      },
+    },
+    null,
+    2
+  )}\n`;
 }
 
 function rootPatternAcceptanceBlueprintToml(): string {

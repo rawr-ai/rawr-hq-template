@@ -19,6 +19,13 @@ native engine without a measured vendor capability gap.
   task graph or process substrate
 - **AND** no custom engine is admitted from duration alone
 
+#### Scenario: Compatibility law uses one repository source inventory
+
+- **WHEN** one owner check selects one or more version-2 compatibility Grit applications
+- **THEN** the catalog observes the Git-visible source inventory exactly once for the request and derives every application's exact subject set from that inventory
+- **AND** ignored paths, tracked non-files, symbolic links, non-files, and paths outside the admitted acquisition roots never enter evaluation
+- **AND** compatibility acquisition performs no recursive filesystem glob and does not inherit the narrower version-3 root-pattern subject or command-line bounds
+
 #### Scenario: Subprocess proof follows its semantic owner
 
 - **WHEN** a child-process fixture proves Habitat CLI, Rawr CLI, or another
