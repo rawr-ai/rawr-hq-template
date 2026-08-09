@@ -32,9 +32,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@cc494354449465fa4178f36d4d5222b4d4072f5d`, with whole-tree identity
   `2eacd194803e542a579b9c6c845605123fcb2bbb`; later fresh owners may consult
   that frozen source only as provenance and owner-local test evidence.
-- Gates A through C, Rawr's finite owner transfer, and the bounded Habitat
-  `0.5.14` adoption are sealed. The active source container is platform
-  separation.
+- Gates A through C, Rawr's finite owner transfer, the bounded Habitat `0.5.14`
+  adoption, and repository separation are sealed. Task 2.12 closed from clean
+  canonical worktrees at Habitat
+  `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
+  `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
+  `main@851a5b87e86278757eb99b952281b90a35e74869`. The active source container is
+  now task 3 platform cleanup and core reservation.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -84,16 +88,17 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   platform owners. This remains inside the first functional checkpoint, not
   another package cohort or runtime release.
 - [x] **Separation**: retain and rename Habitat platform owners, delete every
-  transferred or rejected predecessor, rename the workspace, and pass the
-  cumulative absence gate.
+  transferred or rejected predecessor, rename the workspace, pass the
+  cumulative absence gate, and seal the three clean canonical repository
+  boundaries through task 2.12.
 
 The active queue has one bounded node:
 
-1. pass task 2.12's exact-main repository gate: land the verified Habitat
-   product-separation boundary, require Rawr's canonical main to contain only
-   its three admitted product closures, run the cumulative Habitat absence gate
-   from exact main, and verify Marketplace remains an independent content
-   repository before task 3 opens.
+1. execute task 3.1 as one owner-complete cleanup: re-author the qualified
+   provider-neutral telemetry resource and OpenTelemetry Node provider from the
+   held mixed source, move their surviving readers, and retire the mixed-core
+   telemetry export and signal hooks in the same green node. Do not open another
+   private runtime owner or disturb task 3.3's reserved SDK-path transfer.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle
