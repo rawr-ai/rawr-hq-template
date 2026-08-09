@@ -17,8 +17,7 @@ pair.
 - You are changing Habitat-owned packages, services, fixtures, repository
   process, or ordinary CLI package/release/install mechanics.
 - You are changing reusable Oclif loading, external-extension mechanics, or the
-  Habitat CLI host interface, including migration of the current `rawr plugins`
-  surface into its foundational Habitat destination.
+  foundational `habitat plugins` host interface.
 
 ## Modify Rawr product source when:
 
@@ -65,9 +64,9 @@ pair.
   the agent-plugin lifecycle service plus its control-plane and CLI projections.
   Rawr owns only downstream product topics.
 - Marketplace owns the closed curated agent-plugin content set and its governance records.
-- External Oclif extensions currently live only under `rawr plugins`.
+- External Oclif extensions live only under `habitat plugins`.
 - Curated agent lifecycle currently lives only under `rawr agent plugins`.
-- Their accepted Habitat command destinations become operational only when the
+- The curated Habitat command destination becomes operational only when its
   command, manifest, and policy migration lands together.
 - App composition is a consumer and never a lifecycle owner.
 

@@ -167,7 +167,7 @@
   select an app profile or provider, prove an installed command vertical, move
   the development vertical, move generators, activate final Oclif-app or
   CLI-topic law, or define the private CLI source-bundle contract.
-- [ ] 2.10a Before task 2.11, transfer the bounded native Oclif plugin owner from
+- [x] 2.10a Before task 2.11, transfer the bounded native Oclif plugin owner from
   `apps/cli` to `@habitat-ai/cli`: move the exact `@oclif/plugin-plugins`
   dependency, Oclif configuration/manifest composition, and installed
   root `plugins` listing operation plus `install`, `link`, `inspect`, `update`,

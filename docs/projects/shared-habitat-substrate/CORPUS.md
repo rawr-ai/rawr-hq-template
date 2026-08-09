@@ -116,14 +116,13 @@ This is the definition-only checkpoint recorded in
 | Nx plugin | Schema-admitted, execution-inert `plugin-nx` definition; no frozen proof axes | Treat it as a complete independent leaf kind until Habitat admits a monotonic specialization relation; close a finite Nx-projection proof grammar before release-pack acceptance |
 | Server API projection | Shallow current packet | Compose service-source law and close public faces and proof |
 | App | Schema-admitted, execution-inert root definition; proof axes remain candidates | Port and validate the accepted Magic app evidence before release-pack acceptance and instance admission |
-| CLI app | Legacy Oclif app law owns commands | Define a complete commandless app kind; do not depend on a specialization relation Habitat does not yet provide |
+| CLI app | Product-bound predecessor law deleted; no Oclif-app law is active | Author the complete generic app kind fresh with its first conforming final owner |
 | CLI topic | Legacy command-plugin root | Rename and rebuild at `plugins/cli/topics/*` |
 
 ## Current Structural Red
 
 - `.habitat/blueprints/oclif-command-plugin` positively encodes
   `plugins/cli/commands/*`.
-- `.habitat/blueprints/oclif-app` admits app-owned `src/commands`.
 - `apps/cli` owns command implementations.
 - existing first-party command plugins live below `plugins/cli/commands/*`.
 - the seven root v3 definitions have no admitted instances or applications and

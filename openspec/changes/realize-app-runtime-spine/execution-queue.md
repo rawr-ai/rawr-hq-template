@@ -16,6 +16,11 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `443c146920795786b850188e2b6179bd29a6bd19`, then agent-plugin lifecycle
   `a397eb7cde1c668b430a6e54203c9d97e1e7a8d9`. Task 2.10 is sealed by those
   exact-main owner receipts.
+- Task 2.10a is sealed by the packed-installed
+  `@habitat-ai/cli:acceptance:oclif-native-plugins` receipt. Habitat now owns
+  native external-extension management, while the Rawr dependency/configuration,
+  production hello fixture, and obsolete product-bound Oclif-app packet are
+  absent. No replacement Oclif-app or CLI-topic law is active.
 - Gates A through C and Rawr's finite owner transfer are sealed. The first
   active source container is Habitat platform separation.
 - The accepted pre-Gate-A semantic sieve removes only closures already
@@ -65,18 +70,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   transferred or rejected predecessor, rename the workspace, and pass the
   cumulative absence gate.
 
-The active separation queue now has two bounded nodes:
+The active separation queue now has one bounded node:
 
-1. land task 2.10a, moving `@oclif/plugin-plugins` dependency/configuration and
-   the complete installed native plugin-management roundtrip from `apps/cli` to
-   `@habitat-ai/cli` with one owner-local prebuilt package fixture and receipt,
-   while deleting the obsolete product-bound Oclif-app packet and applications;
-   and
-2. land task 2.11 only after that receipt: freeze the exact pre-deletion source
-   commit/tree, delete `apps/cli`, the product-bound Oclif-command-plugin packet,
-   and the exact task-2.11 predecessor inventory while retaining mixed
-   `@habitat-ai/rawr-core` / `packages/core` for task 3.3, then pass the
-   checkpoint-aware cumulative product-separation absence gate.
+1. land task 2.11 after the sealed task 2.10a receipt: freeze the exact
+   pre-deletion source commit/tree, delete `apps/cli`, the product-bound
+   Oclif-command-plugin packet, and the exact task-2.11 predecessor inventory
+   while retaining mixed `@habitat-ai/rawr-core` / `packages/core` for task 3.3,
+   then pass the checkpoint-aware cumulative product-separation absence gate.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle

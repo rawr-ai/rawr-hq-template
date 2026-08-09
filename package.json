@@ -102,6 +102,7 @@
     "@nx/js": "23.1.1",
     "@oclif/core": "^4.13.2",
     "@oclif/plugin-help": "^6.2.27",
+    "@oclif/plugin-plugins": "^5.4.84",
     "@rawr/test-utils": "workspace:*",
     "@types/node": "^24.13.3",
     "@vitest/ui": "^4.0.18",

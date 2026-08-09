@@ -69,7 +69,6 @@ None may impersonate another.
 - [[blueprint-packet/skill|Blueprint packets]]
 - [[grit-pattern/skill|Grit patterns]]
 - [[nx-workspace/skill|Nx workspaces]]
-- [[oclif-app/skill|Oclif applications]]
 - [[oclif-command-plugin/skill|Oclif command plugins]]
 - [[plugin/skill|Plugins]]
 - [[plugin-server/skill|Server plugins]]

@@ -58,12 +58,12 @@
 
 ## Command Surface Policy
 
-- Current external CLI plugin channel: `rawr plugins ...`
+- Current external CLI plugin channel: `habitat plugins ...`
 - Current curated agent-plugin lifecycle channel: `rawr agent plugins ...`
-- Their accepted destination is the foundational Habitat CLI, but that command
-  migration is not current operational truth until its source and policy land
-  together. The later private Rawr CLI may contain only downstream product
-  topics and must not duplicate or alias either Habitat channel.
+- The curated channel's accepted Habitat destination is not current operational
+  truth until its source and policy land together. The later private Rawr CLI
+  may contain only downstream product topics and must not duplicate or alias a
+  Habitat channel.
 - Product composition, web hosts, and runtime mounting consume these lifecycle
   commands and cannot own either channel.
 - Do not mix these command surfaces in guidance or examples.

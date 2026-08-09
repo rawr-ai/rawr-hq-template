@@ -12,5 +12,4 @@ relationships. Nx schedules their checks; it does not define the boundary.
 This kind does not own the product command inventory and does not give a
 command plugin its own executable binary.
 
-See [[../../AUTHORITY|the repository-local authority boundary]] and
-[[../oclif-app/README|the executable app kind]].
+See [[../../AUTHORITY|the repository-local authority boundary]].

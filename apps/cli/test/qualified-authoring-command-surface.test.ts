@@ -24,9 +24,9 @@ describe("qualified authoring command surface", () => {
       const result = runRawr(args);
       expect(result.status, `${args.join(" ")}\n${result.stderr}`).toBe(0);
     }
-    const plugins = runRawr(["plugins", "--help"]);
-    expect(plugins.status).toBe(0);
-    expect(`${plugins.stdout}\n${plugins.stderr}`).not.toContain("plugins scaffold");
+    const scaffold = runRawr(["plugins", "scaffold", "--help"]);
+    expect(scaffold.status).toBe(2);
+    expect(scaffold.stderr).toContain("Command plugins:scaffold not found.");
   });
 
   it("rejects every retired command ID without an alias or forwarder", { timeout: 60_000 }, () => {

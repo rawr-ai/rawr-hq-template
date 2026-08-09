@@ -14,7 +14,7 @@
   "lane": "enforced",
   "forbids": "a literal module-loading edge from curated agent-plugin command or command-support source to @oclif/plugin-plugins or one of its subpaths",
   "why": "Native Oclif extension lifecycle and curated agent-plugin lifecycle are separate command channels. Curated command source must not acquire the native external-plugin implementation.",
-  "remediate": "Keep @oclif/plugin-plugins composition on the native rawr plugins channel. Route curated rawr agent plugins commands through their agent-plugin lifecycle owner instead.",
+  "remediate": "Keep @oclif/plugin-plugins composition on the native habitat plugins channel. Route curated rawr agent plugins commands through their agent-plugin lifecycle owner instead.",
   "message": "Curated agent-plugin commands must not load the native Oclif plugin lifecycle package.",
   "pathCoverage": [
     {

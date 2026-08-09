@@ -25,7 +25,7 @@
 
 - Reuse `@rawr/*` packages; avoid cross-app internal coupling.
 - Keep authority boundaries explicit:
-  - `rawr plugins ...` manages external Oclif extensions.
+  - `habitat plugins ...` manages external Oclif extensions.
   - `rawr agent plugins ...` manages curated agent-plugin lifecycle.
   - server/web app composition consumes declared outputs and owns no lifecycle state.
 

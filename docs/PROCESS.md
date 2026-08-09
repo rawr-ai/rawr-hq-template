@@ -28,9 +28,9 @@ The previous plugin E2E workflow is preserved at `docs/process/quarantine/PLUGIN
 
 ## Command Channel Model
 
-- `rawr plugins ...` is currently reserved for external Oclif extensions.
+- `habitat plugins ...` is reserved for external Oclif extensions.
 - `rawr agent plugins ...` is currently reserved for curated agent-plugin
-  lifecycle. Their Habitat command destinations remain migration targets until
+  lifecycle. Its Habitat command destination remains a migration target until
   the executable manifest and policy land together.
 - Private `rawr` application development uses `bun run rawr -- ...` from the
   exact repository revision. Habitat package metadata, Nx Release

@@ -22,7 +22,6 @@
     "@effect/platform-node": "4.0.0-beta.101",
     "@oclif/core": "^4.13.2",
     "@oclif/plugin-help": "^6.2.27",
-    "@oclif/plugin-plugins": "^5.4.36",
     "@orpc/client": "2.0.0-beta.23",
     "@habitat-ai/cli": "0.5.6",
     "@habitat-ai/agent-plugin-lifecycle-service": "workspace:*",
@@ -52,7 +51,6 @@
     "topicSeparator": " ",
     "plugins": [
       "@oclif/plugin-help",
-      "@oclif/plugin-plugins",
       "@habitat-ai/rawr-plugin-chatgpt-corpus",
       "@habitat-ai/rawr-plugin-devops",
       "@habitat-ai/rawr-plugin-hyperresearch",
@@ -70,8 +68,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p tsconfig.test.json --noEmit",
     "test": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli",
-    "acceptance:oclif": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli test/bin-run.test.ts --testNamePattern='loads the same manifest-backed application inventory from source and compiled entrypoints|discovers the CLI and every command plugin from source and compiled output without manifests|uses generated manifests for the same compiled command inventory'",
-    "acceptance:oclif-native-plugins": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli-native-acceptance"
+    "acceptance:oclif": "TMPDIR=/tmp bun --bun ../../node_modules/.bin/vitest run --project cli test/bin-run.test.ts --testNamePattern='loads the same manifest-backed application inventory from source and compiled entrypoints|discovers the CLI and every command plugin from source and compiled output without manifests|uses generated manifests for the same compiled command inventory'"
   },
   "bin": {
     "rawr": "./bin/run.js"
@@ -95,25 +92,13 @@
               "@habitat-ai/rawr-plugin-session-tools"
             ],
             "target": "manifest"
-          },
-          {
-            "projects": [
-              "@rawr/plugin-hello"
-            ],
-            "target": "build"
           }
         ],
         "inputs": [
           "default",
           "^default",
           "typescriptRuntime",
-          "{workspaceRoot}/vitest.config.ts",
-          {
-            "projects": [
-              "@rawr/plugin-hello"
-            ],
-            "input": "production"
-          }
+          "{workspaceRoot}/vitest.config.ts"
         ]
       },
       "acceptance:oclif": {
@@ -126,37 +111,6 @@
               "@habitat-ai/rawr-plugin-devops",
               "@habitat-ai/rawr-plugin-hyperresearch",
               "@habitat-ai/rawr-plugin-session-tools"
-            ],
-            "target": "manifest"
-          },
-          {
-            "projects": [
-              "@rawr/plugin-hello"
-            ],
-            "target": "build"
-          }
-        ],
-        "inputs": [
-          "default",
-          "^default",
-          "typescriptRuntime",
-          "{workspaceRoot}/vitest.config.ts",
-          {
-            "projects": [
-              "@rawr/plugin-hello"
-            ],
-            "input": "production"
-          }
-        ],
-        "outputs": []
-      },
-      "acceptance:oclif-native-plugins": {
-        "cache": false,
-        "dependsOn": [
-          "acceptance:oclif",
-          {
-            "projects": [
-              "@rawr/plugin-hello"
             ],
             "target": "manifest"
           }

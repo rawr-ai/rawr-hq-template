@@ -16,7 +16,7 @@ Session listing/search/extraction commands for the RAWR CLI.
 
 Session Tools is a core Oclif command plugin composed by `@habitat-ai/rawr`. Do not
 install or link it through the native external-extension channel
-`rawr plugins ...`. The application remains private to Template; use its
+`habitat plugins ...`. The application remains private to Rawr; use its
 Nx-owned repository invocation and do not restore the retired custom
 distribution to test this module.
 
