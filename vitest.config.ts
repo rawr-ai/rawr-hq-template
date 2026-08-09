@@ -59,11 +59,6 @@ export default defineConfig({
       },
       {
         extends: true,
-        root: r("packages/core"),
-        test: { name: "core", environment: "node", include: [...includes] },
-      },
-      {
-        extends: true,
         root: r("packages/habitat-sdk"),
         test: { name: "habitat-sdk", environment: "node", include: [...includes] },
       },

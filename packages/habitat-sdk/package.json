@@ -36,6 +36,11 @@
       "import": "./dist/service/schema.js",
       "default": "./dist/service/schema.js"
     },
+    "./telemetry": {
+      "types": "./dist/telemetry.d.ts",
+      "import": "./dist/telemetry.js",
+      "default": "./dist/telemetry.js"
+    },
     "./habitat-pack.json": "./habitat-pack.json",
     "./blueprints/*": "./dist/blueprints/*",
     "./package.json": "./package.json"
@@ -49,7 +54,7 @@
     "@effect/platform-node": "4.0.0-beta.101",
     "@effect/platform-node-shared": "4.0.0-beta.101",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
-    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/api": "1.9.0",
     "@orpc/contract": "2.0.0-beta.23",
     "@orpc/experimental-effect": "2.0.0-beta.23",
     "@orpc/server": "2.0.0-beta.23",

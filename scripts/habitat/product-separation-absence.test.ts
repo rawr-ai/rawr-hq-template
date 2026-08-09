@@ -40,6 +40,7 @@ const EXPECTED_PROJECT_ROOTS = {
     "resources/rule-evaluation/providers/grit-effect-platform-node",
   "provider-source-inventory-git-effect-platform-node":
     "resources/source-inventory/providers/git-effect-platform-node",
+  "provider-telemetry-opentelemetry-node": "resources/telemetry/providers/opentelemetry-node",
   "@habitat-ai/resource-agent-plugin-package-output": "resources/agent-plugin-package-output",
   "@habitat-ai/agent-plugin-lifecycle-service": "services/agent-plugin-lifecycle",
   "@habitat-ai/resource-native-agent-provider": "resources/native-agent-provider",
@@ -49,6 +50,7 @@ const EXPECTED_PROJECT_ROOTS = {
   "@habitat-ai/resource-versioned-content": "resources/versioned-content",
   "@habitat-ai/resource-source-inventory": "resources/source-inventory",
   "@habitat-ai/resource-rule-evaluation": "resources/rule-evaluation",
+  "@habitat-ai/resource-telemetry": "resources/telemetry",
   "@habitat-ai/sdk": "packages/habitat-sdk",
   "@habitat-ai/catalog-service": "services/catalog",
   habitat: "scripts/habitat",
@@ -377,7 +379,7 @@ function condemnedState(homeRoot: string, fixtureWorkspaceRoot: string): readonl
 }
 
 describe("task 2.11 product-separation absence", () => {
-  it("has exactly the 22 retained Nx projects at their canonical roots", async () => {
+  it("has exactly the 24 retained Nx projects at their canonical roots", async () => {
     const graph = await createProjectGraphAsync({ exitOnError: true });
     const projects = readProjectsConfigurationFromProjectGraph(graph).projects;
     const actualProjectIds = Object.keys(projects).sort();

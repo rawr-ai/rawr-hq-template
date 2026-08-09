@@ -90,6 +90,7 @@
     "@habitat-ai/agent-plugin-lifecycle-service": "workspace:*",
     "@habitat-ai/resource-rule-evaluation": "workspace:*",
     "@habitat-ai/resource-source-inventory": "workspace:*",
+    "@habitat-ai/resource-telemetry": "workspace:*",
     "@habitat-ai/sdk": "workspace:*",
     "@nx/devkit": "23.1.1",
     "@nx/js": "23.1.1",

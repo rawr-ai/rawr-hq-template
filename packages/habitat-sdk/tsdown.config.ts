@@ -3,6 +3,8 @@ import { defineConfig } from "tsdown";
 const privateWorkspacePackages = [
   "@habitat-ai/resource-rule-evaluation",
   "@habitat-ai/resource-source-inventory",
+  "@habitat-ai/resource-telemetry",
+  "@habitat-ai/resource-telemetry/providers/opentelemetry-node",
   "@habitat-ai/catalog-service",
 ];
 
@@ -13,6 +15,7 @@ export default defineConfig({
     index: "src/index.ts",
     "service/index": "src/service/index.ts",
     "service/schema": "src/service/schema.ts",
+    telemetry: "src/telemetry.ts",
   },
   outDir: "dist",
   format: "esm",

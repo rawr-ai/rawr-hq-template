@@ -162,12 +162,13 @@ function createObservabilityHandler<
 }
 
 /**
- * Creates the callback a service base authors as observability middleware.
+ * Creates optional service-semantic observability enrichment.
  *
  * @remarks
- * The callback consumes only the logger capability it needs. Each service's
- * native oRPC base owns context compatibility and middleware construction;
- * service-specific fields remain ordinary options on this execution boundary.
+ * Habitat runtime and harness owners supply foundational instrumentation once;
+ * service authors do not bootstrap a telemetry provider. This callback consumes
+ * only the logger capability needed to add service-specific fields at the
+ * native oRPC execution boundary.
  */
 export function createObservabilityMiddlewareCallback<
   TContext extends ObservabilityContext,

@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "provider-telemetry-opentelemetry-node"
+ownerProject = "provider-telemetry-opentelemetry-node"
+blueprint = "provider"
+blueprintVersion = 1
+
+[roots]
+project = "resources/telemetry/providers/opentelemetry-node"
+
+[selections]

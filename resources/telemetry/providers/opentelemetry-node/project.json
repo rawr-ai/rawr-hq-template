@@ -1,0 +1,29 @@
+{
+  "name": "provider-telemetry-opentelemetry-node",
+  "projectType": "library",
+  "sourceRoot": "resources/telemetry/providers/opentelemetry-node",
+  "implicitDependencies": ["@habitat-ai/resource-telemetry"],
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:telemetry",
+    "provider:opentelemetry-node"
+  ],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}

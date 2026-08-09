@@ -53,7 +53,7 @@
 
 - [Repository router](../AGENTS.md)
 - [Public Habitat SDK](habitat-sdk/AGENTS.md)
-- [Transitional telemetry package](core/AGENTS.md)
+- [Mixed-core reservation shell](core/AGENTS.md)
 - [Runtime schema adapter](core/runtime/schema/AGENTS.md)
 
 ## Parent Coverage

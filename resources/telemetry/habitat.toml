@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/resource-telemetry"
+ownerProject = "@habitat-ai/resource-telemetry"
+blueprint = "resource"
+blueprintVersion = 2
+
+[roots]
+project = "resources/telemetry"
+
+[selections]
