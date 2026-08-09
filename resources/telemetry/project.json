@@ -1,0 +1,25 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat-ai/resource-telemetry",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/telemetry/providers/**/*.ts",
+      "!{workspaceRoot}/resources/telemetry/providers/**/test/**",
+      "!{workspaceRoot}/resources/telemetry/providers/**/*.test.*",
+      "!{workspaceRoot}/resources/telemetry/providers/**/*.spec.*",
+      "!{workspaceRoot}/resources/telemetry/providers/**/vitest.config.*"
+    ]
+  },
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}

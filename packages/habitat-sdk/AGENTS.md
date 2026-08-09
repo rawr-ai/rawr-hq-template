@@ -20,9 +20,14 @@
   analytics and observability middleware, and their required capability ports.
 - `standard` and `TypeBoxStandardSchema` are available only through
   `@habitat-ai/sdk/service/schema`.
-- Low-level service constructors, resource contracts, provider factories, and
-  implementation package identities stay private and must be bundled out of
-  both JavaScript and declarations.
+- `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
+  and declarative OpenTelemetry Node configuration. It exports no acquisition,
+  lease, exporter factory, or instrumentation bootstrap; Habitat runtime
+  provisioning owns those mechanics. Service, plugin, and command authors add
+  only optional semantic enrichment through their owning surfaces.
+- Other low-level service constructors, resource contracts, provider
+  factories, and all implementation package identities stay private and must
+  be bundled out of both JavaScript and declarations.
 - Third-party runtime libraries remain ordinary npm dependencies.
 - The SDK owns production Node composition, but no controller, package manager,
   retained store, compatibility export, or public implementation cohort.
@@ -61,7 +66,13 @@
 - `src/index.ts` composes the private service and concrete Node providers into
   the public workspace-bound client. `src/service/index.ts` owns the generic
   service authoring surface, while `src/service/schema.ts` separately assembles
-  the private runtime-schema owner.
+  the private runtime-schema owner. `src/telemetry.ts` assembles the private
+  telemetry resource and OpenTelemetry Node provider without selecting or
+  acquiring that provider for a consumer.
+- Later runtime and harness owners attach foundational telemetry exactly once
+  per selected process lease. Business-logic authors may add semantic
+  enrichment, but never repeat exporter configuration, provider acquisition,
+  or baseline instrumentation.
 - `tsdown` bundles workspace implementation owners into `dist` and leaves only
   declared third-party dependencies external.
 - The build copies `.habitat/blueprints` into `dist/blueprints` without
@@ -74,6 +85,7 @@
 - Public runtime: `@habitat-ai/sdk`.
 - Public service authoring substrate: `@habitat-ai/sdk/service`.
 - Public service schema adapter: `@habitat-ai/sdk/service/schema`.
+- Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and
   `@habitat-ai/sdk/blueprints/*`.
 - Ordinary package metadata: `@habitat-ai/sdk/package.json`.
@@ -84,6 +96,7 @@
 - [[../../services/catalog/AGENTS|Private Habitat catalog service authority]]
 - [[../../resources/rule-evaluation/AGENTS|Private rule-evaluation resource]]
 - [[../../resources/source-inventory/AGENTS|Private source-inventory resource]]
+- [[../../resources/telemetry/AGENTS|Private telemetry resource]]
 - [[../core/runtime/schema/AGENTS|Private runtime-schema owner]]
 
 ## Validation

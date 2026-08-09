@@ -1,40 +1,42 @@
-# Transitional Core Package Router (`@habitat-ai/rawr-core`)
+# Mixed-Core Reservation Router (`@habitat-ai/rawr-core`)
 
 ## Purpose
 
-- Retain the predecessor telemetry installer until its Habitat-owned readers
-  move in task 3.3.
+- Retain the empty predecessor package/project identity until task 3.3 removes
+  it atomically while preserving `packages/core` as a Habitat namespace.
 
 ## Scope
 
-- Applies to the remaining telemetry source in `packages/core/**`.
+- Applies to the transitional package shell at `packages/core`.
+- Deeper owners, including `runtime/schema`, follow their own routers.
 
 ## Boundaries
 
-- Temporarily owns only the exported oRPC telemetry installer.
+- Owns no telemetry, runtime, SDK, application, or provider capability.
 - Must not own CLI command lifecycle, parsing, result rendering,
   command-specific behavior, plugin lifecycle policy, workspace manifest
   semantics, or application composition.
-- Must not restore workspace discovery or become a permanent Habitat SDK owner.
+- Must not restore a telemetry export, add new source, or become a permanent
+  Habitat SDK owner.
 
 ## Behavior
 
-- The package preserves the existing telemetry behavior only until task 3.3
-  moves its final readers and deletes this mixed predecessor.
+- Keep the empty package/project identity stable for task 3.3; do not turn this
+  reservation into a capability owner.
 
 ## Concepts
 
-- **Telemetry installation** configures one compatible OpenTelemetry SDK
-  instance at a process boundary.
+- A **reservation shell** preserves only the path and identity needed for the
+  later atomic namespace transfer.
 
 ## Flow
 
-- Runtime hosts may import the dedicated telemetry export and install it at their
-  process boundary.
+- No runtime or application flow passes through this package.
 
 ## Interfaces
 
-- Process hosts consume the telemetry installer through its qualified subpath.
+- The root package export remains empty; there is no supported capability
+  subpath.
 
 ## Routing
 
@@ -45,5 +47,4 @@
 
 - `bunx nx run habitat:lint`
 - `bunx nx run @habitat-ai/rawr-core:typecheck`
-- `bunx nx run @habitat-ai/rawr-core:test`
 - `bunx nx run @habitat-ai/rawr-core:build`

@@ -24,6 +24,14 @@ and the `AnalyticsClient` and `Logger` capability contracts they require. It
 does not expose binding, composition, workflow, database, feedback, or concrete
 adapter mechanics.
 
+The isolated `@habitat-ai/sdk/telemetry` entry exposes the provider-neutral
+technical telemetry contract and declarative OpenTelemetry Node configuration.
+It exports no provider acquisition, lease, exporter factory, or instrumentation
+bootstrap. Habitat runtime provisioning owns those mechanics; the selected
+runtime owns one process lease and later harness owners attach foundational
+observations once. Service, plugin, and command authors add only optional
+semantic enrichment through their owning surfaces.
+
 The package also exports `habitat-pack.json`, files below `blueprints/*`, and
 ordinary `package.json` metadata. The blueprint files are copied during the
 build directly from the repository's canonical `.habitat/blueprints` tree;
@@ -31,16 +39,23 @@ there is no second tracked authority tree in this package.
 
 ## Ownership boundary
 
-The service, resource contracts, concrete providers, and runtime-schema adapter
-remain private workspace implementation owners. The SDK bundles their code and
-declarations, so consumers install and import only `@habitat-ai/sdk`; their
-package identities are not part of the published runtime or type interface.
-Third-party libraries remain ordinary dependencies.
+The service, resources, concrete providers, and runtime-schema adapter remain
+private workspace implementation owners. The SDK bundles their code and
+declarations behind its qualified public surfaces, so consumers install and
+import only `@habitat-ai/sdk`; private package identities are not part of the
+published runtime or type interface. Third-party libraries remain ordinary
+dependencies.
 
 The SDK selects the production Node provider profile, resolves the packaged
 policy envelope, and constructs a fresh client for each workspace binding. It
 does not own a controller, package manager, retained store, compatibility
 surface, or public implementation cohort.
+
+The telemetry integration in this package is provider substrate, not the final
+`RuntimeTelemetry` observation bridge. Process provisioning, automatic oRPC,
+Effect, Oclif, and Inngest instrumentation, and app-profile selection land with
+their exact runtime and harness owners; none is repeated by an individual
+service or plugin.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
 exactly nine sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,

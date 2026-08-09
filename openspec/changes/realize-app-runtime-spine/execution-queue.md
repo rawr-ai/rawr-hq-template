@@ -91,14 +91,19 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   transferred or rejected predecessor, rename the workspace, pass the
   cumulative absence gate, and seal the three clean canonical repository
   boundaries through task 2.12.
+- [x] **Telemetry owner qualification**: task 3.1 now owns one private
+  provider-neutral telemetry resource and nested OpenTelemetry Node provider,
+  exposes only contracts and declarative configuration through the SDK, and
+  deletes the mixed-core telemetry singleton. Runtime provisioning and harness
+  observation remain with their exact later owners.
 
 The active queue has one bounded node:
 
-1. execute task 3.1 as one owner-complete cleanup: re-author the qualified
-   provider-neutral telemetry resource and OpenTelemetry Node provider from the
-   held mixed source, move their surviving readers, and retire the mixed-core
-   telemetry export and signal hooks in the same green node. Do not open another
-   private runtime owner or disturb task 3.3's reserved SDK-path transfer.
+1. execute task 3.2 as one classification pass over the current public SDK root
+   exports. Move an export only when its qualified destination already has a
+   conforming implementation; preserve every other root export until its owning
+   later task replaces it. Create no empty SDK family or private runtime owner,
+   and do not disturb task 3.3's reserved SDK-path transfer.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle

@@ -1,0 +1,15 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "files": [
+    "index.ts",
+    "degraded.ts",
+    "enabled.ts",
+    "exporters.ts",
+    "lifecycle.ts",
+    "neutral.ts",
+    "records.ts"
+  ]
+}
