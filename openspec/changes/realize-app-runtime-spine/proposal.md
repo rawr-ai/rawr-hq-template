@@ -17,7 +17,11 @@ The exact sectional source ledger is [[authority-amendment]].
   the substrate and realizes its non-core tooling through a self-hosted app,
   while downstream product apps own their composition, profiles, process
   declarations, and thin entrypoints. Runtime owns compilation, provisioning,
-  execution, mounting coordination, and process finalization for both.
+  execution, mounting coordination, and process finalization for both. Admit
+  complete `app@2` as the sole current app packet for one app/Nx project, one
+  cold process catalog, and one-`startApp(...)` entrypoints with independent
+  process leases and stops. Keep the already-published `app@1` locator
+  immutable outside the pack; add no compatibility or coexistence machinery.
 - Apply a semantic sieve before runtime implementation: a current Rawr name
   conveys no ownership. Retain reusable platform capability in Habitat, move
   only proven downstream product capability to Rawr, and delete duplicate,
@@ -39,8 +43,13 @@ The exact sectional source ledger is [[authority-amendment]].
   `ProcessExecutionRuntime` never executes oRPC service Effects. Reject manual
   or custom Effect runners.
 - Define harness as one platform kind with a shared lifecycle contract, then
-  realize Oclif first and retain explicit Elysia and Inngest extension points
-  without encoding their native semantics in runtime mounting or observation.
+  realize Oclif first and retain explicit Elysia, Inngest Serve/Connect, MCP
+  stdio/Streamable HTTP, web, desktop, and OpenShell verticals without encoding
+  native semantics in runtime mounting or observation. MCP is an implemented
+  `server` surface and native harness, never a role, kind, service, app, or
+  execution plane. Distinguish required-resource acquisition, process
+  liveness, and fail-closed readiness; preserve one immutable deployment/source
+  identity per process; and keep lifecycle and observation process-local.
 - **BREAKING** Remove the flattened `apps/cli`, `apps/server`, `apps/hq`, and
   `apps/web` identities from Habitat. Platform capability moves to the Habitat
   self-host, its control-plane API plugin, or another qualified platform owner;
@@ -90,17 +99,18 @@ The exact sectional source ledger is [[authority-amendment]].
 - `app-runtime-realization`: The constitutional app, profile, compiler,
   provisioning, process-runtime, adapter, and observation lifecycle.
 - `runtime-harness-boundary`: The generic native-host mount and stop contract
-  plus bounded Oclif, Elysia, and Inngest realizations whose native stop
-  operations own any drain semantics.
+  plus bounded Oclif, Elysia, Inngest Serve/Connect, MCP stdio/Streamable HTTP,
+  web, desktop, and OpenShell realizations whose native stop operations own
+  their transport semantics.
 - `repository-separation`: Habitat contains no downstream product source, Rawr
   owns its product closure, and Marketplace remains an independent content
   repository.
 
 ### Modified Capabilities
 
-- `habitat-shared-blueprint-resolution`: Exact blueprint versions coexist as
-  immutable complete closures; successor selection never inherits or falls back
-  across versions.
+- `habitat-shared-blueprint-resolution`: The policy pack selects one complete
+  definition per admitted kind/version locator; `app@2` is the sole admitted
+  app closure and no predecessor coexistence or fallback is retained.
 - `repository-ratchet-runtime`: Subprocess acceptance moves from the deleted
   generic test-utils package to the CLI or semantic owner whose behavior it
   proves.

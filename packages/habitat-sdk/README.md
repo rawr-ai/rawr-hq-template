@@ -58,7 +58,7 @@ their exact runtime and harness owners; none is repeated by an individual
 service or plugin.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
-exactly nine sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
+exactly nine sorted members: `app@2`, `package@1`, `plugin@1`, `plugin-nx@1`,
 `provider@1`, `resource@1`, `resource@2`, `service@1`, and `service@2`.
 Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; version 2
 resolves from `dist/blueprints/<id>/versions/2/blueprint.toml`. Presence in

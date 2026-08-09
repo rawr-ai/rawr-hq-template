@@ -245,6 +245,7 @@ Each `startApp(...)` invocation produces exactly one started process runtime ass
 | One process runtime assembly | Runtime / process runtime | Bound services, role access, mount-ready surface records, adapter lowering, and its own stop handle |
 | Zero or more mounted roles | App-selected process shape | Selected role slices from the app composition |
 | Zero or more mounted surfaces | Process runtime and harnesses | Runtime-ready surface payloads mounted into native hosts |
+| Zero or one published process health boundary | Runtime mounting and selected harnesses | Immutable launch identity, process/native-host liveness, and fail-closed readiness over required resources plus selected harness contributions; finite processes may publish none |
 | One runtime catalog stream or record set | Runtime observation | Redacted projection of selected, derived, compiled, provisioned, bound, projected, executed, mounted, observed, and stopped runtime state |
 | One deterministic finalization path | Runtime mounting | Reverse-order harness stop followed by the process-runtime stop handle, which releases assembled state and the provisioned substrate; runtime observation independently projects admitted finalization records |
 
@@ -436,7 +437,14 @@ A service is a domain capability boundary. It owns the domain contracts, invaria
 
 A plugin is a lane projection boundary. It projects underlying capabilities into exactly one role/surface/capability lane. The underlying capability may be service-owned domain capability, workflow dispatch capability, host/native capability, agent/shell capability, desktop capability, web/client capability, or another runtime-authorized capability. A plugin owns the lane-native contract, caller shape, boundary policy, authentication/authorization/redaction/transformation, service/resource use declarations, executable boundary, and native mount facts for that lane. It does not own the underlying domain authority, provider implementation, app membership, provider selection, runtime acquisition, or native host runtime.
 
-An app is a product composition boundary. It owns app identity, selected plugin projections, runtime profiles, provider selections, config source selection, entrypoints, process role shapes, publication artifacts, and product-level composition defaults. It composes by selection. It does not acquire resources or run effects. It does not own service domain authority, plugin projection meaning, resource contracts, provider implementation, runtime acquisition, local execution, harness behavior, or deployment placement.
+An app is a product composition boundary. It owns app identity, selected plugin
+projections, runtime profiles, provider selections, config source selection,
+one cold process catalog, entrypoints, process role shapes, publication
+artifacts, and product-level composition defaults. It composes by selection.
+It does not acquire resources or run effects. It does not own service domain
+authority, plugin projection meaning, resource contracts, provider
+implementation, runtime acquisition, local execution, harness behavior, or
+deployment placement.
 
 A resource is a runtime capability contract. It declares the identity, value shape, lifetime requirements, and diagnostic-safe snapshot rules for a provisionable runtime capability. Its package owns a closed provider family: the package root exposes the provider-neutral resource contract, and each nested provider has its own direct public face. Each provider owns its config. A resource may expose effectful operations on provisioned values, including operations that return `HabitatEffect`. It does not implement itself, select a provider, own domain authority, acquire runtime values, or become app composition.
 
@@ -479,9 +487,26 @@ business logic, run `HabitatEffect`, construct managed runtimes, acquire
 providers, consume raw authoring declarations, consume normalized authoring
 graphs directly, or own native host lifecycle.
 
-A harness is the native host mounting boundary. Runtime mounting invokes it with adapter-lowered payloads; it mounts them into a native host such as Elysia, Inngest, OCLIF, web, agent/OpenShell, or desktop and returns `StartedHarness` with owner-local findings and its stop handle. It owns native host lifecycle after Habitat lowering. It does not consume normalized authoring graphs, compile plans, acquire providers, bind services, lower `HabitatEffect`, import observation-owned projection types, own service/plugin/app meaning, or create managed runtimes.
+A harness is the native host mounting boundary. Runtime mounting invokes it
+with adapter-lowered payloads; it mounts them into a native host such as Elysia,
+Inngest, OCLIF, web, agent/OpenShell, or desktop and receives an owner-local
+native stop handle plus findings. Runtime mounting alone creates the private
+`StartedHarness` record. A harness owns native host lifecycle after Habitat
+lowering. It does not consume normalized authoring graphs, compile plans,
+acquire providers, bind services, lower `HabitatEffect`, import
+observation-owned projection types, own service/plugin/app meaning, or create
+managed runtimes.
 
-Runtime mounting is the downstream live lifecycle boundary. It implements `startApp(...)`, invokes harnesses, collects `StartedHarness`, and coordinates reverse-order harness shutdown before the process-runtime stop handle. It adapts admitted owner-local findings into `RuntimeObservationRecord` values and publishes those lifecycle records through the definition-owned observation boundary. It does not project observation read models, compose app membership, acquire providers, bind services, lower adapters, or own native host interiors.
+Runtime mounting is the downstream live lifecycle boundary. It implements
+`startApp(...)`, invokes harnesses, collects `StartedHarness`, and coordinates
+reverse-order harness shutdown before the one selected process-runtime stop
+handle. Each invocation owns its own single-flight finalization and cannot
+coordinate a sibling invocation merely because both use the same app. It adapts
+admitted owner-local findings into `RuntimeObservationRecord` values and
+publishes those lifecycle records through the definition-owned observation
+boundary. It does not project observation read models, compose app membership,
+acquire providers, bind services, lower adapters, own native host interiors, or
+coordinate another entrypoint-selected process.
 
 Runtime observation is the downstream, non-authorizing projection boundary. It implements the definition-owned observation port and alone projects admitted `RuntimeObservationRecord` values into `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeTopologyRecord`, and `RuntimeCatalog`. It does not consume unadapted owner-local findings, implement `startApp(...)`, invoke or stop harnesses, coordinate finalization, mutate upstream runtime state, acquire live values, select providers, expose secrets, or become a control plane by itself.
 
@@ -493,7 +518,17 @@ Runtime observation is the downstream, non-authorizing projection boundary. It i
 
 `FunctionBundle` is the async harness-facing lowered artifact. It packages selected workflow, schedule, and consumer definitions into native Inngest-compatible payloads for the Inngest harness. It owns no product API meaning, no workflow semantics, no live dispatcher authority, and no app selection. It is an adapter output consumed by the async harness.
 
-An entrypoint is a selected process-start boundary. It chooses one app, one runtime profile, one entrypoint id, and one role set for a single `startApp(...)` invocation. It owns process-start selection facts. It does not redefine app membership, service domain authority, plugin projection, provider implementation, execution grammar, harness internals, or deployment placement.
+An entrypoint is a selected process-start boundary. It chooses one app, one
+runtime profile, and one named record from the app-owned process catalog for a
+single `startApp(...)` invocation. It owns no process-shape facts itself. It
+does not redefine app membership, service domain authority, plugin projection,
+provider implementation, execution grammar, harness internals, or deployment
+placement.
+
+The process catalog is import-safe app authoring data. Each record names one
+process id, role set, surface and harness attachments, and process defaults. It
+is not a live registry, supervisor, deployment manifest, ontology kind, or
+  cross-process lifecycle controller.
 
 A runtime profile is an app-owned runtime selection boundary. It selects provider implementations, config sources, process defaults, and environment-shaped wiring for an app. It does not acquire resources, construct providers, execute `HabitatEffect`, mount harnesses, own service domain authority, or become deployment placement.
 
@@ -501,7 +536,7 @@ A runtime profile is an app-owned runtime selection boundary. It selects provide
 
 `ResourceRequirement` is a demand declaration for a runtime capability contract. It states that a service, plugin, provider, harness, or runtime plan needs a resource at a lifetime, role, optionality, and instance. It is not provider selection, not acquisition, and not live access.
 
-A role is a selected process responsibility slice, such as server, async, web, agent, CLI, or desktop. A surface is a lane-specific projection target within a role, such as server API, server internal, workflow, schedule, command, tool, window, menubar, or background. A plugin capability is the named projection capability within one role/surface lane. It is not automatically the same thing as a service domain capability or a runtime resource capability.
+A role is a selected process responsibility slice, such as server, async, web, agent, CLI, or desktop. `server` owns synchronous public and trusted surfaces, including HTTP/oRPC and MCP server projection. `async` owns workflows, schedules, and consumers on one Inngest plane. A surface is a lane-specific projection target within a role, such as server API, server internal, MCP, workflow, schedule, command, tool, window, menubar, or background. A plugin capability is the named projection capability within one role/surface lane. It is not automatically the same thing as a service domain capability or a runtime resource capability.
 
 Short law:
 
@@ -537,7 +572,7 @@ Capabilities name projections.
 | Process execution runtime | Invocation-time execution through `EffectRuntimeAccess`, bridge resolution, policy application, result/exit mapping for non-oRPC descriptor lanes | oRPC Effect execution, service binding, provider acquisition, harness mounting, app selection, plugin projection, domain authority |
 | Surface adapters | Lowering compiled surface plans to host payloads, resolving executable boundaries through registry, producing native callbacks | Business logic, `HabitatEffect` execution, managed runtime construction, provider acquisition, raw authoring consumption |
 | Harnesses | Native host mounting and native lifecycle after adapter lowering, `StartedHarness`, owner-local harness findings and stop handles | Normalized-authoring-graph consumption, runtime compilation, provider acquisition, topology projection, service domain authority, `HabitatEffect` lowering, managed runtime construction |
-| Runtime mounting | Live `startApp(...)` coordination, harness invocation, `StartedHarness` collection, reverse-order harness stop, and cross-owner finalization | Observation projection, composition authority, provider acquisition, service binding, adapter lowering, native host interiors |
+| Runtime mounting | Live `startApp(...)` coordination, frozen launch identity, required-resource readiness gate, process-local health composition, harness invocation, `StartedHarness` collection, reverse-order harness stop, and cross-owner finalization | Observation projection, composition authority, provider acquisition, service binding, adapter lowering, native host interiors, cross-process health or lifecycle control |
 | Runtime observation | Definition-port implementation and non-authorizing projection of diagnostics, telemetry, topology records, catalog views, and finalization records | Live start, harness invocation or stop, cross-owner finalization, composition authority, acquisition, binding, adapter lowering |
 
 Shared infrastructure does not transfer schema ownership, write authority, service domain authority, resource identity, plugin identity, or app membership. Multiple services may share a process, machine, database instance, connection pool, telemetry installation, cache infrastructure, or host runtime. That sharing is infrastructure. It is not shared domain authority.
@@ -652,9 +687,17 @@ apps/
     <app>.app.ts                 # app composition
     <entrypoint>.ts              # mount or process-role entrypoint
     runtime/
+      processes.ts               # cold named process catalog
       profiles/
-      <app-runtime-modules>
 ```
+
+The runtime implementation uses complete `app@2` as the sole admitted app
+packet. The already-published `app@1` locator remains immutable historical
+artifact identity outside the current policy pack and acceptance; no
+compatibility, fallback, or coexistence machinery resolves it. `app@2` owns one
+app/Nx project and closes its composition,
+profiles, process catalog, entrypoints, and proof layout; it does not create a
+`process`, `MCP`, or `async-server` blueprint kind.
 
 Platform machinery lives under `packages/core/*`. Authored provisionable capability contracts live under `resources/*`. In both source-ownership regions, the nearest resource/provider, service, plugin, or app remains the source and meaning owner.
 
@@ -725,6 +768,7 @@ packages/core/sdk/src/
     desktop/
       effect/
   runtime/
+    harnesses/
     observation/
     resources/
     providers/
@@ -829,6 +873,8 @@ packages/core/sdk/src/
           runtime-delegation.ts
 
   runtime/
+    harnesses/
+      index.ts
     observation/
       index.ts
     resources/
@@ -870,6 +916,7 @@ Canonical public import surfaces include:
 | `@habitat-ai/sdk/service/schema` | Service-owned callable data schema facade |
 | `@habitat-ai/sdk/plugins/server` | Server projection authoring |
 | `@habitat-ai/sdk/plugins/server/effect` | Server projection executable authoring helpers |
+| `@habitat-ai/sdk/plugins/server/mcp` | MCP tool, resource, and prompt server-surface authoring |
 | `@habitat-ai/sdk/plugins/async` | Async projection authoring |
 | `@habitat-ai/sdk/plugins/async/effect` | Async step-local executable authoring helpers |
 | `@habitat-ai/sdk/plugins/cli` | CLI projection authoring |
@@ -886,6 +933,7 @@ Canonical public import surfaces include:
 | `@habitat-ai/sdk/runtime/providers` | Runtime provider declarations |
 | `@habitat-ai/sdk/runtime/providers/effect` | Runtime provider Effect plan authoring |
 | `@habitat-ai/sdk/runtime/profiles` | Runtime profile declarations |
+| `@habitat-ai/sdk/runtime/harnesses` | Native Habitat harness contracts and app-facing harness selection |
 | `@habitat-ai/sdk/runtime/schema` | `RuntimeSchema` facade |
 | `@habitat-ai/sdk/runtime/observation` | Read-only runtime diagnostic, telemetry, topology-record, and catalog facades |
 
@@ -909,8 +957,8 @@ composition, execute `HabitatEffect`, or mount native hosts.
 | Plugin modules | One plugin factory, lane-specific definitions, native oRPC routers/contracts where selected, workflow definitions, command definitions, web/agent/desktop surface definitions, and non-oRPC Effect execution descriptors |
 | Resource modules | `RuntimeResource` descriptors, requirement helpers, value types, and no provider imports |
 | Provider modules | Cold `RuntimeProvider` descriptors, provider-local config schemas, and `ProviderEffectPlan` acquisition/release plans behind direct package public faces |
-| App modules | App membership declarations and runtime profile selection |
-| Entrypoints | `startApp(...)` invocation and selected process shape |
+| App modules | App membership declarations, runtime profiles, and cold process catalog |
+| Entrypoints | Exactly one `startApp(...)` invocation selecting one catalog record |
 
 `HabitatEffect` values are lazy execution descriptions. They are not running work.
 
@@ -1025,7 +1073,7 @@ Names remain layer-specific. Similar concepts in different layers use different 
 
 | Layer | Canonical terms | Consumer |
 | --- | --- | --- |
-| App authoring | `defineApp(...)`, `startApp(...)`, `AppDefinition`, `Entrypoint`, `RuntimeProfile` | Runtime mounting, which drives runtime derivation and compilation through private owners |
+| App authoring | `defineApp(...)`, `startApp(...)`, `AppDefinition`, `ProcessCatalog`, `Entrypoint`, `RuntimeProfile` | Runtime mounting, which drives runtime derivation and compilation through private owners |
 | Service authoring | `defineService(...)`, `resourceDep(...)`, `serviceDep(...)`, `semanticDep(...)`, `deps`, `scope`, `config`, `invocation`, `provided` | Runtime derivation and service binding |
 | Plugin authoring | `PluginFactory`, `PluginDefinition`, `useService(...)`, lane-specific builders, lane-native definitions, `.effect(...)` terminal bodies | Runtime derivation and surface runtime plans |
 | Author-facing Effect facade | `Effect`, `HabitatEffect`, `TaggedError`, `HabitatRetryPolicy`, `HabitatTimeoutPolicy`, `HabitatConcurrencyPolicy` | Services, plugins, resources, providers, repositories where allowed |
@@ -1040,13 +1088,15 @@ Names remain layer-specific. Similar concepts in different layers use different 
 | Runtime binding | `ServiceBindingCache`, `ServiceBindingCacheKey`, `bindService(...)` | Process runtime and plugin projection |
 | Adapter lowering | `SurfaceAdapter`, `AdapterLoweringResult`, adapter-lowered payloads, `FunctionBundle` | Harnesses |
 | Dispatcher integration | `WorkflowDispatcherDescriptor`, `WorkflowDispatcher` | Server API/internal projections and async harness integration |
-| Harness/native boundary | `HarnessDescriptor`, `StartedHarness`, native host payloads, owner-local harness findings | Runtime mounting and native host framework |
+| Harness/native boundary | public `HarnessDescriptor`, `HarnessMountInput`, `NativeHarnessHandle`; private `StartedHarness`; native host payloads and owner-local findings | Runtime mounting and native host framework |
 | Observation input | `RuntimeObservationRecord`, `RuntimeObservationPort` | Runtime observation |
 | Observation projection | `RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeTopologyRecord` | Diagnostic readers, topology tools, control-plane touchpoints |
 
 `HabitatEffect`, `ExecutionDescriptor`, `CompiledExecutionPlan`, `ExecutionDescriptorTable`, `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, and `ProviderEffectPlan` are operational execution nouns. They are not top-level ontology kinds.
 
-`startApp(...)` is the canonical app start operation. Roles, surfaces, harnesses, profiles, and process hosts are selected data passed to the entrypoint operation. There is no role-specific public start verb.
+`startApp(...)` is the canonical app start operation. An entrypoint passes one
+app, one profile, and one named process-catalog record. There is no role-specific
+public start verb, `startAll`, or cross-process live handle.
 
 ## 7. Code block exactness rule
 
@@ -1927,10 +1977,29 @@ Runtime derivation derives normalized `ProviderSelection` artifacts from the pro
 Entrypoints start processes.
 
 `startApp(...)` is the canonical app start operation. It receives selected app
-definition, runtime profile, process roles, and optional process/harness
-selection facts. The terminal SDK exposes it, `runtime-mounting` implements its
-live coordination over the completed private graph, and `runtime-definition`
-owns only the cold declarations and selection inputs. It starts one process.
+definition, runtime profile, and one named record from the app-owned process
+catalog. The terminal SDK exposes it, `runtime-mounting` implements its live
+coordination over the completed private graph, and `runtime-definition` owns
+only the cold declarations and selection inputs. It starts one process with one
+process lease and returns one independently stoppable started-process handle.
+The start input also carries one immutable `RuntimeLaunchIdentity` supplied by
+the process environment. Runtime freezes and reports that identity; it does not
+derive deployment placement or source provenance.
+
+File (independent downstream Rawr repository): `apps/rawr/runtime/processes.ts`  
+Layer: app process selection  
+Exactness: normative for one cold app-owned catalog and distinct server/async
+process records; illustrative for record ids and selected surfaces.
+
+```ts
+import { defineProcessCatalog } from "@habitat-ai/sdk/app";
+
+export const rawrProcesses = defineProcessCatalog({
+  server: { id: "rawr.server", roles: ["server"] },
+  async: { id: "rawr.async", roles: ["async"], harness: "inngest.serve" },
+  dev: { id: "rawr.dev", roles: ["server", "async", "web", "agent", "desktop"] },
+});
+```
 
 File (independent downstream Rawr repository): `apps/rawr/server.ts`  
 Layer: entrypoint authoring  
@@ -1942,11 +2011,11 @@ id, profile, and selected role set.
 import { startApp } from "@habitat-ai/sdk/app";
 import { rawrApp } from "./rawr.app";
 import { productionProfile } from "./runtime/profiles/production";
+import { rawrProcesses } from "./runtime/processes";
 
 await startApp(rawrApp, {
-  entrypointId: "rawr.server",
   profile: productionProfile,
-  roles: ["server"],
+  process: rawrProcesses.server,
 });
 ```
 
@@ -1960,11 +2029,11 @@ entrypoint id, profile, and selected role set.
 import { startApp } from "@habitat-ai/sdk/app";
 import { rawrApp } from "./rawr.app";
 import { localProfile } from "./runtime/profiles/local";
+import { rawrProcesses } from "./runtime/processes";
 
 await startApp(rawrApp, {
-  entrypointId: "rawr.dev",
   profile: localProfile,
-  roles: ["server", "async", "web", "agent", "desktop"],
+  process: rawrProcesses.dev,
 });
 ```
 
@@ -1976,6 +2045,12 @@ surface mount. An entrypoint that mounts several plugin surfaces must use its
 mount or role identity rather than masquerading as one selected surface.
 
 An entrypoint must not construct `ManagedRuntime`, call raw Effect runtime APIs, run `HabitatEffect` programs directly, construct effect-oRPC adapters, or bypass `startApp(...)` to mount service/plugin execution manually.
+
+Each entrypoint contains exactly one top-level `startApp(...)` call. It does not
+loop over the process catalog or coordinate sibling process handles. Two
+entrypoints from the same app produce distinct process leases and stop
+operations; neither process can observe, await, stop, or release the other's
+live values.
 
 ## 11. Service runtime boundary contract
 
@@ -4678,6 +4753,12 @@ Harnesses mount hosts.
 
 Harnesses own native mounting after runtime realization and adapter lowering. Runtime mounting invokes them with process-runtime mount-ready inputs. They do not consume normalized authoring graphs or compiler plans directly.
 
+The import-safe native harness contract is public at
+`@habitat-ai/sdk/runtime/harnesses`. Habitat's harness verticals implement that
+contract and an app profile selects cold descriptors for one named process
+record. The contract does not expose private runtime projects or
+`StartedHarness`, and a harness never gains cross-process lifecycle authority.
+
 File: `packages/core/runtime/harnesses/harness-descriptor.ts`  
 Layer: runtime harness contract  
 Exactness: normative for harness handoff, start, stop, observation, and native ownership boundary.
@@ -4687,23 +4768,92 @@ export interface HarnessDescriptor<TPayload = unknown> {
   readonly id: string;
   readonly roles: readonly AppRole[];
   readonly surfaces: readonly string[];
+  readonly health: "required" | "not-applicable";
 
-  mount(input: {
-    processAccess: ProcessRuntimeAccess;
-    mountReadySurfaces: readonly MountReadySurfaceRuntimeRecord<TPayload>[];
-    observation: HarnessObservationSink;
-  }): Promise<StartedHarness>;
+  mount(input: HarnessMountInput<TPayload>): Promise<NativeHarnessHandle>;
 }
 
-export interface StartedHarness {
-  readonly id: string;
-  readonly mountedAt: string;
+export interface HarnessMountInput<TPayload = unknown> {
+  readonly processAccess: ProcessRuntimeAccess;
+  readonly mountReadySurfaces: readonly MountReadySurfaceRuntimeRecord<TPayload>[];
+  readonly requiredResources: RequiredResourceReadiness;
+  readonly observation: HarnessObservationSink;
+}
+
+export interface RuntimeLaunchIdentity {
+  readonly appId: string;
+  readonly processId: string;
+  readonly entrypointId: string;
+  readonly deploymentId: string;
+  readonly sourceRevision: string;
+}
+
+export interface RuntimeProbeResult {
+  readonly identity: RuntimeLaunchIdentity;
+  readonly ok: boolean;
+  readonly code: string;
+}
+
+export interface RequiredResourceReadiness {
+  readonly identity: RuntimeLaunchIdentity;
+  check(): Promise<RuntimeProbeResult>;
+}
+
+export interface NativeHarnessHealth {
+  liveness(): Promise<RuntimeProbeResult>;
+  readiness(): Promise<RuntimeProbeResult>;
+}
+
+export interface NativeHarnessHandle {
   readonly findings: readonly HarnessFinding[];
-  stop?(): Promise<void>;
+  readonly health?: NativeHarnessHealth;
+  stop(): Promise<void>;
 }
 ```
 
-`HarnessObservationSink` and `HarnessFinding` are harness-owner-local contracts; they do not import observation-owned projection types. Runtime mounting collects `StartedHarness`, adapts its admitted findings into `RuntimeObservationRecord` values, publishes harness observations through the definition-owned observation boundary, and on failed startup or normal shutdown stops harnesses in reverse mount order before invoking the process-runtime stop handle. Runtime observation alone projects the admitted records.
+`HarnessObservationSink` and `HarnessFinding` are harness-owner-local contracts;
+they do not import observation-owned projection types. Runtime mounting wraps
+each returned `NativeHarnessHandle` in its private `StartedHarness` record,
+adapts admitted findings into `RuntimeObservationRecord` values, publishes
+harness observations through the definition-owned observation boundary, and on
+failed startup or normal shutdown stops harnesses in reverse mount order before
+invoking that process's process-runtime stop handle. Runtime observation alone
+projects the admitted records.
+
+Required-resource acquisition and process health are different claims. A
+missing or failed required `ResourceRequirement` prevents
+`ProvisionedProcess`, so no harness mounts and no started process may report
+live or ready. Once mounting succeeds, liveness says only that the selected
+process/native host can answer its own probe. Readiness is fail-closed: it is
+true only when `RequiredResourceReadiness.check()` succeeds and every selected
+harness that participates in the process's published readiness reports ready.
+A missing, rejected, timed-out, or negative required probe reports not ready.
+Optional resources do not block unless the selected process declares them
+required for that path.
+
+Every liveness and readiness result carries the same frozen
+`RuntimeLaunchIdentity`. Deployment supplies `deploymentId` and
+`sourceRevision`; Habitat carries them without interpreting placement,
+environment, release lineage, or product meaning. A harness cannot replace or
+mutate that identity. Findings, logs, telemetry, mount success, and provider
+acquisition by themselves never satisfy readiness.
+
+Probe publication is optional for process shapes, such as finite CLI commands,
+that expose no health boundary. Once a process publishes liveness or readiness,
+the distinction and fail-closed rules above are mandatory. Every descriptor
+declares its health participation as `required` or `not-applicable`; runtime
+mounting refuses a `required` harness handle with no health implementation. A
+  native Habitat harness implements its health endpoint from the supplied
+  required-resource gate plus its bounded native or upstream checks. Habitat
+does not reinterpret those checks as product or cross-process readiness policy.
+
+Packed-consumer acceptance builds the SDK, installs its tarball into a consumer
+outside the workspace, starts each admitted native harness through a thin
+`app@2` entrypoint, and proves native stop settles before that process lease
+releases. Each health-publishing fixture exposes distinct liveness and
+fail-closed readiness, preserves the runtime-supplied launch identity, and
+rejects readiness when one required native check fails. A source link or
+private runtime import does not prove the published substrate.
 
 ### 21.1 Elysia harness
 
@@ -4714,7 +4864,8 @@ Input: mounted server API and server internal surface runtimes, adapter-lowered 
 Output: mounted Elysia routes; mounted native oRPC callbacks whose
 Effect-backed operations execute through official `handlerGen(...)`; public
 OpenAPI publication for selected public API projections; internal RPC handlers
-for selected internal projections; `StartedHarness`. Non-oRPC descriptor
+for selected internal projections; `NativeHarnessHandle`, wrapped privately as
+`StartedHarness` by runtime mounting. Non-oRPC descriptor
 callbacks may delegate to `ProcessExecutionRuntime`.
 
 Boundary rule: Elysia owns HTTP host lifecycle and request routing. It does not own public API meaning, service construction, provider selection, app membership, or runtime provisioning.
@@ -4725,11 +4876,55 @@ Placement: `packages/core/runtime/harnesses/inngest`.
 
 Input: `FunctionBundle`, selected Inngest runtime resource, async harness mode, process access, and harness-local observation/correlation input.
 
-Output: connected worker or serve-mode runtime ingress, native Inngest functions, native async handles used by runtime dispatcher integration, `StartedHarness`. The harness does not produce or own `WorkflowDispatcher`.
+Output: connected worker or serve-mode runtime ingress, native Inngest
+functions, native async handles used by runtime dispatcher integration, and a
+`NativeHarnessHandle` wrapped privately as `StartedHarness` by runtime mounting.
+The harness does not produce or own `WorkflowDispatcher`.
 
 Boundary rule: Inngest owns durable async execution semantics. It does not own workflow meaning, service domain authority, caller-facing API semantics, app membership, provider selection, or runtime provisioning.
 
-### 21.3 OCLIF harness
+Cross-harness acceptance must use one `app@2` app definition and one process
+catalog, then launch its Elysia `server` and native Inngest Serve `async`
+records as separate child processes. Each child must acquire a distinct process
+lease, accept one native boundary operation, and expose its own stop handle.
+Each child also freezes a distinct launch identity; a required async resource
+failure prevents only the async child from mounting, and the server child's
+liveness remains independent. With both mounted, each child's liveness and
+fail-closed readiness carry its exact deployment/source identity.
+Stopping the server child must not stop, await, or release the async child, and
+stopping the async child must not stop, await, or release the server child.
+This proof creates no `process`, `MCP`, or `async-server` kind.
+
+Inngest Serve and Connect are final native harness selections. They are not
+roles, process kinds, deployment variants, or alternate execution planes.
+
+### 21.3 MCP server harnesses
+
+Placement: `packages/core/runtime/harnesses/mcp`.
+
+Input: adapter-lowered MCP tool, resource, and prompt payloads from selected
+`server` surfaces, transport configuration, process access, and harness-local
+observation/correlation input.
+
+Output: an official MCP SDK server mounted through either stdio or Streamable
+HTTP and a `NativeHarnessHandle` wrapped privately as `StartedHarness` by
+runtime mounting.
+
+Boundary rule: MCP is a `server` surface and protocol harness, never a role,
+kind, service, app, or execution plane. The MCP adapter resolves selected
+service-backed executable boundaries through `ExecutionRegistry`. The native
+stdio and Streamable HTTP harnesses own protocol initialization, sessions,
+transport ingress/egress, and native stop. They do not acquire providers,
+select app membership, author service truth, or own process lifecycle.
+
+Installed-package acceptance starts each transport through a thin `server`
+entrypoint, invokes one real tool and one real resource boundary, proves exact
+protocol errors and cancellation, and settles transport stop before releasing
+the process lease. Streamable HTTP additionally proves origin validation and
+session cleanup; stdio proves stdout remains protocol-only and stderr carries
+diagnostics.
+
+### 21.4 OCLIF harness
 
 Placement: foundational Habitat CLI harness implemented and distributed by
 `@habitat-ai/cli` (reference source placement:
@@ -4743,14 +4938,16 @@ second adapter.
 Input: adapter-lowered command payloads from the app-selected
 `plugins/cli/topics/*` packages, role access, process access.
 
-Output: native OCLIF command registration/materialization, native command callbacks that delegate to `ProcessExecutionRuntime`, `StartedHarness`.
+Output: native OCLIF command registration/materialization, native command
+callbacks that delegate to `ProcessExecutionRuntime`, and a
+`NativeHarnessHandle` wrapped privately as `StartedHarness` by runtime mounting.
 
 Boundary rule: the selected topic plugin retains projection and command-body
 authority; `@habitat-ai/cli` owns the foundational loader, harness, and selected
 topic materialization; OCLIF owns command parsing and dispatch semantics. None
 owns service semantics or app selection outside its boundary.
 
-### 21.4 Web harness
+### 21.5 Web harness
 
 Placement: `packages/core/runtime/harnesses/web`.
 
@@ -4760,23 +4957,27 @@ Output: web app mount/build/serve handoff appropriate to the selected web host.
 
 Boundary rule: web hosts own rendering, bundling, routing, and browser-native behavior inside their boundary. They do not own service domain authority, server API projection classification, or provider acquisition.
 
-### 21.5 Agent/OpenShell harness
+### 21.6 Agent/OpenShell harness
 
 Placement: `packages/core/runtime/harnesses/agent`.
 
 Input: agent channel/shell/tool surface payloads, OpenShell-related runtime resources, process access, policy hooks.
 
-Output: channel mounts, shell mounts, tool mounts, OpenShell host payloads, native tool callbacks that delegate to `ProcessExecutionRuntime`, `StartedHarness`.
+Output: channel mounts, shell mounts, tool mounts, OpenShell host payloads,
+native tool callbacks that delegate to `ProcessExecutionRuntime`, and a
+`NativeHarnessHandle` wrapped privately as `StartedHarness` by runtime mounting.
 
 Boundary rule: OpenShell and agent hosts own native shell behavior inside their harness boundary. Agent governance remains a reserved boundary with locked integration hooks. Agent plugins do not move service domain authority or broad runtime access into agent-local semantics.
 
-### 21.6 Desktop harness
+### 21.7 Desktop harness
 
 Placement: `packages/core/runtime/harnesses/desktop`.
 
 Input: desktop menubar/window/background surface payloads, desktop host config, process access.
 
-Output: native desktop mount payloads, host callbacks that delegate to `ProcessExecutionRuntime`, and `StartedHarness`.
+Output: native desktop mount payloads, host callbacks that delegate to
+`ProcessExecutionRuntime`, and a `NativeHarnessHandle` wrapped privately as
+`StartedHarness` by runtime mounting.
 
 Boundary rule: desktop hosts own native desktop interiors. Menubar, window, and background surfaces are process-local projections. Durable business execution remains on `async`.
 
@@ -5602,6 +5803,9 @@ build-enforced private dependency graph defined in §4, that no private owner
 import the SDK, and that the SDK re-export authoring contracts or delegate
 runtime operations without implementing a parallel runtime path. Rawr remains
 downstream product source and contributes no Habitat distribution authority.
+The active change's release contract is recorded in
+`openspec/changes/realize-app-runtime-spine/runtime-release-migration-note.md`;
+no consumer may treat foundation `0.5.15` as this runtime release.
 
 ### 25.12 Blueprint evaluator boundary and test layout
 
@@ -5629,6 +5833,9 @@ Gate families are:
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `handlerGen(...)` or admitted official `.effect(...)` for Effect-backed oRPC; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation |
 | Provider separation gates | provider acquire/release represented as `ProviderEffectPlan`; bootgraph modules carry identity/dependency ordering facts only; neither is an ordinary `EffectExecutionDescriptor` procedure plan |
 | Private dependency-boundary gates | exact §4 graph only; no private owner imports SDK; no upstream owner imports observation-owned projection types; runtime mounting alone starts, invokes and stops harnesses, and coordinates cross-owner finalization; runtime observation alone projects observation read models |
+| App-version and process-isolation gates | sole admitted complete packed `app@2`; published `app@1` locator absent from current pack and acceptance; one app/Nx project with composition, profiles, process catalog, and one-call entrypoints; same-app Elysia server and native Inngest Serve child processes acquire distinct leases and stop independently |
+| Process health gates | required-resource acquisition blocks mounting; liveness and readiness remain distinct and process-local; fail-closed readiness requires every required resource and selected readiness contributor; both probe results preserve one immutable runtime-supplied deployment/source identity; logs and observations do not satisfy readiness |
+| Native-harness distribution gates | packed consumer starts Elysia, Inngest Serve and Connect, MCP stdio and Streamable HTTP, Oclif, web, desktop, and OpenShell verticals only through admitted SDK contracts; each mounts lowered payloads, exposes process-local health where applicable, and settles native stop before the process lease releases; no private source link or private `StartedHarness` construction |
 
 ## 26. Load-bearing foundation and flexible extension matrix
 
@@ -5639,7 +5846,7 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Ownership | Services govern domains, plugins project capabilities, apps compose products, runtime realizes | New service domains, plugin capabilities, provider families |
 | Topology | Locked roots, public faces, projection lanes, and closed test directories | Additional private files only through explicitly admitted, versioned blueprint test layout |
 | Lifecycle | `definition -> selection -> derivation -> compilation -> provisioning -> mounting -> observation` | Additional owner-local findings, observation records, and derived artifacts within phases |
-| App start | `defineApp(...)`, `startApp(...)` | Entrypoint count and selected role combinations |
+| App start | sole admitted complete `app@2`; `defineApp(...)`, cold process catalog, one-call `startApp(...)` entrypoints, immutable launch identity, per-process leases and stops | Entrypoint count and selected process-record combinations |
 | Service lanes | `deps`, `scope`, `config`, `invocation`, `provided` | Service-specific schemas and middleware |
 | Service dependencies | `serviceDep(...)`; no sibling internals | Semantic adapters via `semanticDep(...)` |
 | Plugin classification | Topology plus lane-specific builder | Surface-local route, command, workflow, shell, desktop facts |
@@ -5651,8 +5858,8 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Service binding | `ServiceBindingCacheKey` excludes invocation | Call-local memoization and service-local caches |
 | Workflow dispatcher | Descriptor derived before runtime; live dispatcher materialized after provisioning | Additional owner-defined dispatcher operations |
 | Adapter lowering | Adapters lower compiled plans, not raw authoring | Native payload details |
-| Runtime mounting | `startApp(...)`, harness invocation, `StartedHarness` collection, reverse stop, cross-owner finalization | Mount policy details that do not change owner edges |
-| Harnesses | Harnesses mount already-lowered payloads | Native host implementation details |
+| Runtime mounting | one-process `startApp(...)`, harness invocation, private `StartedHarness` collection, reverse stop, process-local cross-owner finalization | Mount policy details that do not change owner edges; never cross-process lifecycle or readiness control |
+| Harnesses | Native Elysia, Inngest Serve/Connect, MCP stdio/Streamable HTTP, Oclif, web, desktop, and OpenShell harnesses mount already-lowered payloads through one Habitat contract; published health keeps liveness separate from fail-closed readiness | Native host checks and endpoint details; no product or cross-process readiness policy |
 | Observation projection | Runtime observation alone projects `RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`, and `RuntimeTopologyRecord` | Storage backend, indexing, retention |
 
 ## 27. Runtime realization component contract summary
@@ -5667,7 +5874,8 @@ closed source topology for each kind.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `RuntimeSchema` | `runtime-schema`, exposed by SDK | `packages/core/runtime/schema` | Runtime schema adaptation | Compiler, config, diagnostics, harness payload validators | Definition through observation | Schema decode/validation/redaction findings | Schema-backed boundary gate |
 | `AppDefinition` | App | `apps/<app>/<app>.app.ts` | `defineApp(...)` | Runtime derivation | Definition | App identity and plugin membership findings | App composition snapshot |
-| `Entrypoint` | App | `apps/<app>/<entrypoint>.ts` | `startApp(...)` call | Runtime mounting, then runtime derivation/compiler | Selection | Entrypoint/process shape findings | Entrypoint selection gate |
+| `ProcessCatalog` | App | `apps/<app>/runtime/processes.ts` | `defineProcessCatalog(...)` | Entrypoints and runtime compiler | Selection | Process identity/role/harness findings | App process-catalog gate |
+| `Entrypoint` | App | `apps/<app>/<entrypoint>.ts` | exactly one `startApp(...)` call selecting one process record | Runtime mounting, then runtime derivation/compiler | Selection | Entrypoint/process selection findings | Entrypoint selection gate |
 | `RuntimeProfile` | App runtime profile | `apps/<app>/runtime/profiles/*` | `defineRuntimeProfile(...)` | Runtime derivation/runtime compiler | Selection/compilation | Provider/config findings | Profile snapshot |
 | `RuntimeResource` | Resource contract family | Provider-neutral root face of `resources/<capability>` | Resource package `defineRuntimeResource(...)` call | Runtime derivation/compiler/providers | Definition through provisioning | Resource coverage, lifetime, observation contributor findings | Resource contract gate |
 | `RuntimeProvider` | Nested provider | Direct public face under `resources/<capability>/providers/<provider>` | Nested provider `defineRuntimeProvider(...)` call | Runtime derivation/compiler/substrate | Definition through provisioning | Owner-local provider coverage, dependency, config, acquisition, and release findings | Provider coverage gate |
@@ -5700,8 +5908,9 @@ closed source topology for each kind.
 | `SurfaceAdapter` | `runtime-process-runtime` | `packages/core/runtime/process-runtime` | Process runtime | Runtime mounting handoff, then selected harness | Mounting | Owner-local adapter findings/observations | Adapter lowering gate |
 | `FunctionBundle` | Async adapter/harness boundary | `packages/core/runtime/harnesses/inngest` | Async surface adapter | Inngest harness | Mounting | Owner-local async-lowering findings | Function bundle gate |
 | `RuntimeMounting` | `runtime-mounting` | `packages/core/runtime/mounting` | SDK terminal delegation | Selected harnesses and process-runtime stop handle | Mounting/finalization | Owner-local lifecycle findings and definition-owned observation records | Start/finalization ownership gate |
-| `HarnessDescriptor` | Selected harness owner | `packages/core/runtime/harnesses/*`; Oclif: `apps/habitat/src/harness/oclif` | Runtime/harness implementation | Runtime mounting | Mounting/finalization | Owner-local harness findings | Harness mount gate |
-| `StartedHarness` | Selected harness owner | `packages/core/runtime/harnesses/*`; Oclif: `apps/habitat/src/harness/oclif` | Harness mount | Runtime mounting | Mounting/finalization | Owner-local start/stop findings and stop handle | Harness finalization gate |
+| `RuntimeLaunchIdentity` / `RequiredResourceReadiness` | Runtime definition and mounting, re-exported by SDK for app/harness authoring | `packages/core/runtime/definition`; `packages/core/runtime/mounting` | Process-start input and runtime mounting | Native Habitat harnesses | Mounting/observation | Immutable process/deployment/source correlation and required-resource readiness findings | Process health identity and fail-closed readiness gate |
+| `HarnessDescriptor` / `HarnessMountInput` / `NativeHarnessHandle` | Selected native harness owner, re-exported by SDK where authoring requires it | `packages/core/runtime/harnesses/*`; Oclif: `apps/habitat/src/harness/oclif` | Native Habitat harness implementation | Runtime mounting | Mounting/finalization | Owner-local harness findings and process-local probe results | Native installed-package mount/health gate |
+| `StartedHarness` | `runtime-mounting` | `packages/core/runtime/mounting` | Runtime mounting wrapping a native handle | Runtime mounting | Mounting/finalization | Owner-local start/stop findings and stop handle | Harness finalization gate |
 | `RuntimeObservationRecord` / `RuntimeObservationPort` | `runtime-definition` | `packages/core/runtime/definition` | Cold contract; records published by owners with an admitted direct definition edge | Runtime observation implementation | All phases | Bounded non-authorizing records | Observation-direction gate |
 | `RuntimeCatalog` | `runtime-observation` | `packages/core/runtime/observation` | Runtime observation only | Diagnostic readers/control-plane touchpoints | Observation | Projected catalog findings | Catalog snapshot gate |
 | `RuntimeDiagnostic` | `runtime-observation` | `packages/core/runtime/observation` | Runtime observation only | Catalog/observability readers | Observation projection over all phases | Projected boundary/phase/finalization findings | Diagnostic coverage gate |
@@ -5839,7 +6048,8 @@ harnesses
   mount hosts
   are invoked by runtime mounting
   invoke adapter-lowered payloads
-  return StartedHarness handles with owner-local findings and stop handles
+  return NativeHarnessHandle values with owner-local findings and stop handles
+  runtime mounting wraps them in private StartedHarness records
   own native interiors only after Habitat adapter lowering
 
 runtime mounting

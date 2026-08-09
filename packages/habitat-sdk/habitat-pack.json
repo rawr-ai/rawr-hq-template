@@ -3,8 +3,8 @@
   "blueprints": [
     {
       "id": "app",
-      "version": 1,
-      "path": "dist/blueprints/app/blueprint.toml"
+      "version": 2,
+      "path": "dist/blueprints/app/versions/2/blueprint.toml"
     },
     {
       "id": "package",

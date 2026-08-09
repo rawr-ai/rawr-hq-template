@@ -1,0 +1,96 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "app-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "*.app.ts",
+  "!(*.app).ts",
+  "habitat.toml",
+  "package.json",
+  "project.json",
+  "runtime",
+  "tsconfig.json",
+]
+allowed = [
+  "AGENTS.md",
+  "bin",
+  "test",
+  "tsconfig.build.json",
+  "tsconfig.test.json",
+  "vitest.config.ts",
+]
+
+[[scopes]]
+name = "app-definition"
+rootRole = "project"
+relativePath = "*.app.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "app-entrypoints"
+rootRole = "project"
+relativePath = "!(*.app).ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "app-runtime"
+rootRole = "project"
+relativePath = "runtime"
+kind = "directory"
+mode = "closed"
+required = [
+  "processes.ts",
+  "profiles",
+]
+allowed = []
+
+[[scopes]]
+name = "app-process-catalog"
+rootRole = "project"
+relativePath = "runtime/processes.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "app-profiles"
+rootRole = "project"
+relativePath = "runtime/profiles"
+kind = "directory"
+mode = "closed"
+required = [
+  "*.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "app-profile-files"
+rootRole = "project"
+relativePath = "runtime/profiles/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "app-tests"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "app-test-files"
+rootRole = "project"
+relativePath = "test/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true

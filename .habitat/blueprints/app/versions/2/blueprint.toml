@@ -1,0 +1,41 @@
+schemaVersion = 1
+id = "app"
+version = 2
+
+[[rules]]
+id = "app_v2_entrypoint"
+lane = "enforced"
+message = "Application entrypoints must select one cold process record through exactly one top-level startApp(...) call."
+remediate = "Keep composition in <app-id>.app.ts and runtime/processes.ts; make each other root TypeScript file a thin one-call process entrypoint."
+
+[rules.runner]
+name = "grit"
+pattern = "components/entrypoint/one-start.md"
+patternName = "app_v2_entrypoint"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["*.ts"] }]
+
+[[rules]]
+id = "app_v2_structure"
+lane = "enforced"
+message = "Applications must preserve one closed composition, profile, process-catalog, entrypoint, and proof topology."
+remediate = "Restore <app-id>.app.ts, runtime/profiles, runtime/processes.ts, thin root entrypoints, and the one-project proof shell."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

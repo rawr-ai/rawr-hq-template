@@ -28,6 +28,37 @@ contents on canonical `main` are the complete normative input to this OpenSpec.
 Branch names, transient restack commits, and byte comparison do not create a
 second authority.
 
+## Canonical Runtime Substrate Correction
+
+The accepted destination is one system with no legacy consumers and one
+canonical realization:
+
+```text
+service truth
+  -> plugin projection
+  -> app composition
+  -> peer server / async roles
+  -> selected surfaces
+  -> one entrypoint-selected process
+  -> derivation / compilation / provisioning / mounting / observation
+  -> deployment placement from a cold handoff
+```
+
+`server` owns synchronous public and trusted surfaces. MCP is one implemented
+server surface with native stdio and Streamable HTTP harnesses; it is never a
+role, kind, service, app, or execution plane. `async` owns workflows,
+schedules, and consumers on one Inngest plane. Serve and Connect are explicit
+native harness modes selected at the final boundary, not architecture or
+deployment variants. Process runtime, lifecycle, readiness, and observation are
+local to one entrypoint-selected process. Deployment consumes only the cold
+portable plan and immutable identity; it receives no live runtime authority.
+
+The published `app@1` locator remains immutable historical artifact identity,
+but it is not retained in the final policy pack or acceptance. Complete
+`app@2` is the sole admitted application packet. No compatibility,
+coexistence, byte-preservation acceptance, external harness escape hatch,
+product-specific runtime law, or cross-process controller is admitted.
+
 Habitat is the platform, substrate, runtime, and architecture law. Rawr is an
 independent downstream product, not a reference application housed in Habitat.
 `apps/habitat` is Habitat's self-hosted realization for non-core platform
@@ -169,8 +200,9 @@ executable acceptance obligations.
   Their useful parts move to the exact Habitat or Rawr owner in the destination
   ledger, and each predecessor package disappears after its last reader moves.
 - A separate `@habitat-ai/blueprints` package is superseded and MUST NOT return.
-- Habitat initializer, hook, pack-resolution, and version-coexistence mechanics
-  remain owned by their existing lifecycle record and are not redesigned here.
+- Habitat initializer, hook, and pack-resolution mechanics remain owned by
+  their existing lifecycle record. App-version coexistence is superseded:
+  `app@2` is the sole app member of the current pack.
 - Unreviewed branch copies and stale canonical documents are not whole-file
   replacements for the exact reviewed normative parent.
 

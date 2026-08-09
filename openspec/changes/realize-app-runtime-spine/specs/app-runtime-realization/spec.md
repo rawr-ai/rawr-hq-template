@@ -3,7 +3,7 @@
 ### Requirement: Application owners own cold composition and selection
 
 Every application built on Habitat MUST own one import-safe `AppDefinition`, its
-plugin membership, runtime profiles, process declarations, and thin
+plugin membership, runtime profiles, one cold process catalog, and thin
 entrypoints. `apps/habitat` is the platform's self-hosted application for
 non-core platform capabilities; a downstream product owns its app in its own
 repository. Those roles MUST remain distinguishable in project metadata even
@@ -12,18 +12,30 @@ sources, process defaults, and harness choices as cold data. An app, profile,
 or entrypoint MUST NOT construct a provider, create an Effect scope or managed
 runtime, bind a live service, lower a native payload, or mount a host.
 
-The app definition MUST live at `apps/<app-id>/<app-id>.app.ts`. Every
-entrypoint MUST call the terminal SDK `startApp(...)` facade and select one
-process role set without redefining app membership or provider selection. An
+The app definition MUST live at `apps/<app-id>/<app-id>.app.ts`; the process
+catalog MUST live at `apps/<app-id>/runtime/processes.ts`; and profiles MUST
+live below `apps/<app-id>/runtime/profiles`. Every entrypoint MUST contain
+exactly one top-level call to the terminal SDK `startApp(...)` facade and select
+one catalog record without redefining app membership, roles, harnesses, or
+provider selection. An
 entrypoint filename MUST name its mount or process role. A surface suffix such
 as `<name>.mcp.ts` is valid only for an intentionally single-surface mount; an
 entrypoint that mounts several plugin surfaces MUST use its mount or role
 identity.
 
+Habitat MUST admit complete `app@2` as the sole current application packet.
+The published `app@1` locator remains immutable historical artifact identity
+outside the current policy pack and acceptance, with no compatibility,
+fallback, or coexistence machinery. `app@2` MUST retain one app and one Nx
+project; profile, catalog, and entrypoint interiors MUST NOT become child
+projects or new blueprint kinds. `process`, `MCP`, and `async-server` MUST NOT
+be introduced as kinds. MCP MUST be an implemented `server` surface with native
+stdio and Streamable HTTP harnesses.
+
 #### Scenario: Application process is selected
 
 - **WHEN** a Habitat self-host or downstream product entrypoint selects an app,
-  profile, process, and role set
+  profile, and named process-catalog record
 - **THEN** it passes only cold selected facts into the runtime start boundary
 - **AND** no live resource exists before runtime provisioning
 
@@ -46,9 +58,21 @@ identity.
 - **WHEN** a Habitat self-host or downstream product app definition and each process
   entrypoint are inspected
 - **THEN** the app definition is named `<app-id>.app.ts`
-- **AND** each entrypoint calls `startApp(...)` with one selected process-role
-  set and contains no provider acquisition or native mounting
+- **AND** one `runtime/processes.ts` catalog owns the named process shapes
+- **AND** each entrypoint calls `startApp(...)` exactly once with one selected
+  process record and contains no provider acquisition or native mounting
 - **AND** a surface suffix appears only on a single-surface mount
+
+#### Scenario: Versioned app law is packed
+
+- **WHEN** the SDK policy pack and installed consumer are inspected
+- **THEN** the pack selects only `app@2` and the published `app@1` locator is
+  absent from current pack membership and acceptance
+- **AND** `app@2` is a complete closure for the app definition, profiles, process
+  catalog, entrypoints, and proof layout
+- **AND** a generated `app@2` consumer owns exactly one app/Nx project
+- **AND** no inheritance, fallback, child process project, or second app kind
+  is present
 
 ### Requirement: Habitat self-hosts its qualified non-core catalog service
 
@@ -279,6 +303,15 @@ A provider MUST NOT select itself or construct a managed runtime.
   order
 - **AND** no process runtime or harness is mounted
 
+#### Scenario: Required resource is unavailable
+
+- **WHEN** a selected process cannot acquire one non-optional resource required
+  by its compiled closure
+- **THEN** provisioning produces no `ProvisionedProcess`, no harness mounts,
+  and no liveness or readiness success is published
+- **AND** a listener, log, diagnostic, or previously healthy sibling process
+  cannot satisfy that process's startup requirement
+
 ### Requirement: Process runtime owns live binding and execution
 
 Process runtime MUST consume one `CompiledProcessPlan`, the matching execution
@@ -321,6 +354,50 @@ runtimes, provider leases, provider internals, or unredacted secrets.
 - **THEN** each process receives its own root runtime and process-scoped leases
 - **AND** neither process observes or releases the other's live values
 
+#### Scenario: Same app starts server and async children
+
+- **WHEN** one `app@2` definition and process catalog start an Elysia `server`
+  child and a native Inngest Serve `async` child through separate entrypoints
+- **THEN** each child acquires a distinct process lease and accepts one real
+  native boundary operation
+- **AND** stopping either child does not stop, await, observe, or release the
+  other child's runtime or native handle
+- **AND** process lifecycle, readiness, and observation remain local to each child
+
+### Requirement: Process health is distinct, immutable, and fail-closed
+
+For any process shape that publishes health, Habitat MUST keep liveness and
+readiness as separate process-local claims. Liveness MUST claim only that the
+selected process/native host can answer its own probe. Readiness MUST require
+successful acquisition and current readiness of every required selected
+resource plus every selected harness readiness contribution. A missing,
+negative, rejected, or timed-out required check MUST report not ready. Logs,
+diagnostics, telemetry, listener creation, mount success, and another process's
+health MUST NOT satisfy readiness.
+
+Both responses MUST carry the same immutable `RuntimeLaunchIdentity` containing
+the app, process, entrypoint, deployment, and source correlation supplied once
+at process start. Habitat MUST carry opaque deployment/source values without
+selecting placement or interpreting release lineage. Process health MUST NOT
+become cross-process runtime authority, product health policy, or
+vendor-specific policy.
+
+#### Scenario: Liveness succeeds while readiness fails
+
+- **WHEN** a mounted native host answers its liveness probe but one required
+  selected readiness check fails
+- **THEN** liveness reports success and readiness reports not ready
+- **AND** both results carry the same immutable launch identity
+- **AND** no finding, log, or observation upgrades readiness
+
+#### Scenario: Sibling process is healthy
+
+- **WHEN** one process from an app is live and ready while a sibling process is
+  missing a required resource or harness readiness contribution
+- **THEN** the sibling remains not started or not ready according to its own
+  lifecycle state
+- **AND** Habitat neither aggregates the siblings nor stops either one
+
 ### Requirement: Observation records without controlling realization
 
 Every upstream lifecycle boundary MUST publish a bounded, redacted
@@ -329,7 +406,7 @@ observation port. `runtime-observation` MUST implement that port and project
 `RuntimeDiagnostic`, `RuntimeTelemetry`, and `RuntimeCatalog` only.
 `runtime-mounting` MUST own the live path exposed as SDK `startApp(...)`,
 harness invocation, `StartedHarness`, reverse native stop, process-stop
-coordination, and cross-owner single-flight finalization; cold definition and
+coordination, and process-local cross-owner single-flight finalization; cold definition and
 runtime observation MUST NOT start a process. Observation MAY
 record derivation, compilation, provisioning, binding, execution, adapter,
 harness, rollback, and finalization facts, but MUST NOT select providers,
@@ -337,6 +414,10 @@ acquire resources, mutate runtime state, expose live values, or become a shadow
 control plane. Runtime mounting MUST stop harnesses, then invoke the process
 stop handle so runtime-owned values release in deterministic reverse dependency
 order.
+
+Runtime mounting MUST NOT coordinate sibling `startApp(...)` invocations or
+implement a cross-process stop, readiness, lifecycle, or observation
+controller.
 
 #### Scenario: Started process settles shutdown
 
@@ -366,8 +447,8 @@ public export set MUST comprise the stable authoring and runtime exports
 `./plugins/cli/schema`, `./plugins/web`, `./plugins/web/effect`,
 `./plugins/agent`, `./plugins/agent/effect`, `./plugins/agent/schema`,
 `./plugins/desktop`, `./plugins/desktop/effect`, `./runtime/resources`,
-`./runtime/providers`, `./runtime/providers/effect`, `./runtime/profiles`, and
-`./runtime/schema`; the optional integration exports `./telemetry`,
+`./runtime/providers`, `./runtime/providers/effect`, `./runtime/profiles`,
+`./runtime/harnesses`, and `./runtime/schema`; the optional integration exports `./telemetry`,
 `./resources/semantic-ledger`, `./resources/semantic-ledger/fluree`,
 `./resources/temporal-inquiry`, and `./resources/temporal-inquiry/fluree`; and
 the data exports `./habitat-pack.json`,
@@ -514,6 +595,17 @@ second runtime distribution.
 - **AND** packed SDK metadata, static reachability, and real process loading
   prove unselected hosts are not installed or evaluated
 
+#### Scenario: Packed consumer runs native harness verticals
+
+- **WHEN** a package outside the Habitat workspace installs the packed SDK/CLI
+  and starts an admitted Elysia, Inngest, MCP, Oclif, web, desktop, or OpenShell
+  process through `app@2`
+- **THEN** each native harness receives only bounded mount input and returns an
+  idempotent native stop handle
+- **AND** runtime mounting creates private `StartedHarness` state and settles
+  native stop before releasing that process lease
+- **AND** the consumer imports no private runtime project or source link
+
 #### Scenario: Structural runtime data is authored
 
 - **WHEN** data must be decoded, validated, redacted, or serialized across a
@@ -533,6 +625,31 @@ second runtime distribution.
   inputs and results derive from TypeBox schemas
 - **AND** no schema pretends to encode executable or live runtime state
 
+### Requirement: Deployment consumes a cold process handoff
+
+Runtime derivation MUST expose one portable cold process plan for deployment
+placement. The handoff MUST contain immutable app, process, entrypoint, source,
+and deployment identity; role and surface requirements; placement constraints;
+and executable descriptor references only. It MUST NOT contain executable
+closures, acquired resources, runtime handles, readiness gates, observation
+ports, provider secrets, or process-local lifecycle authority. Deployment owns
+placement, supervision, networking, and replicas and MUST NOT reconstruct app
+composition or start runtime phases outside the selected entrypoint.
+
+#### Scenario: Deployment selects placement
+
+- **WHEN** a deployment consumer receives the portable process plan
+- **THEN** it can choose placement and supervision from cold facts without
+  importing runtime implementation or starting the process
+- **AND** the entrypoint later realizes exactly that selected identity through
+  the canonical lifecycle
+
+#### Scenario: Live runtime state enters deployment handoff
+
+- **WHEN** a candidate handoff includes a live value, closure, readiness gate,
+  observation port, provider secret, or process stop handle
+- **THEN** derivation refuses the handoff before deployment placement
+
 ### Requirement: Habitat law asserts the runtime kinds positively
 
 Habitat MUST apply closed blueprint structures for the exact ten private
@@ -548,6 +665,14 @@ behavior tests MUST prove process-wide runtime and lifecycle semantics. A kind
 law MUST activate in the same semantic node as its first conforming owner. The
 repository MUST NOT use standalone structural or topology scripts where these
 native owners can express the law.
+
+The app kind MUST use complete `app@2` as the sole admitted runtime-authoring
+topology; the immutable published `app@1` locator remains outside current pack
+and acceptance. Habitat structure MUST own the
+positive app tree; focused Grit MAY assert the parser-visible one-`startApp`
+entrypoint relation; Nx MUST own the one project identity and task graph;
+TypeScript MUST own catalog/profile/entrypoint compatibility; child-process
+tests MUST own independent lease and stop behavior.
 
 #### Scenario: A runtime owner is created or changed
 

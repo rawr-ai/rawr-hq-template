@@ -141,11 +141,15 @@ Application bounds execution.
 ## Current Realization
 
 The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits nine
-members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
+members: `app@2`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
 `resource@1`, `resource@2`, `service@1`, and `service@2`. The two version-1
 closures preserve their `habitat-cli-v0.5.13` bytes. Their complete version-2
 successors retain the same law and structure while narrowing Grit acquisition
 to definition-owned `rootPatterns`.
+
+The published `app@1` locator remains immutable outside the current pack.
+`app@2` is the sole admitted application closure; Habitat does not resolve,
+inherit, merge, or coexist with the predecessor application packet.
 
 Protocol 1 already supports nested declared rule assets. It does not realize
 blueprint relations, capability activation, niche admission, inheritance,

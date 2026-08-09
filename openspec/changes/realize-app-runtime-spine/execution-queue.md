@@ -103,7 +103,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   conforming destination yet; task 11.5 owns their reader migration and
   replacement. No source, package export, empty SDK family, or runtime owner
   changed in this node.
-- [x] **Compatibility acquisition continuation**: one Git-visible inventory per
+- [x] **Foundation acquisition continuation**: one Git-visible inventory per
   owner check passes local and installed candidate acceptance. The `0.5.15`
   SDK/CLI pair, including only the already-qualified declarative telemetry face,
   is published, registry-smoked, and adopted. No runtime,
@@ -119,6 +119,14 @@ The active queue has one bounded node:
    and repository edge, extend the cumulative absence inventory, and pass the
    exact-main platform-only gate. Preserve no predecessor path, alias, or
    compatibility facade.
+
+The corrected authority admits sole `app@2`, peer `server` and `async` roles,
+MCP as a native `server` surface, Inngest Serve/Connect as final harness modes,
+process-local lifecycle/readiness/observation, and deployment's cold handoff.
+The app packet and policy-pack locator are corrected now; runtime source still
+opens only in owner order after task 3.3 and the remaining task-3 predecessors.
+Task 3.2a's exact adoption receipt remains a foundation checkpoint only. It is
+not a runtime/coexistence contract and authorizes no public runtime release.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle
