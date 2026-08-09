@@ -33,7 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.13";
+const CANDIDATE_VERSION = "0.5.14";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -773,14 +773,19 @@ describe("installed Habitat products", () => {
     )
       .flat()
       .sort();
-    const nestedBlueprintResidue = blueprintInventory.filter((relativePath) => {
+    const nestedStructureFiles = blueprintInventory.filter((relativePath) => {
       const segments = relativePath.split("/");
       const filename = segments.at(-1);
+      return segments.length > 2 && filename === "structure.toml";
+    });
+    expect(nestedStructureFiles).toEqual([
+      "resource/versions/2/structure.toml",
+      "service/versions/2/structure.toml",
+    ]);
+    const nestedBlueprintResidue = blueprintInventory.filter((relativePath) => {
+      const filename = relativePath.split("/").at(-1);
       return (
-        filename === "baseline.json" ||
-        filename === "rule.json" ||
-        filename === "staged-rule.json" ||
-        (segments.length > 2 && filename === "structure.toml")
+        filename === "baseline.json" || filename === "rule.json" || filename === "staged-rule.json"
       );
     });
     expect(nestedBlueprintResidue).toEqual([]);
@@ -844,6 +849,18 @@ describe("installed Habitat products", () => {
               expect.objectContaining({ id: "project", path: "packages/example" }),
             ]),
           }),
+          expect.objectContaining({
+            blueprint: "resource",
+            blueprintVersion: 2,
+            id: "resource-v2-acceptance",
+            ownerProject: "@fixture/resource-v2-acceptance",
+          }),
+          expect.objectContaining({
+            blueprint: "service",
+            blueprintVersion: 2,
+            id: "@fixture/greeting-service",
+            ownerProject: "@fixture/greeting-service",
+          }),
         ]),
         applications: expect.arrayContaining([
           expect.objectContaining({
@@ -859,6 +876,37 @@ describe("installed Habitat products", () => {
               structure: expect.objectContaining({
                 provenance: expect.objectContaining({ kind: "policy-pack" }),
               }),
+            }),
+          }),
+          expect.objectContaining({
+            blueprintVersion: 2,
+            instanceId: "resource-v2-acceptance",
+            ruleId: "resource_v2_effect_error_authority",
+            runner: expect.objectContaining({
+              acquisition: {
+                entries: [
+                  {
+                    kind: "file",
+                    path: "packages/resource-v2-acceptance/contract.ts",
+                    source: {
+                      id: "project",
+                      kind: "root-pattern",
+                      pattern: "contract.ts",
+                    },
+                  },
+                  {
+                    kind: "file",
+                    path: "packages/resource-v2-acceptance/providers/**/*.ts",
+                    source: {
+                      id: "project",
+                      kind: "root-pattern",
+                      pattern: "providers/**/*.ts",
+                    },
+                  },
+                ],
+                kind: "check",
+              },
+              name: "grit",
             }),
           }),
           expect.objectContaining({
@@ -886,9 +934,25 @@ describe("installed Habitat products", () => {
         ]),
       },
     });
-    expect(resolvedCatalog.catalog.policyPack.blueprints).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: "package", version: 1 })])
-    );
+    expect(resolvedCatalog.catalog.policyPack.blueprints).toEqual([
+      { id: "app", path: "dist/blueprints/app/blueprint.toml", version: 1 },
+      { id: "package", path: "dist/blueprints/package/blueprint.toml", version: 1 },
+      { id: "plugin", path: "dist/blueprints/plugin/blueprint.toml", version: 1 },
+      { id: "plugin-nx", path: "dist/blueprints/plugin-nx/blueprint.toml", version: 1 },
+      { id: "provider", path: "dist/blueprints/provider/blueprint.toml", version: 1 },
+      { id: "resource", path: "dist/blueprints/resource/blueprint.toml", version: 1 },
+      {
+        id: "resource",
+        path: "dist/blueprints/resource/versions/2/blueprint.toml",
+        version: 2,
+      },
+      { id: "service", path: "dist/blueprints/service/blueprint.toml", version: 1 },
+      {
+        id: "service",
+        path: "dist/blueprints/service/versions/2/blueprint.toml",
+        version: 2,
+      },
+    ]);
     expect(resolvedCatalog.catalog.blueprints).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -897,6 +961,14 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           definition: expect.objectContaining({ id: "package", version: 1 }),
+          provenance: expect.objectContaining({ kind: "policy-pack" }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "resource", version: 2 }),
+          provenance: expect.objectContaining({ kind: "policy-pack" }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "service", version: 2 }),
           provenance: expect.objectContaining({ kind: "policy-pack" }),
         }),
       ])
@@ -920,6 +992,18 @@ describe("installed Habitat products", () => {
           instanceId: "installed-package",
           ruleId: "package_v1_structure",
           runner: "habitat",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          instanceId: "resource-v2-acceptance",
+          ruleId: "resource_v2_effect_error_authority",
+          runner: "grit",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          instanceId: "@fixture/greeting-service",
+          ruleId: "service_v2_client_lineage",
+          runner: "grit",
           status: "pass",
         }),
       ]),
@@ -1084,6 +1168,7 @@ describe("installed Habitat products", () => {
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/root-pattern-acceptance/no-forbidden.md",
       "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/packages/root-pattern-acceptance/src/**/*.ts",
@@ -1212,6 +1297,9 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   const servicePackage = JSON.parse(
     await readFile(path.join(serviceRoot, "package.json"), "utf8")
   ) as { readonly dependencies?: Readonly<Record<string, string>> };
+  expect(await readFile(path.join(serviceRoot, "habitat.toml"), "utf8")).toContain(
+    "blueprintVersion = 2"
+  );
   expect(servicePackage.dependencies).toEqual({
     "@habitat-ai/sdk": installVersion,
     "@orpc/contract": "2.0.0-beta.23",
@@ -1293,7 +1381,15 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   });
   expect(projected, projected.stderr || projected.stdout).toMatchObject({ exitCode: 0 });
   const project = JSON.parse(projected.stdout) as {
-    readonly targets?: Readonly<Record<string, { readonly parallelism?: boolean }>>;
+    readonly targets?: Readonly<
+      Record<
+        string,
+        {
+          readonly inputs?: readonly unknown[];
+          readonly parallelism?: boolean;
+        }
+      >
+    >;
   };
   expect(project.targets).toMatchObject({
     build: expect.any(Object),
@@ -1302,11 +1398,62 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
     "check:policy": { parallelism: false },
     typecheck: expect.any(Object),
   });
+  const serviceRootInput = "{workspaceRoot}/services/greeting";
+  const serviceTargetPrefix = "habitat:application:@fixture/greeting-service:";
+  const expectedServiceInputsByRule = {
+    service_v2_client_lineage: [`${serviceRootInput}/src/client.ts`],
+    service_v2_context_funnel: [
+      `${serviceRootInput}/src/service/base.ts`,
+      `${serviceRootInput}/src/service/impl.ts`,
+      `${serviceRootInput}/src/service/middleware/*.ts`,
+      `${serviceRootInput}/src/service/modules/*/module.ts`,
+      `${serviceRootInput}/src/service/modules/*/router/*.ts`,
+    ],
+    service_v2_contract_authority: [`${serviceRootInput}/src/service/modules/*/contract/*.ts`],
+    service_v2_contract_composition: [
+      `${serviceRootInput}/src/service/contract.ts`,
+      `${serviceRootInput}/src/service/modules/*/contract/index.ts`,
+    ],
+    service_v2_effect_bridge: [
+      `${serviceRootInput}/src/client.ts`,
+      `${serviceRootInput}/src/service/**/*.ts`,
+    ],
+    service_v2_public_face: [`${serviceRootInput}/package.json`],
+    service_v2_router_composition: [
+      `${serviceRootInput}/src/service/modules/*/router.ts`,
+      `${serviceRootInput}/src/service/modules/*/router/*.ts`,
+      `${serviceRootInput}/src/service/router.ts`,
+    ],
+    service_v2_source_boundary: [
+      `${serviceRootInput}/src/client.ts`,
+      `${serviceRootInput}/src/service/**/*.ts`,
+    ],
+  } as const;
+  const expectedServiceTargets = [
+    ...Object.keys(expectedServiceInputsByRule).map((ruleId) => `${serviceTargetPrefix}${ruleId}`),
+    `${serviceTargetPrefix}service_v2_structure`,
+  ].sort();
   const habitatLeafTargets = Object.entries(project.targets ?? {}).filter(([target]) =>
     target.startsWith("habitat:")
   );
-  expect(habitatLeafTargets.length).toBeGreaterThan(0);
+  expect(habitatLeafTargets.map(([target]) => target).sort()).toEqual(expectedServiceTargets);
   expect(habitatLeafTargets.every(([, target]) => target.parallelism === false)).toBe(true);
+  for (const [ruleId, expectedInputs] of Object.entries(expectedServiceInputsByRule)) {
+    const serviceInputs = (
+      project.targets?.[`${serviceTargetPrefix}${ruleId}`]?.inputs ?? []
+    ).filter(
+      (input): input is string => typeof input === "string" && input.startsWith(serviceRootInput)
+    );
+    expect(serviceInputs, ruleId).toEqual(expectedInputs);
+    expect(serviceInputs, ruleId).not.toContain(serviceRootInput);
+    expect(serviceInputs, ruleId).not.toContain(`${serviceRootInput}/**/*`);
+  }
+  const structureInputs = (
+    project.targets?.[`${serviceTargetPrefix}service_v2_structure`]?.inputs ?? []
+  ).filter(
+    (input): input is string => typeof input === "string" && input.startsWith(serviceRootInput)
+  );
+  expect(structureInputs).toEqual([serviceRootInput, `${serviceRootInput}/**/*`]);
 
   const typechecked = await run(
     nx,
@@ -1626,6 +1773,43 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
     )}\n`,
     "packages/root-pattern-acceptance/src/included.ts": "allowed();\n",
     "packages/root-pattern-acceptance/test/excluded.ts": "forbidden();\n",
+    "packages/resource-v2-acceptance/contract.ts":
+      "export type AcceptanceResource = { readonly ready: true };\n",
+    "packages/resource-v2-acceptance/habitat.toml": resourceV2AcceptanceInstanceToml(),
+    "packages/resource-v2-acceptance/package.json": `${JSON.stringify(
+      { name: "@fixture/resource-v2-acceptance", private: true, version: "0.0.0" },
+      null,
+      2
+    )}\n`,
+    "packages/resource-v2-acceptance/providers/acceptance/index.ts":
+      "export const acceptanceProvider = { ready: true } as const;\n",
+    "packages/resource-v2-acceptance/project.json": `${JSON.stringify(
+      {
+        name: "@fixture/resource-v2-acceptance",
+        projectType: "library",
+        sourceRoot: "packages/resource-v2-acceptance",
+      },
+      null,
+      2
+    )}\n`,
+    "packages/resource-v2-acceptance/tsconfig.build.json": `${JSON.stringify(
+      { extends: "./tsconfig.json", exclude: ["test"] },
+      null,
+      2
+    )}\n`,
+    "packages/resource-v2-acceptance/tsconfig.json": `${JSON.stringify(
+      {
+        compilerOptions: {
+          module: "NodeNext",
+          moduleResolution: "NodeNext",
+          strict: true,
+          target: "ES2022",
+        },
+        include: ["contract.ts", "providers/**/*.ts"],
+      },
+      null,
+      2
+    )}\n`,
     "tools/hook-check/project.json": `${JSON.stringify(
       {
         name: "@fixture/hook-check",
@@ -1878,6 +2062,20 @@ blueprintVersion = 3
 
 [roots]
 project = "packages/root-pattern-acceptance"
+
+[selections]
+`;
+}
+
+function resourceV2AcceptanceInstanceToml(): string {
+  return `schemaVersion = 1
+id = "resource-v2-acceptance"
+ownerProject = "@fixture/resource-v2-acceptance"
+blueprint = "resource"
+blueprintVersion = 2
+
+[roots]
+project = "packages/resource-v2-acceptance"
 
 [selections]
 `;

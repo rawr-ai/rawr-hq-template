@@ -28,6 +28,10 @@ import { excludedRepositoryDirectorySegments } from "../model/policy/repository-
 
 const authorityGlobs = [
   { kind: "blueprint" as const, pattern: ".habitat/blueprints/*/blueprint.toml" },
+  {
+    kind: "blueprint" as const,
+    pattern: ".habitat/blueprints/*/versions/*/blueprint.toml",
+  },
   { kind: "rule" as const, pattern: ".habitat/**/rule.json" },
 ];
 const compatibilityIndexAuthorityPath = ".habitat/index.json";

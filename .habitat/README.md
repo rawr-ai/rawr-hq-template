@@ -9,18 +9,30 @@ packets, instances, capabilities, governed communities, and resolved
 execution.
 [[BLUEPRINT-COMPOSITION|Blueprint composition]] keeps that definition graph
 readable while preserving one ordinary manifest and Nx owner per repository
-component. The SDK build copies the complete recursive definition and runner
-assets into the selected policy pack; packaging does not flatten or reinterpret
-them.
+component. The SDK build copies authored paths unchanged into the selected
+policy pack; each definition declares its complete runner-asset closure and
+packaging does not flatten or reinterpret it.
 Repositories retain authority for their own instances and overlays.
 
 ```text
 .habitat/blueprints/<kind>/blueprint.toml
 .habitat/blueprints/<kind>/structure.toml
+.habitat/blueprints/<kind>/<rule>.md
 .habitat/blueprints/<kind>/components/<role>/<rule>.md
+.habitat/blueprints/<kind>/versions/<version>/blueprint.toml
+.habitat/blueprints/<kind>/versions/<version>/structure.toml
+.habitat/blueprints/<kind>/versions/<version>/<rule>.md
+.habitat/blueprints/<kind>/versions/<version>/components/<role>/<rule>.md
 .habitat/rawr/<niche>/rules/<rule>/
 .habitat/staged/blueprints/<kind>/<rule>/
 ```
+
+The top-level resource and service definitions remain the released version-1
+locations. A successor below `versions/<version>/` is a complete immutable
+closure, not an overlay: it declares every runner asset it uses. Selection is
+an exact identity-and-version locator with no `include`, `contains`,
+inheritance, ancestor or sibling asset traversal, generated staging, or
+instance rewrite.
 
 The component path is optional authoring organization for ordinary rules, not
 a manifest or runtime concept. Every executable asset is declared by the
@@ -46,20 +58,22 @@ The current selected generic kinds are:
 - `app`: one closed product-composition shell. Narrower app kinds own their
   host-specific runtime and entrypoint faces.
 
-The accepted SDK protocol-1 policy pack admits exactly seven version-1
-definitions, sorted as `app`, `package`, `plugin`, `plugin-nx`, `provider`,
-`resource`, and `service`.
+The accepted SDK protocol-1 policy pack admits exactly nine sorted members:
+`app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`, `resource@1`,
+`resource@2`, `service@1`, and `service@2`.
 Each member resolves its definition and runner assets from the selected
 package with policy-pack provenance. A repository activates one only through
 its own `habitat.toml` instance; an exact producer-source copy is inert, and a
 different definition at the same identity fails resolution. The remaining
 repository compatibility rules continue to execute beside resolved package
-rule applications. The selected `service` definition co-lands its focused
-positive law, native Nx generator, recursive package closure, and
+rule applications. The selected `service` definitions co-land their focused
+positive law, native Nx generator, complete package closure, and
 packed-consumer construction proof.
-Each selected definition exposes only
-its required `project` anchor; source-specific scopes use blueprint-owned
-`src/**` paths below that root, so repository manifests cannot redirect source
+The version-1 resource and service closures preserve the exact
+`habitat-cli-v0.5.13` definition and runner-asset bytes. Their version-2
+successors retain the same structure and semantic law while narrowing Grit
+acquisition to definition-owned `rootPatterns`. Each definition exposes only
+its required `project` anchor, so repository manifests cannot redirect source
 independently.
 Nested-member closure remains Habitat-owned. The closed package export law and
 Nx's `@nx/enforce-module-boundaries` rule own workspace-wide foreign-consumer
@@ -134,9 +148,10 @@ is flat because `impl.ts` is its sole assembly owner. The closed model ontology
 is `dto`, `entities`, `errors`, `policy`, and `ports`; TypeBox owns canonical
 schemas and generated types, while database schema remains physical mapping.
 
-`service@1` owns its optional database interior because persistence authority
-belongs to the service and the current instance protocol selects one kind. Its
-positive subtree is closed to migrations, optional physical schema, and stores;
+`service@1` and `service@2` own the same optional database interior because
+persistence authority belongs to the service and the current instance protocol
+selects one kind. The positive subtree is closed to migrations, optional
+physical schema, and stores;
 absence is the only alternative shape. Stores privately realize persistence
 and enter modules through inherited context. Modules do not acquire database
 implementations, providers, or sibling service interiors. A later capability
@@ -147,9 +162,11 @@ commit `e58cbebbee0755faf644aa36c0bd2d2527b79ee5`. Habitat retains the same clos
 contract/realization split and adds its existing workspace package manifest and
 build TypeScript faces to the resource shell. From Magic commit
 `8f40bdff34dde18680352a9b91ce7b953c385942`, only the provider-neutral
-resource Effect failure semantics enter `resource@1`, as one package-native
-Grit pattern acquired from the instance project root. The predecessor v2
-manifest, baseline, and consumer paths remain outside the shared definition.
+resource Effect failure semantics enter both resource versions as one
+package-native Grit pattern. `resource@1` preserves whole-project acquisition;
+`resource@2` narrows it to `contract.ts` and `providers/**/*.ts`. The
+predecessor compatibility-rule v2 manifest, baseline, and consumer paths remain
+outside both shared definitions.
 Magic's API, workflow, app, Nx, and tool overlays remain outside this package
 release. Their exercised variance informs later generic Habitat kinds; the
 product instances, adapters, policy, and qualified overlay rules remain local.

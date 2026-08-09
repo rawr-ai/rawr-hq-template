@@ -411,6 +411,153 @@ describe("Habitat catalog resolve", () => {
     });
   });
 
+  test("resolves coexisting legacy and successor definitions by exact instance version", async () => {
+    const result = await resolveFixture({
+      files: {
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml({
+          version: 1,
+          ruleId: "package_v1_structure",
+        }),
+        ".habitat/blueprints/package/structure.toml": structureToml(),
+        ".habitat/blueprints/package/versions/2/blueprint.toml": blueprintToml({
+          version: 2,
+          ruleId: "package_v2_structure",
+        }),
+        ".habitat/blueprints/package/versions/2/structure.toml": structureToml(),
+        "packages/v1/habitat.toml": instanceToml({
+          id: "package-v1",
+          ownerProject: "@fixture/package-v1",
+          project: "packages/v1",
+          blueprintVersion: 1,
+        }),
+        "packages/v1/test/contract/api.typecheck.ts": "export {};\n",
+        "packages/v2/habitat.toml": instanceToml({
+          id: "package-v2",
+          ownerProject: "@fixture/package-v2",
+          project: "packages/v2",
+          blueprintVersion: 2,
+        }),
+        "packages/v2/test/contract/api.typecheck.ts": "export {};\n",
+      },
+      directories: ["packages/v1/src", "packages/v2/src"],
+    });
+
+    expect(result._tag).toBe("Resolved");
+    if (result._tag !== "Resolved") throw new Error("Expected both blueprint versions to resolve.");
+    expect(
+      result.catalog.blueprints.map(({ definition, provenance }) => ({
+        id: definition.id,
+        version: definition.version,
+        relativePath: provenance.kind === "local" ? provenance.relativePath : undefined,
+      }))
+    ).toEqual([
+      {
+        id: "package",
+        version: 1,
+        relativePath: ".habitat/blueprints/package/blueprint.toml",
+      },
+      {
+        id: "package",
+        version: 2,
+        relativePath: ".habitat/blueprints/package/versions/2/blueprint.toml",
+      },
+    ]);
+    expect(
+      result.catalog.instances.map(({ id, blueprintVersion }) => ({ id, blueprintVersion }))
+    ).toEqual([
+      { id: "package-v1", blueprintVersion: 1 },
+      { id: "package-v2", blueprintVersion: 2 },
+    ]);
+    expect(result.catalog.applications).toMatchObject([
+      {
+        instanceId: "package-v1",
+        blueprintVersion: 1,
+        ruleId: "package_v1_structure",
+        provenance: { relativePath: ".habitat/blueprints/package/blueprint.toml" },
+        runner: { structure: { relativePath: ".habitat/blueprints/package/structure.toml" } },
+      },
+      {
+        instanceId: "package-v2",
+        blueprintVersion: 2,
+        ruleId: "package_v2_structure",
+        provenance: { relativePath: ".habitat/blueprints/package/versions/2/blueprint.toml" },
+        runner: {
+          structure: {
+            relativePath: ".habitat/blueprints/package/versions/2/structure.toml",
+          },
+        },
+      },
+    ]);
+  });
+
+  test("rejects non-canonical and mismatched successor blueprint locators", async () => {
+    for (const locatorVersion of ["1", "02", "v2"]) {
+      const definitionVersion = locatorVersion === "1" ? 1 : 2;
+      const relativePath = `.habitat/blueprints/package/versions/${locatorVersion}/blueprint.toml`;
+      const result = await resolveFixture({
+        files: {
+          [relativePath]: blueprintToml({ version: definitionVersion }),
+          [`.habitat/blueprints/package/versions/${locatorVersion}/structure.toml`]:
+            structureToml(),
+        },
+      });
+
+      expect(result).toMatchObject({
+        _tag: "Rejected",
+        issues: [{ code: "authority-path-invalid", path: relativePath }],
+      });
+    }
+
+    const versionMismatch = await resolveFixture({
+      files: {
+        ".habitat/blueprints/package/versions/2/blueprint.toml": blueprintToml({ version: 3 }),
+        ".habitat/blueprints/package/versions/2/structure.toml": structureToml(),
+      },
+    });
+    expect(versionMismatch).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-version-mismatch",
+          path: ".habitat/blueprints/package/versions/2/blueprint.toml",
+        },
+      ],
+    });
+
+    const idMismatch = await resolveFixture({
+      files: {
+        ".habitat/blueprints/package/versions/2/blueprint.toml": blueprintToml({
+          id: "service",
+          version: 2,
+        }),
+        ".habitat/blueprints/package/versions/2/structure.toml": structureToml(),
+      },
+    });
+    expect(idMismatch).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        {
+          code: "authority-definition-kind-mismatch",
+          path: ".habitat/blueprints/package/versions/2/blueprint.toml",
+        },
+      ],
+    });
+  });
+
+  test("does not constrain versions declared at the legacy top-level locator", async () => {
+    const result = await resolveFixture({
+      files: {
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml({ version: 3 }),
+        ".habitat/blueprints/package/structure.toml": structureToml(),
+      },
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Resolved",
+      catalog: { blueprints: [{ definition: { id: "package", version: 3 } }] },
+    });
+  });
+
   test("rejects a conflicting local definition at a selected package identity", async () => {
     const fixture = policyPackInstanceFixture();
     const result = await resolveFixture({
@@ -442,6 +589,7 @@ describe("Habitat catalog resolve", () => {
       files: {
         ...fixture.files,
         ".habitat/blueprints/package/nested/blueprint.toml": "not = [valid",
+        ".habitat/blueprints/package/versions/2/nested/blueprint.toml": "not = [valid",
         ".semantica/ignored/habitat.toml": "not = [valid",
         ".venv/ignored/habitat.toml": "not = [valid",
         "dist/ignored/habitat.toml": "not = [valid",
@@ -1472,7 +1620,12 @@ function packageInstanceFixture(options: { readonly grit?: boolean } = {}): Fixt
 }
 
 function blueprintToml(
-  options: { readonly id?: string; readonly ruleId?: string; readonly grit?: boolean } = {}
+  options: {
+    readonly id?: string;
+    readonly version?: number;
+    readonly ruleId?: string;
+    readonly grit?: boolean;
+  } = {}
 ): string {
   const id = options.id ?? "package";
   const ruleId = options.ruleId ?? `${id}_structure`;
@@ -1492,7 +1645,7 @@ mode = "structure"
 structure = "structure.toml"`;
   return `schemaVersion = 1
 id = "${id}"
-version = 1
+version = ${options.version ?? 1}
 
 [[rules]]
 id = "${ruleId}"
@@ -1525,6 +1678,7 @@ function instanceToml(
     readonly id?: string;
     readonly ownerProject?: string;
     readonly blueprint?: string;
+    readonly blueprintVersion?: number;
     readonly project?: string;
   } = {}
 ): string {
@@ -1533,7 +1687,7 @@ function instanceToml(
 id = "${options.id ?? "example-package"}"
 ownerProject = "${options.ownerProject ?? "@rawr/example"}"
 blueprint = "${options.blueprint ?? "package"}"
-blueprintVersion = 1
+blueprintVersion = ${options.blueprintVersion ?? 1}
 
 [roots]
 project = "${project}"

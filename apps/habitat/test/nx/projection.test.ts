@@ -75,6 +75,50 @@ const gritApplication: ResolvedGritApplication = {
   },
 };
 
+const successorProvenance: ResolvedApplication["provenance"] = {
+  ...provenance,
+  relativePath: ".habitat/blueprints/service/versions/2/blueprint.toml",
+};
+
+const successorInstance: ResolvedInstance = {
+  id: "service-v2",
+  ownerProject: "service-v2",
+  blueprint: "service",
+  blueprintVersion: 2,
+  manifestPath: "services/v2/habitat.toml",
+  roots: [{ id: "project", required: true, kind: "directory", path: "services/v2" }],
+  selections: [],
+};
+
+const successorApplication: ResolvedGritApplication = {
+  ...gritApplication,
+  ownerProject: "service-v2",
+  instanceId: "service-v2",
+  blueprintVersion: 2,
+  ruleId: "source-law-v2",
+  manifestPath: "services/v2/habitat.toml",
+  provenance: successorProvenance,
+  runner: {
+    ...gritApplication.runner,
+    pattern: {
+      provenance: successorProvenance,
+      relativePath: ".habitat/blueprints/service/versions/2/source-law/pattern.md",
+      absolutePath: "/workspace/.habitat/blueprints/service/versions/2/source-law/pattern.md",
+    },
+    patternName: "source_law_v2",
+    acquisition: {
+      kind: "check",
+      entries: [
+        {
+          source: { kind: "root-role", id: "project" },
+          kind: "directory",
+          path: "services/v2/src",
+        },
+      ],
+    },
+  },
+};
+
 const rootPatternApplication: ResolvedApplication = {
   ...gritApplication,
   ruleId: "root-pattern-law",
@@ -309,7 +353,7 @@ function createHandler(
   const plugin = createHabitatNxPlugin({ clientForWorkspace, runtimeInputs });
   expect("name" in plugin).toBe(false);
   expect(plugin.createNodes[0]).toBe(
-    "{.habitat/blueprints/*/blueprint.toml,.habitat/index.json,.habitat/**/rule.json,**/habitat.toml}"
+    "{.habitat/blueprints/*/blueprint.toml,.habitat/blueprints/*/versions/*/blueprint.toml,.habitat/index.json,.habitat/**/rule.json,**/habitat.toml}"
   );
   return plugin.createNodes[1];
 }
@@ -371,6 +415,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/service/source-law/pattern.md",
       "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/services/a/src",
@@ -400,11 +445,41 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/plugin/structure.toml",
       "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/plugins/b",
       "{workspaceRoot}/plugins/b/**/*",
       "{workspaceRoot}/plugins/b/habitat.toml",
+    ]);
+  });
+
+  it("hashes a successor definition locator and its exact local runner asset", async () => {
+    const createNodes = createHandler(() => ({
+      catalog: {
+        resolve: async () => resolvedCatalog([successorApplication], [successorInstance]),
+      },
+    }));
+
+    const result = await createNodes(
+      [".habitat/blueprints/service/versions/2/blueprint.toml", successorInstance.manifestPath],
+      undefined,
+      { workspaceRoot: "/workspace", nxJsonConfiguration: {} }
+    );
+    const inputs =
+      projectMap(result)["services/v2"]?.targets?.["habitat:application:service-v2:source-law-v2"]
+        ?.inputs;
+
+    expect(inputs).toEqual([
+      ...runtimeInputs,
+      "{workspaceRoot}/**/habitat.toml",
+      "{workspaceRoot}/.habitat/**/rule.json",
+      "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/service/versions/2/source-law/pattern.md",
+      "{workspaceRoot}/.habitat/index.json",
+      "{workspaceRoot}/services/v2/src",
+      "{workspaceRoot}/services/v2/src/**/*",
     ]);
   });
 
@@ -444,6 +519,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/packages/example",
       "{workspaceRoot}/packages/example/**/*",
@@ -479,6 +555,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/service/source-law/pattern.md",
       "{workspaceRoot}/.habitat/index.json",
       "{workspaceRoot}/services/a/package.json",
@@ -536,6 +613,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/.habitat/**",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/baseline.json",
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/pattern.md",
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/rule.json",
@@ -578,6 +656,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/.habitat/**",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/legacy/plugin-compat/baseline.json",
       "{workspaceRoot}/.habitat/blueprints/legacy/plugin-compat/rule.json",
       "{workspaceRoot}/.habitat/blueprints/legacy/plugin-compat/structure.toml",
@@ -634,6 +713,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/.habitat/**",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
+      "{workspaceRoot}/.habitat/blueprints/*/versions/*/blueprint.toml",
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/baseline.json",
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/pattern.md",
       "{workspaceRoot}/.habitat/blueprints/legacy/source-compat/rule.json",

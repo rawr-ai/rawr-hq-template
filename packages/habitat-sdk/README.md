@@ -43,13 +43,11 @@ does not own a controller, package manager, retained store, compatibility
 surface, or public implementation cohort.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
-exactly seven sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
-`provider@1`, `resource@1`, and `service@1`. Each member points to its installed
-package-relative `dist/blueprints/<id>/blueprint.toml` definition. The service
-member co-lands with its portable source law, native Nx generator, and packed
-consumer proof, plus explicit selected descent by every service still present
-in the Habitat repository. Presence in `dist/blueprints`, a generated fixture,
-or a green predecessor packet alone grants no authority.
+exactly nine sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
+`provider@1`, `resource@1`, `resource@2`, `service@1`, and `service@2`.
+Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; version 2
+resolves from `dist/blueprints/<id>/versions/2/blueprint.toml`. Presence in
+`dist/blueprints` alone grants no authority.
 
 The selected SDK package owns each reusable definition, version, runner asset,
 and its policy-pack provenance. A repository remains the authority for its own
@@ -57,15 +55,18 @@ and its policy-pack provenance. A repository remains the authority for its own
 not select an instance or create an application. Template's exact tracked
 authoring copy is inert during resolution, while a different local definition
 at the same identity is rejected as drift.
+Each member path locates one immutable, complete definition and runner-asset
+closure. A version neither inherits nor traverses assets from another version.
 
 Each selected definition exposes only its required `project` anchor.
 Source-specific structure scopes carry blueprint-owned `src/**` relative
 paths; a caller-authored `source` binding is rejected as an unknown root role.
 
-`resource@1` includes the provider-neutral Effect failure law promoted from
-the Magic Migration evidence at commit
+`resource@1` and `resource@2` include the provider-neutral Effect failure law
+promoted from the Magic Migration evidence at commit
 `8f40bdff34dde18680352a9b91ce7b953c385942`. Only its generic Grit semantics
-ship: the Magic v2 rule manifest, baseline, and consumer paths are not package
-members. Their exercised API, workflow, app, Nx, and tool variance informs
-later generic Habitat kinds, while Magic-specific instances, adapters, policy,
-and qualified overlay rules remain local.
+ship. `resource@1` and `service@1` preserve their `habitat-cli-v0.5.13`
+definition and runner-asset bytes. Their complete version-2 successors change
+only version and rule identity plus Grit acquisition, narrowing subjects to the
+declared `rootPatterns`; no instance or generated staging data is part of either
+closure.

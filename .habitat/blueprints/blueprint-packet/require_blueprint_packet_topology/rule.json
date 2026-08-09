@@ -12,9 +12,9 @@
   },
   "ownerProject": "habitat",
   "lane": "enforced",
-  "forbids": "an open legacy compatibility packet, an unqualified blueprint component group, or an executable source outside Habitat's native rule forms",
-  "why": "Versioned blueprints compose declared rules from one structural anchor and focused Markdown source assets. Remaining v2 compatibility packets retain their closed rule and baseline envelope until they migrate into that model.",
-  "remediate": "Keep component source under components/<role>/*.md and register it from blueprint.toml. Keep rule.json and baseline.json only in remaining v2 compatibility packets, alongside their selected pattern.md or structure.toml source.",
+  "forbids": "an open legacy compatibility packet, an unqualified blueprint component group, a successor closure misclassified as a compatibility packet, or an executable source outside Habitat's native rule forms",
+  "why": "Versioned blueprints compose declared rules from one structural anchor and focused Markdown source assets. Complete successor closures live under the reserved versions/<version> locator and are not compatibility packets. Remaining v2 compatibility packets retain their closed rule and baseline envelope until they migrate into that model.",
+  "remediate": "Keep complete successor definitions and their declared assets under versions/<version>. Keep component source under components/<role>/*.md and register it from blueprint.toml. Keep rule.json and baseline.json only in remaining v2 compatibility packets, alongside their selected pattern.md or structure.toml source.",
   "message": "Habitat authority packets must retain one closed native policy surface.",
   "pathCoverage": [
     {

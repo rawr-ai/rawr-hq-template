@@ -4,6 +4,7 @@ import type { CreateNodes, CreateNodesResultArray, TargetConfiguration } from "@
 
 const HABITAT_CATALOG_PATHS = [
   ".habitat/blueprints/*/blueprint.toml",
+  ".habitat/blueprints/*/versions/*/blueprint.toml",
   ".habitat/index.json",
   ".habitat/**/rule.json",
   "**/habitat.toml",
