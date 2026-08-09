@@ -1,4 +1,5 @@
 import type { Path } from "effect";
+import picomatch from "picomatch";
 import type { Static, TSchema } from "typebox";
 import { Validator } from "typebox/schema";
 import { Equal } from "typebox/value";
@@ -27,6 +28,15 @@ import {
 
 const MEMBER_PLACEHOLDER = "{member}";
 const GLOB_CHARACTERS = /[*?[\]!]/;
+const ROOT_PATTERN_UNSUPPORTED_SYNTAX = /[?\[\]{}()!|\\]/u;
+const ROOT_PATTERN_BOUND_ROOT_UNSUPPORTED_SYNTAX = /[*?\[\]{}()!|\\]/u;
+const ROOT_PATTERN_PICOMATCH_OPTIONS: Readonly<picomatch.PicomatchOptions> = Object.freeze({
+  contains: false,
+  dot: true,
+  nonegate: true,
+  strictBrackets: true,
+  strictSlashes: true,
+});
 const blueprintValidator = new Validator({}, BlueprintDefinitionSchema);
 const policyPackManifestValidator = new Validator({}, PolicyPackManifestSchema);
 const policyPackPackageJsonValidator = new Validator({}, PolicyPackPackageJsonSchema);
@@ -603,6 +613,17 @@ export function resolveCatalog(
           });
         }
       }
+      for (const declaration of rule.runner.acquisition.rootPatterns ?? []) {
+        const root = instance.roots.find((candidate) => candidate.id === declaration.rootRole);
+        if (root?.kind !== "directory") continue;
+        for (const pattern of declaration.patterns) {
+          entries.push({
+            source: { kind: "root-pattern", id: declaration.rootRole, pattern },
+            kind: "file",
+            path: toRepositoryPath(path.join(root.path, pattern), path),
+          });
+        }
+      }
       applications.push({
         ...common,
         runner: {
@@ -857,17 +878,24 @@ function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIss
     const asset = rule.runner.name === "habitat" ? rule.runner.structure : rule.runner.pattern;
     issues.push(...relativePathIssues(asset, sourcePath, path));
     if (rule.runner.name === "habitat") continue;
+    const rootPatterns = rule.runner.acquisition.rootPatterns ?? [];
     issues.push(
       ...sortedUniqueIssues(rule.runner.acquisition.rootRoles, sourcePath, "acquisition rootRoles"),
       ...sortedUniqueIssues(
         rule.runner.acquisition.selections,
         sourcePath,
         "acquisition selections"
+      ),
+      ...sortedUniqueIssues(
+        rootPatterns.map((declaration) => declaration.rootRole),
+        sourcePath,
+        "acquisition rootPattern root roles"
       )
     );
     if (
       rule.runner.acquisition.rootRoles.length === 0 &&
-      rule.runner.acquisition.selections.length === 0
+      rule.runner.acquisition.selections.length === 0 &&
+      rootPatterns.length === 0
     ) {
       issues.push(
         issue(
@@ -908,6 +936,36 @@ function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIss
             `Acquisition selection "${selectionId}" must resolve files.`
           )
         );
+      }
+    }
+    for (const declaration of rootPatterns) {
+      const root = roots.get(declaration.rootRole);
+      if (root === undefined) {
+        issues.push(
+          issue(
+            "authority-rule-invalid",
+            sourcePath,
+            `Unknown root-pattern root role "${declaration.rootRole}".`
+          )
+        );
+      } else if (root.kind !== "directory") {
+        issues.push(
+          issue(
+            "authority-rule-invalid",
+            sourcePath,
+            `Root-pattern root role "${declaration.rootRole}" must resolve a directory.`
+          )
+        );
+      }
+      issues.push(
+        ...sortedUniqueIssues(
+          declaration.patterns,
+          sourcePath,
+          `rootPatterns for "${declaration.rootRole}"`
+        )
+      );
+      for (const pattern of declaration.patterns) {
+        issues.push(...rootRelativePatternIssues(pattern, sourcePath, path));
       }
     }
   }
@@ -1071,6 +1129,41 @@ function resolveInstance(
             `Grit rule "${rule.id}" requires bound acquisition selection "${selectionId}".`
           )
         );
+      }
+    }
+    for (const declaration of rule.runner.acquisition.rootPatterns ?? []) {
+      if (roots.get(declaration.rootRole)?.kind !== "directory") continue;
+      const boundPath = source.manifest.roots[declaration.rootRole];
+      if (boundPath === undefined) {
+        issues.push(
+          issue(
+            "authority-manifest-invalid",
+            source.relativePath,
+            `Grit rule "${rule.id}" requires bound root-pattern root role "${declaration.rootRole}".`
+          )
+        );
+        continue;
+      }
+      if (ROOT_PATTERN_BOUND_ROOT_UNSUPPORTED_SYNTAX.test(boundPath)) {
+        issues.push(
+          issue(
+            "authority-path-invalid",
+            source.relativePath,
+            `Grit rule "${rule.id}" binds root-pattern root role "${declaration.rootRole}" to a path containing glob-significant syntax: "${boundPath}".`
+          )
+        );
+        continue;
+      }
+      for (const pattern of declaration.patterns) {
+        if (toRepositoryPath(path.join(boundPath, pattern), path).length > 4_096) {
+          issues.push(
+            issue(
+              "authority-path-invalid",
+              source.relativePath,
+              `Grit rule "${rule.id}" resolves root pattern beyond the maximum repository path length.`
+            )
+          );
+        }
       }
     }
   }
@@ -1369,6 +1462,46 @@ function repositoryPatternIssues(
         ),
       ]
     : [];
+}
+
+function rootRelativePatternIssues(
+  candidate: string,
+  sourcePath: string,
+  path: Path.Path
+): CatalogIssue[] {
+  const segments = candidate.split("/");
+  const globstarCount = segments.filter((segment) => segment === "**").length;
+  let valid =
+    candidate !== "." &&
+    !ROOT_PATTERN_UNSUPPORTED_SYNTAX.test(candidate) &&
+    !path.isAbsolute(candidate) &&
+    !/^[A-Za-z]:\//u.test(candidate) &&
+    !candidate.endsWith("/") &&
+    !/[\u0000-\u001f\u007f]/u.test(candidate) &&
+    globstarCount <= 1 &&
+    !segments.some(
+      (segment) =>
+        segment === "" ||
+        segment === "." ||
+        segment === ".." ||
+        (segment !== "**" && segment.split("*").length > 2)
+    );
+  if (valid) {
+    try {
+      picomatch(candidate, ROOT_PATTERN_PICOMATCH_OPTIONS);
+    } catch {
+      valid = false;
+    }
+  }
+  return valid
+    ? []
+    : [
+        issue(
+          "authority-path-invalid",
+          sourcePath,
+          `Root pattern must be a safe root-relative literal/star glob: "${candidate}".`
+        ),
+      ];
 }
 
 function pathTemplateIssues(template: string, sourcePath: string, path: Path.Path): CatalogIssue[] {

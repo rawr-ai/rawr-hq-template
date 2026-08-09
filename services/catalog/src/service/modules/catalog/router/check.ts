@@ -2,10 +2,18 @@ import type {
   RuleEvaluationFinding,
   RuleEvaluationProgramResult,
 } from "@habitat-ai/resource-rule-evaluation";
-import { MAX_SOURCE_INVENTORY_ENTRIES } from "@habitat-ai/resource-source-inventory";
+import {
+  MAX_SOURCE_INVENTORY_ENTRIES,
+  type SourceInventoryResult,
+} from "@habitat-ai/resource-source-inventory";
 import { Effect, type FileSystem, type Path, type PlatformError } from "effect";
+import picomatch from "picomatch";
 import { parse as parseToml } from "smol-toml";
-import type { CatalogIssue } from "../model/dto/catalog.js";
+import {
+  type CatalogIssue,
+  MAX_ROOT_PATTERN_ACQUISITION_COMMAND_LINE_UNITS,
+  MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS,
+} from "../model/dto/catalog.js";
 import type {
   CheckApplicationReport,
   CheckCatalogResult,
@@ -37,6 +45,13 @@ import {
 import { module } from "../module.js";
 
 const compatibilityProtectedRoots = [".habitat/cache/patterns"];
+const ROOT_PATTERN_PICOMATCH_OPTIONS: Readonly<picomatch.PicomatchOptions> = Object.freeze({
+  contains: false,
+  dot: true,
+  nonegate: true,
+  strictBrackets: true,
+  strictSlashes: true,
+});
 
 type StructureCheckApplicationReport = Extract<CheckApplicationReport, { runner: "habitat" }>;
 type StructurePreparation =
@@ -53,10 +68,14 @@ type ReadyGritEvaluation = {
   readonly subjects: readonly ResolvedSubject[];
   readonly subjectPaths: readonly string[];
 };
-type StructureInventoryPreparation =
+type SourceInventoryPreparation =
   | { readonly kind: "not-required" }
   | { readonly kind: "failed"; readonly detail: string }
-  | { readonly kind: "ready"; readonly universe: ReturnType<typeof makeStructureUniverse> };
+  | {
+      readonly kind: "ready";
+      readonly inventory: SourceInventoryResult;
+      readonly universe: ReturnType<typeof makeStructureUniverse>;
+    };
 type StructureRootObservationFailure = {
   readonly ok: false;
   readonly detail: string;
@@ -200,11 +219,12 @@ export const check = module.check.effect(function* ({ context, input }) {
 
   const needsInventory = preparations.some(
     (prepared) =>
-      prepared.kind === "structure" &&
-      prepared.preparation.kind === "admitted" &&
-      prepared.preparation.value.scopes.length > 0
+      (prepared.kind === "structure" &&
+        prepared.preparation.kind === "admitted" &&
+        prepared.preparation.value.scopes.length > 0) ||
+      (prepared.kind === "grit" && hasRootPatternEntries(prepared.application))
   );
-  let inventoryPreparation: StructureInventoryPreparation = { kind: "not-required" };
+  let inventoryPreparation: SourceInventoryPreparation = { kind: "not-required" };
   if (needsInventory) {
     const inventoryAttempt = yield* Effect.result(
       context.sourceInventory.observe({
@@ -220,6 +240,7 @@ export const check = module.check.effect(function* ({ context, input }) {
     } else {
       inventoryPreparation = {
         kind: "ready",
+        inventory: inventoryAttempt.success,
         universe: makeStructureUniverse(inventoryAttempt.success),
       };
     }
@@ -296,11 +317,26 @@ export const check = module.check.effect(function* ({ context, input }) {
       continue;
     }
 
+    if (hasRootPatternEntries(application) && inventoryPreparation.kind === "failed") {
+      reports[applicationIndex] = failedApplication(
+        application,
+        "SetupFailed",
+        inventoryPreparation.detail
+      );
+      continue;
+    }
+    if (hasRootPatternEntries(application) && inventoryPreparation.kind === "not-required") {
+      return yield* Effect.die(
+        new Error("Source inventory was not prepared for root-pattern acquisition.")
+      );
+    }
+
     const subjectPreparation = yield* prepareGritSubjects(
       application,
       context.workspaceRoot,
       context.fileSystem,
-      context.path
+      context.path,
+      inventoryPreparation.kind === "ready" ? inventoryPreparation.inventory : undefined
     );
     if (subjectPreparation.kind === "failed") {
       reports[applicationIndex] = failedApplication(
@@ -438,6 +474,15 @@ type GritSubjectPreparation =
   | { readonly kind: "ready"; readonly subjects: readonly ResolvedSubject[] }
   | { readonly kind: "not-applicable" }
   | { readonly kind: "failed"; readonly detail: string };
+type GritAcquisitionEntry = GritCheckApplication["runner"]["acquisition"]["entries"][number];
+type RootPatternAcquisitionEntry = GritAcquisitionEntry & {
+  readonly source: {
+    readonly kind: "root-pattern";
+    readonly id: string;
+    readonly pattern: string;
+  };
+  readonly kind: "file";
+};
 
 function groupGritEvaluations(
   evaluations: readonly ReadyGritEvaluation[]
@@ -481,13 +526,16 @@ function prepareGritSubjects(
   application: GritCheckApplication,
   workspaceRoot: string,
   fileSystem: FileSystem.FileSystem,
-  path: Path.Path
+  path: Path.Path,
+  inventory: SourceInventoryResult | undefined
 ): Effect.Effect<GritSubjectPreparation, never> {
   if (!isCompatibilityRule(application)) {
-    return Effect.succeed({
-      kind: "ready" as const,
-      subjects: resolvedSubjects(application, workspaceRoot, path),
-    });
+    return hasRootPatternEntries(application)
+      ? prepareRootPatternSubjects(application, inventory, workspaceRoot, fileSystem, path)
+      : Effect.succeed({
+          kind: "ready" as const,
+          subjects: resolvedSubjects(application, workspaceRoot, path),
+        });
   }
 
   return Effect.gen(function* () {
@@ -660,12 +708,201 @@ function resolvedSubjects(
 ): readonly ResolvedSubject[] {
   const subjects = new Map<string, ResolvedSubject>();
   for (const entry of application.runner.acquisition.entries) {
+    if (isRootPatternEntry(entry)) continue;
     const absolutePath = path.resolve(workspaceRoot, entry.path);
     subjects.set(absolutePath, { absolutePath, kind: entry.kind });
   }
   return [...subjects.values()].sort((left, right) =>
     left.absolutePath < right.absolutePath ? -1 : left.absolutePath > right.absolutePath ? 1 : 0
   );
+}
+
+function hasRootPatternEntries(application: GritCheckApplication): boolean {
+  return application.runner.acquisition.entries.some(isRootPatternEntry);
+}
+
+function isRootPatternEntry(entry: GritAcquisitionEntry): entry is RootPatternAcquisitionEntry {
+  return "source" in entry && entry.source.kind === "root-pattern";
+}
+
+function prepareRootPatternSubjects(
+  application: GritCheckApplication,
+  inventory: SourceInventoryResult | undefined,
+  workspaceRoot: string,
+  fileSystem: FileSystem.FileSystem,
+  path: Path.Path
+): Effect.Effect<GritSubjectPreparation, never> {
+  return Effect.gen(function* () {
+    if (inventory === undefined) {
+      return {
+        kind: "failed" as const,
+        detail: "Source inventory is unavailable for root-pattern acquisition.",
+      };
+    }
+
+    const patternEntries = application.runner.acquisition.entries.filter(isRootPatternEntry);
+    let matchers: readonly ((candidate: string) => boolean)[];
+    try {
+      matchers = patternEntries.map((entry) =>
+        picomatch(entry.path, ROOT_PATTERN_PICOMATCH_OPTIONS)
+      );
+    } catch {
+      return {
+        kind: "failed" as const,
+        detail: "Resolved root-pattern acquisition contains an invalid glob.",
+      };
+    }
+
+    const subjects = new Map(
+      resolvedSubjects(application, workspaceRoot, path).map(
+        (subject): readonly [string, ResolvedSubject] => [subject.absolutePath, subject]
+      )
+    );
+    const directLimitDetail = rootPatternSubjectLimitDetail(subjects.values());
+    if (directLimitDetail !== undefined) {
+      return { kind: "failed" as const, detail: directLimitDetail };
+    }
+
+    const trackedNonFiles = new Set(inventory.trackedNonFilePaths);
+    const candidates: string[] = [];
+    for (const candidate of inventory.paths) {
+      if (
+        isTrackedNonFileOrDescendant(candidate, trackedNonFiles) ||
+        !matchers.some((matches) => matches(candidate))
+      ) {
+        continue;
+      }
+      const absolutePath = path.resolve(workspaceRoot, candidate);
+      if (subjects.has(absolutePath)) continue;
+      candidates.push(candidate);
+      if (candidates.length > MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS) {
+        return {
+          kind: "failed" as const,
+          detail: `Root-pattern acquisition matched more than ${MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS} inventory paths before filesystem qualification.`,
+        };
+      }
+    }
+    const workspaceRealPath = yield* Effect.result(fileSystem.realPath(workspaceRoot));
+    if (workspaceRealPath._tag === "Failure") {
+      return {
+        kind: "failed" as const,
+        detail: "Unable to canonicalize the root-pattern workspace root.",
+      };
+    }
+
+    for (const relativePath of candidates) {
+      const absolutePath = path.resolve(workspaceRoot, relativePath);
+      const linkAttempt = yield* Effect.result(fileSystem.readLink(absolutePath));
+      if (linkAttempt._tag === "Success") continue;
+      if (isNotFound(linkAttempt.failure) || hasExactCauseCode(linkAttempt.failure, "ENOTDIR")) {
+        continue;
+      }
+      if (!hasExactCauseCode(linkAttempt.failure, "EINVAL")) {
+        return {
+          kind: "failed" as const,
+          detail: `Unable to inspect root-pattern subject "${relativePath}".`,
+        };
+      }
+
+      const canonical = yield* Effect.result(fileSystem.realPath(absolutePath));
+      if (canonical._tag === "Failure") {
+        if (isNotFound(canonical.failure) || hasExactCauseCode(canonical.failure, "ENOTDIR")) {
+          continue;
+        }
+        return {
+          kind: "failed" as const,
+          detail: `Unable to canonicalize root-pattern subject "${relativePath}".`,
+        };
+      }
+      const expectedCanonical = path.resolve(workspaceRealPath.success, relativePath);
+      if (
+        canonical.success !== expectedCanonical ||
+        !isContained(workspaceRealPath.success, canonical.success, path)
+      ) {
+        continue;
+      }
+
+      const statAttempt = yield* Effect.result(fileSystem.stat(canonical.success));
+      if (statAttempt._tag === "Failure") {
+        if (isNotFound(statAttempt.failure) || hasExactCauseCode(statAttempt.failure, "ENOTDIR")) {
+          continue;
+        }
+        return {
+          kind: "failed" as const,
+          detail: `Unable to inspect root-pattern subject "${relativePath}".`,
+        };
+      }
+      if (statAttempt.success.type === "File") {
+        subjects.set(absolutePath, { absolutePath, kind: "file" });
+        const limitDetail = rootPatternSubjectLimitDetail(subjects.values());
+        if (limitDetail !== undefined) {
+          return { kind: "failed" as const, detail: limitDetail };
+        }
+      }
+    }
+
+    if (subjects.size === 0) {
+      return {
+        kind: "failed" as const,
+        detail: "Root-pattern acquisition produced no live regular files or direct subjects.",
+      };
+    }
+    return {
+      kind: "ready" as const,
+      subjects: [...subjects.values()].sort((left, right) =>
+        left.absolutePath < right.absolutePath ? -1 : left.absolutePath > right.absolutePath ? 1 : 0
+      ),
+    };
+  });
+}
+
+function rootPatternSubjectLimitDetail(subjects: Iterable<ResolvedSubject>): string | undefined {
+  let count = 0;
+  let commandLineUnits = 0;
+  for (const subject of subjects) {
+    count += 1;
+    if (count > MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS) {
+      return `Root-pattern acquisition produced more than ${MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS} final subjects.`;
+    }
+    commandLineUnits += quotedCommandLineArgumentUnits(subject.absolutePath);
+    if (commandLineUnits > MAX_ROOT_PATTERN_ACQUISITION_COMMAND_LINE_UNITS) {
+      return `Root-pattern acquisition final subjects exceed the ${MAX_ROOT_PATTERN_ACQUISITION_COMMAND_LINE_UNITS} UTF-16 code-unit command-line contribution limit.`;
+    }
+  }
+  return undefined;
+}
+
+function quotedCommandLineArgumentUnits(argument: string): number {
+  let units = 3;
+  let backslashes = 0;
+  for (const character of argument) {
+    if (character === "\\") {
+      backslashes += 1;
+      units += 1;
+      continue;
+    }
+    if (character === '"') {
+      units += backslashes + 2;
+    } else {
+      units += character.length;
+    }
+    backslashes = 0;
+  }
+  return units + backslashes;
+}
+
+function isTrackedNonFileOrDescendant(
+  candidate: string,
+  trackedNonFiles: ReadonlySet<string>
+): boolean {
+  let current = candidate;
+  while (current.length > 0) {
+    if (trackedNonFiles.has(current)) return true;
+    const separator = current.lastIndexOf("/");
+    if (separator < 0) return false;
+    current = current.slice(0, separator);
+  }
+  return false;
 }
 
 function normalizeFindings(

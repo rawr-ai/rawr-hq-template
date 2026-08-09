@@ -94,6 +94,15 @@ It carries provenance and exact acquisition facts. It is not a policy owner,
 instance, kind, capability, or niche. Nx may schedule it and a runner may
 execute it without changing ownership.
 
+A blueprint rule may bind its parser-visible corpus through bounded
+literal/star patterns relative to an already declared instance root. That
+relation belongs to the rule definition: it neither creates another root or
+selection nor asks the instance to enumerate fixed interiors of its kind.
+Resolution joins the bound root and definition patterns once; Nx hashes those
+exact globs and the runner evaluates the corresponding Git-visible regular
+files. An individual pattern may describe an optional interior, but a selected
+application must resolve at least one subject before evaluation.
+
 ## Blueprint Relations
 
 `include` and `contains` are reserved future relations between independently

@@ -1,6 +1,6 @@
 {
   "name": "@habitat-ai/cli",
-  "version": "0.5.12",
+  "version": "0.5.13",
   "private": false,
   "repository": {
     "type": "git",
@@ -61,7 +61,7 @@
     "test": "vitest run --project habitat-cli"
   },
   "dependencies": {
-    "@habitat-ai/sdk": "0.5.12",
+    "@habitat-ai/sdk": "0.5.13",
     "@nx/devkit": "23.1.1",
     "@oclif/core": "^4.13.2",
     "@oclif/plugin-help": "^6.2.27",

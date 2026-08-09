@@ -3,6 +3,21 @@ import { type Static, Type } from "typebox";
 /** Maximum stable issues returned by one rejected resolution. */
 export const MAX_CATALOG_ISSUES = 100;
 
+/** Maximum root-role pattern declarations admitted by one Grit rule. */
+export const MAX_ROOT_PATTERN_ACQUISITION_DECLARATIONS = 4;
+
+/** Maximum root-relative patterns admitted beneath one declared root role. */
+export const MAX_ROOT_PATTERNS_PER_DECLARATION = 16;
+
+/** Maximum exact subjects in an acquisition union that includes root patterns. */
+export const MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS = 256;
+
+/**
+ * Maximum quoted subject-argument contribution, leaving 4,095 Windows command-line
+ * units for the provider-owned command and fixed arguments.
+ */
+export const MAX_ROOT_PATTERN_ACQUISITION_COMMAND_LINE_UNITS = 28 * 1_024;
+
 const IdSchema = Type.String({
   minLength: 1,
   maxLength: 200,
@@ -143,6 +158,38 @@ const BlueprintGritAcquisitionSchema = Type.Object(
       uniqueItems: true,
       description: "Selection axes whose members enter evaluation.",
     }),
+    rootPatterns: Type.Optional(
+      Type.Array(
+        Type.Object(
+          {
+            rootRole: IdSchema,
+            patterns: Type.Array(
+              Type.String({
+                minLength: 1,
+                maxLength: 4_096,
+                description:
+                  "Literal/star glob relative to the bound directory root: one * may occur per ordinary segment, one whole-segment ** may recurse, and dotfiles participate.",
+              }),
+              {
+                minItems: 1,
+                maxItems: MAX_ROOT_PATTERNS_PER_DECLARATION,
+                uniqueItems: true,
+                description: "Canonical root-relative source patterns.",
+              }
+            ),
+          },
+          {
+            additionalProperties: false,
+            description: "Pattern acquisition bound to one directory root role.",
+          }
+        ),
+        {
+          minItems: 1,
+          maxItems: MAX_ROOT_PATTERN_ACQUISITION_DECLARATIONS,
+          description: "Canonical root-role pattern declarations.",
+        }
+      )
+    ),
   },
   { additionalProperties: false, description: "Blueprint-level Grit acquisition declaration." }
 );
@@ -384,6 +431,24 @@ const AcquisitionSourceSchema = Type.Union(
         member: IdSchema,
       },
       { additionalProperties: false, description: "Acquisition from one selected member." }
+    ),
+    Type.Object(
+      {
+        kind: Type.Literal("root-pattern", {
+          description: "Root-relative pattern acquisition source.",
+        }),
+        id: IdSchema,
+        pattern: Type.String({
+          minLength: 1,
+          maxLength: 4_096,
+          description:
+            "Canonical literal/star glob relative to the named root role, with at most one * per ordinary segment and one whole-segment **; dotfiles participate.",
+        }),
+      },
+      {
+        additionalProperties: false,
+        description: "Acquisition from one pattern beneath a bound directory root.",
+      }
     ),
   ],
   { description: "Origin of one resolved acquisition path." }

@@ -14,6 +14,10 @@ import {
 } from "@habitat-ai/resource-source-inventory";
 import { Effect, FileSystem, Path, PlatformError } from "effect";
 import { type Client, createClient } from "../../../../src/client";
+import {
+  MAX_ROOT_PATTERN_ACQUISITION_COMMAND_LINE_UNITS,
+  MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS,
+} from "../../../../src/service/modules/catalog/model/dto/catalog";
 
 type CheckInput = Parameters<Client["catalog"]["check"]>[0];
 type Evaluation = ReturnType<RuleEvaluationResource<never>["evaluate"]>;
@@ -58,6 +62,8 @@ type RuleSpec = {
   readonly lane?: "enforced" | "advisory";
   readonly runner?: "grit" | "structure";
   readonly acquisition?: "check" | "apply-dry-run";
+  readonly rootRoles?: readonly string[];
+  readonly rootPatterns?: readonly string[];
   readonly patternContents?: string;
   readonly structureContents?: string;
 };
@@ -197,6 +203,360 @@ describe("Habitat catalog check", () => {
         ]);
       }
     }
+  });
+
+  test("expands root patterns to sorted unique live regular files from the shared inventory", async () => {
+    const authority = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "pattern_rule",
+              rootRoles: [],
+              rootPatterns: ["lib/**/*.ts", "src/**/*.ts"],
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const fixture: Fixture = {
+      ...authority,
+      files: {
+        ...authority.files,
+        "packages/example/src/.hidden/nested.ts": "export const nestedDotfile = true;\n",
+        "packages/example/src/.root.ts": "export const rootDotfile = true;\n",
+        "packages/example/src/a.ts": "export const a = true;\n",
+        "packages/example/src/nested/b.ts": "export const b = true;\n",
+        "packages/example/test/outside.ts": "export const outside = true;\n",
+      },
+      directories: ["packages/example/src/directory.ts"],
+      symlinks: [
+        { path: "packages/example/src/linked.ts", target: "file", contents: "linked\n" },
+        { path: "packages/example/src/tracked-linked.ts", target: "file", contents: "linked\n" },
+      ],
+    };
+    const inventoryPaths = [
+      ...Object.keys(fixture.files),
+      "packages/example/src/deleted.ts",
+      "packages/example/src/directory.ts",
+      "packages/example/src/linked.ts",
+      "packages/example/src/tracked-linked.ts",
+    ];
+
+    const checked = await checkFixture(fixture, {}, undefined, () =>
+      Effect.succeed({
+        paths: [...new Set(inventoryPaths)].sort(textOrder),
+        trackedNonFilePaths: ["packages/example/src/tracked-linked.ts"],
+      })
+    );
+
+    expect(checked.inventoryCalls).toEqual([
+      expect.objectContaining({ maxEntries: MAX_SOURCE_INVENTORY_ENTRIES }),
+    ]);
+    expect(
+      checked.calls[0]?.subjectPaths.map((subject) =>
+        subject.slice(subject.indexOf("packages/example/"))
+      )
+    ).toEqual([
+      "packages/example/src/.hidden/nested.ts",
+      "packages/example/src/.root.ts",
+      "packages/example/src/a.ts",
+      "packages/example/src/nested/b.ts",
+    ]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [{ ruleId: "pattern_rule", disposition: { kind: "evaluated" } }],
+    });
+  });
+
+  test("includes an explicitly matched tracked generated path in root-pattern acquisition", async () => {
+    const generatedPath = "packages/example/src/generated/derived.ts";
+    const authority = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "generated_rule",
+              rootRoles: [],
+              rootPatterns: ["src/generated/**/*.ts"],
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const checked = await checkFixture(
+      {
+        ...authority,
+        files: {
+          ...authority.files,
+          [generatedPath]: "export const derived = true;\n",
+        },
+      },
+      {}
+    );
+
+    expect(checked.calls).toHaveLength(1);
+    expect(checked.calls[0]?.subjectPaths).toEqual([expect.stringContaining(generatedPath)]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [{ ruleId: "generated_rule", disposition: { kind: "evaluated" } }],
+    });
+  });
+
+  test("does not let a terminal globstar consume its parent path", async () => {
+    const parentPath = "packages/example/src";
+    const authority = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [{ id: "terminal_globstar", rootRoles: [], rootPatterns: ["src/**"] }],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const checked = await checkFixture(
+      {
+        ...authority,
+        files: { ...authority.files, [parentPath]: "tracked parent file\n" },
+      },
+      {}
+    );
+
+    expect(checked.calls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          ruleId: "terminal_globstar",
+          disposition: {
+            kind: "failed",
+            reason: "SetupFailed",
+            detail: expect.stringContaining("produced no live regular files or direct subjects"),
+          },
+        },
+      ],
+    });
+  });
+
+  test("judges root-pattern emptiness on the final mixed acquisition union", async () => {
+    const mixed = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [{ id: "mixed_rule", rootPatterns: ["missing/**/*.ts"] }],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const mixedResult = await checkFixture(mixed, {});
+
+    expect(mixedResult.inventoryCalls).toHaveLength(1);
+    expect(mixedResult.calls).toHaveLength(1);
+    expect(mixedResult.calls[0]?.subjectPaths).toHaveLength(1);
+    expect(mixedResult.calls[0]?.subjectPaths[0]?.endsWith("/packages/example")).toBe(true);
+    expect(mixedResult.result).toMatchObject({
+      _tag: "Completed",
+      ok: true,
+      applications: [{ ruleId: "mixed_rule", disposition: { kind: "evaluated" } }],
+    });
+
+    const patternsOnly = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "empty_rule",
+              rootRoles: [],
+              rootPatterns: ["missing/**/*.ts"],
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const emptyResult = await checkFixture(patternsOnly, {});
+
+    expect(emptyResult.inventoryCalls).toHaveLength(1);
+    expect(emptyResult.calls).toEqual([]);
+    expect(emptyResult.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          ruleId: "empty_rule",
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "SetupFailed",
+            detail: expect.stringContaining("produced no live regular files or direct subjects"),
+          },
+        },
+      ],
+    });
+  });
+
+  test("bounds root-pattern inventory qualification before filesystem probes", async () => {
+    const authority = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "bounded_candidates",
+              rootRoles: [],
+              rootPatterns: ["src/**/*.ts"],
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const candidates = Array.from(
+      { length: MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS + 1 },
+      (_, index) => `packages/example/src/candidate-${String(index).padStart(3, "0")}.ts`
+    );
+    let candidateProbeCalls = 0;
+    const checked = await checkFixture(
+      {
+        ...authority,
+        clientFileSystem: (fileSystem, _path, workspaceRoot) =>
+          FileSystem.makeNoop({
+            ...fileSystem,
+            readLink: (candidate) => {
+              if (candidate.startsWith(`${workspaceRoot}/packages/example/src/`)) {
+                candidateProbeCalls += 1;
+              }
+              return fileSystem.readLink(candidate);
+            },
+          }),
+      },
+      {},
+      undefined,
+      () =>
+        Effect.succeed({
+          paths: [...Object.keys(authority.files), ...candidates].sort(textOrder),
+          trackedNonFilePaths: [],
+        })
+    );
+
+    expect(candidateProbeCalls).toBe(0);
+    expect(checked.calls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "SetupFailed",
+            detail: expect.stringContaining(
+              `more than ${MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS} inventory paths`
+            ),
+          },
+        },
+      ],
+    });
+  });
+
+  test("bounds the final mixed root-pattern subject union", async () => {
+    const authority = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [{ id: "bounded_union", rootPatterns: ["src/**/*.ts"] }],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const matchedFiles = Object.fromEntries(
+      Array.from({ length: MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS }, (_, index) => [
+        `packages/example/src/a${String(index).padStart(3, "0")}.ts`,
+        "export {};\n",
+      ])
+    );
+    const checked = await checkFixture(
+      {
+        ...authority,
+        files: { ...authority.files, ...matchedFiles },
+      },
+      {}
+    );
+
+    expect(checked.calls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "SetupFailed",
+            detail: expect.stringContaining(
+              `more than ${MAX_ROOT_PATTERN_ACQUISITION_SUBJECTS} final subjects`
+            ),
+          },
+        },
+      ],
+    });
+  });
+
+  test("bounds the final root-pattern command-line contribution", async () => {
+    const authority = authorityFixture({
+      blueprints: [
+        {
+          id: "package",
+          rules: [
+            {
+              id: "bounded_argv",
+              rootRoles: [],
+              rootPatterns: ["src/**/*.ts"],
+            },
+          ],
+        },
+      ],
+      instances: [exampleInstance()],
+    });
+    const matchedFiles = Object.fromEntries(
+      Array.from({ length: 200 }, (_, index) => [
+        `packages/example/src/argv-${String(index).padStart(3, "0")}-${"x".repeat(120)}.ts`,
+        "export {};\n",
+      ])
+    );
+    const checked = await checkFixture(
+      {
+        ...authority,
+        files: { ...authority.files, ...matchedFiles },
+      },
+      {}
+    );
+
+    expect(checked.calls).toEqual([]);
+    expect(checked.result).toMatchObject({
+      _tag: "Completed",
+      ok: false,
+      applications: [
+        {
+          status: "error",
+          disposition: {
+            kind: "failed",
+            reason: "SetupFailed",
+            detail: expect.stringContaining(
+              `${MAX_ROOT_PATTERN_ACQUISITION_COMMAND_LINE_UNITS} UTF-16 code-unit`
+            ),
+          },
+        },
+      ],
+    });
   });
 
   test("completes an empty catalog successfully without evaluating anything", async () => {
@@ -2795,7 +3155,7 @@ function blueprintToml(id: string, rules: readonly RuleSpec[]): string {
       const runner =
         rule.runner === "structure"
           ? `[rules.runner]\nname = "habitat"\nmode = "structure"\nstructure = "${rule.id}.structure.toml"`
-          : `[rules.runner]\nname = "grit"\npattern = "${rule.id}.md"\npatternName = "${rule.id}"\n\n[rules.runner.acquisition]\nkind = "${rule.acquisition ?? "check"}"\nrootRoles = ["project"]\nselections = []`;
+          : `[rules.runner]\nname = "grit"\npattern = "${rule.id}.md"\npatternName = "${rule.id}"\n\n[rules.runner.acquisition]\nkind = "${rule.acquisition ?? "check"}"\nrootRoles = ${JSON.stringify(rule.rootRoles ?? ["project"])}\nselections = []${rule.rootPatterns === undefined ? "" : `\nrootPatterns = [{ rootRole = "project", patterns = ${JSON.stringify(rule.rootPatterns)} }]`}`;
       return `[[rules]]\nid = "${rule.id}"\nlane = "${rule.lane ?? "enforced"}"\nmessage = "${rule.id} found a violation."\nremediate = "Fix ${rule.id}."\n\n${runner}`;
     })
     .join("\n\n");

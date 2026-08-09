@@ -643,6 +643,189 @@ describe("Habitat catalog resolve", () => {
     });
   });
 
+  test("resolves canonical root patterns without replacing root-role or selection entries", async () => {
+    const fixture = packageInstanceFixture({ grit: true });
+    const result = await resolveFixture({
+      ...fixture,
+      files: {
+        ...fixture.files,
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml({ grit: true }).replace(
+          'selections = ["contract"]',
+          'selections = ["contract"]\nrootPatterns = [{ rootRole = "project", patterns = ["src/**/*.ts", "test/**/*.ts"] }]'
+        ),
+      },
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Resolved",
+      catalog: {
+        applications: [
+          {
+            runner: {
+              name: "grit",
+              acquisition: {
+                entries: [
+                  {
+                    source: { kind: "root-role", id: "project" },
+                    kind: "directory",
+                    path: "packages/example",
+                  },
+                  {
+                    source: { kind: "selection", id: "contract", member: "api" },
+                    kind: "file",
+                    path: "packages/example/test/contract/api.typecheck.ts",
+                  },
+                  {
+                    source: { kind: "root-pattern", id: "project", pattern: "src/**/*.ts" },
+                    kind: "file",
+                    path: "packages/example/src/**/*.ts",
+                  },
+                  {
+                    source: { kind: "root-pattern", id: "project", pattern: "test/**/*.ts" },
+                    kind: "file",
+                    path: "packages/example/test/**/*.ts",
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      },
+    });
+  });
+
+  test("rejects unsafe, ambiguous, duplicate, and noncanonical root patterns", async () => {
+    const fixture = packageInstanceFixture({ grit: true });
+    const cases = [
+      { patterns: '["../**/*.ts"]', code: "authority-path-invalid" },
+      { patterns: '["/src/**/*.ts"]', code: "authority-path-invalid" },
+      { patterns: '["!src/**/*.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/!(generated)/**/*.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/[!a].ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/{a,b}.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/@(a|b).ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/+(a|b).ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/?.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/a!.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/*|b.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/**.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/***.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/a**b.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/*a*b.ts"]', code: "authority-path-invalid" },
+      {
+        patterns: JSON.stringify([`src/${"*a".repeat(128)}.ts`]),
+        code: "authority-path-invalid",
+      },
+      { patterns: '["src/**/nested/**/*.ts"]', code: "authority-path-invalid" },
+      { patterns: '["src/\\\\*.ts"]', code: "authority-path-invalid" },
+      { patterns: '["test/**/*.ts", "src/**/*.ts"]', code: "authority-order-invalid" },
+      { patterns: '["src/**/*.ts", "src/**/*.ts"]', code: "authority-schema-invalid" },
+    ];
+
+    for (const candidate of cases) {
+      const result = await resolveFixture({
+        ...fixture,
+        files: {
+          ...fixture.files,
+          ".habitat/blueprints/package/blueprint.toml": blueprintToml({ grit: true }).replace(
+            'selections = ["contract"]',
+            `selections = ["contract"]\nrootPatterns = [{ rootRole = "project", patterns = ${candidate.patterns} }]`
+          ),
+        },
+      });
+      expect(result._tag).toBe("Rejected");
+      if (result._tag === "Rejected") {
+        expect(result.issues.some((issue) => issue.code === candidate.code)).toBe(true);
+      }
+    }
+  });
+
+  test("requires root patterns to name an already-bound directory role", async () => {
+    const fixture = packageInstanceFixture({ grit: true });
+    const optionalRootBlueprint = blueprintToml({ grit: true })
+      .replace('rootRoles = ["project"]', "rootRoles = []")
+      .replace(
+        'selections = ["contract"]',
+        'selections = []\nrootPatterns = [{ rootRole = "optional", patterns = ["src/**/*.ts"] }]'
+      )
+      .replace(
+        '[[instance.roots]]\nid = "project"',
+        '[[instance.roots]]\nid = "optional"\nrequired = false\nkind = "directory"\n\n[[instance.roots]]\nid = "project"'
+      );
+    const unbound = await resolveFixture({
+      ...fixture,
+      files: {
+        ...fixture.files,
+        ".habitat/blueprints/package/blueprint.toml": optionalRootBlueprint,
+      },
+    });
+    expect(unbound).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        expect.objectContaining({
+          code: "authority-manifest-invalid",
+          message: expect.stringContaining("requires bound root-pattern root role"),
+        }),
+      ],
+    });
+
+    const fileRole = await resolveFixture({
+      ...fixture,
+      files: {
+        ...fixture.files,
+        ".habitat/blueprints/package/blueprint.toml": optionalRootBlueprint.replace(
+          'id = "optional"\nrequired = false\nkind = "directory"',
+          'id = "optional"\nrequired = false\nkind = "file"'
+        ),
+      },
+    });
+    expect(fileRole).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        expect.objectContaining({
+          code: "authority-rule-invalid",
+          message: expect.stringContaining("must resolve a directory"),
+        }),
+      ],
+    });
+  });
+
+  test("rejects glob-significant bound paths only for root-pattern acquisition", async () => {
+    const projectPath = "packages/foo(bar)";
+    const files = {
+      ".habitat/blueprints/package/blueprint.toml": blueprintToml({ grit: true }),
+      ".habitat/blueprints/package/pattern.md": "language ts\n`forbidden()`\n",
+      [`${projectPath}/habitat.toml`]: instanceToml({ project: projectPath }),
+      [`${projectPath}/test/contract/api.typecheck.ts`]: "export {};\n",
+    };
+    const ordinary = await resolveFixture({ files, directories: [`${projectPath}/src`] });
+    expect(ordinary._tag).toBe("Resolved");
+
+    const result = await resolveFixture({
+      files: {
+        ...files,
+        ".habitat/blueprints/package/blueprint.toml": files[
+          ".habitat/blueprints/package/blueprint.toml"
+        ].replace(
+          'selections = ["contract"]',
+          'selections = ["contract"]\nrootPatterns = [{ rootRole = "project", patterns = ["src/**/*.ts"] }]'
+        ),
+      },
+      directories: [`${projectPath}/src`],
+    });
+
+    expect(result).toMatchObject({
+      _tag: "Rejected",
+      issues: [
+        expect.objectContaining({
+          code: "authority-path-invalid",
+          path: `${projectPath}/habitat.toml`,
+          message: expect.stringContaining("path containing glob-significant syntax"),
+        }),
+      ],
+    });
+  });
+
   test("refuses a caller-authored source root outside the blueprint vocabulary", async () => {
     const fixture = packageInstanceFixture();
     const result = await resolveFixture({
