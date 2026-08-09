@@ -33,7 +33,7 @@ type PublicProduct = Readonly<{
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.11";
+const CANDIDATE_VERSION = "0.5.12";
 const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
@@ -107,9 +107,13 @@ let consumerRoot = "";
 let gritSubjectPaths: readonly string[] = [];
 let localRegistry: Server | undefined;
 const originalRegistryEnvironment = new Map(
-  ["BUN_CONFIG_REGISTRY", "BUN_CONFIG_TOKEN", "NPM_CONFIG_USERCONFIG", "npm_config_registry"].map(
-    (name) => [name, process.env[name]]
-  )
+  [
+    "BUN_CONFIG_REGISTRY",
+    "BUN_CONFIG_TOKEN",
+    "NPM_CONFIG_REGISTRY",
+    "NPM_CONFIG_USERCONFIG",
+    "npm_config_registry",
+  ].map((name) => [name, process.env[name]])
 );
 const installVersion = publishedRegistryVersion ?? CANDIDATE_VERSION;
 
@@ -118,15 +122,19 @@ beforeAll(async () => {
   consumerRoot = path.join(acceptanceRoot, "consumer");
   await mkdir(path.join(acceptanceRoot, "packages"), { recursive: true });
   await Promise.all(
-    ["cache", "config", "data", "home", "tmp"].map((directory) =>
+    ["cache", "config", "data", "home", "public-config", "tmp"].map((directory) =>
       mkdir(path.join(acceptanceRoot, "runtime", directory), { recursive: true })
     )
+  );
+  await writeFile(
+    path.join(acceptanceRoot, "runtime", "public-config", ".npmrc"),
+    `registry=${PUBLIC_NPM_REGISTRY}/\n`
   );
   await mkdir(consumerRoot, { recursive: true });
   await packPublicProducts();
   if (publishedRegistryVersion === undefined) {
-    await startCandidateRegistry();
-    await publishCandidateProducts();
+    const registryUrl = await startCandidateRegistry();
+    await publishCandidateProducts(registryUrl);
   }
   await createConsumer();
   await installConsumer();
@@ -478,14 +486,16 @@ describe("installed Habitat products", () => {
       )}\n`
     );
 
+    // Bun keeps scoped registries above --registry, so the old pair needs a public-only config.
     const installedPreviousPair = await run(
       "bun",
       ["install", "--ignore-scripts", `--registry=${PUBLIC_NPM_REGISTRY}`],
       {
         cwd: root,
         env: {
-          BUN_CONFIG_TOKEN: "",
           BUN_INSTALL_CACHE_DIR: path.join(acceptanceRoot, "runtime", "cache", "bun-public"),
+          NPM_CONFIG_USERCONFIG: path.join(acceptanceRoot, "runtime", "public-config", ".npmrc"),
+          XDG_CONFIG_HOME: path.join(acceptanceRoot, "runtime", "public-config"),
         },
         timeoutMs: 120_000,
       }
@@ -1157,15 +1167,20 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   });
   expect(projected, projected.stderr || projected.stdout).toMatchObject({ exitCode: 0 });
   const project = JSON.parse(projected.stdout) as {
-    readonly targets?: Readonly<Record<string, unknown>>;
+    readonly targets?: Readonly<Record<string, { readonly parallelism?: boolean }>>;
   };
   expect(project.targets).toMatchObject({
     build: expect.any(Object),
     check: expect.any(Object),
     "check:boundaries": expect.any(Object),
-    "check:policy": expect.any(Object),
+    "check:policy": { parallelism: false },
     typecheck: expect.any(Object),
   });
+  const habitatLeafTargets = Object.entries(project.targets ?? {}).filter(([target]) =>
+    target.startsWith("habitat:")
+  );
+  expect(habitatLeafTargets.length).toBeGreaterThan(0);
+  expect(habitatLeafTargets.every(([, target]) => target.parallelism === false)).toBe(true);
 
   const typechecked = await run(
     nx,
@@ -1294,20 +1309,19 @@ async function packPublicProducts(): Promise<void> {
   }
 }
 
-async function startCandidateRegistry(): Promise<void> {
+async function startCandidateRegistry(): Promise<string> {
   const registry = (await runServer(
     {
       configPath: path.join(acceptanceRoot, "registry.config.yml"),
       storage: path.join(acceptanceRoot, "registry"),
-      uplinks: { npmjs: { maxage: "60m", url: PUBLIC_NPM_REGISTRY } },
+      uplinks: {},
       packages: {
-        // Candidate artifacts own this namespace even after their version is public.
+        // Candidate artifacts enter Verdaccio; public dependency traffic bypasses it.
         "@habitat-ai/*": {
           access: "$all",
           publish: "$all",
           unpublish: "$all",
         },
-        "**": { access: "$all", proxy: "npmjs", publish: "$all", unpublish: "$all" },
       },
       log: { format: "pretty", level: "warn", type: "stdout" },
       publish: { allow_offline: true },
@@ -1328,19 +1342,22 @@ async function startCandidateRegistry(): Promise<void> {
     throw new Error("Verdaccio did not bind a local TCP address.");
   }
   const registryUrl = `http://127.0.0.1:${address.port}`;
-  const npmConfig = path.join(acceptanceRoot, "runtime", "config", "npmrc");
+  const npmConfig = path.join(acceptanceRoot, "runtime", "config", ".npmrc");
   await writeFile(
     npmConfig,
     [
-      `registry=${registryUrl}/`,
+      `registry=${PUBLIC_NPM_REGISTRY}/`,
+      `@habitat-ai:registry=${registryUrl}/`,
       `//127.0.0.1:${address.port}/:_authToken=habitat-acceptance`,
       "",
     ].join("\n")
   );
   process.env.NPM_CONFIG_USERCONFIG = npmConfig;
-  process.env.npm_config_registry = registryUrl;
-  process.env.BUN_CONFIG_REGISTRY = registryUrl;
-  process.env.BUN_CONFIG_TOKEN = "habitat-acceptance";
+  delete process.env.NPM_CONFIG_REGISTRY;
+  delete process.env.npm_config_registry;
+  delete process.env.BUN_CONFIG_REGISTRY;
+  delete process.env.BUN_CONFIG_TOKEN;
+  return registryUrl;
 }
 
 async function stopCandidateRegistry(): Promise<void> {
@@ -1356,7 +1373,7 @@ async function stopCandidateRegistry(): Promise<void> {
   });
 }
 
-async function publishCandidateProducts(): Promise<void> {
+async function publishCandidateProducts(registryUrl: string): Promise<void> {
   for (const product of products) {
     const published = await run(
       "npm",
@@ -1366,6 +1383,7 @@ async function publishCandidateProducts(): Promise<void> {
         "--access",
         "public",
         "--ignore-scripts",
+        `--registry=${registryUrl}`,
       ],
       { cwd: acceptanceRoot, timeoutMs: 120_000 }
     );
