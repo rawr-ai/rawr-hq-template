@@ -1,8 +1,9 @@
 # Service
 
-`service@1` is Habitat's closed, contract-first oRPC service kind. It owns a
-cohesive runtime capability and its domain invariants. It does not own transport
-projection, host startup, long-running orchestration, or provider selection;
+`service` is Habitat's closed, contract-first oRPC service kind. Each selected
+immutable version owns a cohesive runtime capability and its domain invariants.
+It does not own transport projection, host startup, long-running orchestration,
+or provider selection;
 plugins and applications own those concerns.
 
 ## Capability Flow
@@ -52,7 +53,7 @@ The private `src/service` spine contains:
 - `modules/`: sealed capability branches.
 - `router.ts`: aggregate router composition.
 
-For a selected `service@1` member, the public `client.ts` face is the sole
+For a selected `service` member, the public `client.ts` face is the sole
 projection path. It projects the aggregate contract for transport owners,
 constructs the in-process client consumed by other services, and may expose
 deliberate boundary types. Client construction privately acquires the root
@@ -130,16 +131,20 @@ client types, and rejects an acquired adjacent child that is never projected.
 File-local Grit proves one canonical adjacent projection at each composition
 face; it does not claim total cross-file inventory reachability. Owner-local
 behavior tests prove the complete callable operation set, middleware order,
-validation, once-only execution, outcomes, and resource lifecycle. The root definition registers
-portable Grit laws over the selected project root for the public client,
-contract-property meaning, stable role declarations, ordinary adjacent binding
-projection, and internal import direction. It does not replace TypeScript
-data-flow analysis. Habitat acquires the package manifest and source subjects
-from that selected root. The closed package export law owns the sole package
-face; Nx module-boundary enforcement owns relative imports across project
-roots.
+validation, once-only execution, outcomes, and resource lifecycle. The root
+definition registers portable Grit laws for the public client, contract-property
+meaning, stable role declarations, ordinary adjacent binding projection, and
+internal import direction. `service@1` preserves the released whole-project
+acquisition and original law and structure bytes. The complete `service@2`
+closure retains that law and structure while each Grit rule acquires only its
+declared manifest, client, contract, middleware, module, or router subjects.
+Neither version inherits from or traverses the other. Grit does not replace
+TypeScript data-flow analysis.
 
-The selected SDK member co-lands with the native Nx service generator and
+The closed package export law owns the sole package face; Nx module-boundary
+enforcement owns relative imports across project roots.
+
+The selected SDK members co-land with the native Nx service generator and
 packed-consumer construction proof. Presence in source or package bytes does
 not by itself grant policy-pack membership.
 

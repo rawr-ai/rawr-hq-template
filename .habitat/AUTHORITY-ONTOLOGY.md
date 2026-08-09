@@ -40,6 +40,10 @@ definition, runner assets, version, and provenance. A repository may retain an
 exact authoring-source copy, but drift at the same identity is a resolution
 failure rather than a second authority.
 
+A blueprint identity and version are an exact locator for one immutable,
+complete definition closure. Every version declares its own runner assets;
+resolution does not inherit, merge, or traverse assets from another version.
+
 ## Rule Packet
 
 A rule packet states one qualified policy claim inside one blueprint. It is the
@@ -136,16 +140,17 @@ Application bounds execution.
 
 ## Current Realization
 
-The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits the
-version-1 `app`, `package`, `plugin`, `plugin-nx`, `provider`, `resource`, and
-`service` definitions. The selected `service@1` definition co-lands its
-positive law, construction path, recursive package closure, and installed
-consumer proof.
+The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits nine
+members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
+`resource@1`, `resource@2`, `service@1`, and `service@2`. The two version-1
+closures preserve their `habitat-cli-v0.5.13` bytes. Their complete version-2
+successors retain the same law and structure while narrowing Grit acquisition
+to definition-owned `rootPatterns`.
 
 Protocol 1 already supports nested declared rule assets. It does not realize
-blueprint relations, capability activation, niche admission, inheritance, or
-implicit directory discovery. That narrow protocol is a release boundary, not
-the whole ontology.
+blueprint relations, capability activation, niche admission, inheritance,
+cross-version asset traversal, or implicit directory discovery. That narrow
+protocol is a release boundary, not the whole ontology.
 
 ## Relations
 

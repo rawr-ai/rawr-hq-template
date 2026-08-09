@@ -15,6 +15,8 @@ kind, version, instance grammar, and sorted rule set. One required root
 `structure.toml` states the kind's complete positive filesystem spine. Focused
 source rules may live in context-bearing component directories when that makes
 the authority easier to understand.
+The identity and version select one immutable, complete closure rather than a
+base plus overrides.
 
 ```text
 blueprint
@@ -60,6 +62,8 @@ authoring and does not reinterpret an existing whole-root rule. Patterns
 introduce no child kinds, generated root bindings, or manifest membership.
 Catalog resolution, Nx inputs, and native evaluation consume the same resolved
 relation so corpus precision is both correctness and performance authority.
+Changing that acquisition creates a successor version; it does not mutate an
+already released definition.
 
 ## Instance Cost
 
@@ -73,13 +77,16 @@ requires another manifest merely because its law is separately readable.
 
 ## Packaging
 
-The policy pack ships the complete recursive asset closure of every selected
-definition at the same relative paths used by `blueprint.toml`. Catalog
-resolution rejects a missing, escaping, wrong-kind, or drifted declared asset.
-Packaging preserves authority bytes; it does not flatten or reinterpret them.
+Each policy-pack member points to one exact definition. That definition and
+all of its declared runner assets form a self-contained version closure at the
+same relative paths used by `blueprint.toml`. A successor repeats the complete
+closure; it is not a delta. Catalog resolution rejects a missing, escaping,
+wrong-kind, or drifted declared asset. It never falls back to an ancestor or
+sibling version. Packaging preserves authority bytes; it does not flatten or
+reinterpret them.
 
 Undeclared files remain inert. Obsolete or superseded files do not belong in a
-selected blueprint's recursive package closure.
+selected blueprint's package closure.
 
 ## Blueprint Relations
 
@@ -94,6 +101,7 @@ layers and are not activated in this release.
 Neither relation is inheritance, directory discovery, or an excuse for extra
 instance authoring. A future relation capability must be specified and proven
 separately.
+No generated staging or instance rewrite participates in version selection.
 
 ## Classification
 

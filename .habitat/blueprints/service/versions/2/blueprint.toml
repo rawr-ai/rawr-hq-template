@@ -1,0 +1,160 @@
+schemaVersion = 1
+id = "service"
+version = 2
+
+[[rules]]
+id = "service_v2_client_lineage"
+lane = "enforced"
+message = "Service clients must descend from the root router through native in-process construction and project the aggregate contract."
+remediate = "Construct the client from the local service router with native oRPC and deliberately export the local aggregate contract."
+
+[rules.runner]
+name = "grit"
+pattern = "components/spine/client-lineage.md"
+patternName = "service_v2_client_lineage"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/client.ts"] }]
+
+[[rules]]
+id = "service_v2_context_funnel"
+lane = "enforced"
+message = "Service context must descend through the request-bound capability funnel."
+remediate = "Restore the five-lane base, native implementation, named middleware, matching module branch, terminal curation, and raw-lane rejection."
+
+[rules.runner]
+name = "grit"
+pattern = "components/funnel/context.md"
+patternName = "service_v2_context_funnel"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/service/base.ts", "src/service/impl.ts", "src/service/middleware/*.ts", "src/service/modules/*/module.ts", "src/service/modules/*/router/*.ts"] }]
+
+[[rules]]
+id = "service_v2_contract_authority"
+lane = "enforced"
+message = "Service contracts must use native oRPC and the canonical Habitat TypeBox boundary."
+remediate = "Root operations in the imported native oc builder, adapt declared schemas through the canonical standard bridge, and describe directly authored TypeBox properties with static caller-facing meaning."
+
+[rules.runner]
+name = "grit"
+pattern = "components/contract/authority.md"
+patternName = "service_v2_contract_authority"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/service/modules/*/contract/*.ts"] }]
+
+[[rules]]
+id = "service_v2_contract_composition"
+lane = "enforced"
+message = "Service operation contracts must compose through their module index into the native aggregate contract."
+remediate = "Restore adjacent operation-to-module contract composition and aggregate the module through the native oRPC contract builder."
+
+[rules.runner]
+name = "grit"
+pattern = "components/contract/composition.md"
+patternName = "service_v2_contract_composition"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/service/contract.ts", "src/service/modules/*/contract/index.ts"] }]
+
+[[rules]]
+id = "service_v2_effect_bridge"
+lane = "enforced"
+message = "Service Effect procedures must use the implementation-owned official oRPC bridge."
+remediate = "When a service authors .effect(...) handlers, load the official extension only in src/service/impl.ts and remove manual Effect execution terminals."
+
+[rules.runner]
+name = "grit"
+pattern = "components/funnel/effect-bridge.md"
+patternName = "service_v2_effect_bridge"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/client.ts", "src/service/**/*.ts"] }]
+
+[[rules]]
+id = "service_v2_public_face"
+lane = "enforced"
+message = "Service packages must expose only their canonical client face."
+remediate = "Declare exactly ./client and target src/client or dist/client artifacts."
+
+[rules.runner]
+name = "grit"
+pattern = "components/spine/public-face.md"
+patternName = "service_v2_public_face"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["package.json"] }]
+
+[[rules]]
+id = "service_v2_router_composition"
+lane = "enforced"
+message = "Service operations must compose through their module router into the root router."
+remediate = "Author each operation from its module, aggregate it through the module-root router, and mount that router through the native service implementation."
+
+[rules.runner]
+name = "grit"
+pattern = "components/funnel/router.md"
+patternName = "service_v2_router_composition"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/service/modules/*/router.ts", "src/service/modules/*/router/*.ts", "src/service/router.ts"] }]
+
+[[rules]]
+id = "service_v2_source_boundary"
+lane = "enforced"
+message = "Service source imports must preserve same-project module, database, proof, and platform direction."
+remediate = "Keep modules local, pass database capabilities through root middleware, keep proof outside production, and leave platform work to adapters."
+
+[rules.runner]
+name = "grit"
+pattern = "components/funnel/source-boundary.md"
+patternName = "service_v2_source_boundary"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/client.ts", "src/service/**/*.ts"] }]
+
+[[rules]]
+id = "service_v2_structure"
+lane = "enforced"
+message = "Services must preserve the closed standalone capability-funnel topology."
+remediate = "Restore the package proof boundary, public client, service spine, modules, middleware, routers, and admitted model kinds."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

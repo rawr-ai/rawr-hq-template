@@ -32,9 +32,19 @@
       "path": "dist/blueprints/resource/blueprint.toml"
     },
     {
+      "id": "resource",
+      "version": 2,
+      "path": "dist/blueprints/resource/versions/2/blueprint.toml"
+    },
+    {
       "id": "service",
       "version": 1,
       "path": "dist/blueprints/service/blueprint.toml"
+    },
+    {
+      "id": "service",
+      "version": 2,
+      "path": "dist/blueprints/service/versions/2/blueprint.toml"
     }
   ]
 }

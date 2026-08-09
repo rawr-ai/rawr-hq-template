@@ -28,6 +28,7 @@ import {
 
 const MEMBER_PLACEHOLDER = "{member}";
 const GLOB_CHARACTERS = /[*?[\]!]/;
+const CANONICAL_SUCCESSOR_VERSION = /^(?:[2-9]|[1-9][0-9]+)$/u;
 const ROOT_PATTERN_UNSUPPORTED_SYNTAX = /[?\[\]{}()!|\\]/u;
 const ROOT_PATTERN_BOUND_ROOT_UNSUPPORTED_SYNTAX = /[*?\[\]{}()!|\\]/u;
 const ROOT_PATTERN_PICOMATCH_OPTIONS: Readonly<picomatch.PicomatchOptions> = Object.freeze({
@@ -808,7 +809,8 @@ function resolveCompatibility(
 function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIssue[] {
   const issues: CatalogIssue[] = [];
   const definitionPath = blueprintSourcePath(source);
-  const kind = source.kind === "local" ? source.relativePath.split("/")[2] : undefined;
+  const locatorSegments = source.kind === "local" ? source.relativePath.split("/") : [];
+  const kind = locatorSegments[2];
   if (source.kind === "local" && kind !== source.definition.id) {
     issues.push(
       issue(
@@ -817,6 +819,26 @@ function validateBlueprint(source: BlueprintSource, path: Path.Path): CatalogIss
         `Blueprint path kind "${kind ?? ""}" does not equal definition id "${source.definition.id}".`
       )
     );
+  }
+  const locatorVersion = locatorSegments[3] === "versions" ? locatorSegments[4] : undefined;
+  if (source.kind === "local" && locatorVersion !== undefined) {
+    if (!CANONICAL_SUCCESSOR_VERSION.test(locatorVersion)) {
+      issues.push(
+        issue(
+          "authority-path-invalid",
+          definitionPath,
+          `Blueprint locator version "${locatorVersion}" must be a canonical decimal integer greater than or equal to 2.`
+        )
+      );
+    } else if (String(source.definition.version) !== locatorVersion) {
+      issues.push(
+        issue(
+          "authority-version-mismatch",
+          definitionPath,
+          `Blueprint locator version ${locatorVersion} does not equal definition version ${source.definition.version}.`
+        )
+      );
+    }
   }
   issues.push(
     ...sortedUniqueIssues(
