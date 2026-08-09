@@ -32,9 +32,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@cc494354449465fa4178f36d4d5222b4d4072f5d`, with whole-tree identity
   `2eacd194803e542a579b9c6c845605123fcb2bbb`; later fresh owners may consult
   that frozen source only as provenance and owner-local test evidence.
-- Gates A through C, Rawr's finite owner transfer, the bounded Habitat `0.5.14`
-  adoption, and repository separation are sealed. Task 2.12 closed from clean
-  canonical worktrees at Habitat
+- Gates A through C, Rawr's finite owner transfer, the bounded Habitat `0.5.15`
+  continuation adoption, and repository separation are sealed. Task 2.12
+  closed from clean canonical worktrees at Habitat
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. The active source container is
@@ -42,7 +42,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
-- The root is bootstrapped by registry `@habitat-ai/cli@0.5.14` while
+- Task 3.2a is sealed by the exact `0.5.15` release and adoption receipts. The
+  root is bootstrapped by registry `@habitat-ai/cli@0.5.15` while
   `apps/habitat` remains outside the Bun workspaces. Bun 1.3.14 keeps a valid
   frozen lock; the released CLI is not added as a `file:`, `link:`, or
   duplicate workspace dependency.
@@ -102,20 +103,16 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   conforming destination yet; task 11.5 owns their reader migration and
   replacement. No source, package export, empty SDK family, or runtime owner
   changed in this node.
-- [ ] **Compatibility acquisition continuation**: replace repeated live-filesystem
-  compatibility globs with one Git-visible inventory per owner check, prove the
-  mechanism locally and through installed candidate acceptance, publish only the
-  `0.5.15` SDK/CLI pair with the already-qualified declarative telemetry face,
-  then adopt that exact registry pair before task 3.3 resumes. No runtime,
+- [x] **Compatibility acquisition continuation**: one Git-visible inventory per
+  owner check passes local and installed candidate acceptance. The `0.5.15`
+  SDK/CLI pair, including only the already-qualified declarative telemetry face,
+  is published, registry-smoked, and adopted. No runtime,
   provider acquisition, app/profile selection, mount, or instrumentation
   bootstrap lands in this continuation.
 
-The active queue has two ordered bounded nodes:
+The active queue has one bounded node:
 
-1. seal task 3.2a through the exact
-   [[foundation-continuation-0-5-15-release-receipt]] and
-   [[foundation-continuation-0-5-15-adoption-receipt]].
-2. execute task 3.3 as the sole atomic SDK path transfer: delete the empty
+1. execute task 3.3 as the sole atomic SDK path transfer: delete the empty
    `@habitat-ai/rawr-core` package/project identity, preserve `packages/core` as
    a Habitat namespace, move `packages/habitat-sdk` wholly to
    `packages/core/sdk` without changing `@habitat-ai/sdk`, update every reader

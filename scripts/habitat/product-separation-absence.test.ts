@@ -155,6 +155,7 @@ const RETAINED_OPENSPEC_PATHS = [
   "openspec/changes/realize-app-runtime-spine/classification-ledger.md",
   "openspec/changes/realize-app-runtime-spine/design.md",
   "openspec/changes/realize-app-runtime-spine/execution-queue.md",
+  "openspec/changes/realize-app-runtime-spine/foundation-continuation-0-5-15-adoption-receipt.json",
   "openspec/changes/realize-app-runtime-spine/foundation-continuation-0-5-15-release-receipt.json",
   "openspec/changes/realize-app-runtime-spine/foundation-continuation-adoption-receipt.json",
   "openspec/changes/realize-app-runtime-spine/foundation-continuation-release-receipt.json",
