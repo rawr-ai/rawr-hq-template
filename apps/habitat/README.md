@@ -67,7 +67,7 @@ the final command applies the repository changes:
 
 ```sh
 NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
-  bunx nx migrate @habitat-ai/cli@0.5.10
+  bunx nx migrate @habitat-ai/cli@0.5.11
 bun install
 NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
   bunx nx migrate --run-migrations=migrations.json --no-interactive
