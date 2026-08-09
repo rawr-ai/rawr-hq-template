@@ -53,6 +53,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `packages/core/sdk`, the empty mixed `@habitat-ai/rawr-core` owner is absent,
   and push-to-main Repository Ratchet run `31339103432` passed the complete
   platform graph.
+- Task 3.4 is sealed at Habitat
+  `main@c59cb3255ac024e34ff0dc0c3aa01aa4572e5bcd` / tree
+  `dc18105ac2a87cd59ede9c2143a66b5225bb8a90`. The ownerless root Elysia and
+  Inngest declarations and lock closure are absent; current packed SDK/CLI
+  public exports remain cold without either host; and push-to-main Repository
+  Ratchet run `31342319663` passed the complete platform graph. No host peer
+  metadata, loader, runtime owner, or blueprint landed early.
 - oRPC service execution follows native authority: `.handler` owns non-Effect
   operations; the official `.effect` extension, installed once in
   `src/service/impl.ts`, owns Effect-backed request fibers through `handlerGen`.
@@ -121,21 +128,20 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   temporary predecessor-name overlay, and passes the exact-main platform-only
   gate with no predecessor path, package, reader, alias, or compatibility
   facade.
+- [x] **Native-host reservation**: task 3.4 removes ownerless Elysia/Inngest
+  root declarations and their lock closure, proves every current packed SDK/CLI
+  public export stays cold and host-isolated, and leaves optional peer metadata
+  plus owner-local loading for the first conforming runtime harness.
 
 The active queue has one bounded node:
 
-1. execute task 3.4 as dependency cleanup and negative artifact proof only:
-   remove the ownerless root Elysia and Inngest declarations, reconcile the
-   lockfile, and prove the current packed SDK/CLI public artifacts stay cold and
-   vendor-isolated with no peer metadata, export, subpath, loader, runtime
-   project, or blueprint added. Use the existing real TypeBox runtime-schema
-   and OpenTelemetry Node config decoders for structural rejection, never a
-   walker or whole-plan snapshot, and pass exact-main absence before task 4.
-   Elysia peer metadata plus its conditional import belongs to task 13.1;
-   Inngest peer metadata plus its conditional import belongs to tasks
-   13.3/13.4. Task 4.2 remains cold and host-neutral. Oclif stays directly
-   owned by `@habitat-ai/cli`; OpenTelemetry, Effect, and oRPC remain current
-   substrate or mechanism dependencies.
+1. execute task 4.1 as the first private runtime owner: reconcile the canonical
+   Habitat authority frame, pinned Effect primitives, and frozen consumer
+   behavior oracles before authorship, then create the cold `runtime-definition`
+   project, its exact graph/cache edges, direct authoring faces, observation
+   contract, terminal SDK assembly, complete positive law, and owner-local
+   proof. Admit no selection, acquisition, execution, mounting, native host,
+   deployment implementation, or empty SDK family.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle
