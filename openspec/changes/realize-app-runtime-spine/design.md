@@ -138,7 +138,10 @@ the catalog, the four agent-plugin resource/provider families, and the
 agent-plugin lifecycle service/readers/tests at their already existing owners.
 Second, task 2.10a transfers native Oclif plugin management to the existing
 public CLI, deletes the obsolete product-bound Oclif-app packet/applications,
-and records the packed/installed roundtrip receipt. Third, task 2.11 records the
+and records the packed/installed roundtrip receipt. Third, task 2.10b adopts the
+exact `0.5.14` bounded foundation-continuation pair and advances only retained
+service/resource owners to their immutable acquisition successors. Fourth,
+task 2.11 records the
 exact pre-deletion source commit and whole tree, deletes `apps/cli`, the
 product-bound Oclif-command-plugin packet/applications, and the exact task 2.11
 predecessor inventory while explicitly retaining mixed
@@ -827,7 +830,10 @@ plugin-management roundtrip into `@habitat-ai/cli`. It does not move a topic,
 profile, development vertical, generator, runtime owner, private source-bundle
 contract, or final generic law.
 
-Only after the native transfer receipt exists does task 2.11 record the exact
+Task 2.10b then adopts the exact `0.5.14` foundation-continuation pair and
+selects `service@2` / `resource@2` only for retained platform owners, with all
+provider and condemned selections unchanged. Only after both the native
+transfer receipt and that adoption are sealed does task 2.11 record the exact
 pre-deletion source commit and whole-tree identity and delete `apps/cli` with the
 exact task-2.11 predecessor inventory. It explicitly retains mixed
 `@habitat-ai/rawr-core` / `packages/core` until its telemetry and SDK readers
@@ -892,9 +898,9 @@ redaction, backend receipt, and telemetry/analytics boundaries. It attaches to
 the canonical runtime observation section; it does not add another realization
 phase.
 
-### Use two exact-main public release checkpoints
+### Use two exact-main functional release checkpoints
 
-This migration has exactly two public checkpoints, both through the existing
+This migration has exactly two functional public checkpoints, both through the existing
 fixed Nx Release group and both containing only `@habitat-ai/sdk` and
 `@habitat-ai/cli`:
 
@@ -908,6 +914,19 @@ fixed Nx Release group and both containing only `@habitat-ai/sdk` and
 2. The **final runtime release** follows task 15.5. It contains the completed
    runtime, harness, resource-integration, telemetry, and CLI closure. Its exact
    main commit exclusively authorizes that second release.
+
+Exact-main bounded foundation-continuation tags inside the first checkpoint do
+not create a third functional checkpoint. Releases `0.5.7` through `0.5.14`
+continue the original Gate B `0.5.6` pair while admitting only the already
+sequenced foundation corrections and owner transfers. Each must publish the
+same two-package Nx release group and carry its own installed-registry receipt.
+The latest pre-separation continuation release is `0.5.14` from
+`9e650107ac8c292ca13be5edc2390b870b952c68`; it adds immutable `service@2` and
+`resource@2` acquisition successors while retaining every version-1 closure.
+Habitat adopts that exact pair and advances only retained platform instances
+before task 2.11. Transferred or deleted instances remain at version 1 until
+their already-authorized removal, so continuation never becomes normalization
+of condemned substrate.
 
 Before each public checkpoint, installed-package acceptance publishes the local
 candidate pair only to an isolated registry and passes the one-operation

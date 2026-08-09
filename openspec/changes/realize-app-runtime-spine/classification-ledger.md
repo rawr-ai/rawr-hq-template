@@ -39,7 +39,7 @@ The table enumerates all 47 projects returned by native Nx at Habitat `main`
 | `provider-source-inventory-git-effect-platform-node` | `resources/source-inventory/providers/git-effect-platform-node` | Habitat | Retain the local Git provider without product policy. | Provider conformance and catalog integration |
 | `@habitat-ai/resource-rule-evaluation` | `resources/rule-evaluation` | Habitat | Retain the provider-neutral evaluation resource. | Resource contract/conformance tests and catalog integration |
 | `provider-rule-evaluation-grit-effect-platform-node` | `resources/rule-evaluation/providers/grit-effect-platform-node` | Habitat | Retain the Grit provider. | Provider conformance and catalog integration |
-| `@habitat-ai/rawr-agent-plugin-lifecycle` | `services/agent-plugin-lifecycle` | Habitat | Retain at the same root as `@habitat-ai/agent-plugin-lifecycle-service` and conform it to `service@1`; qualify its public-client readers and tests without creating the final topic, overlay, profile, or installed vertical. | Task 2.10 owner-local service behavior; task 12.1 installed agent-plugin vertical |
+| `@habitat-ai/rawr-agent-plugin-lifecycle` | `services/agent-plugin-lifecycle` | Habitat | Retain at the same root as `@habitat-ai/agent-plugin-lifecycle-service` and advance its exact selection to the semantic-equivalent `service@2` acquisition successor; qualify its public-client readers and tests without creating the final topic, overlay, profile, or installed vertical. | Task 2.10 owner-local service behavior; task 2.10b exact successor selection; task 12.1 installed agent-plugin vertical |
 | `@habitat-ai/rawr-resource-agent-plugin-package-output` | `resources/agent-plugin-package-output` | Habitat | Retain at the same root as the provider-neutral `@habitat-ai/resource-agent-plugin-package-output`; owner qualification selects no app provider. | Task 2.10 resource conformance; task 12.1 selected lifecycle integration |
 | `provider-agent-plugin-package-output-cowork-v1-effect-platform-node` | `resources/agent-plugin-package-output/providers/cowork-v1-effect-platform-node` | Habitat | Retain the Cowork package projection provider without selecting it in an app during qualification. | Task 2.10 provider conformance; task 12.1 selected lifecycle packaging acceptance |
 | `@habitat-ai/rawr-resource-content-workspace` | `resources/content-workspace` | Habitat | Retain at the same root as the clean Git `@habitat-ai/resource-content-workspace`; owner qualification selects no app provider. | Task 2.10 resource conformance; task 12.1 selected lifecycle source acceptance |
@@ -76,6 +76,15 @@ The table enumerates all 47 projects returned by native Nx at Habitat `main`
 | `@rawr/test-utils` | `packages/test-utils` | Dissolve | Move minimal subprocess/fixture helpers beside each surviving test owner, then delete the generic package. | Owner-local tests and package/reader absence |
 | `@habitat-ai/typebox-adapter` | `packages/typebox-adapter` | Dissolve | Move the one native TypeBox Standard Schema adaptation into the private `runtime-schema` owner and expose it through `@habitat-ai/sdk/service/schema` without duplicate validation. | Ambiguous-path behavior tests, SDK export acceptance, and package absence |
 | `@rawr/bootgraph` | `packages/bootgraph` | Delete | Delete the empty reservation shell during separation. The private package-less `runtime-bootgraph` owner is authored fresh later. | Predecessor project absence and later runtime-bootgraph behavior |
+
+Task 2.10b advances exactly the retained `services/catalog` and
+`services/agent-plugin-lifecycle` selections to `service@2`, and exactly the
+retained `resources/{source-inventory,rule-evaluation,agent-plugin-package-output,content-workspace,native-agent-provider,versioned-content}`
+selections to `resource@2`. This is an acquisition-only authority update:
+provider projects remain `provider@1`; app/profile provider selection remains
+later-owned; and `services/{dev,chatgpt-corpus,hyperresearch-codex,session-intelligence}`
+plus `resources/agent-plugin-export-destination` remain at version 1 until task
+2.11 deletes the already-dispositioned Habitat-side substrate.
 
 ## Behavioral Acceptance Matrix
 

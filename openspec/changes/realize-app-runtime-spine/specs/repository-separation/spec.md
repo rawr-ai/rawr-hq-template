@@ -111,24 +111,25 @@ that one operation. There is no SDK preseed, custom installer, second preset
 invocation, or manual producer-file copy. Later upgrades MUST use `nx migrate`.
 Habitat distribution MUST remain the existing Nx Release group containing
 exactly `@habitat-ai/sdk` and `@habitat-ai/cli`; no product or internal runtime
-package joins that group. The SDK's installed Habitat pack MUST select a
-constructible `service@1` kind with one public contract, in-process client,
-router, and private implementation. Service dependencies MUST use public
+package joins that group. The SDK's installed Habitat pack MUST contain the
+immutable constructible `service@1` definition and the current constructible
+`service@2` acquisition successor, each with one public contract, in-process
+client, router, and private implementation. Service dependencies MUST use public
 clients, resources/providers MUST enter at app composition, and plugin/app
 owners MUST retain transport projection and orchestration. The installed pack
 MUST contain the complete recursively packed composed authority bytes for
-`service@1`: its definition manifest, required root `structure.toml` anchor,
-and every focused Grit rule asset nested under its informal authoring component
-directories at preserved relative paths. Those installed bytes MUST equal their
-selected source-authority bytes. The root `structure.toml` MUST remain exactly
-one ordinary Habitat structure rule and own the complete positive service
+both service versions: each definition manifest, required root `structure.toml`
+anchor, and every focused Grit rule asset nested under its informal authoring
+component directories at preserved relative paths. Those installed bytes MUST
+equal their exact source-authority bytes. Each root `structure.toml` MUST remain
+exactly one ordinary Habitat structure rule and own the complete positive service
 filesystem closure. Every nested service packet MUST remain an ordinary
 schema-version-1 Grit rule with its normal application and focused target; the
 blueprint and instance schemas MUST remain unchanged. At the pre-separation
 checkpoint `service@1` MUST declare zero blueprint relations; module and
 database law MUST remain service-owned authoring organization. The composed
-service authority MUST contain only the positive closed `service@1` kind.
-Product terms, legacy v2 rule
+service authority MUST contain only the positive closed service kind versions.
+Product terms, legacy rule-schema-v2
 metadata, generic `forbids` packets, and superseded service source-policy
 variants MUST be absent. oRPC 2 and Effect 4 MUST be the sole vendor substrate;
 no compatibility kind or legacy construction path may ship.
@@ -138,10 +139,21 @@ provider-neutral semantic-ledger contract at
 the optional conditional-import `/fluree` integration; neither source project
 may become another release member.
 
-The initiative has exactly two exact-main public checkpoints: the task 2.8
-pre-separation interface release and the task 15.6 final runtime release. Each
-checkpoint publishes only the SDK and CLI, and each checkpoint's accepted main
-commit authorizes only that checkpoint.
+The initiative has exactly two exact-main functional public checkpoints: the
+task 2.8 pre-separation interface checkpoint and the task 15.6 final runtime
+checkpoint. Each checkpoint publishes only the SDK and CLI, and each
+checkpoint's accepted main commit authorizes only that checkpoint.
+
+An exact-main bounded foundation-continuation release MAY advance the
+implementation inside the first checkpoint when it admits only already
+sequenced foundation corrections or owner transfers and publishes the same
+SDK/CLI pair. Such a release does not create a third functional checkpoint or
+admit a new package, runtime, app/profile selection, mount, or product owner.
+Before source work relies on a continuation release, the Habitat root MUST
+migrate to that exact CLI version and lock its exact paired SDK. Retained
+Habitat-owned instances MAY then select an admitted immutable acquisition
+successor. Instances already classified for deletion or transfer MUST NOT be
+normalized merely to exercise the successor.
 
 #### Scenario: Rawr upgrades after Habitat runtime release
 
@@ -152,17 +164,18 @@ commit authorizes only that checkpoint.
 #### Scenario: A service consumer installs Habitat law
 
 - **WHEN** Civ7, Rawr, Magic Migration, or another downstream repository runs the required CLI `nx add` flow
-- **THEN** the initializer-installed SDK makes `service@1` selected and constructible without repository-local generic service law
+- **THEN** the initializer-installed SDK makes the generator-selected current service version constructible without repository-local generic service law
+- **AND** previously admitted service versions remain independently resolvable for existing exact selections
 - **AND** the consumer retains only product-qualified overlays and proof
 
 #### Scenario: Public artifacts are admitted before publication
 
 - **WHEN** an exact Habitat-main SDK and CLI candidate is ready for release
 - **THEN** the local installed-package Nx acceptance packs both public tarballs, publishes both exact candidates only to an isolated local registry, and invokes native `nx add @habitat-ai/cli@<candidate-version>` once in a disposable Bun/Nx consumer with neither Habitat product preinstalled before any tag or public-registry mutation
-- **AND** that one operation installs the exact paired SDK, converges the repository foundation, and proves generated `service@1` construction, cold public imports, Nx rejection of a relative cross-project private-service import, CLI plugin and initializer loading, Oclif manifest behavior, and exact dependency closure
+- **AND** that one operation installs the exact paired SDK, converges the repository foundation, and proves generated current-service construction, cold public imports, Nx rejection of a relative cross-project private-service import, CLI plugin and initializer loading, Oclif manifest behavior, and exact dependency closure
 - **AND** artifact inspection proves the service definition, sole root structure asset, and every focused nested Grit asset is recursively present at its declared path and byte-identical to selected source authority
 - **AND** the root asset remains exactly one ordinary Habitat structure rule owning complete positive filesystem closure, while every nested packet remains an ordinary schema-version-1 Grit rule/application/focused target that registry `@habitat-ai/cli@0.5.2` can project without candidate plugin authority
-- **AND** the installed `service@1` definition declares zero blueprint relations
+- **AND** every installed service definition declares zero blueprint relations
 - **AND** the composed installed authority contains only the positive closed kind and no product vocabulary or legacy service rule packet
 - **AND** any workspace import, missing public face, unpublished dependency, or source/installed divergence blocks publication
 

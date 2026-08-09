@@ -91,12 +91,14 @@ product inventory, but cannot duplicate, weaken, or replace generic kind law.
 
 ## Current Realization
 
-The accepted protocol-1 SDK pack selects `app`, `package`, `plugin`,
-`plugin-nx`, `provider`, `resource`, and `service`. The selected `service@1`
-definition co-lands its positive law, native construction, recursive package
-closure, and installed-consumer proof. Its schema remains the existing
-protocol-1 blueprint schema; no component or relation engine is part of this
-gate.
+The accepted protocol-1 SDK pack contains `app@1`, `package@1`, `plugin@1`,
+`plugin-nx@1`, `provider@1`, `resource@1`, `resource@2`, `service@1`, and
+`service@2`. Version 1 remains immutable for exact existing selections. The
+version-2 resource and service definitions are complete acquisition successors
+with the same semantic law and structure, narrower declared `rootPatterns`, and
+their own recursive package closure and installed-consumer proof. Retained
+Habitat owners select the successors explicitly; no inheritance, fallback,
+component engine, or relation engine is part of this gate.
 
 See [[README|the Habitat policy index]], [[AUTHORITY-ONTOLOGY|the authority
 ontology]], [[BLUEPRINT-COMPOSITION|blueprint composition]], and
