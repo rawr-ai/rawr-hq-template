@@ -309,6 +309,7 @@ ResourceLifetime     = process or role lifetime
 RuntimeProvider      = cold implementation plan for a resource contract
 ProviderSelection    = app-owned normalized provider choice
 RuntimeProfile       = app-owned provider, config-source, process-default, and harness-default selection
+ServiceUse           = sole cold plugin-to-service relation authored by useService(...)
 process resource     = resource acquired once per started process
 role resource        = resource acquired once per mounted role in a process
 invocation context   = per-request / per-call / per-execution values
@@ -1576,7 +1577,11 @@ A capability that needs both public and trusted first-party callable surfaces au
 
 ### 8.4 Service use and resource requirements inside plugins
 
-Plugin authoring uses `useService(...)` to declare projected service clients. Private `runtime-derivation` turns those declarations into service binding requirements. SDK type contracts use the same services map only to infer lane-context client types. The process runtime constructs the selected service clients later and supplies them to the plugin projection boundary.
+Plugin authoring uses `useService(serviceDefinition, { contract, instance? })` to produce the sole cold plugin-to-service relation, `ServiceUse<TContract>`. A plugin's `services` map key is only the client property projected into lane context. It is not an alias, service identity, binding identity, or instance identity. `ServiceUse` carries `kind: "service.use"`, canonical `serviceId`, and optional `serviceInstance` only when the app genuinely selects more than one instance of that service.
+
+The public `ServiceUse` record carries no service definition or contract payload. `runtime-definition` retains the exact definition and contract through a private non-enumerable symbol carrier available only to private runtime owners; the public SDK uses `ServiceContractOf` solely for TypeScript client inference. This hidden carrier does not grant authors a second service definition or runtime lookup surface.
+
+Private `runtime-derivation` lowers each selected `ServiceUse` into a `ServiceBindingPlan`. The runtime compiler resolves that plan into a `CompiledServiceBindingPlan`. Only the process runtime combines the compiled plan with live runtime access, binds and caches the service client, and supplies it to the plugin projection boundary. The five service context lanes remain the service contract described in §6.4; they are not fields on `ServiceUse`.
 
 Plugins may also declare resource requirements. Resource requirements state what the projection or harness needs. They do not acquire providers. The app profile selects providers. The runtime compiler validates coverage. Bootgraph orders provider/resource lifecycle from compiler input; the provisioning kernel alone acquires resources. The process runtime passes role- or process-scoped access to projection and adapter code under sanctioned access rules.
 
@@ -1946,6 +1951,8 @@ A provider may contain Effect-native acquisition code, but it remains cold until
 
 The private `runtime-derivation` owner derives structured plan artifacts and an in-process execution descriptor table from compact authoring declarations. `@habitat-ai/sdk` exposes the public authoring contracts and the operation that invokes derivation; derived output is the sole input to the runtime compiler.
 
+For service use, derivation lowers selected `ServiceUse` declarations into `ServiceBindingPlan` artifacts. Its scope/config binding references come only from a closed declarative source grammar. Runtime derivation does not execute a binding callback or construct a live service client.
+
 Neither the SDK facade nor runtime derivation acquires resources, executes providers, constructs managed runtime roots, constructs native harness payloads, mounts harnesses, or defines native framework semantics.
 
 The specific artifact types, their portability classification, and the producer/consumer contract for each artifact are defined in the runtime realization specification, §15.
@@ -1953,6 +1960,8 @@ The specific artifact types, their portability classification, and the producer/
 ### 10.5 Runtime compiler
 
 The runtime compiler consumes runtime-derived artifacts plus the entrypoint's selected app, profile, and harness configuration, validates coverage and dependency closure against architectural invariants, and emits one `CompiledProcessPlan` plus diagnostics.
+
+For each `ServiceBindingPlan`, the compiler emits a `CompiledServiceBindingPlan` with resolved dependency and binding references. The process runtime consumes only the compiled form for live binding.
 
 Compilation precedes provisioning and harness mounting. A compilation failure aborts startup before any resource is acquired.
 
@@ -2155,10 +2164,10 @@ Each boundary names the architecture-spec section that establishes it, the runti
 |---|---|---|---|---|---|---|
 | Lifecycle vocabulary | §10.2 | §24.2, §22.1 | Arch-spec: canonical phase names | Runtime-spec: phase implementation, diagnostics, telemetry correlation | Seven phase names: `definition`, `selection`, `derivation`, `compilation`, `provisioning`, `mounting`, `observation` | Runtime realization spec; TBD: deployment spec |
 | Runtime derivation handoff | §10.4 | §15 | Arch-spec: artifact category names | Runtime-spec: artifact shapes, portability classification, producer/consumer contracts | `NormalizedAuthoringGraph`, `PortableRuntimePlanArtifact`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorTable` (non-portable) | Runtime realization spec |
-| Runtime compiler | §10.5 | §16 | Arch-spec: compiler role in the chain | Runtime-spec: validation list, CompiledProcessPlan shape, emission contract | `CompiledProcessPlan`, `CompiledExecutionPlan` | Runtime realization spec |
+| Runtime compiler | §10.5 | §16 | Arch-spec: compiler role in the chain | Runtime-spec: validation list, CompiledProcessPlan shape, emission contract | `CompiledProcessPlan`, `CompiledServiceBindingPlan`, `CompiledExecutionPlan` | Runtime realization spec |
 | Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: Habitat-vs-Effect control split naming | Runtime-spec: bootgraph ordering, Effect kernel construction, ProvisionedProcess, rollback mechanics | `Bootgraph`, `ProvisionedProcess` | Runtime realization spec |
 | Runtime access | §10.8 | §18.1–§18.2 | Arch-spec: runtime access noun taxonomy | Runtime-spec: RuntimeAccess scoping, ProcessRuntimeAccess, RoleRuntimeAccess shapes | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` | Runtime realization spec; TBD: observability companion spec |
-| Service binding | §10.9 | §18.3–§18.5 | Arch-spec: cache-key exclusion rule | Runtime-spec: ServiceBindingCache mechanics, bindService contract | `ServiceBindingCache`, `ServiceBindingCacheKey`; five context lanes: `deps`, `scope`, `config`, `invocation`, `provided` | Runtime realization spec |
+| Service use and binding | §8.4, §10.4–§10.5, §10.9 | §11.8, §12.4, §15.4, §16, §18.5 | Arch-spec: sole cold relation, phase handoffs, cache-key exclusion rule | Runtime-spec: `ServiceUse` inference/carrier contract, plan shapes, `ServiceBindingCache` mechanics, `bindService` contract | `ServiceUse`, `ServiceBindingPlan`, `CompiledServiceBindingPlan`, `ServiceBindingCache`, `ServiceBindingCacheKey`; five context lanes: `deps`, `scope`, `config`, `invocation`, `provided` | Runtime realization spec |
 | Workflow dispatcher | §10.10 | §19 | Arch-spec: dispatcher role as server-internal→async bridge | Runtime-spec: WorkflowDispatcher materialization, FunctionBundle lowering, async step-local Effect | `WorkflowDispatcher`, `FunctionBundle` | Runtime realization spec |
 | Surface adapter lowering | §10.11 | §20 | Arch-spec: adapter layer position in the chain | Runtime-spec: CompiledSurfacePlan → native payload closure contract, SurfaceAdapter interface | `CompiledSurfacePlan`, `SurfaceAdapter` | Runtime realization spec; TBD: additional vendor harness specs |
 | Harness and native boundary | §10.12 | §21 | Arch-spec: harness role taxonomy and vendor assignments | Runtime-spec: per-harness input/output contracts, HarnessDescriptor mount protocol | Public: `HarnessDescriptor`, `HarnessMountInput`, `NativeHarnessHandle`, `HarnessHealthReport`; private mounting wrapper: `StartedHarness`; per-harness: `FunctionBundle` (Inngest), oRPC route payloads (Elysia), command payloads (OCLIF) | Runtime realization spec; TBD: vendor harness companion specs (incl. OpenShell vendor contract per §13.5) |
@@ -2185,7 +2194,7 @@ The runtime realization specification (`HABITAT_RUNTIME_REALIZATION`) is the cur
 - **Runtime compiler:** runtime-spec §16 owns the validation list and emission contract; the arch-spec names the compiler's role in the chain.
 - **Bootgraph and provisioning kernel:** arch-spec §10.6 names the Habitat-vs-Effect control split; the arch-spec must NOT enumerate the Effect-internal primitives (queues, pubsub, refs, fibers, semaphores) — those belong in runtime-spec §17.
 - **Runtime access:** runtime-spec §18.1 carries the RuntimeAccess scoping invariant ("services do not receive broad RuntimeAccess; only their declared deps"); the arch-spec names the access noun taxonomy.
-- **Service binding:** runtime-spec §18.3–§18.5 owns ServiceBindingCache mechanics; the arch-spec carries the cache-key exclusion rule (`invocation` excluded from `ServiceBindingCacheKey`) and enumerates the five context lanes (`deps`, `scope`, `config`, `invocation`, `provided`) as integration vocabulary.
+- **Service use and binding:** runtime-spec §§11.8, 12.4, 15.4, 16, and 18.5 own the private-carried `ServiceUse` inference contract and derived, compiled, and live mechanics; the arch-spec fixes the sole cold relation, phase handoffs, cache-key exclusion rule (`invocation` excluded from `ServiceBindingCacheKey`), and five context lanes (`deps`, `scope`, `config`, `invocation`, `provided`) as integration vocabulary.
 - **Workflow dispatcher:** runtime-spec §19 owns dispatcher materialization and FunctionBundle lowering; the arch-spec names the dispatcher as the server-internal→async bridge.
 - **Surface adapter lowering:** runtime-spec §20 owns the CompiledSurfacePlan → native payload closure contract; the arch-spec §10.11 names the adapter layer position in the chain.
 - **Harness and native boundary:** arch-spec §10.12 names public
@@ -3343,6 +3352,11 @@ RuntimeAccess != diagnostics
 
 ### 17.7 Service binding invariants
 
+- `useService(...)` produces the sole cold author-facing service relation, `ServiceUse`;
+- a plugin `services` map key is a client property only, never an alias or identity input;
+- the public `ServiceUse` record is limited to `kind: "service.use"`, `serviceId`, and optional genuine `serviceInstance`; exact definition and contract remain on the private non-enumerable carrier used by runtime owners and `ServiceContractOf` inference;
+- runtime derivation lowers `ServiceUse` to `ServiceBindingPlan`, the runtime compiler emits `CompiledServiceBindingPlan`, and only process runtime performs live access, binding, and caching;
+- binding references use a closed declarative source grammar and never callbacks;
 - `deps`, `scope`, and `config` are construction-time boundary inputs;
 - `invocation` is per-call input;
 - `provided` is execution-time service middleware output;
@@ -3448,6 +3462,10 @@ The following patterns are forbidden in the canonical architecture:
 - re-merging `deps` and `provided`;
 - seeding `provided` at the package boundary as a general pattern;
 - introducing a generic DI-container vocabulary as public architecture;
+- author-facing `ProcessView` or `RoleView` live-access declarations in place of `ProcessRuntimeAccess` and `RoleRuntimeAccess`;
+- an author-facing `ServiceBoundary` or `ServiceBinding` declaration parallel to `defineService(...)` and `ServiceUse`;
+- a public service or contract payload, alias identity, or client-map-key identity on `ServiceUse`;
+- callback- or closure-driven service binding reference resolution;
 - direct environment-variable reads in ordinary plugins or services;
 - unredacted runtime secrets in topology export, runtime diagnostics, telemetry, or catalog records;
 - using process-local `Cache`, `Queue`, `PubSub`, `Schedule`, `Ref`, fibers, or semaphores as durable cross-process systems;

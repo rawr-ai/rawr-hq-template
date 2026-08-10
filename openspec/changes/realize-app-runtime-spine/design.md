@@ -121,7 +121,7 @@ conformance fixtures.
 | `packages/habitat-sdk` | Habitat core | Move wholly to `packages/core/sdk` while retaining the sole public package identity `@habitat-ai/sdk`. |
 | `packages/hq-sdk` API/workflow declarations and composition | predecessor evidence | Do not move the current self-classifying API builders or Inngest-shaped workflow builders into the public SDK. After the canonical runtime owners exist, implement the accepted topology-specific server/internal faces and host-neutral async faces fresh, reusing only proven generic algorithms. |
 | `packages/hq-sdk` service metadata and generic middleware/dependency contracts | Habitat authoring | Move `BaseMetadata`, `ServiceMetadataOf`, `procedureMetadata`, `getProcedureMetadata`, analytics/observability middleware factories, `AnalyticsClient`, and `Logger` to `@habitat-ai/sdk/service` with their retained platform readers. Product policy wrappers do not remain in Habitat. |
-| `packages/hq-sdk` service binding declarations and mechanics | predecessor evidence | Delete the current pre-runtime declarations, `BoundService`, `bindService`, and cache mechanics during separation. Author the canonical cold binding declarations fresh in `runtime-definition` and live mechanics fresh in `runtime-process-runtime`; retain no bridge. |
+| `packages/hq-sdk` service binding declarations and mechanics | predecessor evidence | Delete every predecessor `ProcessView`, `RoleView`, `ServiceBoundary`, author-facing `ServiceBinding`, `BoundService`, `bindService`, and cache mechanic during separation. Author only the cold `ServiceUse<TContract>` relation in `runtime-definition` and the terminal SDK service face; derive `ServiceBindingPlan` in `runtime-derivation`; author the five context lanes in the SDK service owner; and author live binding/cache mechanics fresh in `runtime-process-runtime`. Retain no bridge, alias identity, or predecessor public API. |
 | `packages/hq-sdk` concrete embedded adapters | no shared production owner | Delete `FeedbackClient`, `DbPool`, `Sql`, and embedded adapters with the example-todo production projects. Retain only the minimum owner-local fake required by a platform acceptance test. Create no generic adapter or test-helper package. |
 | Mixed `packages/hq-sdk` / `@habitat-ai/rawr-hq-sdk` identity | none | Delete only after the preceding named transfers have moved every reader; the deletion node moves no capability. |
 | Mixed `packages/runtime-context` / `@rawr/runtime-context` | predecessor evidence | Preserve its five-lane semantics in the canonical specifications, delete the unused package and workflow/support state during separation, then author the canonical service and execution contracts fresh with their qualified runtime owners. |
@@ -666,6 +666,33 @@ and bootgraph inputs required by downstream phases.
 The pure identity, closure, cycle, duplicate, and route-matching algorithms in
 the lab may be ported after their inputs and outputs are reshaped to the frozen
 contracts. The lab's truncated `CompiledProcessPlan` is rejected.
+
+### Keep service use cold until process binding
+
+Plugin service use is one relation, not a family of process, role, boundary, or
+binding views. `useService(serviceDefinition, { contract, instance? })` returns
+a frozen `ServiceUse<TContract>` with the public enumerable shape
+`{ kind: "service.use", serviceId, serviceInstance? }`. `serviceInstance` is
+present only for a genuine composition-selected instance. The key containing a
+use in a plugin's services map is the local injected-client property and has no
+alias, identity, or cache-key authority. Neither the complete service definition
+nor the contract object is public cold data.
+
+`runtime-definition` carries the exact definition and contract witness through
+a private non-enumerable symbol. Its accessor is available only to private
+runtime owners and is not re-exported by the SDK. The public SDK supplies
+`ServiceContractOf` and map-key-preserving TypeScript inference without dynamic
+lookup or a second runtime record.
+
+Runtime derivation normalizes each `ServiceUse` and produces the corresponding
+`ServiceBindingPlan`. Its scope and config binding references are closed
+declarative discriminated unions; they contain no callback, resolver, provider
+acquisition, or live value. The compiler consumes the derived plan rather than
+inventing it. The SDK service owner separately defines the five context lanes,
+and process runtime alone constructs `BoundService` values through
+`bindService`, creates the cache key, and owns `ServiceBindingCache`. The
+predecessor `ProcessView`, `RoleView`, `ServiceBoundary`, and author-facing
+`ServiceBinding` names are rejected rather than adapted.
 
 ### Give one Effect kernel the process lifecycle
 

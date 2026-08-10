@@ -1065,7 +1065,7 @@ Names remain layer-specific. Similar concepts in different layers use different 
 | --- | --- | --- |
 | App authoring | `defineApp(...)`, `startApp(...)`, `AppDefinition`, `Entrypoint`, `RuntimeProfile` | Runtime mounting, which drives runtime derivation and compilation through private owners |
 | Service authoring | `defineService(...)`, `resourceDep(...)`, `serviceDep(...)`, `semanticDep(...)`, `deps`, `scope`, `config`, `invocation`, `provided` | Runtime derivation and service binding |
-| Plugin authoring | `PluginFactory`, `PluginDefinition`, `useService(...)`, lane-specific builders, lane-native definitions, `.effect(...)` terminal bodies | Runtime derivation and surface runtime plans |
+| Plugin authoring | `PluginFactory`, `PluginDefinition`, `useService(...)`, `ServiceUse`, lane-specific builders, lane-native definitions, `.effect(...)` terminal bodies | Runtime derivation and surface runtime plans |
 | Author-facing Effect facade | `Effect`, `HabitatEffect`, `TaggedError`, `HabitatRetryPolicy`, `HabitatTimeoutPolicy`, `HabitatConcurrencyPolicy` | Services, plugins, resources, providers, repositories where allowed |
 | Resource/provider/profile authoring | `RuntimeResource`, `ResourceRequirement`, `ResourceLifetime`, `RuntimeProvider`, `ProviderSelection`, `RuntimeProfile`, `ProviderEffectPlan`, `providerFx` | Runtime derivation, runtime compiler, provisioning kernel |
 | Runtime derivation | `NormalizedAuthoringGraph`, `ExecutionDescriptorRef`, `ExecutionDescriptorTable`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `PortableRuntimePlanArtifact` | Runtime compiler and process runtime |
@@ -1081,6 +1081,12 @@ Names remain layer-specific. Similar concepts in different layers use different 
 | Harness/native boundary | `HarnessDescriptor`, `HarnessMountInput`, `NativeHarnessHandle`, `HarnessHealthReport`, native host payloads, owner-local harness findings | Runtime mounting and native host framework |
 | Observation input | `RuntimeObservationRecord`, `RuntimeObservationPort` | Runtime observation |
 | Observation projection | `RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeTopologyRecord` | Diagnostic readers, topology tools, control-plane touchpoints |
+
+The authoring layer does not admit `ProcessView`, `RoleView`, `ServiceBoundary`,
+or author-facing `ServiceBinding` declarations. Live access retains the canonical
+`RuntimeAccess`, `ProcessRuntimeAccess`, and `RoleRuntimeAccess` contracts in
+§18.1. The sole cold plugin-to-service relation is `ServiceUse`; derived,
+compiled, and live service-binding nouns remain distinct downstream artifacts.
 
 `HabitatEffect`, `ExecutionDescriptor`, `CompiledExecutionPlan`, `ExecutionDescriptorTable`, `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, and `ProviderEffectPlan` are operational execution nouns. They are not top-level ontology kinds.
 
@@ -2347,7 +2353,7 @@ export const createServiceMiddleware = service.createMiddleware;
 export const createServiceImplementer = service.createImplementer;
 ```
 
-Runtime derivation normalizes resource dependencies, service dependencies, semantic dependencies, runtime-carried schemas, metadata, and boundary identity into the normalized authoring graph through the SDK facade. The runtime compiler uses the normalized dependencies to produce `ServiceBindingPlan` and resource requirements. The process runtime uses the binding plan to construct live service clients.
+Runtime derivation normalizes resource dependencies, service dependencies, semantic dependencies, runtime-carried schemas, metadata, and boundary identity into the normalized authoring graph through the SDK facade and produces `ServiceBindingPlan` artifacts plus resource requirements. The runtime compiler resolves each derived plan into a `CompiledServiceBindingPlan`. The process runtime uses only the compiled plan to construct live service clients.
 
 ### 11.6 Service procedure implementation terminal
 
@@ -2447,6 +2453,52 @@ Inside Habitat-managed application execution, injected service clients are Effec
 
 The service binding cache remains construction-time over `deps`, `scope`, and `config`. Invocation-bound Effect clients are per-call views over construction-bound service bindings.
 
+`ServiceUse` is the sole cold plugin-to-service relation. Its string-keyed
+public record contains only `kind: "service.use"`, `serviceId`, and optional
+`serviceInstance`. The optional instance is present only for a genuinely
+distinct selected service instance; it is not a cosmetic alias.
+
+File: `packages/core/runtime/definition/src/service.ts`  
+Layer: private `runtime-definition` service-use contract exposed through the SDK service face  
+Exactness: normative for public fields, private carrier behavior, TypeScript inference, and the absence of alias or public definition/contract payloads; illustrative for the private symbol spelling.
+
+```ts
+declare const serviceUseCarrier: unique symbol;
+
+interface ServiceUseCarrier<TContract> {
+  readonly definition: ServiceDefinition;
+  readonly contract: TContract;
+}
+
+export interface ServiceUse<TContract = unknown> {
+  readonly kind: "service.use";
+  readonly serviceId: string;
+  readonly serviceInstance?: string;
+  readonly [serviceUseCarrier]: ServiceUseCarrier<TContract>;
+}
+
+export function useService<const TContract>(
+  serviceDefinition: ServiceDefinition,
+  options: {
+    readonly contract: TContract;
+    readonly instance?: string;
+  },
+): ServiceUse<TContract>;
+
+export type ServiceUses = Readonly<Record<string, ServiceUse<unknown>>>;
+
+export type ServiceContractOf<TUse> =
+  TUse extends ServiceUse<infer TContract> ? TContract : never;
+```
+
+`useService(...)` attaches the exact service definition and contract through
+the unexported symbol before freezing the declaration. The symbol property is
+non-enumerable and is available only through private runtime-owner accessors;
+the SDK does not export the symbol or a value-level accessor. Therefore the
+public record has no `service`, `definition`, `contract`, `__contract`, or
+`alias` payload while `ServiceContractOf` still preserves exact client
+inference.
+
 File: `packages/core/sdk/src/service/service-client.ts`  
 Layer: SDK service client execution shape  
 Exactness: normative for separation between internal Effect execution and external Promise interop.
@@ -2465,17 +2517,6 @@ export type InvocationBoundEffectServiceClient<TContract> = ServiceClientMapped<
   TContract,
   "effect"
 >;
-
-export interface ServiceUse<TContract = unknown> {
-  readonly kind: "service.use";
-  readonly serviceId: string;
-  readonly __contract?: TContract;
-}
-
-export type ServiceUses = Record<string, ServiceUse<unknown>>;
-
-export type ServiceContractOf<TUse> =
-  TUse extends ServiceUse<infer TContract> ? TContract : never;
 
 export type ConstructionBoundServiceClients<
   TServiceUses extends ServiceUses,
@@ -2630,7 +2671,7 @@ A plugin package exports one canonical `PluginFactory`. That factory is import-s
 
 Grouped plugin helpers may exist for ergonomics. Grouped plugins are not a runtime architecture kind. They are not used for identity, topology, diagnostics, app composition authority, service binding, or harness mounting.
 
-File: `packages/core/runtime/definition/src/plugins/plugin-definition.ts`  
+File: `packages/core/runtime/definition/src/plugin.ts`  
 Layer: private `runtime-definition` plugin contract exposed through the SDK facade  
 Exactness: normative for owner, producer/consumer, and fields; illustrative for generic spelling.
 
@@ -2656,7 +2697,7 @@ export interface PluginDefinition<
   readonly surface: TSurface;
   readonly capability: TCapability;
   readonly instance?: string;
-  readonly serviceUses: readonly ServiceUse[];
+  readonly services: ServiceUses;
   readonly resourceRequirements: readonly ResourceRequirement[];
   readonly project: PluginProjectionFunction;
 }
@@ -2698,7 +2739,32 @@ A capability that needs both public and trusted internal callable surfaces autho
 
 ### 12.4 `useService(...)`
 
-Plugin authoring uses `useService(...)` to declare projected service clients. Runtime derivation turns `useService(...)` into service binding requirements; SDK type contracts use the same services map for static lane-context inference. The plugin projection function returns cold route, command, tool, or async descriptors. The process runtime constructs service clients later and supplies them through the executable invocation context. Server, CLI, agent, and similar request contexts receive construction-bound clients when the author must call `.withInvocation(...)`; async step contexts receive invocation-bound clients after the step bridge has applied invocation identity.
+Plugin authoring uses `useService(serviceDefinition, { contract, instance? })`
+to produce `ServiceUse<TContract>`, the sole cold plugin-to-service relation.
+The key in a plugin's `services` map names the client property available in lane
+context. It is not copied into `ServiceUse` and is never a service alias,
+service identity, binding identity, or instance identity. Canonical service
+identity comes from `serviceId`; optional `serviceInstance` is derived from the
+helper's `instance` option and names only a genuinely distinct selected
+instance.
+
+`ServiceUse` does not carry a public service definition, contract, client,
+binding, callback, or any of the five service context lanes. Its private
+non-enumerable symbol carrier retains the exact definition and contract for
+private runtime owners, while `ServiceContractOf` gives SDK type contracts
+static lane-context client inference from the same `services` map.
+
+Runtime derivation resolves that private carrier and lowers each selected
+`ServiceUse` into a `ServiceBindingPlan`. The runtime compiler resolves the
+derived plan into a `CompiledServiceBindingPlan`. Only the process runtime uses
+the compiled plan with live `RuntimeAccess` to bind and cache the selected
+client. The plugin projection function remains cold and returns route, command,
+tool, or async descriptors; it never binds a client itself.
+
+Server, CLI, agent, and similar request contexts receive construction-bound
+clients when the author must call `.withInvocation(...)`; async step contexts
+receive invocation-bound clients after the step bridge has applied invocation
+identity.
 
 File: `plugins/server/api/work-items/src/plugin.ts`  
 Layer: public server API plugin authoring  
@@ -2710,7 +2776,10 @@ import {
   useService,
 } from "@habitat-ai/sdk/plugins/server";
 
-import { service as WorkItemsService } from "@rawr/services/work-items";
+import {
+  contract as WorkItemsContract,
+  service as WorkItemsService,
+} from "@rawr/services/work-items";
 import { createWorkItemsPublicRouter } from "./router";
 
 export const createPlugin = defineServerApiPlugin.factory()({
@@ -2718,7 +2787,7 @@ export const createPlugin = defineServerApiPlugin.factory()({
   routeBase: "/work-items",
 
   services: {
-    workItems: useService(WorkItemsService),
+    workItems: useService(WorkItemsService, { contract: WorkItemsContract }),
   },
 
   api() {
@@ -2898,14 +2967,17 @@ import {
   useService,
 } from "@habitat-ai/sdk/plugins/async";
 
-import { service as WorkItemsService } from "@rawr/services/work-items";
+import {
+  contract as WorkItemsContract,
+  service as WorkItemsService,
+} from "@rawr/services/work-items";
 import { WorkItemsSyncWorkflow } from "./workflows/sync-work-item";
 
 export const createPlugin = defineAsyncWorkflowPlugin.factory()({
   capability: "work-items-sync",
 
   services: {
-    workItems: useService(WorkItemsService),
+    workItems: useService(WorkItemsService, { contract: WorkItemsContract }),
   },
 
   workflows: [
@@ -3842,11 +3914,11 @@ Authors may supply explicit instance identity when multiple real instances of th
 
 ### 15.4 `ServiceBindingPlan`
 
-`ServiceBindingPlan` is the derived recipe for constructing a service client from provisioned resources, sibling service clients, semantic adapters, scope, and config.
+`ServiceBindingPlan` is the derived recipe for constructing a service client from provisioned resources, sibling service clients, semantic adapters, and declarative scope/config binding references.
 
 File: `packages/core/runtime/derivation/src/service-binding-plan.ts`  
 Layer: runtime-derived service binding artifact exposed through the SDK  
-Exactness: normative for construction-time inputs and exclusion of invocation from binding cache identity.
+Exactness: normative for construction-time inputs, closed declarative binding-reference sources, and exclusion of invocation from binding cache identity; illustrative for the exact binding-reference member spelling fixed with the derivation implementation.
 
 ```ts
 export interface ServiceBindingPlan {
@@ -3866,14 +3938,22 @@ export interface ServiceBindingPlan {
   readonly configSchema: RuntimeSchema;
   readonly invocationSchema: RuntimeSchema;
 
-  readonly scopeBinding: RuntimeValueBinding;
-  readonly configBinding: RuntimeValueBinding;
-
   readonly cacheKeyInput: ServiceBindingCacheKeyInput;
 }
 ```
 
+The plan also carries scope and config binding references. Their source grammar
+must be closed over the declarative sources admitted by app, plugin, profile,
+and runtime-definition contracts when derivation lands. A function, closure,
+resolver, selector callback, or other executable value is never a binding
+reference source. This specification does not allocate a catch-all
+`RuntimeValueBinding` or invent source discriminants before that closed grammar
+lands.
+
 `invocationSchema` is preserved because invocation remains required per call. Invocation does not participate in construction-time service binding and does not participate in `ServiceBindingCacheKey`.
+
+The runtime compiler consumes `ServiceBindingPlan` and emits
+`CompiledServiceBindingPlan`; process runtime consumes the compiled form only.
 
 ### 15.5 `SurfaceRuntimePlan`
 
@@ -3964,6 +4044,11 @@ This artifact is consumed by runtime compiler, diagnostic tooling, topology expo
 The compiler plans processes.
 
 The runtime compiler turns a normalized authoring graph plus entrypoint selection into one `CompiledProcessPlan`.
+
+For service use, it consumes each derived `ServiceBindingPlan`, validates its
+service closure and declarative binding references, resolves dependency and
+binding refs, and emits `CompiledServiceBindingPlan`. It never evaluates a
+binding callback or binds a live client.
 
 File: `packages/core/runtime/compiler/_tree.txt`  
 Layer: runtime compiler placement  
@@ -4070,7 +4155,7 @@ The compiled process plan carries these load-bearing compiled artifacts:
 
 | Artifact | Contract |
 | --- | --- |
-| `CompiledServiceBindingPlan` | Wraps `ServiceBindingPlan` with resolved resource dependency refs, service dependency refs, semantic dependency refs, scope/config bindings, and `ServiceBindingCacheKey` ingredients. |
+| `CompiledServiceBindingPlan` | Compiles `ServiceBindingPlan` with resolved resource dependency refs, service dependency refs, semantic dependency refs, closed scope/config binding refs, and `ServiceBindingCacheKey` ingredients for process-runtime consumption. |
 | `CompiledSurfacePlan` | Wraps `SurfaceRuntimePlan` with resolved service binding refs, executable boundary refs, adapter target, harness target, payload schema refs, and compilation findings. |
 | `CompiledWorkflowDispatcherPlan` | Wraps `WorkflowDispatcherDescriptor` with selected workflow refs, async provider refs, event-admission policy, and compilation findings. |
 | `CompiledExecutionPlan` | Wraps `ExecutionDescriptor` refs with boundary kind, Effect execution policy, telemetry labels, and error bridge refs. |
@@ -4376,7 +4461,7 @@ Process runtime owns:
 | Responsibility | Input | Output |
 | --- | --- | --- |
 | Runtime access scoping | `ProvisionedProcess`, `CompiledProcessPlan` | Process, role, and surface runtime access |
-| Service binding | Compiled service binding plans, runtime access | Live service clients |
+| Service binding | `CompiledServiceBindingPlan` values, runtime access | Live service clients |
 | Service binding cache | Binding inputs | Cached live service clients |
 | Invocation-bound client view creation | Cached construction-bound binding, invocation context | Effect-facing per-call client views |
 | Workflow dispatcher materialization | Dispatcher plans, selected workflow definitions, provisioned async client | Live `WorkflowDispatcher` |
@@ -4491,6 +4576,11 @@ call it.
 ### 18.5 `ServiceBindingCache` and `ServiceBindingCacheKey`
 
 Service binding is construction-time over `deps`, `scope`, and `config`. `invocation` is supplied per call and does not participate in `ServiceBindingCacheKey`.
+
+Process runtime consumes `CompiledServiceBindingPlan`, resolves its closed
+binding references against live `RuntimeAccess`, and alone owns
+`bindService(...)` plus `ServiceBindingCache`. It does not consume authoring
+`ServiceUse` declarations or uncompiled `ServiceBindingPlan` artifacts.
 
 File: `packages/core/runtime/process-runtime/src/service-binding-cache.ts`  
 Layer: runtime service binding cache  
@@ -5788,6 +5878,13 @@ Services use `resourceDep(...)` for provisionable host capabilities, `serviceDep
 
 Plugins use `useService(...)`.
 
+`useService(...)` produces `ServiceUse` as the sole cold plugin-to-service
+relation. A `services` map key is a client property only. The public record has
+`kind: "service.use"`, `serviceId`, and optional genuine `serviceInstance`; it
+has no alias or public definition/contract payload. Exact definition/contract
+retention remains on the private non-enumerable carrier used by private runtime
+owners and `ServiceContractOf` inference.
+
 Service-to-service clients are not runtime resources. They are service dependencies materialized by service binding.
 
 Plugins and apps must not import service repositories, migrations, module routers, module schemas, service-private middleware, or service-private providers.
@@ -5832,6 +5929,12 @@ forces the lazy managed runtime's `context()` before mounting; no second root
 ### 25.5 Service binding
 
 `ServiceBindingCacheKey` excludes invocation.
+
+Runtime derivation lowers `ServiceUse` to `ServiceBindingPlan`; the compiler
+lowers that plan to `CompiledServiceBindingPlan`; process runtime alone resolves
+live access and owns binding/cache mechanics. Scope/config binding references
+come from a closed declarative source grammar and never from functions,
+closures, resolvers, or callbacks.
 
 Invocation context is supplied per call through invocation-aware Effect clients, oRPC context, workflow context, command context, shell/tool context, or equivalent native caller context.
 
@@ -6005,10 +6108,10 @@ Gate families are:
 | Gate family | Required coverage |
 | --- | --- |
 | Static/import gates | no managed runtime construction outside runtime substrate; no manual `Effect.run*`; no community/custom Effect-oRPC runner; one same-realm official extension bootstrap and `.effect(...)` authoring for Effect-backed oRPC; no operation-leaf `handlerGen` import; contracts/providers cold; no sibling service internals |
-| Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, contract errors |
+| Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, `ServiceContractOf` inference from private-carried `ServiceUse`, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, contract errors |
 | Runtime behavior gates | one lazy `ManagedRuntime` forced through `context()` before mount; one `Layer.effectContext(...)` provider adapter; no second root `Scope`; non-oRPC descriptor execution through `ProcessExecutionRuntime`; native oRPC Effect execution through official `.effect(...)` and its internal bridge; `effect/context` and `effect/wrap`; abort/finalizer/resource-release order; single physical bridge/oRPC realm; `EffectRuntimeAccess` internal-only; service binding cache invocation exclusion; provider acquire/release finalization |
 | Registry gates | descriptor table is present; descriptors are derivable without runtime-bound closure capture; every executable boundary ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation |
-| Fixture/plan gates | `NormalizedAuthoringGraph`, `ServiceBindingPlan`, `CompiledExecutionPlan`, `CompiledExecutionRegistryInput`, provider dependency graph, `RuntimeCatalog`, telemetry labels, startup rollback, finalization records |
+| Fixture/plan gates | `NormalizedAuthoringGraph`, `ServiceBindingPlan`, `CompiledServiceBindingPlan`, `CompiledExecutionPlan`, `CompiledExecutionRegistryInput`, provider dependency graph, `RuntimeCatalog`, telemetry labels, startup rollback, finalization records |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
 | Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
 | Provider separation gates | provider acquire/release represented as `ProviderEffectPlan`; bootgraph modules carry identity/dependency ordering facts only; neither is an ordinary `EffectExecutionDescriptor` procedure plan |
@@ -6032,7 +6135,7 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Runtime compiler | Coverage, closure, topology validation, provider dependency graph, compiled process plan | Additional plan findings and optimization |
 | Bootgraph | Acquisition/release order and rollback metadata only | Provider-specific refresh and retry strategies |
 | Runtime access | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` live access only | Additional sanctioned redacted handles |
-| Service binding | `ServiceBindingCacheKey` excludes invocation | Call-local memoization and service-local caches |
+| Service use and binding | `ServiceUse` is the sole cold author relation; private carrier preserves exact definition/contract inference; derivation emits `ServiceBindingPlan`; compiler emits `CompiledServiceBindingPlan`; process runtime owns live access, binding, and cache; cache key excludes invocation; binding-reference sources are closed declarative data with no callbacks | Call-local memoization, service-local caches, and additional owner-local binding findings that do not add authoring nouns or binding-source variants |
 | Workflow dispatcher | Descriptor derived before runtime; live event-admission dispatcher materialized after provisioning | Additional event-admission options only; run controls require a separate capability |
 | Adapter lowering | Adapters lower compiled plans, not raw authoring | Native payload details |
 | Runtime mounting | `startApp(...)`, harness invocation, `StartedHarness` collection, reverse stop, cross-owner finalization | Mount policy details that do not change owner edges |
@@ -6067,8 +6170,10 @@ closed source topology for each kind.
 | `ProcessExecutionRuntime` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/execution-runtime.ts` | Process runtime | Non-oRPC runtime adapter-lowered closures and SDK delegating hooks only | Mounting/invocation | Owner-local non-oRPC execution bridge findings | Execution bridge gate |
 | `EffectRuntimeAccess` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/src/effect-runtime-access.ts` | Process runtime | Process execution and process-runtime adapter interiors only | Mounting/invocation | Owner-local `HabitatEffect` execution findings | Effect runtime access gate |
 | `ManagedRuntimeHandle` | Runtime substrate | `packages/core/runtime/substrate/effect` | Runtime substrate | `EffectRuntimeAccess`, provisioning/finalization | Provisioning/invocation/finalization | Owner-local managed-runtime findings or definition-owned observation records | Managed runtime ownership gate |
+| `ServiceUse` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/service.ts` | `useService(...)` | Runtime derivation; SDK type inference through `ServiceContractOf` | Definition/derivation | Cold public record plus private non-enumerable exact-definition/contract carrier; no live finding authority | Service-use shape and inference gate |
 | `NormalizedAuthoringGraph` | `runtime-derivation`, exposed by SDK | `packages/core/runtime/derivation` | Runtime derivation | Runtime compiler | Derivation | Owner-local derivation findings | Normalized graph snapshot |
-| `ServiceBindingPlan` | `runtime-derivation`, exposed by SDK | `packages/core/runtime/derivation` | Runtime derivation | Runtime compiler/process runtime | Derivation/compilation/mounting | Owner-local binding-closure findings | Service binding plan snapshot |
+| `ServiceBindingPlan` | `runtime-derivation`, exposed by SDK | `packages/core/runtime/derivation` | Runtime derivation from selected `ServiceUse` declarations | Runtime compiler | Derivation/compilation | Owner-local binding-closure findings | Service binding plan snapshot |
+| `CompiledServiceBindingPlan` | Runtime compiler | `packages/core/runtime/compiler` | Runtime compiler from `ServiceBindingPlan` | Process runtime | Compilation/mounting/invocation | Owner-local compiled binding findings | Compiled service binding plan gate |
 | `SurfaceRuntimePlan` | `runtime-derivation`, exposed by SDK | `packages/core/runtime/derivation` | Runtime derivation | Runtime compiler | Derivation/compilation | Owner-local surface-plan findings | Surface plan snapshot |
 | `WorkflowDispatcherDescriptor` | `runtime-derivation`, exposed by SDK | `packages/core/runtime/derivation` | Runtime derivation | Runtime compiler/process runtime | Derivation/mounting | Owner-local dispatcher findings | Dispatcher descriptor gate |
 | `PortableRuntimePlanArtifact` | `runtime-derivation`, exposed by SDK | `packages/core/runtime/derivation` | Runtime derivation | Compiler/diagnostic tooling/control-plane touchpoints | Derivation | Owner-local artifact findings | Portable plan snapshot |
@@ -6138,8 +6243,8 @@ runtime derivation
   normalizes app composition
   derives identities
   derives provider selections
-  turns useService declarations into binding requirements
-  derives service binding plans
+  normalizes ServiceUse declarations
+  derives ServiceBindingPlan artifacts from closed declarative binding references
   derives surface runtime plans
   derives workflow dispatcher descriptors
   derives Effect descriptor refs
@@ -6156,6 +6261,7 @@ runtime derivation
 runtime compiler
   plans processes
   validates selection, topology, provider coverage, provider dependency closure, service closure
+  emits CompiledServiceBindingPlan artifacts
   validates Effect execution boundary policy
   validates raw Effect authority and official Effect-oRPC bridge import law
   emits one compiled process plan
