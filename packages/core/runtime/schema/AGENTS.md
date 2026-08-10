@@ -2,8 +2,8 @@
 
 ## Purpose
 
-- Own Habitat's product-free adaptation from TypeBox schemas to the Standard
-  Schema validation and JSON Schema protocols.
+- Own Habitat's product-free TypeBox adaptation for runtime-carried values,
+  Standard Schema validation, and JSON Schema projection.
 
 ## Scope
 
@@ -15,6 +15,8 @@
 
 - TypeBox `Validator` is the sole validation authority. The adapter snapshots
   its input and does not implement a second validation grammar.
+- `RuntimeSchema.fromTypeBox(...)` owns runtime decoding, validation, and
+  redaction-shape metadata without changing semantic schema ownership.
 - TypeBox 1.3.8 error paths are not reconstructable without ambiguity. Issues
   retain native messages and deliberately omit paths.
 - The owner has zero private project dependencies and must not import the
@@ -24,20 +26,19 @@
 
 ## Behavior
 
-- `standard` snapshots one TypeBox schema, validates unknown values with the
-  native validator, and projects only the supported draft-2020-12 Standard
-  JSON Schema target.
+- `standard` projects the supported Standard Schema protocols;
+  `RuntimeSchema.fromTypeBox(...)` adapts runtime-carried values through the
+  same TypeBox authority.
 
 ## Flow
 
 - A semantic owner supplies a TypeBox schema, this owner snapshots and adapts
-  it, and the terminal SDK publishes the adapter through
-  `@habitat-ai/sdk/service/schema`.
+  it, and the terminal SDK publishes the appropriate schema face.
 
 ## Interfaces
 
 - Private source interface: `src/index.ts`.
-- Public assembly interface: `@habitat-ai/sdk/service/schema`.
+- Public assembly is owned by terminal SDK schema faces.
 - Nx scheduler identity: `runtime-schema`.
 
 ## Validation

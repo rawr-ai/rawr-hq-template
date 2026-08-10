@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { Type } from "typebox";
-import { standard } from "../src";
+import { RuntimeSchema, standard } from "../src";
 
 describe("TypeBox Standard Schema adapter", () => {
   test("validates and projects one detached construction snapshot", () => {
@@ -102,10 +102,73 @@ describe("TypeBox Standard Schema adapter", () => {
     );
   });
 
+  test("adapts runtime-carried values and preserves redaction metadata", () => {
+    const schema = RuntimeSchema.fromTypeBox(
+      Type.Object(
+        {
+          token: Type.String({ minLength: 1 }),
+        },
+        { additionalProperties: false, description: "Provider credentials." }
+      ),
+      { redaction: { paths: ["token"] } }
+    );
+
+    expect(schema.decode({ token: "secret" })).toEqual({
+      success: true,
+      value: { token: "secret" },
+    });
+    expect(schema.validate({ token: "" })).toMatchObject({ success: false });
+    expect(schema.description).toBe("Provider credentials.");
+    expect(schema.toRedactedShape()).toMatchObject({
+      schema: { type: "object" },
+      redaction: { paths: ["token"] },
+    });
+  });
+
+  test("keeps RuntimeSchema validation and projection on a hidden canonical snapshot", () => {
+    const source = Type.Object(
+      {
+        label: Type.String({ minLength: 2 }),
+      },
+      { additionalProperties: false }
+    );
+    const schema = RuntimeSchema.fromTypeBox(source);
+    const serializable = schema.serializable;
+
+    if (
+      typeof serializable !== "object" ||
+      serializable === null ||
+      !("properties" in serializable) ||
+      typeof serializable.properties !== "object" ||
+      serializable.properties === null ||
+      !("label" in serializable.properties) ||
+      typeof serializable.properties.label !== "object" ||
+      serializable.properties.label === null
+    ) {
+      throw new Error("Expected a serializable TypeBox object schema");
+    }
+
+    Object.assign(source.properties.label, { minLength: 10 });
+    Object.assign(serializable.properties.label, { minLength: 20 });
+
+    expect(serializable).toMatchObject({
+      properties: { label: { minLength: 20 } },
+    });
+    expect(schema.validate({ label: "ok" })).toMatchObject({ success: true });
+    expect(schema.validate({ label: "x" })).toMatchObject({ success: false });
+    expect(schema.toRedactedShape()).toMatchObject({
+      schema: {
+        type: "object",
+        properties: { label: { type: "string", minLength: 2 } },
+        additionalProperties: false,
+      },
+    });
+  });
+
   test("publishes only the native adapter surface", async () => {
     const adapter = await import("../src");
 
-    expect(Object.keys(adapter)).toEqual(["standard"]);
+    expect(Object.keys(adapter).sort()).toEqual(["RuntimeSchema", "standard"]);
     expect(standard(Type.String())).not.toHaveProperty("__typebox");
   });
 });

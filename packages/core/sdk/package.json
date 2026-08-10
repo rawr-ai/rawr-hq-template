@@ -26,6 +26,21 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./app": {
+      "types": "./dist/app/index.d.ts",
+      "import": "./dist/app/index.js",
+      "default": "./dist/app/index.js"
+    },
+    "./effect": {
+      "types": "./dist/effect/index.d.ts",
+      "import": "./dist/effect/index.js",
+      "default": "./dist/effect/index.js"
+    },
+    "./execution": {
+      "types": "./dist/execution/index.d.ts",
+      "import": "./dist/execution/index.js",
+      "default": "./dist/execution/index.js"
+    },
     "./service": {
       "types": "./dist/service/index.d.ts",
       "import": "./dist/service/index.js",
@@ -35,6 +50,26 @@
       "types": "./dist/service/schema.d.ts",
       "import": "./dist/service/schema.js",
       "default": "./dist/service/schema.js"
+    },
+    "./runtime/resources": {
+      "types": "./dist/runtime/resources/index.d.ts",
+      "import": "./dist/runtime/resources/index.js",
+      "default": "./dist/runtime/resources/index.js"
+    },
+    "./runtime/providers": {
+      "types": "./dist/runtime/providers/index.d.ts",
+      "import": "./dist/runtime/providers/index.js",
+      "default": "./dist/runtime/providers/index.js"
+    },
+    "./runtime/profiles": {
+      "types": "./dist/runtime/profiles/index.d.ts",
+      "import": "./dist/runtime/profiles/index.js",
+      "default": "./dist/runtime/profiles/index.js"
+    },
+    "./runtime/schema": {
+      "types": "./dist/runtime/schema.d.ts",
+      "import": "./dist/runtime/schema.js",
+      "default": "./dist/runtime/schema.js"
     },
     "./telemetry": {
       "types": "./dist/telemetry.d.ts",

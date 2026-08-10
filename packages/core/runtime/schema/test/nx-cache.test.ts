@@ -76,7 +76,13 @@ async function createFixture(): Promise<string> {
       },
     });
 
-    for (const relativePath of [".gitignore", "bun.lock", "package.json", "tsconfig.base.json"]) {
+    for (const relativePath of [
+      ".gitignore",
+      "bun.lock",
+      "bunfig.toml",
+      "package.json",
+      "tsconfig.base.json",
+    ]) {
       await copyFile(path.join(workspaceRoot, relativePath), path.join(fixtureRoot, relativePath));
     }
     await writeFixtureNxConfig(fixtureRoot);
@@ -122,6 +128,7 @@ async function writeFixtureNxConfig(fixtureRoot: string): Promise<void> {
     namedInputs: {
       default: requiredNxValue(source.namedInputs?.default, "namedInputs.default"),
       production: requiredNxValue(source.namedInputs?.production, "namedInputs.production"),
+      bunToolchain: requiredNxValue(source.namedInputs?.bunToolchain, "namedInputs.bunToolchain"),
       typescriptRuntime: requiredNxValue(
         source.namedInputs?.typescriptRuntime,
         "namedInputs.typescriptRuntime"

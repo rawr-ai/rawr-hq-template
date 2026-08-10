@@ -1,11 +1,21 @@
 export type {
-  BaseMetadata,
-  ServiceMetadataOf,
-} from "./metadata";
+  ResourceDependency,
+  SemanticDependency,
+  ServiceDefinition,
+  ServiceDependency,
+  ServiceDependencyDeclaration,
+  ServiceOf,
+  ServiceUse,
+} from "../../../runtime/definition/src/service";
 export {
-  getProcedureMetadata,
-  procedureMetadata,
-} from "./metadata";
+  defineService,
+  resourceDep,
+  semanticDep,
+  serviceDep,
+  useService,
+} from "../../../runtime/definition/src/service";
+export type { BaseMetadata, ServiceMetadataOf } from "./metadata";
+export { getProcedureMetadata, procedureMetadata } from "./metadata";
 export type {
   AnalyticsMiddlewareInput,
   AnalyticsPayloadArgs,

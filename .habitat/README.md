@@ -58,9 +58,9 @@ The current selected generic kinds are:
 - `app`: one closed product-composition shell. Narrower app kinds own their
   host-specific runtime and entrypoint faces.
 
-The accepted SDK protocol-1 policy pack admits exactly nine sorted members:
+The accepted SDK protocol-1 policy pack admits exactly ten sorted members:
 `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`, `resource@1`,
-`resource@2`, `service@1`, and `service@2`.
+`resource@2`, `runtime-definition@1`, `service@1`, and `service@2`.
 Each member resolves its definition and runner assets from the selected
 package with policy-pack provenance. A repository activates one only through
 its own `habitat.toml` instance; an exact producer-source copy is inert, and a
@@ -69,6 +69,8 @@ repository compatibility rules continue to execute beside resolved package
 rule applications. The selected `service` definitions co-land their focused
 positive law, native Nx generator, complete package closure, and
 packed-consumer construction proof.
+The `runtime-definition@1` member closes the cold private definition owner; it
+does not realize `app@2`, live runtime execution, or a native host.
 The version-1 resource and service closures preserve the exact
 `habitat-cli-v0.5.13` definition and runner-asset bytes. Their version-2
 successors retain the same structure and semantic law while narrowing Grit

@@ -1,1 +1,4 @@
+.habitat/blueprints/app/blueprint.toml text eol=lf
+.habitat/blueprints/app/skill.md text eol=lf
+.habitat/blueprints/app/structure.toml text eol=lf
 docs/system/HABITAT_RUNTIME_REALIZATION.md -whitespace

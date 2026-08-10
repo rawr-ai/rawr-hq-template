@@ -48,6 +48,7 @@
 - [Repository router](../../AGENTS.md)
 - [Public Habitat SDK](sdk/AGENTS.md)
 - [Private runtime-schema owner](runtime/schema/AGENTS.md)
+- [Private runtime-definition owner](runtime/definition/AGENTS.md)
 
 ## Validation
 

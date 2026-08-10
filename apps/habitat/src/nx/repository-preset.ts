@@ -202,8 +202,12 @@ const standardNamedInputs: NonNullable<NxJsonConfiguration["namedInputs"]> = {
     "!{projectRoot}/**/*.test.*",
     "!{projectRoot}/**/*.spec.*",
   ],
-  bunToolchain: ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"],
-  typescriptRuntime: ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
+  bunToolchain: [
+    "{workspaceRoot}/package.json",
+    "{workspaceRoot}/bun.lock",
+    "{workspaceRoot}/bunfig.toml",
+  ],
+  typescriptRuntime: ["bunToolchain", "{workspaceRoot}/tsconfig.base.json"],
 };
 
 const nativeNxPresetNamedInputs: Readonly<Record<string, unknown>> = {

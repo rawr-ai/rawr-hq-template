@@ -1,4 +1,5 @@
 import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   lstat,
   mkdir,
@@ -60,8 +61,15 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
   "@habitat-ai/cli": ["@habitat-ai/cli/command", "@habitat-ai/cli/nx-plugin"],
   "@habitat-ai/sdk": [
     "@habitat-ai/sdk",
+    "@habitat-ai/sdk/app",
+    "@habitat-ai/sdk/effect",
+    "@habitat-ai/sdk/execution",
     "@habitat-ai/sdk/service",
     "@habitat-ai/sdk/service/schema",
+    "@habitat-ai/sdk/runtime/resources",
+    "@habitat-ai/sdk/runtime/providers",
+    "@habitat-ai/sdk/runtime/profiles",
+    "@habitat-ai/sdk/runtime/schema",
     "@habitat-ai/sdk/telemetry",
   ],
 } as const satisfies Readonly<Record<PublicProduct["name"], readonly string[]>>;
@@ -72,8 +80,14 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "plugin-nx",
   "provider",
   "resource",
+  "runtime-definition",
   "service",
 ] as const;
+const IMMUTABLE_APP_V1_SHA256 = {
+  "app/blueprint.toml": "897149c9bcd188d959222fad314372bebcc31e4c835c8a6ae906bd40b153b776",
+  "app/skill.md": "244846de684e4f8cdbb2c1c0ab3a93010914e1031ce7b791443d84fb2cd2e254",
+  "app/structure.toml": "39353121c563732527f9ba49b6b081feb9e83402dbf4952a1750323138ce8165",
+} as const;
 const GENERATED_SERVICE_INVENTORY = [
   "AGENTS.md",
   "habitat.toml",
@@ -269,12 +283,18 @@ describe("installed Habitat products", () => {
     const fixturePath = `${path.join(consumerRoot, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`;
     expect(JSON.parse(await readFile(path.join(consumerRoot, "nx.json"), "utf8"))).toMatchObject({
       namedInputs: {
+        bunToolchain: [
+          "{workspaceRoot}/package.json",
+          "{workspaceRoot}/bun.lock",
+          "{workspaceRoot}/bunfig.toml",
+        ],
         production: [
           "default",
           "!{projectRoot}/test/**",
           "!{projectRoot}/**/*.test.*",
           "!{projectRoot}/**/*.spec.*",
         ],
+        typescriptRuntime: ["bunToolchain", "{workspaceRoot}/tsconfig.base.json"],
       },
     });
     expect(await readFile(path.join(consumerRoot, "eslint.config.mjs"), "utf8")).toContain(
@@ -761,12 +781,19 @@ describe("installed Habitat products", () => {
       coldSdkEntrypoint,
       [
         'const sdk = await import("@habitat-ai/sdk");',
+        'const app = await import("@habitat-ai/sdk/app");',
+        'const effect = await import("@habitat-ai/sdk/effect");',
+        'const execution = await import("@habitat-ai/sdk/execution");',
         'const service = await import("@habitat-ai/sdk/service");',
         'const schema = await import("@habitat-ai/sdk/service/schema");',
+        'const resources = await import("@habitat-ai/sdk/runtime/resources");',
+        'const providers = await import("@habitat-ai/sdk/runtime/providers");',
+        'const profiles = await import("@habitat-ai/sdk/runtime/profiles");',
+        'const runtimeSchema = await import("@habitat-ai/sdk/runtime/schema");',
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
         'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
-        "console.log(JSON.stringify({ sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service), telemetry: Object.keys(telemetry).sort() }));",
+        "console.log(JSON.stringify({ app: Object.keys(app).sort(), effect: Object.keys(effect).sort(), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
       ].join("\n"),
       "utf8"
     );
@@ -777,14 +804,30 @@ describe("installed Habitat products", () => {
       stderr: "",
     });
     expect(JSON.parse(coldSdk.stdout)).toMatchObject({
+      app: ["defineApp", "defineEntrypoint", "defineProcessCatalog", "runtimeLaunchIdentity"],
+      effect: ["Effect", "TaggedError"],
+      execution: [],
+      profiles: ["defineRuntimeProfile"],
+      providers: ["defineRuntimeProvider"],
+      resources: ["defineRuntimeResource", "requireResource"],
+      runtimeSchema: [
+        "RuntimeLifecyclePhaseSchema",
+        "RuntimeObservationRecordSchema",
+        "RuntimeSchema",
+      ],
       sdk: ["createHabitatClientForWorkspace"],
       schema: ["standard"],
-      service: expect.arrayContaining([
+      service: [
         "createAnalyticsMiddlewareCallback",
         "createObservabilityMiddlewareCallback",
+        "defineService",
         "getProcedureMetadata",
         "procedureMetadata",
-      ]),
+        "resourceDep",
+        "semanticDep",
+        "serviceDep",
+        "useService",
+      ],
       telemetry: [
         "DisabledOpenTelemetryNodeConfigSchema",
         "EmitTechnicalLogInputSchema",
@@ -820,11 +863,31 @@ describe("installed Habitat products", () => {
     const installedBlueprintPath = generatedServiceRequire.resolve(
       "@habitat-ai/sdk/blueprints/package/blueprint.toml"
     );
-    expect(JSON.parse(await readFile(installedPackPath, "utf8"))).toEqual(
+    const installedPack = JSON.parse(await readFile(installedPackPath, "utf8")) as {
+      readonly blueprints?: readonly {
+        readonly id?: unknown;
+        readonly version?: unknown;
+      }[];
+      readonly protocolVersion?: unknown;
+    };
+    expect(installedPack).toEqual(
       JSON.parse(
         await readFile(path.join(workspaceRoot, "packages/core/sdk/habitat-pack.json"), "utf8")
       )
     );
+    expect(installedPack.protocolVersion).toBe(1);
+    expect(installedPack.blueprints?.map(({ id, version }) => `${id}@${version}`)).toEqual([
+      "app@1",
+      "package@1",
+      "plugin@1",
+      "plugin-nx@1",
+      "provider@1",
+      "resource@1",
+      "resource@2",
+      "runtime-definition@1",
+      "service@1",
+      "service@2",
+    ]);
 
     const canonicalBlueprintRoot = path.join(workspaceRoot, ".habitat/blueprints");
     const installedBlueprintRoot = path.resolve(path.dirname(installedBlueprintPath), "..");
@@ -865,6 +928,14 @@ describe("installed Habitat products", () => {
     for (const relativePath of blueprintInventory) {
       expect(await readFile(path.join(installedBlueprintRoot, relativePath)), relativePath).toEqual(
         await readFile(path.join(canonicalBlueprintRoot, relativePath))
+      );
+    }
+    for (const [relativePath, expectedSha256] of Object.entries(IMMUTABLE_APP_V1_SHA256)) {
+      expect(await sha256File(path.join(canonicalBlueprintRoot, relativePath)), relativePath).toBe(
+        expectedSha256
+      );
+      expect(await sha256File(path.join(installedBlueprintRoot, relativePath)), relativePath).toBe(
+        expectedSha256
       );
     }
 
@@ -926,6 +997,12 @@ describe("installed Habitat products", () => {
             blueprintVersion: 2,
             id: "resource-v2-acceptance",
             ownerProject: "@fixture/resource-v2-acceptance",
+          }),
+          expect.objectContaining({
+            blueprint: "runtime-definition",
+            blueprintVersion: 1,
+            id: "runtime-definition-acceptance",
+            ownerProject: "@fixture/runtime-definition-acceptance",
           }),
           expect.objectContaining({
             blueprint: "service",
@@ -1018,6 +1095,11 @@ describe("installed Habitat products", () => {
         path: "dist/blueprints/resource/versions/2/blueprint.toml",
         version: 2,
       },
+      {
+        id: "runtime-definition",
+        path: "dist/blueprints/runtime-definition/blueprint.toml",
+        version: 1,
+      },
       { id: "service", path: "dist/blueprints/service/blueprint.toml", version: 1 },
       {
         id: "service",
@@ -1037,6 +1119,10 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           definition: expect.objectContaining({ id: "resource", version: 2 }),
+          provenance: expect.objectContaining({ kind: "policy-pack" }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "runtime-definition", version: 1 }),
           provenance: expect.objectContaining({ kind: "policy-pack" }),
         }),
         expect.objectContaining({
@@ -1087,6 +1173,14 @@ describe("installed Habitat products", () => {
           status: "pass",
         }),
         expect.objectContaining({
+          disposition: { kind: "evaluated" },
+          instanceId: "runtime-definition-acceptance",
+          ownerProject: "@fixture/runtime-definition-acceptance",
+          ruleId: "runtime_definition_v1_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+        expect.objectContaining({
           instanceId: "resource-v2-acceptance",
           ruleId: "resource_v2_effect_error_authority",
           runner: "grit",
@@ -1099,6 +1193,36 @@ describe("installed Habitat products", () => {
           status: "pass",
         }),
       ]),
+      ok: true,
+    });
+
+    const checkedRuntimeDefinition = await run(
+      habitat,
+      [
+        "check",
+        "--instance",
+        "runtime-definition-acceptance",
+        "--rule",
+        "runtime_definition_v1_structure",
+      ],
+      { cwd: consumerRoot }
+    );
+    expect(
+      checkedRuntimeDefinition,
+      checkedRuntimeDefinition.stderr || checkedRuntimeDefinition.stdout
+    ).toMatchObject({ exitCode: 0, stderr: "" });
+    expect(JSON.parse(checkedRuntimeDefinition.stdout)).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        expect.objectContaining({
+          disposition: { kind: "evaluated" },
+          instanceId: "runtime-definition-acceptance",
+          ownerProject: "@fixture/runtime-definition-acceptance",
+          ruleId: "runtime_definition_v1_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+      ],
       ok: true,
     });
 
@@ -1675,6 +1799,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   expect(structureInputs).toEqual([serviceRootInput, `${serviceRootInput}/**/*`]);
 
   const telemetryTypeConsumerPath = path.join(serviceRoot, "src/telemetry-type-consumer.ts");
+  const runtimeTypeConsumerPath = path.join(serviceRoot, "src/runtime-type-consumer.ts");
   await writeFile(
     telemetryTypeConsumerPath,
     [
@@ -1684,12 +1809,92 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "",
     ].join("\n")
   );
+  await writeFile(
+    runtimeTypeConsumerPath,
+    [
+      'import type { oc as NativeOc } from "@orpc/contract";',
+      'import type { implement as NativeImplement, os as NativeOs } from "@orpc/server";',
+      'import type { HabitatEffect } from "@habitat-ai/sdk/effect";',
+      'import type { EffectExecutionDescriptor } from "@habitat-ai/sdk/execution";',
+      'import { defineService, serviceDep } from "@habitat-ai/sdk/service";',
+      'import { RuntimeSchema, type RuntimeSchemaValue } from "@habitat-ai/sdk/runtime/schema";',
+      'import { Type } from "typebox";',
+      "",
+      "type Equal<TLeft, TRight> =",
+      "  (<T>() => T extends TLeft ? 1 : 2) extends",
+      "  (<T>() => T extends TRight ? 1 : 2)",
+      "    ? (<T>() => T extends TRight ? 1 : 2) extends",
+      "      (<T>() => T extends TLeft ? 1 : 2)",
+      "      ? true",
+      "      : false",
+      "    : false;",
+      "type Assert<T extends true> = T;",
+      "",
+      'interface ExecutionFailure { readonly _tag: "ExecutionFailure"; }',
+      "interface ExecutionContext { readonly traceId: string; }",
+      "interface RuntimeRequirement { readonly clock: true; }",
+      "type Descriptor = EffectExecutionDescriptor<",
+      "  { readonly jobId: string },",
+      '  "complete",',
+      "  ExecutionFailure,",
+      "  ExecutionContext,",
+      "  RuntimeRequirement",
+      ">;",
+      'type ExecutionValues = typeof import("@habitat-ai/sdk/execution");',
+      "",
+      "const sibling = defineService({",
+      '  id: "sibling",',
+      "  deps: {},",
+      "  scope: RuntimeSchema.fromTypeBox(Type.Object({ workspaceId: Type.String() })),",
+      "  config: RuntimeSchema.fromTypeBox(Type.Object({ readOnly: Type.Boolean() })),",
+      "  invocation: RuntimeSchema.fromTypeBox(Type.Object({ traceId: Type.String() })),",
+      "});",
+      "const dependent = defineService({",
+      '  id: "dependent",',
+      "  deps: { sibling: serviceDep(sibling) },",
+      "});",
+      "",
+      "export type PackedRuntimeDefinitionOracle = readonly [",
+      "  Assert<",
+      "    Equal<",
+      '      ReturnType<Descriptor["run"]>,',
+      '      HabitatEffect<"complete", ExecutionFailure, RuntimeRequirement>',
+      "    >",
+      "  >,",
+      '  Assert<Equal<Extract<keyof ExecutionValues, "defineEffectExecution">, never>>,',
+      "  Assert<",
+      "    Equal<",
+      "      RuntimeSchemaValue<NonNullable<typeof sibling.scope>>,",
+      "      { workspaceId: string }",
+      "    >",
+      "  >,",
+      "  Assert<",
+      "    Equal<",
+      "      RuntimeSchemaValue<NonNullable<typeof sibling.config>>,",
+      "      { readOnly: boolean }",
+      "    >",
+      "  >,",
+      "  Assert<",
+      "    Equal<",
+      "      RuntimeSchemaValue<NonNullable<typeof sibling.invocation>>,",
+      "      { traceId: string }",
+      "    >",
+      "  >,",
+      "  Assert<Equal<typeof dependent.deps.sibling.service, typeof sibling>>,",
+      "  Assert<Equal<typeof sibling.oc, typeof NativeOc>>,",
+      "  Assert<Equal<typeof sibling.createMiddleware, typeof NativeOs.middleware>>,",
+      "  Assert<Equal<typeof sibling.createImplementer, typeof NativeImplement>>,",
+      "];",
+      "",
+    ].join("\n")
+  );
   const typechecked = await run(
     nx,
     ["run", "@fixture/greeting-service:typecheck", "--outputStyle=static"],
     { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
   );
   await rm(telemetryTypeConsumerPath);
+  await rm(runtimeTypeConsumerPath);
   expect(typechecked, `${typechecked.stdout}\n${typechecked.stderr}`).toMatchObject({
     exitCode: 0,
   });
@@ -1777,6 +1982,12 @@ async function listFiles(root: string, relativeRoot = ""): Promise<readonly stri
     })
   );
   return files.flat().sort();
+}
+
+async function sha256File(filePath: string): Promise<string> {
+  return createHash("sha256")
+    .update(await readFile(filePath))
+    .digest("hex");
 }
 
 async function packPublicProducts(): Promise<void> {
@@ -2075,6 +2286,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       null,
       2
     )}\n`,
+    ...runtimeDefinitionAcceptanceFiles(),
     "tools/hook-check/project.json": `${JSON.stringify(
       {
         name: "@fixture/hook-check",
@@ -2359,6 +2571,74 @@ blueprintVersion = 3
 
 [roots]
 project = "packages/root-pattern-acceptance"
+
+[selections]
+`;
+}
+
+function runtimeDefinitionAcceptanceFiles(): Readonly<Record<string, string>> {
+  const root = "packages/runtime-definition-acceptance";
+  const sourceFiles = [
+    "app.ts",
+    "effect.ts",
+    "execution.ts",
+    "index.ts",
+    "observation.ts",
+    "plugin.ts",
+    "profile.ts",
+    "provider.ts",
+    "resource.ts",
+    "service.ts",
+  ];
+  const proofFiles = ["definition.test.ts", "nx-cache.test.ts"];
+
+  return {
+    [`${root}/AGENTS.md`]: "# Runtime Definition Acceptance Fixture\n",
+    [`${root}/habitat.toml`]: runtimeDefinitionAcceptanceInstanceToml(),
+    [`${root}/project.json`]: `${JSON.stringify(
+      {
+        name: "@fixture/runtime-definition-acceptance",
+        projectType: "library",
+        root,
+        sourceRoot: `${root}/src`,
+        tags: ["type:runtime", "role:runtime-definition-acceptance"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.json`]: `${JSON.stringify(
+      {
+        extends: "../../../tsconfig.base.json",
+        compilerOptions: { noEmit: true },
+        include: ["src/**/*.ts", "test/**/*.ts"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.test.json`]: `${JSON.stringify(
+      { extends: "./tsconfig.json", include: ["test/**/*.ts"] },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsdown.config.ts`]: 'export default { entry: ["src/index.ts"] };\n',
+    ...Object.fromEntries(
+      sourceFiles.map((filename) => [`${root}/src/${filename}`, "export {};\n"])
+    ),
+    ...Object.fromEntries(
+      proofFiles.map((filename) => [`${root}/test/${filename}`, "export {};\n"])
+    ),
+  };
+}
+
+function runtimeDefinitionAcceptanceInstanceToml(): string {
+  return `schemaVersion = 1
+id = "runtime-definition-acceptance"
+ownerProject = "@fixture/runtime-definition-acceptance"
+blueprint = "runtime-definition"
+blueprintVersion = 1
+
+[roots]
+project = "packages/runtime-definition-acceptance"
 
 [selections]
 `;

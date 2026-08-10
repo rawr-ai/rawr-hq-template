@@ -47,8 +47,12 @@
       "{workspaceRoot}/packages/core/sdk/package.json",
       "{workspaceRoot}/packages/core/sdk/habitat-pack.json"
     ],
-    "typescriptRuntime": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
-    "bunToolchain": ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"]
+    "typescriptRuntime": ["bunToolchain", "{workspaceRoot}/tsconfig.base.json"],
+    "bunToolchain": [
+      "{workspaceRoot}/package.json",
+      "{workspaceRoot}/bun.lock",
+      "{workspaceRoot}/bunfig.toml"
+    ]
   },
   "plugins": ["@habitat-ai/cli/nx-plugin"],
   "targetDefaults": {
