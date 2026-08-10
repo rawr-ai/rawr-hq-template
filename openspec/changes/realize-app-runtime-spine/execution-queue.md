@@ -37,8 +37,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   closed from clean canonical worktrees at Habitat
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
-  `main@851a5b87e86278757eb99b952281b90a35e74869`. The active source container is
-  now task 3 platform cleanup and core reservation.
+  `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 are
+  sealed; the active source container is now task 4.1.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -85,6 +85,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   source is completed transfer provenance. None is a parallel Habitat
   implementation lane.
 - Merged local residue is removed before source work resumes.
+- The rejected task-4 prototype stack in PRs #931, #938, and #939 is closed and
+  retired after the runtime authority correction in PR #940. Its commits remain
+  provenance only. No new runtime owner inherits that stack or its complete
+  `app@2`, task-4.2 plugin faces, or direct MCP choices.
 
 ## Containers
 
@@ -154,30 +158,103 @@ The active queue has one bounded node:
 1. execute task 4.1 as the first private runtime owner: reconcile the canonical
    Habitat authority frame, pinned Effect primitives, and frozen consumer
    behavior oracles before authorship, then create the cold `runtime-definition`
-   project and define only the finite cold `ProcessCatalog` and immutable
-   `RuntimeLaunchIdentity` contracts with exactly
-   `{ app, process, entrypoint, deployment, source }`, plus their exact
-   graph/cache edges and owner-local proof. Preserve immutable `app@1`
+   project. Define `AppDefinition`, the finite cold `ProcessCatalog`,
+   `Entrypoint`, `RuntimeProfile`, the immutable `RuntimeLaunchIdentity` with
+   exactly `{ app, process, entrypoint, deployment, source }`, cold
+   service/plugin/Effect descriptors, provider-neutral resources,
+   provider-owned config declarations, and the definition-owned observation
+   record/port. Re-export only the task-4.1 authoring faces through the terminal
+   SDK, add `runtime-definition@1` to the policy pack, and prove the exact
+   graph/cache and installed-artifact boundary. Preserve immutable `app@1`
    byte-for-byte. Task 11.3 alone authors and proves the complete independently
    resolvable `app@2` successor. Task 4.1 MUST NOT create or claim complete
-   `app@2`, app composition, selection, acquisition, execution, mounting, native
-   host, MCP authoring face, deployment implementation, sibling-process control,
-   or an empty SDK family.
+   `app@2`, live provider selection, acquisition, Effect execution, mounting,
+   native host, MCP authoring face, deployment implementation,
+   sibling-process control, or an empty SDK family.
+
+The remaining containers execute in this dependency order. A later container
+may supply a frozen oracle or acceptance obligation, but it does not share
+write authority with the active one:
+
+1. **Cold definition (`4.1-4.6`)**: establish `runtime-definition` and the exact
+   terminal SDK authoring faces, then add plugin and service-context declarations
+   without acquisition, native hosts, or `app@2`.
+2. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
+   deployment-safe cold portable process plan. Land the definition-owned
+   provider-effect plan from `6.1` after provider selection and before the
+   compiler consumes it; do not insert a placeholder compiler input.
+3. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
+   process plan, deterministic boot artifact, and the two path-qualified Fluree
+   integrations without acquiring a provider or publishing another package.
+4. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
+   `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter, force its
+   context before mount, and prove rollback and reverse release.
+5. **Process runtime (`8.1-9.2`, `10.1`)**: bind services, lower adapters, match
+   execution descriptors, run only non-oRPC Effect lanes, and return one
+   process-owned stop handle without invoking a harness.
+6. **Harness, observation, and mounting (`10.2-10.7`)**: seal the public
+   companion contract, private `StartedHarness`, non-authorizing read models,
+   and stop-before-release finalization state machine.
+7. **Habitat self-host and Oclif (`11.1-11.8`)**: audit the already-qualified
+   tool identity, co-land complete `app@2` with the self-host catalog, then
+   realize `habitat resolve`, `check`, and `hook`, generators, child-process
+   fixtures, and isolated-registry package acceptance.
+8. **Additional CLI verticals (`12.1-12.3`)**: freshly author and select the
+   agent-plugin, development, and authoring topics from frozen behavior
+   evidence; never revive predecessor source.
+9. **Native hosts (`13.1-13.6`)**: add Elysia/oRPC and native Inngest beside
+   `runtime-harnesses`, prove same-app child isolation, and treat the MCP
+   companion as conditional rather than a release blocker.
+10. **Web (`14.1-14.2`)**: prove the cold build and native mount handoff through
+    the terminal SDK web face without restoring a product web app.
+11. **Audit and runtime-spine release (`15.1-15.6`)**: close telemetry receipts
+    and residue, pass the complete graph and installed artifacts, land exact
+    main, and publish only the SDK/CLI pair.
+12. **Consumer adoption and drain (`15.7-15.9`)**: issue lane-specific
+    informational handoffs and an exact receipt contract, accept owner-local
+    migrations, retire each source only after its sink accepts, archive the
+    change, and drain only dispositioned Graphite/worktree residue.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle
-contract, or final generic Oclif laws. Task 11.4 owns the foundation/source
-bundle/law vertical; task 11.6 owns native generator mechanics; and tasks 12.1
-through 12.3 own the agent-plugin, development, and authoring topic verticals
-respectively.
+contract, or final generic Oclif laws early. Task 11.4 owns the
+foundation/source-bundle/law vertical; task 11.6 owns native generator
+mechanics; and tasks 12.1 through 12.3 own the agent-plugin, development, and
+authoring topic verticals respectively.
 
-- [ ] **Runtime**: realize the private runtime owners in specification order,
-  one green owner and its readers at a time; keep process-owned Effect
-  context/lifetime/policy/telemetry separate from native bridge execution.
-- [ ] **Harnesses**: adopt qualified telemetry and vendor behavior only beside
-  the app, process, adapter, or harness owner that proves it.
-- [ ] **Final release**: publish the completed Habitat runtime through the same
-  SDK/CLI pair, migrate consumers, retire adoption sources, and drain Graphite.
+## Consumer Checkpoints
+
+- Civ7 may now run an owner-local foundation migration from its exact `0.5.5`
+  proof to released `0.5.15`: that pair now contains the service definitions
+  whose absence blocked its Controller Foundation row. This is a foundation
+  re-attestation, not early runtime adoption.
+- Magic remains the primary runtime behavior oracle. Task 13.5 requests parity
+  against its committed process-isolation assertions; task 13.6 communicates
+  the independent MCP-companion disposition; task 15.7 alone opens the final
+  runtime migration. Magic retains product placement and deployment control.
+- The final handoff is informational and lane-specific. It states released
+  facts, consumer-owned proof obligations, prototype-retirement conditions,
+  and the return-receipt schema without scripting product implementation.
+
+## Initiative Exterior
+
+This change finishes the Habitat runtime spine, process-local observation and
+telemetry integration, and a deployment-safe cold plan handoff. It does not
+claim either of the following reserved systems:
+
+- a persisted observability companion that owns exporter/backend policy,
+  storage, indexing, retention, and retrieval; or
+- a deployment/control-plane companion that owns placement, rollout,
+  supervision, and provider-specific deployment mechanics.
+
+Those become separate Habitat OpenSpec containers after their prerequisite
+runtime handoffs are real. Product deployment controllers such as Magic's
+Railway/GitHub flow remain consumer-owned evidence and integrations, never
+Habitat source. After task 15.9 has drained source-quarry branches and accepted
+all sinks, rename the legacy Habitat and Marketplace repository locators as two
+independent operational migrations; Rawr's repository identity is already
+correct. Marketplace record locators change only through its governed data
+interface, not a bulk text rewrite.
 
 Only the first unchecked container is active. Later containers may supply
 acceptance obligations or frozen source evidence, but they do not share write
