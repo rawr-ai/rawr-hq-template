@@ -60,11 +60,27 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   public exports remain cold without either host; and push-to-main Repository
   Ratchet run `31342319663` passed the complete platform graph. No host peer
   metadata, loader, runtime owner, or blueprint landed early.
-- oRPC service execution follows native authority: `.handler` owns non-Effect
-  operations; the official `.effect` extension, installed once in
-  `src/service/impl.ts`, owns Effect-backed request fibers through `handlerGen`.
-  The app/process supplies `effect/context` plus `effect/wrap`, and no
-  oRPC service Effect enters `ProcessExecutionRuntime`.
+- Task 1.7 records Magic's committed consumer oracle
+  `ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7` / tree
+  `2b3c99700d5db8264b7ee42910575e8b877bda3a`, separately from clean blueprint
+  snapshot `4e2f5d63`. It freezes only generic process-local ownership,
+  server/async isolation, native-host lifecycle, and external-companion demand.
+  Magic product wiring, copied `mcp-openapi` tarball, and dirty deployment
+  evidence are excluded.
+- Proposal commit `203c9c686b0c18644218de5583902bcb180544a8` is provenance only;
+  its admitted app/process concepts are selectively re-authored here and the
+  commit is never cherry-picked. Proposal commit
+  `419d5286bf83a41175a001233de244699c1b72da` is rejected as a landing unit
+  because it removes immutable `app@1` and selects an unexercised direct MCP SDK
+  shape. This completed authority correction is a prerequisite to task 4.1,
+  not a parallel implementation lane.
+- oRPC service execution follows native authority: synchronous and
+  Promise-returning operations use `.handler`; exact
+  `@orpc/experimental-effect@2.0.0-beta.23` implementation-owned `.effect`,
+  installed once in `src/service/impl.ts`, owns Effect-backed request fibers.
+  `handlerGen` is internal vendor machinery only. The app/process supplies
+  `effect/context` plus `effect/wrap`, and no oRPC service Effect enters
+  `ProcessExecutionRuntime`.
 - Telemetry and Fluree worktrees are held adoption sources. The Session Metrics
   source is completed transfer provenance. None is a parallel Habitat
   implementation lane.
@@ -138,10 +154,15 @@ The active queue has one bounded node:
 1. execute task 4.1 as the first private runtime owner: reconcile the canonical
    Habitat authority frame, pinned Effect primitives, and frozen consumer
    behavior oracles before authorship, then create the cold `runtime-definition`
-   project, its exact graph/cache edges, direct authoring faces, observation
-   contract, terminal SDK assembly, complete positive law, and owner-local
-   proof. Admit no selection, acquisition, execution, mounting, native host,
-   deployment implementation, or empty SDK family.
+   project and define only the finite cold `ProcessCatalog` and immutable
+   `RuntimeLaunchIdentity` contracts with exactly
+   `{ app, process, entrypoint, deployment, source }`, plus their exact
+   graph/cache edges and owner-local proof. Preserve immutable `app@1`
+   byte-for-byte. Task 11.3 alone authors and proves the complete independently
+   resolvable `app@2` successor. Task 4.1 MUST NOT create or claim complete
+   `app@2`, app composition, selection, acquisition, execution, mounting, native
+   host, MCP authoring face, deployment implementation, sibling-process control,
+   or an empty SDK family.
 
 These nodes do not realize the final agent-plugin topic/overlay/profile,
 development vertical, generators, authoring topic, private CLI source-bundle
