@@ -358,14 +358,17 @@ direct edges `@habitat-ai/sdk -> runtime-schema`, `runtime-definition`,
 publication metadata or an `implicitDependencies` substitute, must establish
 those edges. No private runtime project imports the SDK facade.
 
-The final SDK edge to `runtime-derivation` is an explicit three-step delivery.
+The final SDK edge to `runtime-derivation` is an explicit four-step delivery.
 Task 4.7 creates the private owner, its two private edges, immutable
 topology-only `runtime-derivation@1`, and bounded normalized topology with no SDK
 edge or export. Task 4.7a closes the exact eight-document authority scope:
 `HABITAT_ARCHITECTURE.md` routes, `HABITAT_RUNTIME_REALIZATION.md` is the sole
 exact canonical document, and the six active OpenSpec artifacts preserve the
-archive-safe acceptance owner without source work. Task 4.8 selects independent
-complete `runtime-derivation@2` with no inheritance or fallback and alone adds
+archive-safe acceptance owner without source work. Task 4.7b closes the matching
+execution-identity, async-step-lowering, and service-resource-normalization
+correction across that same authority surface, also without source work. Only
+then does task 4.8 select independent complete `runtime-derivation@2` with no
+inheritance or fallback and alone add
 `@habitat-ai/sdk -> runtime-derivation` when the complete derivation surface
 becomes public through exactly `@habitat-ai/sdk/runtime/derivation`. The
 completed graph remains exact; the phased landing does not authorize an empty
@@ -478,8 +481,9 @@ realization land atomically with the owner's first conforming implementation.
 An SDK assembly edge lands atomically with that owner's first public SDK
 projection, never before it. For `runtime-derivation`, those are deliberately
 different nodes: task 4.7 is private topology, task 4.7a is the authority-only
-complete-derivation-contract and binding-source gate, and task 4.8 is the first
-public projection. Acceptance runs each new owner target once cold and once unchanged
+complete-derivation-contract and binding-source gate, task 4.7b is the matching
+authority-only identity/lowering/resource-normalization correction, and task
+4.8 is the first public projection. Acceptance runs each new owner target once cold and once unchanged
 to prove cached leaf replays, then changes one declared relevant input and
 proves only the affected leaf work invalidates. The composition target never
 executes a Habitat command, and the underlying command of any restored cacheable
@@ -733,7 +737,20 @@ mechanics route; the active `app-runtime-realization` requirement and scenarios
 are the sole archive-safe acceptance owner. This design records only ownership
 and phase boundaries.
 
-Task 4.8 alone creates the exact independent
+Task 4.7b closes the three remaining complete-derivation joins through that
+same eight-document authority surface, again without implementation or source
+work and without changing the exact task-4.8 corpora. It fixes canonical
+RFC 8785/SHA-256 execution-descriptor identity and descriptor/ref/recomputation
+agreement; per-occurrence lazy async-step lowering to derived frozen
+`execution.effect` descriptors, including definition-owned `Effect.gen` for a
+generator and distinct ids when one authored step is reused under distinct
+parents; and deterministic service-owned `resourceDep` normalization from the
+service id, dependency local name, resource default lifetime, and binding role
+only for role lifetime. It leaves authored async descriptors and effects in
+definition by reference, leaves plugin/provider reasons authored, and changes
+no `packages/core/runtime/definition/src/execution.ts`.
+
+Only after task 4.7b is sealed, task 4.8 alone creates the exact independent
 `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
 closure, selects version 2 in the existing derivation `habitat.toml`, preserves
 the exact seven-file behavior companion corpus, and uses the separate exact

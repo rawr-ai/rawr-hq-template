@@ -38,12 +38,14 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.7a are sealed. The authority-only complete-derivation-contract
-  and binding-source correction changed no source and retained the exact
+  4.1 through 4.7b are sealed. The authority-only complete-derivation-contract,
+  binding-source, execution-identity, async-lowering, and service-resource
+  corrections changed no source and retained the exact
   eight-document scope: `HABITAT_ARCHITECTURE.md` routes,
   `HABITAT_RUNTIME_REALIZATION.md` is the sole exact canonical document, and six
-  active OpenSpec artifacts preserve acceptance. Task 4.8 is the sole active
-  node and MUST follow canonical §§11.8, 13.5, 15, 23.1, and 27 plus the active
+  active OpenSpec artifacts preserve acceptance. Only after completed task 4.7b,
+  task 4.8 is the sole active node and MUST follow canonical §§11.8, 13.5, 15,
+  23.1, and 27 plus the active
   `app-runtime-realization` requirement/scenarios under independent
   `runtime-derivation@2`; immutable topology-only version 1 remains unchanged.
 - The accepted pre-Gate-A semantic sieve removes only closures already
@@ -280,7 +282,8 @@ The active queue has one bounded source node:
 
 1. execute task 4.8 under independent no-inheritance/no-fallback
    `runtime-derivation@2` through the canonical sections and active acceptance
-   owner. Task 4.7a is complete; no contract choice remains open in source.
+   owner. Tasks 4.7a and 4.7b are complete; no contract choice remains open in
+   source.
 
 ## Task 4.7a Authority Routing
 
@@ -290,7 +293,19 @@ mechanics, and the active `app-runtime-realization` requirement/scenarios are
 the sole archive-safe acceptance owner. This queue routes execution and proof
 only.
 
-Task 4.8 is the sole active source node under independent
+## Task 4.7b Authority Routing
+
+Task 4.7b is sealed without an implementation node across the same exact
+eight-document authority surface. It corrects only canonical execution-id
+derivation/agreement, per-full-ref lazy async-step lowering into derived frozen
+operational descriptors, and service-owned `resourceDep` normalization. The
+active acceptance owner mirrors mismatch refusal, lazy lowering and distinct
+parent reuse, and process/role lifetime normalization. It changes no source,
+including `packages/core/runtime/definition/src/execution.ts`, and preserves
+the exact task-4.8 corpora.
+
+Only after that completed correction, task 4.8 is the sole active source node
+under independent
 `runtime-derivation@2`, with the exact runtime-derivation closure, seven-file
 behavior companion corpus, and separate publication/assembly corpus named by
 the active spec. It proves cold
@@ -329,7 +344,17 @@ write authority with the active one:
    `graph.topology === topology`, recursively freeze the result, and invoke no
    body. Emit the singular-profile graph, source defaults/authored order/ref
    expansion, private-carrier-derived binding plans, sole optional-provider
-   finding, and built-in `TypeError` refusals. Task 4.8 proves zero source
+   finding, and built-in `TypeError` refusals. Apply the sealed task-4.7b join:
+   derive `execution-descriptor:sha256:` ids from the exact closed
+   boundary-specific identity input and require descriptor/ref/recomputed
+   agreement; lazily lower every async-step occurrence into its distinct frozen
+   operational descriptor without invoking authored code during derivation or
+   `run(...)`; and normalize service-owned resource dependencies from exact
+   service/local-name, resource-default-lifetime, and binding-role facts while
+   retaining authored plugin/provider reasons. The execution table stores the
+   derived async operational descriptors, and
+   `packages/core/runtime/definition/src/execution.ts` remains outside the exact
+   corpus. Task 4.8 proves zero source
    I/O/decode plus binding-id/dedupe, not physical resolution or live cache
    construction. Keep
    Effect and web reference/table families distinct, including

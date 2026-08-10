@@ -363,12 +363,13 @@ MUST NOT require or authorize an SDK edge or export, complete
   and reachable-service facts
 - **AND** neither executable body is called
 
-### Requirement: Complete-derivation contract and binding-source authority are closed before implementation
+### Requirement: Complete-derivation authority corrections are closed before implementation
 
-The task-4.7a authority gate MUST remain closed by the canonical routing and
-acceptance ownership recorded here. It MUST remain a documentation-only correction, leave
-immutable topology-only `runtime-derivation@1` unchanged, and make task 4.8 the
-sole source owner of independent `runtime-derivation@2`.
+The task-4.7a and task-4.7b authority gates MUST remain closed by the canonical
+routing and acceptance ownership recorded here. Both MUST remain
+documentation-only corrections and leave immutable topology-only
+`runtime-derivation@1` unchanged. Only after task 4.7b is complete MUST task 4.8
+become the sole source owner of independent `runtime-derivation@2`.
 
 Task 4.7a MUST remain an authority-only correction across exactly eight
 documents: `HABITAT_ARCHITECTURE.md` as the architecture router,
@@ -382,7 +383,15 @@ source/binding law, publication topology, and runtime mechanics. This
 requirement and its scenarios are the sole archive-safe OpenSpec acceptance
 owner; they MUST NOT create a second implementation vocabulary.
 
-Task 4.8 MUST select independent no-inheritance/no-fallback
+Task 4.7b MUST remain a matching authority-only correction across that same
+exact eight-document surface. It closes only execution-descriptor identity,
+async-step occurrence lowering, and service-owned `resourceDep` normalization
+under the existing canonical mechanics and the scenarios below. It changes no
+implementation, source, test, project, blueprint, SDK edge, export map, public
+export, stage, or commit, and it does not widen either exact task-4.8 corpus.
+
+Only after that correction is sealed, task 4.8 MUST select independent
+no-inheritance/no-fallback
 `runtime-derivation@2` and implement those canonical sections without widening
 them. It MUST create exactly the independent blueprint closure
 `.habitat/blueprints/runtime-derivation/versions/2/blueprint.toml` and
@@ -428,6 +437,10 @@ The separate exact task-4.8 publication/assembly corpus is `.gitattributes`;
 blueprint files named in this requirement. Task 4.8 MUST create no new
 `runtime-definition` file, project, blueprint, or blueprint version and no
 other blueprint kind, version, or project.
+Task 4.7b adds no source or test file, and
+`packages/core/runtime/definition/src/execution.ts` MUST remain outside task
+4.8 and unchanged; the exact source/test, seven-file behavior-companion, and
+separate publication/assembly corpora above remain otherwise exact.
 
 The SDK policy pack MUST grow from exactly 11 to exactly 13 sorted members by
 adding `runtime-derivation@1` at
@@ -512,6 +525,22 @@ readonly arrays, or recursively readonly plain string-keyed objects.
 `undefined`, bigint, symbol, function, class or other nonplain object, `NaN`,
 and either infinity MUST throw built-in `TypeError`.
 
+For every binding role through which a reachable service-owned
+`resourceDep(...)` key is normalized, the non-derived requirement fields MUST
+be exactly owner `{ kind: "service", serviceId, localName }`; resource
+`{ resourceId: dependency.resource.id, lifetime:
+dependency.resource.defaultLifetime }` plus `role: bindingRole` if and only if
+that default lifetime is `role`; `optional: false`; and `reason: localName`.
+`resource.instance` MUST be absent. A process-lifetime dependency therefore
+carries no role, while a role-lifetime dependency carries the enclosing binding
+role. Plugin- and provider-owned requirements MUST retain their exact authored
+`reason`; only a service-owned dependency derives it from `localName`.
+The same process-lifetime dependency reached through multiple binding roles
+MUST resolve to one requirement id reused by those bindings, while a
+role-lifetime dependency MUST resolve to a distinct id for each propagated
+role. Each binding plan MUST reference its corresponding direct requirement id
+in `resourceRequirementIds`.
+
 A normalized `ProviderSelection` MUST carry `configRef` if and only if its
 provider owns `configSchema`, using an explicit selection key before the
 provider default. A schema-bearing provider without either key and a
@@ -533,6 +562,39 @@ canonical RFC 8785/SHA-256 ids and proves binding-id/equal-diamond deduplication
 only; task 8.2 alone constructs and proves a live cache.
 
 The Effect and web reference/table channels MUST remain distinct.
+Every `ExecutionDescriptorRef.executionId` and matching operational
+descriptor id MUST match
+`^execution-descriptor:sha256:[0-9a-f]{64}$`; every execution ref `ownerId` MUST
+match `^plugin-owner:sha256:[0-9a-f]{64}$`. The execution id MUST be SHA-256
+over the UTF-8 RFC 8785 canonical JSON record
+`{ kind: "execution.descriptor-identity", ...identityInput }`, where
+`identityInput` is the exact closed boundary-specific
+`ExecutionDescriptorIdentityInput`. A looser optional-field bag is forbidden.
+For every table pair, `descriptor.executionId`, `ref.executionId`, and the
+recomputed id MUST agree byte for byte, and `descriptor.boundary` MUST equal
+`ref.boundary`; disagreement MUST throw built-in `TypeError` before a result.
+
+For every authored async-step occurrence under a workflow, schedule, or
+consumer, complete derivation MUST create one new frozen operational
+`execution.effect` descriptor under that occurrence's full ref. The ref MUST
+use the enclosing plugin's canonical `ownerId`, the authored descriptor `id` as
+`stepId`, and exactly the enclosing `workflowId`, `scheduleId`, or `consumerId`.
+The operational descriptor MUST use that ref's canonical `executionId`,
+boundary `plugin.async-step`, the exact authored frozen policy value by
+reference, and the exact authored `effect` function by reference. Its
+`run(invocation)` MUST invoke no authored code before returning a cold
+`HabitatEffect`; only execution of that returned Effect MUST invoke
+`authoredDescriptor.effect(invocation.context)` with the exact
+reference-identical context and no reconstruction. It MUST NOT pass
+`invocation.input` to the authored async-step function. A generator result MUST
+be normalized through definition-owned `Effect.gen(...)`, while an authored
+`HabitatEffect` result MUST be yielded by reference inside that lazy wrapper.
+Reusing one authored async descriptor under distinct parents MUST
+produce distinct full refs, ids, and operational descriptors. Derivation MUST
+invoke neither `run(...)` nor the authored function, and the table MUST carry
+the derived operational descriptors rather than authored
+`AsyncStepEffectDescriptor` values.
+
 `ExecutionDescriptorTable` exposes only literal kind, full-structural-ref
 `get` returning `ExecutionDescriptor<unknown, unknown, unknown, unknown>`,
 and `entries` returning readonly frozen `[ref, descriptor]` tuples.
@@ -618,6 +680,47 @@ construction and reuse.
   binding-id ingredient, while service-owned dependency keys may affect the id
   only through normalized dependency or requirement ids
 
+#### Scenario: Execution descriptor identity disagreement is refused
+
+- **WHEN** complete derivation emits an execution descriptor and its full ref
+- **THEN** canonical `executionId` and `ownerId` patterns hold, and the
+  descriptor id, ref id, RFC 8785 recomputation from the exact closed
+  boundary-specific identity input, and descriptor/ref boundary agree
+- **AND** any pattern, id, boundary, or full-ref disagreement throws built-in
+  `TypeError` before a result
+
+#### Scenario: Reused async steps lower lazily per occurrence
+
+- **WHEN** generator-returning and direct-`HabitatEffect`-returning authored
+  async-step descriptors are reused beneath distinct workflow, schedule, or
+  consumer parents
+- **THEN** each occurrence's full ref uses the enclosing canonical plugin owner,
+  authored step id, and exact parent id and produces a distinct frozen
+  operational `execution.effect` descriptor and canonical execution id
+- **AND** the table contains those derived descriptors with the exact authored
+  policy and effect-function reference, not the authored async descriptor
+- **AND** neither derivation nor `run(invocation)` invokes authored code;
+  `run(invocation)` returns a cold `HabitatEffect`, whose execution passes the
+  exact reference-identical `invocation.context` to the authored function and
+  never passes `invocation.input`
+- **AND** the generator result is normalized through definition-owned
+  `Effect.gen`, while the direct `HabitatEffect` result is yielded by reference
+  inside the lazy wrapper
+
+#### Scenario: Service resource dependencies normalize by lifetime
+
+- **WHEN** reachable service `resourceDep` keys select process- and role-default
+  resources through a binding role
+- **THEN** both requirements use exact service owner/local-name fields,
+  resource id/default lifetime, `optional: false`, and `reason: localName`, with
+  no resource instance
+- **AND** only the role-lifetime requirement carries the binding role, so
+  one process-lifetime requirement is emitted and reused across reaching
+  bindings while role-lifetime identity remains role-specific, and each
+  binding plan references its direct requirement id; independently authored
+  duplicate requirements still refuse, and plugin/provider reasons remain
+  authored
+
 #### Scenario: Independent version-2 law is packed and applied
 
 - **WHEN** task 4.8 builds and installs the SDK policy pack and evaluates the
@@ -652,14 +755,15 @@ portable artifact.
 #### Scenario: Exact result and eager tables execute nothing
 
 - **WHEN** a consumer calls
-  `deriveRuntimeArtifacts({ entrypoint, profileId })` with one Effect descriptor
-  and one lazy web route-module loader
+  `deriveRuntimeArtifacts({ entrypoint, profileId })` with one non-async Effect
+  descriptor, one async-step occurrence, and one lazy web route-module loader
 - **THEN** it receives exactly `topology`, `graph`,
   `executionDescriptorTable`, `webRouteModuleTable`, and `portableArtifact`,
   from one private topology call with referential graph identity
 - **AND** both eager tables return frozen canonical entry snapshots, exact
-  structural lookup returns the preserved descriptor/loader, absent or
-  mismatched lookup throws `TypeError`, and neither executable is invoked
+  structural lookup returns the preserved non-async descriptor, derived async
+  operational descriptor, and preserved loader; absent or mismatched lookup
+  throws `TypeError`, and no executable or authored async function is invoked
 
 #### Scenario: Optional provider finding and fatal refusal are distinguished
 

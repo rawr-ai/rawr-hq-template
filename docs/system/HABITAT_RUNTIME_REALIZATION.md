@@ -1569,8 +1569,12 @@ import { ReadonlyObject, Type, type Static } from "typebox";
 const closedExecutionRef = { additionalProperties: false } as const;
 const executionDescriptorRefBase = {
   kind: Type.Literal("execution.descriptor-ref"),
-  executionId: Type.String(),
-  ownerId: Type.String(),
+  executionId: Type.String({
+    pattern: "^execution-descriptor:sha256:[0-9a-f]{64}$",
+  }),
+  ownerId: Type.String({
+    pattern: "^plugin-owner:sha256:[0-9a-f]{64}$",
+  }),
 } as const;
 
 export const ExecutionDescriptorRefSchema = Type.Union([
@@ -1641,6 +1645,12 @@ For `plugin.async-step` refs, exactly one of `workflowId`, `scheduleId`, or
 the step-local executable body. `executionId` remains the canonical derived id,
 but the boundary-specific fields are required identity ingredients for
 diagnostics, descriptor lookup, and registry matching.
+
+An authored `AsyncStepEffectDescriptor` is cold definition input, not the
+operational descriptor stored for an async ref. Complete derivation lowers each
+occurrence in a workflow, schedule, or consumer `steps` tuple into the distinct
+frozen `EffectExecutionDescriptor` fixed by §15.3 for that occurrence's full
+boundary-specific ref.
 
 For every plugin boundary, `ownerId` is the canonical owner identity of the
 plugin that owns the executable body. An actual web-local Effect body uses the
@@ -1728,7 +1738,10 @@ assemble `ExecutionRegistry`.
 
 Executable descriptor values are cold, statically declarable values. Complete
 runtime derivation imports definition-owned declarations directly and eagerly
-indexes their descriptors without executing them. The descriptors remain cold.
+indexes their operational descriptors without executing them. Non-async
+descriptor values are preserved exactly. An async entry preserves the derived
+operational `EffectExecutionDescriptor` fixed by §15.3, not its authoring
+`AsyncStepEffectDescriptor`. Every descriptor remains cold.
 Derivation also emits descriptor refs; the complete-derivation public contracts
 are exposed through `@habitat-ai/sdk/runtime/derivation`, which is never a
 private-owner dependency. Runtime derivation must not acquire
@@ -4751,6 +4764,37 @@ plain string-keyed JSON objects. Derivation rejects `undefined`, bigint,
 symbol, function, class instances and other non-plain prototypes, `NaN`, and
 positive or negative infinity with `TypeError`.
 
+For every binding role through which a reachable service-owned
+`resourceDep(...)` key is normalized, the emitted requirement's non-derived
+fields are exactly:
+
+```ts
+{
+  owner: { kind: "service", serviceId, localName },
+  resource: {
+    resourceId: dependency.resource.id,
+    lifetime: dependency.resource.defaultLifetime,
+    ...(dependency.resource.defaultLifetime === "role"
+      ? { role: bindingRole }
+      : {}),
+  },
+  optional: false,
+  reason: localName,
+}
+```
+
+`resource.instance` is absent. This is the exact service role-lifetime
+propagation rule: a role-lifetime dependency carries the enclosing binding
+role, while a process-lifetime dependency carries no `role`. Plugin- and
+provider-owned requirements retain their exact authored `reason`; only the
+service-owned dependency key derives `reason` from `localName`.
+
+Consequently, the same service-owned process-lifetime dependency reached
+through multiple binding roles resolves to one requirement id reused by those
+bindings, while a role-lifetime dependency resolves to a distinct requirement
+id for each propagated binding role. Each binding plan references the
+corresponding direct requirement id in `resourceRequirementIds`.
+
 Each normalized provider selection carries `configRef` iff its preserved
 provider definition has `configSchema`. The explicit selection key wins; when
 absent, the provider's nonempty `defaultConfigKey` supplies the ref; absence of
@@ -4835,8 +4879,35 @@ It is passed through the in-process runtime realization path. A process that
 mounts Effect-backed executable surfaces must receive the matching table before
 `ExecutionRegistry` assembly.
 
-The table eagerly indexes the cold descriptors found during derivation without
-executing them. `get(ref)` validates and compares the complete closed ref
+For every cold `AsyncStepEffectDescriptor` occurrence under an authored
+workflow, schedule, or consumer, complete derivation constructs exactly one new
+frozen operational `EffectExecutionDescriptor` for that occurrence's full ref.
+That ref uses the enclosing plugin's recomputed canonical plugin-owner id as
+`ownerId`, the authored descriptor's `id` as `stepId`, and exactly the
+enclosing workflow's `id` as `workflowId`, schedule's `id` as `scheduleId`, or
+consumer's `id` as `consumerId`.
+Its `kind` is `"execution.effect"`; its `executionId` is the canonical §15.5 id
+for the ref's exact `ExecutionDescriptorIdentityInput`; its `boundary` is
+`"plugin.async-step"`; and its `policy` is the exact authored frozen policy
+value by reference. The operational descriptor retains the exact authored
+`effect` function by reference. Its `run(invocation)` invokes no authored code
+before returning a cold `HabitatEffect`; only execution of that returned Effect
+calls `authoredDescriptor.effect(invocation.context)`, passing the exact
+reference-identical `invocation.context` and never reconstructing it. A
+generator result is normalized through the definition-owned `Effect.gen(...)`,
+while the exact returned `HabitatEffect` is yielded by reference inside that
+lazy wrapper. The operational wrapper does not pass `invocation.input` to the
+authored async-step function.
+
+Reusing one authored async-step descriptor beneath distinct parents produces a
+distinct operational descriptor for every distinct full ref; authoring object
+identity cannot collapse those entries. The table preserves the derived
+operational descriptor for an async ref, never the authoring
+`AsyncStepEffectDescriptor`. Derivation invokes neither `run(...)` nor the
+authored `effect` function.
+
+The table eagerly indexes all cold operational descriptors without executing
+them. `get(ref)` validates and compares the complete closed ref
 structure rather than object identity, `executionId` alone, or a partial key;
 it returns the exact preserved descriptor or throws built-in `TypeError` for
 an invalid or absent ref. Descriptor/ref identity or boundary disagreement and
@@ -4845,7 +4916,8 @@ duplicate full refs are fatal `TypeError` during derivation.
 The table constructs one recursively frozen array snapshot of frozen readonly
 `[ref, descriptor]` tuples in the exact §15.9 ref order. `entries()` returns
 that same snapshot by reference on every call. Every ref is fresh recursively
-frozen public data, while each descriptor is its exact preserved cold value.
+frozen public data, while each descriptor is its exact preserved or derived
+operational cold value as specified above.
 The snapshot cannot mutate the table. No named entry type, derived aggregate,
 schema value, iterator, mutator, size property, partial-key lookup, or
 asynchronous lookup is public.
@@ -4937,11 +5009,17 @@ shown prefix:
 | provider selection | `provider-selection:sha256:` | `{ kind: "provider.selection-identity", providerId, resource, configRef? }` |
 | surface plan | `surface-plan:sha256:` | `{ kind: "surface.plan-identity", pluginOwnerId, role, surface, capability }` |
 | workflow dispatcher | `workflow-dispatcher:sha256:` | `{ kind: "workflow.dispatcher-identity", appId, pluginOwnerId, role, surface, capability, workflowIds }` with `workflowIds` already sorted |
+| execution descriptor | `execution-descriptor:sha256:` | `{ kind: "execution.descriptor-identity", ...identityInput }`, where `identityInput` is the exact closed boundary-specific `ExecutionDescriptorIdentityInput` |
 | service binding | `service-binding:sha256:` | `{ kind: "service.binding-identity", role, serviceId, serviceInstance?, scopeRef?, configRef?, resourceRequirementIds, serviceBindingIds, semanticDependencyIds }` with all three id arrays already sorted |
 
-`ResourceRequirement.reason` is nonidentity diagnostic text. Two requirements
-with the same requirement identity are a duplicate and throw `TypeError` even
-when their reasons differ. `NormalizedServiceUse.localName`, the plugin's
+`ResourceRequirement.reason` is nonidentity diagnostic text. Two independently
+authored requirements with the same requirement identity are a duplicate and
+throw `TypeError` even when their reasons differ. The one exception is repeated
+reachability of the same normalized service-owned process-lifetime dependency
+from multiple binding plans: derivation emits that requirement once before
+duplicate refusal and every reaching binding references the same id. A
+role-lifetime dependency includes its propagated role and therefore remains a
+distinct requirement per role. `NormalizedServiceUse.localName`, the plugin's
 injected-client property, is wholly excluded from binding identity. A
 service-owned dependency `localName` remains part of its dependency or
 service-owned resource-requirement id and therefore may participate indirectly
@@ -4950,19 +5028,23 @@ binding field. Provider config refs, scope refs, and service config refs are
 reference identity, not decoded values, and therefore participate only where
 the table states.
 
-`executionDescriptorId(...)` consumes the same boundary-discriminated identity
-input used to derive `ExecutionDescriptorRef`, excluding only `kind` and the
-derived `executionId`. It must not accept a looser optional-field bag that can
-describe impossible boundary/id combinations.
+`executionDescriptorId(identityInput)` accepts only the exact
+boundary-discriminated `ExecutionDescriptorIdentityInput` used to derive
+`ExecutionDescriptorRef`, excluding only `kind` and the derived `executionId`,
+and hashes the exact table record above. It must not accept a looser
+optional-field bag that can describe impossible boundary/id combinations.
 
 This amendment does not alter the already exact `ExecutionDescriptorRef`
 identity contract or re-hash authored app, service, workflow, route, command,
 tool, background, schedule, or consumer ids. Derivation recomputes the
 canonical `executionId` from the complete boundary-specific
 `ExecutionDescriptorIdentityInput` under that existing contract and throws
-`TypeError` on disagreement. A `WebRouteModuleRef` is identified structurally
-by its complete `(kind, ownerId, routeId, path)` value and has no second derived
-id.
+`TypeError` on disagreement. For every table pair,
+`descriptor.executionId`, `ref.executionId`, and
+`executionDescriptorId(identityInput)` are byte-for-byte equal, and
+`descriptor.boundary` equals `ref.boundary`. A
+`WebRouteModuleRef` is identified structurally by its complete
+`(kind, ownerId, routeId, path)` value and has no second derived id.
 
 Authors may supply explicit instance identity when multiple real instances of
 the same capability are selected. Cosmetic identity overrides are not app
@@ -7530,6 +7612,12 @@ closes over only private `deriveNormalizedRuntimeTopology(...)` and
 `NormalizedRuntimeTopology`; its proof closes over only normalized-topology
 acceptance and owner cache behavior.
 
+Task 4.7b is an authority-only correction: this document remains the sole exact
+mechanics owner, while active OpenSpec material mirrors its acceptance routing.
+It adds no source, test, blueprint, or SDK surface and does not widen either
+fixed task-4.8 corpus. In particular,
+`packages/core/runtime/definition/src/execution.ts` remains outside task 4.8.
+
 Task 4.8 implements this document's combined §§11.8, 13.5, 15, 23.1, and 27
 contract. It creates exactly the independent complete definition closure below:
 
@@ -7679,7 +7767,7 @@ and proves `ServiceBindingCache`, cache-key construction, and live binding in
 | `ProviderSelection` | App/runtime profile, normalized by runtime derivation | `providers` field in `apps/<app>/runtime/profiles/*`; normalized contract in `packages/core/runtime/derivation` | Generic SDK `providerSelection({ resource, provider, config, lifetime?, role?, instance? })`, then complete derivation | Runtime compiler | Selection/compilation | Unselected optional requirement is the sole finding; required missing/ambiguous or config-iff violation is `TypeError` | Exact normalized selection and config-ref iff-schema gate |
 | `ProviderEffectPlan` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/providers/provider-effect-plan.ts` | Definition-backed `providerFx` facade re-exported by SDK | Runtime compiler and `runtime-substrate-effect`; never bootgraph | Definition/provisioning | Owner-local `provider.effect-plan.missing` finding | Provider effect plan gate |
 | `HabitatEffect` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/effect/habitat-effect.ts` | Definition-owned curated `Effect` facade | Execution descriptors, resource values, substrate raw Effect lowering through process-runtime execution | Definition through invocation | Raw import, yieldability, and owner-local execution findings | `habitat-effect.execution` gate |
-| `EffectExecutionDescriptor` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/execution/descriptor.ts` | Cold `.effect(...)` terminal bodies and `defineAsyncStepEffect(...)` descriptors through the SDK facade | Runtime compiler/process execution runtime | Derivation through invocation | Owner-local Effect descriptor findings | Effect descriptor gate |
+| `EffectExecutionDescriptor` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/execution/descriptor.ts` | Cold `.effect(...)` terminal bodies through the SDK facade; complete derivation lowers each `AsyncStepEffectDescriptor` occurrence into a frozen operational value | Runtime compiler/process execution runtime | Derivation through invocation | Owner-local Effect descriptor findings | Effect descriptor gate |
 | `ExecutionDescriptorRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler / execution registry | Derivation/compilation/mounting | Invalid, duplicate, absent, or descriptor-mismatched ref is `TypeError` | Exact closed boundary-discriminated ref gate |
 | `ExecutionDescriptorTable` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Process runtime / execution registry | Derivation/mounting | Full-ref `get` returns preserved descriptor or throws `TypeError`; frozen tuple snapshots only | Exact non-portable Effect table gate |
 | `WebRouteModuleRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler / web surface adapter | Derivation/compilation/mounting | Invalid, duplicate, absent, or loader-mismatched ref is `TypeError` | Exact closed `(kind, ownerId, routeId, path)` gate |

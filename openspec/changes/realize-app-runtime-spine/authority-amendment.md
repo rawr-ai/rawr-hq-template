@@ -156,10 +156,10 @@ map keys.
 
 Task 4.8's complete runtime-derivation increment owns normalization of
 `ServiceUse` and production of `ServiceBindingPlan` from the exact grammar
-accepted by the authority-only task 4.7a gate. Task 4.7a freezes the complete
-derivation contract, including the closed declarative scope/config
-binding-reference discriminants, but implements nothing; task 4.7's bounded
-topology increment owns neither. The SDK service owner
+accepted by the authority-only task 4.7a gate and the service-resource
+normalization exactness sealed by the authority-only task 4.7b correction.
+Neither authority task implements anything; task 4.7's bounded topology
+increment owns neither. The SDK service owner
 separately owns the five context lanes. Process runtime alone owns live
 `BoundService`, `bindService`, cache-key construction, and
 `ServiceBindingCache`. `ProcessView`, `RoleView`, `ServiceBoundary`, an
@@ -172,8 +172,9 @@ alias identity are rejected predecessor vocabulary and preserve no public API.
 `HABITAT_RUNTIME_REALIZATION.md` is its sole exact canonical document. The
 accepted delivery boundary is deliberately split across immutable topology task
 4.7, the completed authority-only complete-derivation-contract and
-binding-source gate 4.7a, and the sole active complete-derivation source task
-4.8.
+binding-source gate 4.7a, the completed matching execution-identity,
+async-lowering, and service-resource-normalization correction 4.7b, and the
+sole active complete-derivation source task 4.8.
 
 Task 4.7 creates only the private package-less `runtime-derivation` Nx project
 at `packages/core/runtime/derivation`, selects the closed
@@ -277,12 +278,40 @@ exact canonical document, and six active OpenSpec artifacts. It changed no
 implementation, project, blueprint, SDK edge, export map, public export, stage,
 or commit. Immutable topology-only `runtime-derivation@1` remains unchanged.
 
+Task 4.7b is complete across that same eight-document authority surface and is
+also documentation-only. It changes no implementation, source, project,
+blueprint, SDK edge, export map, public export, stage, or commit; in particular,
+it changes no `packages/core/runtime/definition/src/execution.ts`. It preserves
+the exact task-4.8 source/test, seven-file behavior-companion, and separate
+publication/assembly corpora.
+
+The matching correction closes three exact task-4.8 joins without duplicating
+their canonical mechanics here. Execution identity is
+`execution-descriptor:sha256:` over RFC 8785 canonical JSON of
+`{ kind: "execution.descriptor-identity", ...identityInput }`, where
+`identityInput` is the exact closed boundary-specific
+`ExecutionDescriptorIdentityInput`; canonical `executionId` and `ownerId`
+patterns apply, and the descriptor, full ref, and recomputed identity must
+agree. Complete derivation lowers every async-step occurrence to a frozen
+operational `execution.effect` descriptor under its full ref, retaining the
+exact authored effect and frozen policy by reference. `run(...)` invokes no
+authored code before returning a cold `HabitatEffect`; executing that Effect
+invokes the authored function and routes a generator through definition-owned
+`Effect.gen`. Reuse under distinct parents produces distinct descriptor ids,
+and the table carries these derived operational descriptors rather than the
+authored async descriptors. A service-owned `resourceDep` normalizes with owner
+`serviceId` and dependency `localName`, resource id and default lifetime, the
+binding role if and only if that lifetime is `role`, no instance, `optional:
+false`, and `reason` equal to `localName`; plugin/provider reasons remain
+authored.
+
 Canonical `HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5, 15, 23.1, and 27 own task
 4.8's exact mechanics. The active `app-runtime-realization` requirement and
 scenarios are the sole archive-safe OpenSpec acceptance owner. This amendment
 records routing only.
 
-Task 4.8 is the sole active source node. It creates exactly the independent
+Only after task 4.7b is sealed, task 4.8 is the sole active source node. It
+creates exactly the independent
 `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
 closure and selects `runtime-derivation@2` in the existing derivation
 `habitat.toml`, without inheritance, fallback, an edit to version 1, or version
