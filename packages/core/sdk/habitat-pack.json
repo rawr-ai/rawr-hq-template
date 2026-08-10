@@ -37,6 +37,11 @@
       "path": "dist/blueprints/resource/versions/2/blueprint.toml"
     },
     {
+      "id": "runtime-definition",
+      "version": 1,
+      "path": "dist/blueprints/runtime-definition/blueprint.toml"
+    },
+    {
       "id": "service",
       "version": 1,
       "path": "dist/blueprints/service/blueprint.toml"

@@ -116,8 +116,12 @@ describe("Habitat Bun repository preset", () => {
     ]);
     expect(readJson(tree, "nx.json")).toMatchObject({
       namedInputs: {
-        bunToolchain: ["{workspaceRoot}/package.json", "{workspaceRoot}/bun.lock"],
-        typescriptRuntime: ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/bun.lock"],
+        bunToolchain: [
+          "{workspaceRoot}/package.json",
+          "{workspaceRoot}/bun.lock",
+          "{workspaceRoot}/bunfig.toml",
+        ],
+        typescriptRuntime: ["bunToolchain", "{workspaceRoot}/tsconfig.base.json"],
       },
       targetDefaults: {
         build: { cache: true, dependsOn: ["^build"] },

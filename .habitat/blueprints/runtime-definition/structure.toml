@@ -1,0 +1,69 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "runtime-definition-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "habitat.toml",
+  "project.json",
+  "src",
+  "test",
+  "tsconfig.json",
+  "tsconfig.test.json",
+  "tsdown.config.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-definition-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|project.json|tsconfig.json|tsconfig.test.json|tsdown.config.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-definition-source"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "closed"
+required = [
+  "app.ts",
+  "effect.ts",
+  "execution.ts",
+  "index.ts",
+  "observation.ts",
+  "plugin.ts",
+  "profile.ts",
+  "provider.ts",
+  "resource.ts",
+  "service.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-definition-source-files"
+rootRole = "project"
+relativePath = "src/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-definition-proof"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+required = ["definition.test.ts", "nx-cache.test.ts"]
+allowed = []
+
+[[scopes]]
+name = "runtime-definition-proof-files"
+rootRole = "project"
+relativePath = "test/*.test.ts"
+kind = "file"
+mode = "closed"

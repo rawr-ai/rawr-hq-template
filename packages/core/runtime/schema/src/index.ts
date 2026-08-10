@@ -3,6 +3,16 @@ import type { Static, TSchema } from "typebox";
 import { Validator } from "typebox/schema";
 import { Clone } from "typebox/value";
 
+export type {
+  RuntimeRedactedShape,
+  RuntimeRedactionPolicy,
+  RuntimeSchema as RuntimeSchemaContract,
+  RuntimeSchemaIssue,
+  RuntimeSchemaResult,
+  RuntimeSchemaValue,
+} from "./runtime-schema";
+export { RuntimeSchema } from "./runtime-schema";
+
 /** Standard validation and JSON Schema projections for one TypeBox schema. */
 export type TypeBoxStandardSchema<TypeSchema extends TSchema> = StandardSchemaV1<
   Static<TypeSchema>,

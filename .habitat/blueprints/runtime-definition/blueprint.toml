@@ -1,0 +1,24 @@
+schemaVersion = 1
+id = "runtime-definition"
+version = 1
+
+[[rules]]
+id = "runtime_definition_v1_structure"
+lane = "enforced"
+message = "The runtime definition owner must remain one package-less cold authoring project with its exact source and proof faces."
+remediate = "Restore the runtime-definition project shell, cold declaration modules, and owner-local proof without adding package, child-project, live-runtime, or read-model authority."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
