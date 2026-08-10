@@ -16,6 +16,7 @@ const blueprintIds = [
   "provider",
   "resource",
   "runtime-definition",
+  "runtime-derivation",
   "service",
 ];
 
@@ -35,6 +36,7 @@ export default defineConfig({
     "runtime/resources/index": "src/runtime/resources/index.ts",
     "runtime/providers/index": "src/runtime/providers/index.ts",
     "runtime/profiles/index": "src/runtime/profiles/index.ts",
+    "runtime/derivation/index": "src/runtime/derivation/index.ts",
     "runtime/schema": "src/runtime/schema.ts",
     telemetry: "src/telemetry.ts",
   },

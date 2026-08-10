@@ -37,6 +37,15 @@
         "command": "bun test packages/core/runtime/derivation/test/normalized-topology.test.ts"
       }
     },
+    "acceptance:deployment-cold-plan": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "outputs": [],
+      "options": {
+        "command": "bun test packages/core/runtime/derivation/test/complete-derivation.test.ts"
+      }
+    },
     "check": {
       "executor": "nx:noop"
     }

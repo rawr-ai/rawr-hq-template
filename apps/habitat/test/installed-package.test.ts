@@ -15,7 +15,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-
+import * as ts from "typescript";
 import { runServer } from "verdaccio";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -74,6 +74,7 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
     "@habitat-ai/sdk/runtime/profiles",
+    "@habitat-ai/sdk/runtime/derivation",
     "@habitat-ai/sdk/runtime/schema",
     "@habitat-ai/sdk/telemetry",
   ],
@@ -86,12 +87,73 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "provider",
   "resource",
   "runtime-definition",
+  "runtime-derivation",
   "service",
+] as const;
+const RUNTIME_DERIVATION_RUNTIME_EXPORTS = [
+  "PortableRuntimePlanArtifactSchema",
+  "decodePortableRuntimePlanArtifact",
+  "deriveRuntimeArtifacts",
+] as const;
+const RUNTIME_DERIVATION_TYPE_EXPORTS = [
+  "DerivationFinding",
+  "DerivedRoleSurfaceIndex",
+  "ExecutionDescriptorRef",
+  "ExecutionDescriptorTable",
+  "NormalizedAppDefinition",
+  "NormalizedPluginDefinition",
+  "NormalizedPluginIdentity",
+  "NormalizedResourceRequirementIdentity",
+  "NormalizedRuntimeProfile",
+  "NormalizedRuntimeTopology",
+  "NormalizedRuntimeTopologyEdge",
+  "NormalizedSemanticDependency",
+  "NormalizedServiceDependency",
+  "NormalizedServiceUse",
+  "NormalizedSurfaceRequirement",
+  "PortableRuntimePlanArtifact",
+  "ProviderSelection",
+  "ResourceRequirement",
+  "RuntimeDerivationInput",
+  "RuntimeDerivationResult",
+  "ServiceBindingPlan",
+  "SurfaceRuntimePlan",
+  "WebRouteModuleRef",
+  "WebRouteModuleTable",
+  "WebRouteModuleTableEntry",
+  "WorkflowDispatcherDescriptor",
 ] as const;
 const IMMUTABLE_APP_V1_SHA256 = {
   "app/blueprint.toml": "897149c9bcd188d959222fad314372bebcc31e4c835c8a6ae906bd40b153b776",
   "app/skill.md": "244846de684e4f8cdbb2c1c0ab3a93010914e1031ce7b791443d84fb2cd2e254",
   "app/structure.toml": "39353121c563732527f9ba49b6b081feb9e83402dbf4952a1750323138ce8165",
+} as const;
+const RUNTIME_DERIVATION_CLOSURES = {
+  runtimeDerivation1: {
+    excludedInventoryPrefixes: ["versions/"],
+    files: [
+      "runtime-derivation/blueprint.toml",
+      "runtime-derivation/skill.md",
+      "runtime-derivation/structure.toml",
+    ],
+    inventoryRoot: "runtime-derivation",
+    sha256: {
+      "runtime-derivation/blueprint.toml":
+        "1d12c5cfa64ffc7f07226a3d1eb227d68f2525c4a1dec1c05ade8419e774049e",
+      "runtime-derivation/skill.md":
+        "eee577a525167ff0cda0025d409bf51f4b31647df17538abe844cb56d7091b91",
+      "runtime-derivation/structure.toml":
+        "3b967abc5e303d436712828cbcae1591be2d62c272f446c0a9e998061cca32ea",
+    },
+  },
+  runtimeDerivation2: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "runtime-derivation/versions/2/blueprint.toml",
+      "runtime-derivation/versions/2/structure.toml",
+    ],
+    inventoryRoot: "runtime-derivation/versions/2",
+  },
 } as const;
 const IMMUTABLE_SERVICE_CLOSURES = {
   service1: {
@@ -757,7 +819,10 @@ describe("installed Habitat products", () => {
     ).toBe(await realpath(installedSdkRoot));
     const sdkManifest = JSON.parse(
       await readFile(path.join(installedSdkRoot, "package.json"), "utf8")
-    ) as { readonly dependencies?: Readonly<Record<string, string>> };
+    ) as {
+      readonly dependencies?: Readonly<Record<string, string>>;
+      readonly exports?: Readonly<Record<string, { readonly types?: string } | string>>;
+    };
     expect(sdkManifest.dependencies).toMatchObject({
       "@effect/platform-node": "4.0.0-beta.101",
       "@effect/platform-node-shared": "4.0.0-beta.101",
@@ -770,6 +835,41 @@ describe("installed Habitat products", () => {
     expect(
       Object.keys(sdkManifest.dependencies ?? {}).filter((name) => name.startsWith("@habitat-ai/"))
     ).toEqual([]);
+    const derivationExport = sdkManifest.exports?.["./runtime/derivation"];
+    if (typeof derivationExport !== "object" || derivationExport.types === undefined) {
+      throw new TypeError("Installed SDK derivation export must declare its type entrypoint.");
+    }
+    expect(
+      inspectTypeScriptModuleExports(path.resolve(installedSdkRoot, derivationExport.types))
+    ).toEqual({
+      graphFields: [
+        "app",
+        "executionDescriptorRefs",
+        "findings",
+        "kind",
+        "plugins",
+        "profile",
+        "resourceRequirements",
+        "roleSurfaceIndex",
+        "semanticDependencies",
+        "serviceBindingPlans",
+        "serviceDependencies",
+        "serviceUses",
+        "surfaceRuntimePlans",
+        "topology",
+        "webRouteModuleRefs",
+        "workflowDispatcherDescriptors",
+      ],
+      resultFields: [
+        "executionDescriptorTable",
+        "graph",
+        "portableArtifact",
+        "topology",
+        "webRouteModuleTable",
+      ],
+      runtime: RUNTIME_DERIVATION_RUNTIME_EXPORTS,
+      types: RUNTIME_DERIVATION_TYPE_EXPORTS,
+    });
 
     const consumerManifest = JSON.parse(
       await readFile(path.join(consumerRoot, "package.json"), "utf8")
@@ -797,6 +897,7 @@ describe("installed Habitat products", () => {
       ).toBeUndefined();
     }
     await assertInstalledWebProjection(generatedServiceRoot);
+    await assertInstalledRuntimeDerivation(generatedServiceRoot);
 
     const coldCliEntrypoint = path.join(consumerRoot, "cold-habitat-cli.mjs");
     await writeFile(
@@ -837,6 +938,7 @@ describe("installed Habitat products", () => {
         'const sdk = await import("@habitat-ai/sdk");',
         'const asyncPlugins = await import("@habitat-ai/sdk/plugins/async");',
         'const asyncEffect = await import("@habitat-ai/sdk/plugins/async/effect");',
+        'const derivation = await import("@habitat-ai/sdk/runtime/derivation");',
         'const resources = await import("@habitat-ai/sdk/runtime/resources");',
         'const providers = await import("@habitat-ai/sdk/runtime/providers");',
         'const profiles = await import("@habitat-ai/sdk/runtime/profiles");',
@@ -844,7 +946,7 @@ describe("installed Habitat products", () => {
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
         'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
-        "console.log(JSON.stringify({ app: Object.keys(app).sort(), asyncEffect: Object.keys(asyncEffect).sort(), asyncPlugins: Object.keys(asyncPlugins).sort(), effect: Object.keys(effect).sort(), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), serverEffect: Object.keys(serverEffect).sort(), serverEffectAfter, serverEffectBefore, serverPlugins: Object.keys(serverPlugins).sort(), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
+        "console.log(JSON.stringify({ app: Object.keys(app).sort(), asyncEffect: Object.keys(asyncEffect).sort(), asyncPlugins: Object.keys(asyncPlugins).sort(), derivation: Object.keys(derivation).sort(), effect: Object.keys(effect).sort(), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), serverEffect: Object.keys(serverEffect).sort(), serverEffectAfter, serverEffectBefore, serverPlugins: Object.keys(serverPlugins).sort(), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
       ].join("\n"),
       "utf8"
     );
@@ -866,9 +968,14 @@ describe("installed Habitat products", () => {
         "defineWorkflow",
         "useService",
       ],
+      derivation: [
+        "PortableRuntimePlanArtifactSchema",
+        "decodePortableRuntimePlanArtifact",
+        "deriveRuntimeArtifacts",
+      ],
       effect: ["Effect", "TaggedError"],
       execution: [],
-      profiles: ["defineRuntimeProfile"],
+      profiles: ["defineRuntimeProfile", "providerSelection"],
       providers: ["defineRuntimeProvider"],
       resources: ["defineRuntimeResource", "requireResource"],
       runtimeSchema: [
@@ -956,6 +1063,8 @@ describe("installed Habitat products", () => {
       "resource@1",
       "resource@2",
       "runtime-definition@1",
+      "runtime-derivation@1",
+      "runtime-derivation@2",
       "service@1",
       "service@2",
       "service@3",
@@ -987,6 +1096,7 @@ describe("installed Habitat products", () => {
     });
     expect(nestedStructureFiles).toEqual([
       "resource/versions/2/structure.toml",
+      "runtime-derivation/versions/2/structure.toml",
       "service/versions/2/structure.toml",
       "service/versions/3/structure.toml",
     ]);
@@ -1010,6 +1120,30 @@ describe("installed Habitat products", () => {
       expect(await sha256File(path.join(installedBlueprintRoot, relativePath)), relativePath).toBe(
         expectedSha256
       );
+    }
+    for (const closure of Object.values(RUNTIME_DERIVATION_CLOSURES)) {
+      for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
+        const closureInventory = (await listFiles(path.join(blueprintRoot, closure.inventoryRoot)))
+          .filter(
+            (relativePath) =>
+              !closure.excludedInventoryPrefixes.some((prefix) => relativePath.startsWith(prefix))
+          )
+          .map((relativePath) => path.posix.join(closure.inventoryRoot, relativePath))
+          .sort();
+        expect(closureInventory, closure.inventoryRoot).toEqual([...closure.files].sort());
+      }
+      if ("sha256" in closure) {
+        for (const [relativePath, expectedSha256] of Object.entries(closure.sha256)) {
+          expect(
+            await sha256File(path.join(canonicalBlueprintRoot, relativePath)),
+            relativePath
+          ).toBe(expectedSha256);
+          expect(
+            await sha256File(path.join(installedBlueprintRoot, relativePath)),
+            relativePath
+          ).toBe(expectedSha256);
+        }
+      }
     }
     for (const { excludedInventoryPrefixes, files, inventoryRoot, sha256 } of Object.values(
       IMMUTABLE_SERVICE_CLOSURES
@@ -1094,6 +1228,12 @@ describe("installed Habitat products", () => {
             ownerProject: "@fixture/runtime-definition-acceptance",
           }),
           expect.objectContaining({
+            blueprint: "runtime-derivation",
+            blueprintVersion: 2,
+            id: "runtime-derivation-acceptance",
+            ownerProject: "@fixture/runtime-derivation-acceptance",
+          }),
+          expect.objectContaining({
             blueprint: "service",
             blueprintVersion: 3,
             id: "@fixture/greeting-service",
@@ -1169,6 +1309,13 @@ describe("installed Habitat products", () => {
               name: "grit",
             }),
           }),
+          expect.objectContaining({
+            blueprintVersion: 2,
+            instanceId: "runtime-derivation-acceptance",
+            ruleId: "runtime_derivation_v2_structure",
+            provenance: expect.objectContaining({ kind: "policy-pack" }),
+            runner: expect.objectContaining({ name: "habitat" }),
+          }),
         ]),
       },
     });
@@ -1188,6 +1335,16 @@ describe("installed Habitat products", () => {
         id: "runtime-definition",
         path: "dist/blueprints/runtime-definition/blueprint.toml",
         version: 1,
+      },
+      {
+        id: "runtime-derivation",
+        path: "dist/blueprints/runtime-derivation/blueprint.toml",
+        version: 1,
+      },
+      {
+        id: "runtime-derivation",
+        path: "dist/blueprints/runtime-derivation/versions/2/blueprint.toml",
+        version: 2,
       },
       { id: "service", path: "dist/blueprints/service/blueprint.toml", version: 1 },
       {
@@ -1217,6 +1374,10 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           definition: expect.objectContaining({ id: "runtime-definition", version: 1 }),
+          provenance: expect.objectContaining({ kind: "policy-pack" }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "runtime-derivation", version: 2 }),
           provenance: expect.objectContaining({ kind: "policy-pack" }),
         }),
         expect.objectContaining({
@@ -1275,6 +1436,14 @@ describe("installed Habitat products", () => {
           status: "pass",
         }),
         expect.objectContaining({
+          disposition: { kind: "evaluated" },
+          instanceId: "runtime-derivation-acceptance",
+          ownerProject: "@fixture/runtime-derivation-acceptance",
+          ruleId: "runtime_derivation_v2_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+        expect.objectContaining({
           instanceId: "resource-v2-acceptance",
           ruleId: "resource_v2_effect_error_authority",
           runner: "grit",
@@ -1313,6 +1482,36 @@ describe("installed Habitat products", () => {
           instanceId: "runtime-definition-acceptance",
           ownerProject: "@fixture/runtime-definition-acceptance",
           ruleId: "runtime_definition_v1_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+      ],
+      ok: true,
+    });
+
+    const checkedRuntimeDerivation = await run(
+      habitat,
+      [
+        "check",
+        "--instance",
+        "runtime-derivation-acceptance",
+        "--rule",
+        "runtime_derivation_v2_structure",
+      ],
+      { cwd: consumerRoot }
+    );
+    expect(
+      checkedRuntimeDerivation,
+      checkedRuntimeDerivation.stderr || checkedRuntimeDerivation.stdout
+    ).toMatchObject({ exitCode: 0, stderr: "" });
+    expect(JSON.parse(checkedRuntimeDerivation.stdout)).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        expect.objectContaining({
+          disposition: { kind: "evaluated" },
+          instanceId: "runtime-derivation-acceptance",
+          ownerProject: "@fixture/runtime-derivation-acceptance",
+          ruleId: "runtime_derivation_v2_structure",
           runner: "habitat",
           status: "pass",
         }),
@@ -1684,6 +1883,234 @@ async function assertColdPublicJavaScriptExport(
     });
   } finally {
     await rm(coldEntrypoint, { force: true });
+  }
+}
+
+function inspectTypeScriptModuleExports(declarationPath: string): {
+  readonly graphFields: readonly string[];
+  readonly resultFields: readonly string[];
+  readonly runtime: readonly string[];
+  readonly types: readonly string[];
+} {
+  const program = ts.createProgram({
+    rootNames: [declarationPath],
+    options: {
+      module: ts.ModuleKind.NodeNext,
+      moduleResolution: ts.ModuleResolutionKind.NodeNext,
+      skipLibCheck: true,
+      target: ts.ScriptTarget.ES2022,
+    },
+  });
+  const sourceFile = program.getSourceFile(declarationPath);
+  if (sourceFile === undefined) {
+    throw new TypeError(`TypeScript did not load ${declarationPath}.`);
+  }
+  const checker = program.getTypeChecker();
+  const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
+  if (moduleSymbol === undefined) {
+    throw new TypeError(`TypeScript did not resolve module ${declarationPath}.`);
+  }
+  const runtime: string[] = [];
+  const types: string[] = [];
+  const moduleExports = checker.getExportsOfModule(moduleSymbol);
+
+  for (const exportedSymbol of moduleExports) {
+    const target =
+      (exportedSymbol.flags & ts.SymbolFlags.Alias) === 0
+        ? exportedSymbol
+        : checker.getAliasedSymbol(exportedSymbol);
+    if ((target.flags & ts.SymbolFlags.Value) !== 0) {
+      runtime.push(exportedSymbol.name);
+    } else if ((target.flags & ts.SymbolFlags.Type) !== 0) {
+      types.push(exportedSymbol.name);
+    }
+  }
+
+  const deriveExport = moduleExports.find((symbol) => symbol.name === "deriveRuntimeArtifacts");
+  if (deriveExport === undefined) {
+    throw new TypeError("Installed SDK derivation declaration has no derivation operation.");
+  }
+  const deriveTarget =
+    (deriveExport.flags & ts.SymbolFlags.Alias) === 0
+      ? deriveExport
+      : checker.getAliasedSymbol(deriveExport);
+  const deriveDeclaration = deriveTarget.valueDeclaration ?? deriveTarget.declarations?.[0];
+  if (deriveDeclaration === undefined) {
+    throw new TypeError("Installed SDK derivation operation has no declaration.");
+  }
+  const signature = checker
+    .getTypeOfSymbolAtLocation(deriveTarget, deriveDeclaration)
+    .getCallSignatures()[0];
+  if (signature === undefined) {
+    throw new TypeError("Installed SDK derivation operation has no call signature.");
+  }
+  const resultType = signature.getReturnType();
+  const graphSymbol = resultType.getProperty("graph");
+  const graphDeclaration = graphSymbol?.valueDeclaration ?? graphSymbol?.declarations?.[0];
+  if (graphSymbol === undefined || graphDeclaration === undefined) {
+    throw new TypeError("Installed SDK derivation result has no structural graph contract.");
+  }
+  const graphType = checker.getTypeOfSymbolAtLocation(graphSymbol, graphDeclaration);
+
+  return {
+    graphFields: graphType
+      .getProperties()
+      .map(({ name }) => name)
+      .sort(),
+    resultFields: resultType
+      .getProperties()
+      .map(({ name }) => name)
+      .sort(),
+    runtime: runtime.sort(),
+    types: types.sort(),
+  };
+}
+
+async function assertInstalledRuntimeDerivation(callerRoot: string): Promise<void> {
+  const entrypointPath = path.join(callerRoot, "cold-installed-runtime-derivation.mjs");
+
+  try {
+    await writeFile(
+      entrypointPath,
+      [
+        'import { defineApp, defineEntrypoint, defineProcessCatalog } from "@habitat-ai/sdk/app";',
+        'import { Effect } from "@habitat-ai/sdk/effect";',
+        'import { defineAsyncWorkflowPlugin, defineWorkflow } from "@habitat-ai/sdk/plugins/async";',
+        'import { defineAsyncStepEffect } from "@habitat-ai/sdk/plugins/async/effect";',
+        'import { defineWebAppPlugin } from "@habitat-ai/sdk/plugins/web";',
+        'import { deriveRuntimeArtifacts, decodePortableRuntimePlanArtifact } from "@habitat-ai/sdk/runtime/derivation";',
+        'import { defineRuntimeProfile } from "@habitat-ai/sdk/runtime/profiles";',
+        'import { RuntimeSchema } from "@habitat-ai/sdk/runtime/schema";',
+        'import { Type } from "typebox";',
+        "let effectCalls = 0;",
+        "let loaderCalls = 0;",
+        "const authoredStep = defineAsyncStepEffect({",
+        '  id: "deliver",',
+        "  policy: {},",
+        "  effect: () => {",
+        "    effectCalls += 1;",
+        '    return Effect.succeed("delivered");',
+        "  },",
+        "});",
+        "const workflow = defineWorkflow({",
+        '  id: "delivery",',
+        "  inputSchema: RuntimeSchema.fromTypeBox(Type.Object({ id: Type.String() })),",
+        "  steps: [authoredStep],",
+        "});",
+        "const asyncPlugin = defineAsyncWorkflowPlugin.factory()({",
+        '  capability: "delivery",',
+        "  services: {},",
+        "  workflows: [workflow],",
+        "})();",
+        "const loadRouteModule = async () => {",
+        "  loaderCalls += 1;",
+        '  return { page: "delivery" };',
+        "};",
+        "const webPlugin = defineWebAppPlugin.factory()({",
+        '  capability: "delivery",',
+        "  routes: [",
+        '    { id: "delivery.index", path: "/delivery", module: loadRouteModule },',
+        "  ],",
+        "})();",
+        'const app = defineApp({ id: "installed-candidate", plugins: [asyncPlugin, webPlugin] });',
+        "const process = defineProcessCatalog({",
+        '  application: { id: "application", roles: ["async", "web"] },',
+        "}).application;",
+        'const profile = defineRuntimeProfile({ id: "installed", providers: [] });',
+        "const entrypoint = defineEntrypoint({",
+        '  id: "installed",',
+        "  app,",
+        "  profile,",
+        "  process,",
+        "  identity: {",
+        '    app: "installed-candidate",',
+        '    process: "application",',
+        '    entrypoint: "installed",',
+        '    deployment: "acceptance",',
+        '    source: "installed-package",',
+        "  },",
+        "});",
+        'const result = deriveRuntimeArtifacts({ entrypoint, profileId: "installed" });',
+        "const executionEntries = result.executionDescriptorTable.entries();",
+        "const webEntries = result.webRouteModuleTable.entries();",
+        "const decoded = decodePortableRuntimePlanArtifact(result.portableArtifact);",
+        "let surplusRejected = false;",
+        "try {",
+        "  decodePortableRuntimePlanArtifact({ ...result.portableArtifact, surplus: true });",
+        "} catch (error) {",
+        "  surplusRejected = error instanceof TypeError;",
+        "}",
+        "console.log(JSON.stringify({",
+        "  artifactJson: JSON.stringify(result.portableArtifact),",
+        "  artifactIdPattern: /^sha256:[0-9a-f]{64}$/.test(result.portableArtifact.artifactId),",
+        "  artifactKeys: Object.keys(result.portableArtifact).sort(),",
+        "  decodedEqual: JSON.stringify(decoded) === JSON.stringify(result.portableArtifact),",
+        "  effectCalls,",
+        "  executionBoundary: executionEntries[0]?.[0].boundary,",
+        "  executionCount: executionEntries.length,",
+        "  executionIdentity: result.executionDescriptorTable.get(executionEntries[0][0]) === executionEntries[0][1],",
+        "  graphTopologyIdentity: result.graph.topology === result.topology,",
+        "  loaderCalls,",
+        "  resultKeys: Object.keys(result).sort(),",
+        "  surplusRejected,",
+        "  webCount: webEntries.length,",
+        "  webLoaderIdentity: result.webRouteModuleTable.get(webEntries[0].ref) === loadRouteModule,",
+        "}));",
+      ].join("\n"),
+      "utf8"
+    );
+    const firstDerived = await run("bun", [entrypointPath], {
+      cwd: callerRoot,
+      timeoutMs: 30_000,
+    });
+    const secondDerived = await run("bun", [entrypointPath], {
+      cwd: callerRoot,
+      timeoutMs: 30_000,
+    });
+    expect(firstDerived, firstDerived.stderr || firstDerived.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(secondDerived, secondDerived.stderr || secondDerived.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    const firstOutput = JSON.parse(firstDerived.stdout) as Record<string, unknown>;
+    const secondOutput = JSON.parse(secondDerived.stdout) as Record<string, unknown>;
+    expect(secondOutput.artifactJson).toBe(firstOutput.artifactJson);
+    const { artifactJson, ...summary } = firstOutput;
+    expect(typeof artifactJson).toBe("string");
+    expect(summary).toEqual({
+      artifactIdPattern: true,
+      artifactKeys: [
+        "artifactId",
+        "executionDescriptorRefs",
+        "identity",
+        "kind",
+        "profileId",
+        "roles",
+        "surfaces",
+      ],
+      decodedEqual: true,
+      effectCalls: 0,
+      executionBoundary: "plugin.async-step",
+      executionCount: 1,
+      executionIdentity: true,
+      graphTopologyIdentity: true,
+      loaderCalls: 0,
+      resultKeys: [
+        "executionDescriptorTable",
+        "graph",
+        "portableArtifact",
+        "topology",
+        "webRouteModuleTable",
+      ],
+      surplusRejected: true,
+      webCount: 1,
+      webLoaderIdentity: true,
+    });
+  } finally {
+    await rm(entrypointPath, { force: true });
   }
 }
 
@@ -2112,6 +2539,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       'import type { implement as NativeImplement, os as NativeOs } from "@orpc/server";',
       'import type { HabitatEffect } from "@habitat-ai/sdk/effect";',
       'import type { EffectExecutionDescriptor } from "@habitat-ai/sdk/execution";',
+      'import type { RuntimeDerivationResult } from "@habitat-ai/sdk/runtime/derivation";',
       'import { defineWebAppPlugin } from "@habitat-ai/sdk/plugins/web";',
       'import { defineService, serviceDep, useService } from "@habitat-ai/sdk/service";',
       'import type { ServiceBoundaryContext, ServiceContractOf, ServiceModuleContextProjection, ServiceUse, ServiceUses } from "@habitat-ai/sdk/service";',
@@ -2127,6 +2555,13 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "      : false",
       "    : false;",
       "type Assert<T extends true> = T;",
+      'type InstalledProcessDefaults = NonNullable<RuntimeDerivationResult["graph"]["profile"]["processDefaults"]>;',
+      "type InstalledNestedProcessDefaults = Extract<",
+      "  InstalledProcessDefaults[string],",
+      "  Readonly<Record<string, unknown>>",
+      ">;",
+      "type InstalledProcessDefaultsIsNever = [InstalledProcessDefaults] extends [never] ? true : false;",
+      "type InstalledNestedProcessDefaultsIsNever = [InstalledNestedProcessDefaults] extends [never] ? true : false;",
       "",
       'type InstalledDeps = { readonly siblingClient: { readonly id: "sibling" } };',
       "type InstalledScope = { readonly workspaceId: string };",
@@ -2145,6 +2580,13 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       '  readonly feature: "installed";',
       "};",
       "declare const installedBoundaryContext: InstalledBoundaryContext;",
+      "declare const installedProcessDefaults: InstalledProcessDefaults;",
+      "declare const installedNestedDefaults: InstalledNestedProcessDefaults;",
+      "const installedProcessDefaultsFixture: InstalledProcessDefaults = {",
+      "  retries: 3,",
+      '  nested: { enabled: true, labels: ["primary", { region: "test" }] },',
+      "};",
+      "void installedProcessDefaultsFixture;",
       "",
       'interface ExecutionFailure { readonly _tag: "ExecutionFailure"; }',
       "interface ExecutionContext { readonly traceId: string; }",
@@ -2213,9 +2655,15 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       '  packedWebDefinition.routes[0].path = "/changed";',
       "  // @ts-expect-error Surplus author fields are absent from the packed route type.",
       "  packedWebDefinition.routes[0].label;",
+      "  // @ts-expect-error Installed top-level process defaults are immutable.",
+      "  installedProcessDefaults.retries = 3;",
+      "  // @ts-expect-error Installed nested process defaults are recursively immutable.",
+      "  installedNestedDefaults.enabled = false;",
       "}",
       "",
       "export type PackedRuntimeDefinitionOracle = readonly [",
+      "  Assert<Equal<InstalledProcessDefaultsIsNever, false>>,",
+      "  Assert<Equal<InstalledNestedProcessDefaultsIsNever, false>>,",
       "  Assert<",
       "    Equal<",
       "      InstalledBoundaryContext,",
@@ -3020,6 +3468,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       2
     )}\n`,
     ...runtimeDefinitionAcceptanceFiles(),
+    ...runtimeDerivationAcceptanceFiles(),
     "tools/hook-check/project.json": `${JSON.stringify(
       {
         name: "@fixture/hook-check",
@@ -3372,6 +3821,80 @@ blueprintVersion = 1
 
 [roots]
 project = "packages/runtime-definition-acceptance"
+
+[selections]
+`;
+}
+
+function runtimeDerivationAcceptanceFiles(): Readonly<Record<string, string>> {
+  const root = "packages/runtime-derivation-acceptance";
+  const sourceFiles = [
+    "derive-execution-descriptor-table.ts",
+    "derive-runtime-artifacts.ts",
+    "execution-descriptor-ref.ts",
+    "identity-policy.ts",
+    "index.ts",
+    "normalized-authoring-graph.ts",
+    "normalized-runtime-topology.ts",
+    "portable-runtime-plan-artifact.ts",
+    "service-binding-plan.ts",
+    "surface-runtime-plan.ts",
+    "web-route-module-table.ts",
+    "workflow-dispatcher-descriptor.ts",
+  ];
+  const proofFiles = [
+    "complete-derivation.test.ts",
+    "normalized-topology.test.ts",
+    "nx-cache.test.ts",
+  ];
+
+  return {
+    [`${root}/AGENTS.md`]: "# Runtime Derivation Acceptance Fixture\n",
+    [`${root}/habitat.toml`]: runtimeDerivationAcceptanceInstanceToml(),
+    [`${root}/project.json`]: `${JSON.stringify(
+      {
+        name: "@fixture/runtime-derivation-acceptance",
+        projectType: "library",
+        root,
+        sourceRoot: `${root}/src`,
+        tags: ["type:runtime", "role:runtime-derivation-acceptance"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.json`]: `${JSON.stringify(
+      {
+        extends: "../../../tsconfig.base.json",
+        compilerOptions: { noEmit: true },
+        include: ["src/**/*.ts", "test/**/*.ts"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.test.json`]: `${JSON.stringify(
+      { extends: "./tsconfig.json", include: ["test/**/*.ts"] },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsdown.config.ts`]: 'export default { entry: ["src/index.ts"] };\n',
+    ...Object.fromEntries(
+      sourceFiles.map((filename) => [`${root}/src/${filename}`, "export {};\n"])
+    ),
+    ...Object.fromEntries(
+      proofFiles.map((filename) => [`${root}/test/${filename}`, "export {};\n"])
+    ),
+  };
+}
+
+function runtimeDerivationAcceptanceInstanceToml(): string {
+  return `schemaVersion = 1
+id = "runtime-derivation-acceptance"
+ownerProject = "@fixture/runtime-derivation-acceptance"
+blueprint = "runtime-derivation"
+blueprintVersion = 2
+
+[roots]
+project = "packages/runtime-derivation-acceptance"
 
 [selections]
 `;

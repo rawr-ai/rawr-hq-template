@@ -14,6 +14,7 @@
         "{workspaceRoot}/.habitat/blueprints/provider/**/*",
         "{workspaceRoot}/.habitat/blueprints/resource/**/*",
         "{workspaceRoot}/.habitat/blueprints/runtime-definition/**/*",
+        "{workspaceRoot}/.habitat/blueprints/runtime-derivation/**/*",
         "{workspaceRoot}/.habitat/blueprints/service/**/*"
       ]
     },

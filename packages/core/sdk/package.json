@@ -91,6 +91,11 @@
       "import": "./dist/runtime/profiles/index.js",
       "default": "./dist/runtime/profiles/index.js"
     },
+    "./runtime/derivation": {
+      "types": "./dist/runtime/derivation/index.d.ts",
+      "import": "./dist/runtime/derivation/index.js",
+      "default": "./dist/runtime/derivation/index.js"
+    },
     "./runtime/schema": {
       "types": "./dist/runtime/schema.d.ts",
       "import": "./dist/runtime/schema.js",

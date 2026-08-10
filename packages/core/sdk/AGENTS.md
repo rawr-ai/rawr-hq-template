@@ -3,8 +3,9 @@
 ## Purpose
 
 - Ship Habitat's public local runtime as one conventional npm SDK.
-- Bundle the private service, resource, provider, runtime-schema, and cold
-  runtime-definition owners behind isolated public surfaces.
+- Bundle the private service, resource, provider, runtime-schema, cold
+  runtime-definition, and complete runtime-derivation owners behind isolated
+  public surfaces.
 - Transport the repository's generic Habitat blueprint bytes from the canonical
   `.habitat/blueprints` tree as generated package assets.
 
@@ -41,8 +42,12 @@
   app composition, native harness lifecycle, or Effect subpath.
 - Implemented app, Effect, execution, service, resource, provider, profile, and
   runtime-schema authoring faces project only cold definition capabilities.
-  They expose no `startApp`, provider selection, provider Effect plan, managed
-  runtime, native harness, or observation read model.
+  `@habitat-ai/sdk/runtime/profiles` is the sole cold provider-selection face.
+  These faces expose no `startApp`, provider Effect plan, managed runtime,
+  native harness, or observation read model.
+- `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face. It
+  exposes exactly three runtime values and twenty-six type-only contracts from
+  the private owner, with no second implementation or public error API.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -71,16 +76,20 @@
   Node. The vendor command owns native acquisition when a consumer package
   manager has not run dependency install scripts.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
-- `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact sorted
-  member set is `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
-  `resource@1`, `resource@2`, `runtime-definition@1`, `service@1`, and
-  `service@2`, and `service@3`. The version-1
+- `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact
+  thirteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
+  `plugin-nx@1`, `provider@1`,
+  `resource@1`, `resource@2`, `runtime-definition@1`,
+  `runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`,
+  and `service@3`. The version-1
   resource and service members preserve their released bytes; each version-2
   member is a complete successor with the same law and structure and narrowed
   Grit acquisition.
   `service@3` preserves that complete service closure while projecting the
   official Effect-oRPC bootstrap through the terminal SDK for SDK-consuming
   services.
+  `runtime-derivation@1` preserves its immutable topology-only closure;
+  `runtime-derivation@2` independently closes the finished derivation owner.
   Shipped files are not members merely by being present.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
@@ -97,8 +106,9 @@
   service authoring surface; `src/service/procedure-context.ts` owns only the
   readonly boundary-lane and disjoint module-projection types; and
   `src/service/schema.ts` separately assembles the private runtime-schema owner.
-  App, Effect, execution, and runtime entry
-  modules project only implemented cold definition capabilities.
+  App, Effect, execution, and runtime entry modules project implemented cold
+  definition capabilities. `src/runtime/derivation/index.ts` directly projects
+  the one private derivation owner without wrapping or duplicating it.
   The `src/plugins/*` entries project only the corresponding private cold
   definitions and native oRPC authoring values; they do not introduce a host,
   loader, adapter, dispatcher, or execution runner. `src/telemetry.ts` assembles the private
@@ -128,6 +138,7 @@
 - Public cold runtime authoring: `@habitat-ai/sdk/app`,
   `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
   `@habitat-ai/sdk/runtime/*` subpaths.
+- Public complete runtime derivation: `@habitat-ai/sdk/runtime/derivation`.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and
   `@habitat-ai/sdk/blueprints/*`.
@@ -142,6 +153,7 @@
 - [[../../../resources/telemetry/AGENTS|Private telemetry resource]]
 - [[../runtime/schema/AGENTS|Private runtime-schema owner]]
 - [[../runtime/definition/AGENTS|Private runtime-definition owner]]
+- [[../runtime/derivation/AGENTS|Private runtime-derivation owner]]
 
 ## Validation
 
