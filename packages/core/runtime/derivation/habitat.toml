@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-derivation"
+ownerProject = "runtime-derivation"
+blueprint = "runtime-derivation"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/derivation"
+
+[selections]
