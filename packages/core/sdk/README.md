@@ -24,6 +24,21 @@ service definitions and dependency declarations, and the `AnalyticsClient` and
 `Logger` capability contracts they require. It does not expose live binding,
 workflow, database, feedback, or concrete adapter mechanics.
 
+The isolated `@habitat-ai/sdk/plugins/server` entry exposes the public and
+trusted-internal server plugin builders, their native oRPC implementers, and
+the shared `useService(...)` declaration. Native `.handler(...)` remains the
+synchronous and Promise terminal, while Effect-backed operations use the
+official implementation-owned Effect-oRPC `.effect(...)` extension.
+`@habitat-ai/sdk/plugins/server/effect` installs that official extension once
+for the service implementation owner; it exports no Habitat runner or helper.
+
+The isolated `@habitat-ai/sdk/plugins/async` entry exposes cold workflow,
+schedule, and consumer plugin builders and declarations plus `useService(...)`.
+`@habitat-ai/sdk/plugins/async/effect` exposes only the cold async-step Effect
+descriptor and its definition function. These entries do not load Inngest or
+construct native functions, clients, registration bundles, loaders, adapters,
+harnesses, or dispatchers; those mechanics remain with later runtime owners.
+
 The app, Effect, execution, and implemented `runtime/*` entries expose the cold
 runtime-definition authoring contract. They declare app composition, finite
 process catalogs, immutable launch identity, profiles, lazy Effects, executable
@@ -48,7 +63,8 @@ there is no second tracked authority tree in this package.
 ## Ownership boundary
 
 The service, resources, concrete providers, runtime-schema adapter, and cold
-runtime-definition remain private workspace implementation owners. The SDK bundles their code and
+runtime-definition, including plugin declarations, remain private workspace
+implementation owners. The SDK bundles their code and
 declarations behind its qualified public surfaces, so consumers install and
 import only `@habitat-ai/sdk`; private package identities are not part of the
 published runtime or type interface. Third-party libraries remain ordinary
@@ -66,11 +82,11 @@ their exact runtime and harness owners; none is repeated by an individual
 service or plugin.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
-exactly ten sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
+exactly eleven sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
 `provider@1`, `resource@1`, `resource@2`, `runtime-definition@1`, `service@1`,
-and `service@2`.
-Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; version 2
-resolves from `dist/blueprints/<id>/versions/2/blueprint.toml`. Presence in
+`service@2`, and `service@3`.
+Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; later versions
+resolve from `dist/blueprints/<id>/versions/<version>/blueprint.toml`. Presence in
 `dist/blueprints` alone grants no authority.
 
 The selected SDK package owns each reusable definition, version, runner asset,

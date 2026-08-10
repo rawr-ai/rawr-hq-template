@@ -66,6 +66,10 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/execution",
     "@habitat-ai/sdk/service",
     "@habitat-ai/sdk/service/schema",
+    "@habitat-ai/sdk/plugins/server",
+    "@habitat-ai/sdk/plugins/server/effect",
+    "@habitat-ai/sdk/plugins/async",
+    "@habitat-ai/sdk/plugins/async/effect",
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
     "@habitat-ai/sdk/runtime/profiles",
@@ -87,6 +91,44 @@ const IMMUTABLE_APP_V1_SHA256 = {
   "app/blueprint.toml": "897149c9bcd188d959222fad314372bebcc31e4c835c8a6ae906bd40b153b776",
   "app/skill.md": "244846de684e4f8cdbb2c1c0ab3a93010914e1031ce7b791443d84fb2cd2e254",
   "app/structure.toml": "39353121c563732527f9ba49b6b081feb9e83402dbf4952a1750323138ce8165",
+} as const;
+const IMMUTABLE_SERVICE_CLOSURES = {
+  service1: {
+    excludedInventoryPrefixes: ["versions/"],
+    files: [
+      "service/README.md",
+      "service/blueprint.toml",
+      "service/components/contract/authority.md",
+      "service/components/contract/composition.md",
+      "service/components/funnel/context.md",
+      "service/components/funnel/effect-bridge.md",
+      "service/components/funnel/router.md",
+      "service/components/funnel/source-boundary.md",
+      "service/components/spine/client-lineage.md",
+      "service/components/spine/public-face.md",
+      "service/skill.md",
+      "service/structure.toml",
+    ],
+    inventoryRoot: "service",
+    sha256: "08c4e3bdbc936ddde1ee32706ced327eb17a7d46f03fb6da36985861af34d99e",
+  },
+  service2: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "service/versions/2/blueprint.toml",
+      "service/versions/2/components/contract/authority.md",
+      "service/versions/2/components/contract/composition.md",
+      "service/versions/2/components/funnel/context.md",
+      "service/versions/2/components/funnel/effect-bridge.md",
+      "service/versions/2/components/funnel/router.md",
+      "service/versions/2/components/funnel/source-boundary.md",
+      "service/versions/2/components/spine/client-lineage.md",
+      "service/versions/2/components/spine/public-face.md",
+      "service/versions/2/structure.toml",
+    ],
+    inventoryRoot: "service/versions/2",
+    sha256: "2a94d39de52bbb8bf80f54342b41e8b8a0f5f93730bfb6b940a5ef8ec7d543e4",
+  },
 } as const;
 const GENERATED_SERVICE_INVENTORY = [
   "AGENTS.md",
@@ -780,12 +822,19 @@ describe("installed Habitat products", () => {
     await writeFile(
       coldSdkEntrypoint,
       [
-        'const sdk = await import("@habitat-ai/sdk");',
+        'const serverPlugins = await import("@habitat-ai/sdk/plugins/server");',
+        'const { os } = await import("@orpc/server");',
+        "const serverEffectBefore = typeof os.effect;",
+        'const serverEffect = await import("@habitat-ai/sdk/plugins/server/effect");',
+        "const serverEffectAfter = typeof os.effect;",
         'const app = await import("@habitat-ai/sdk/app");',
         'const effect = await import("@habitat-ai/sdk/effect");',
         'const execution = await import("@habitat-ai/sdk/execution");',
         'const service = await import("@habitat-ai/sdk/service");',
         'const schema = await import("@habitat-ai/sdk/service/schema");',
+        'const sdk = await import("@habitat-ai/sdk");',
+        'const asyncPlugins = await import("@habitat-ai/sdk/plugins/async");',
+        'const asyncEffect = await import("@habitat-ai/sdk/plugins/async/effect");',
         'const resources = await import("@habitat-ai/sdk/runtime/resources");',
         'const providers = await import("@habitat-ai/sdk/runtime/providers");',
         'const profiles = await import("@habitat-ai/sdk/runtime/profiles");',
@@ -793,7 +842,7 @@ describe("installed Habitat products", () => {
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
         'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
-        "console.log(JSON.stringify({ app: Object.keys(app).sort(), effect: Object.keys(effect).sort(), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
+        "console.log(JSON.stringify({ app: Object.keys(app).sort(), asyncEffect: Object.keys(asyncEffect).sort(), asyncPlugins: Object.keys(asyncPlugins).sort(), effect: Object.keys(effect).sort(), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), serverEffect: Object.keys(serverEffect).sort(), serverEffectAfter, serverEffectBefore, serverPlugins: Object.keys(serverPlugins).sort(), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
       ].join("\n"),
       "utf8"
     );
@@ -805,6 +854,16 @@ describe("installed Habitat products", () => {
     });
     expect(JSON.parse(coldSdk.stdout)).toMatchObject({
       app: ["defineApp", "defineEntrypoint", "defineProcessCatalog", "runtimeLaunchIdentity"],
+      asyncEffect: ["defineAsyncStepEffect"],
+      asyncPlugins: [
+        "defineAsyncConsumerPlugin",
+        "defineAsyncSchedulePlugin",
+        "defineAsyncWorkflowPlugin",
+        "defineConsumer",
+        "defineSchedule",
+        "defineWorkflow",
+        "useService",
+      ],
       effect: ["Effect", "TaggedError"],
       execution: [],
       profiles: ["defineRuntimeProfile"],
@@ -817,6 +876,16 @@ describe("installed Habitat products", () => {
       ],
       sdk: ["createHabitatClientForWorkspace"],
       schema: ["standard"],
+      serverEffect: [],
+      serverEffectAfter: "function",
+      serverEffectBefore: "undefined",
+      serverPlugins: [
+        "defineServerApiPlugin",
+        "defineServerInternalPlugin",
+        "implementServerApiPlugin",
+        "implementServerInternalPlugin",
+        "useService",
+      ],
       service: [
         "createAnalyticsMiddlewareCallback",
         "createObservabilityMiddlewareCallback",
@@ -887,6 +956,7 @@ describe("installed Habitat products", () => {
       "runtime-definition@1",
       "service@1",
       "service@2",
+      "service@3",
     ]);
 
     const canonicalBlueprintRoot = path.join(workspaceRoot, ".habitat/blueprints");
@@ -916,6 +986,7 @@ describe("installed Habitat products", () => {
     expect(nestedStructureFiles).toEqual([
       "resource/versions/2/structure.toml",
       "service/versions/2/structure.toml",
+      "service/versions/3/structure.toml",
     ]);
     const nestedBlueprintResidue = blueprintInventory.filter((relativePath) => {
       const filename = relativePath.split("/").at(-1);
@@ -937,6 +1008,22 @@ describe("installed Habitat products", () => {
       expect(await sha256File(path.join(installedBlueprintRoot, relativePath)), relativePath).toBe(
         expectedSha256
       );
+    }
+    for (const { excludedInventoryPrefixes, files, inventoryRoot, sha256 } of Object.values(
+      IMMUTABLE_SERVICE_CLOSURES
+    )) {
+      for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
+        const closureInventory = (await listFiles(path.join(blueprintRoot, inventoryRoot)))
+          .filter(
+            (relativePath) =>
+              !excludedInventoryPrefixes.some((prefix) => relativePath.startsWith(prefix))
+          )
+          .map((relativePath) => path.posix.join(inventoryRoot, relativePath))
+          .sort();
+        expect(closureInventory, inventoryRoot).toEqual([...files].sort());
+      }
+      expect(await sha256FileSet(canonicalBlueprintRoot, files), files.join(", ")).toBe(sha256);
+      expect(await sha256FileSet(installedBlueprintRoot, files), files.join(", ")).toBe(sha256);
     }
 
     const oclifManifest = JSON.parse(
@@ -1006,7 +1093,7 @@ describe("installed Habitat products", () => {
           }),
           expect.objectContaining({
             blueprint: "service",
-            blueprintVersion: 2,
+            blueprintVersion: 3,
             id: "@fixture/greeting-service",
             ownerProject: "@fixture/greeting-service",
           }),
@@ -1106,6 +1193,11 @@ describe("installed Habitat products", () => {
         path: "dist/blueprints/service/versions/2/blueprint.toml",
         version: 2,
       },
+      {
+        id: "service",
+        path: "dist/blueprints/service/versions/3/blueprint.toml",
+        version: 3,
+      },
     ]);
     expect(resolvedCatalog.catalog.blueprints).toEqual(
       expect.arrayContaining([
@@ -1188,7 +1280,7 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           instanceId: "@fixture/greeting-service",
-          ruleId: "service_v2_client_lineage",
+          ruleId: "service_v3_client_lineage",
           runner: "grit",
           status: "pass",
         }),
@@ -1637,31 +1729,17 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       readFile(path.join(serviceRoot, relativePath), "utf8")
     )
   );
-  const servicePackage = JSON.parse(
-    await readFile(path.join(serviceRoot, "package.json"), "utf8")
-  ) as { readonly dependencies?: Readonly<Record<string, string>> };
-  expect(await readFile(path.join(serviceRoot, "habitat.toml"), "utf8")).toContain(
-    "blueprintVersion = 2"
-  );
+  const servicePackagePath = path.join(serviceRoot, "package.json");
+  const generatedServiceManifest = await readFile(servicePackagePath, "utf8");
+  const servicePackage = JSON.parse(generatedServiceManifest) as {
+    readonly dependencies?: Readonly<Record<string, string>>;
+  };
   expect(servicePackage.dependencies).toEqual({
     "@habitat-ai/sdk": installVersion,
     "@orpc/contract": "2.0.0-beta.23",
     "@orpc/server": "2.0.0-beta.23",
     typebox: "1.3.8",
   });
-
-  const generatedSources = (
-    await Promise.all(
-      GENERATED_SERVICE_INVENTORY.filter((relativePath) => relativePath.endsWith(".ts")).map(
-        (relativePath) => readFile(path.join(serviceRoot, relativePath), "utf8")
-      )
-    )
-  ).join("\n");
-  expect(generatedSources).toContain(".greet.handler(");
-  expect(generatedSources).not.toContain("@orpc/experimental-effect");
-  expect(generatedSources).not.toContain('from "effect"');
-  expect(generatedSources).not.toContain("Effect.run");
-  expect(generatedSources).not.toContain("ProcessExecutionRuntime");
 
   const callerRoot = path.join(consumerRoot, "apps/caller");
   const callerSourcePath = path.join(callerRoot, "src/index.ts");
@@ -1744,37 +1822,37 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   const serviceRootInput = "{workspaceRoot}/services/greeting";
   const serviceTargetPrefix = "habitat:application:@fixture/greeting-service:";
   const expectedServiceInputsByRule = {
-    service_v2_client_lineage: [`${serviceRootInput}/src/client.ts`],
-    service_v2_context_funnel: [
+    service_v3_client_lineage: [`${serviceRootInput}/src/client.ts`],
+    service_v3_context_funnel: [
       `${serviceRootInput}/src/service/base.ts`,
       `${serviceRootInput}/src/service/impl.ts`,
       `${serviceRootInput}/src/service/middleware/*.ts`,
       `${serviceRootInput}/src/service/modules/*/module.ts`,
       `${serviceRootInput}/src/service/modules/*/router/*.ts`,
     ],
-    service_v2_contract_authority: [`${serviceRootInput}/src/service/modules/*/contract/*.ts`],
-    service_v2_contract_composition: [
+    service_v3_contract_authority: [`${serviceRootInput}/src/service/modules/*/contract/*.ts`],
+    service_v3_contract_composition: [
       `${serviceRootInput}/src/service/contract.ts`,
       `${serviceRootInput}/src/service/modules/*/contract/index.ts`,
     ],
-    service_v2_effect_bridge: [
+    service_v3_effect_bridge: [
       `${serviceRootInput}/src/client.ts`,
       `${serviceRootInput}/src/service/**/*.ts`,
     ],
-    service_v2_public_face: [`${serviceRootInput}/package.json`],
-    service_v2_router_composition: [
+    service_v3_public_face: [`${serviceRootInput}/package.json`],
+    service_v3_router_composition: [
       `${serviceRootInput}/src/service/modules/*/router.ts`,
       `${serviceRootInput}/src/service/modules/*/router/*.ts`,
       `${serviceRootInput}/src/service/router.ts`,
     ],
-    service_v2_source_boundary: [
+    service_v3_source_boundary: [
       `${serviceRootInput}/src/client.ts`,
       `${serviceRootInput}/src/service/**/*.ts`,
     ],
   } as const;
   const expectedServiceTargets = [
     ...Object.keys(expectedServiceInputsByRule).map((ruleId) => `${serviceTargetPrefix}${ruleId}`),
-    `${serviceTargetPrefix}service_v2_structure`,
+    `${serviceTargetPrefix}service_v3_structure`,
   ].sort();
   const habitatLeafTargets = Object.entries(project.targets ?? {}).filter(([target]) =>
     target.startsWith("habitat:")
@@ -1792,14 +1870,81 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
     expect(serviceInputs, ruleId).not.toContain(`${serviceRootInput}/**/*`);
   }
   const structureInputs = (
-    project.targets?.[`${serviceTargetPrefix}service_v2_structure`]?.inputs ?? []
+    project.targets?.[`${serviceTargetPrefix}service_v3_structure`]?.inputs ?? []
   ).filter(
     (input): input is string => typeof input === "string" && input.startsWith(serviceRootInput)
   );
   expect(structureInputs).toEqual([serviceRootInput, `${serviceRootInput}/**/*`]);
 
+  await writeFile(
+    servicePackagePath,
+    `${JSON.stringify(
+      {
+        ...servicePackage,
+        dependencies: {
+          ...servicePackage.dependencies,
+          effect: "4.0.0-beta.101",
+        },
+      },
+      null,
+      2
+    )}\n`
+  );
+  const installedEffectImplementationOwner = await run("bun", ["install", "--ignore-scripts"], {
+    cwd: consumerRoot,
+    timeoutMs: 120_000,
+  });
+  expect(
+    installedEffectImplementationOwner,
+    installedEffectImplementationOwner.stderr || installedEffectImplementationOwner.stdout
+  ).toMatchObject({ exitCode: 0 });
+
+  const generatedServiceRequire = createRequire(servicePackagePath);
+  const installedSdkManifestPath = await realpath(
+    generatedServiceRequire.resolve("@habitat-ai/sdk/package.json")
+  );
+  const installedSdkRequire = createRequire(installedSdkManifestPath);
+  const installedEffectExtensionManifestPath = await realpath(
+    installedSdkRequire.resolve("@orpc/experimental-effect/package.json")
+  );
+  const installedEffectExtensionRequire = createRequire(installedEffectExtensionManifestPath);
+  const installedEffectExtensionPath = await realpath(
+    installedSdkRequire.resolve("@orpc/experimental-effect/extensions/effect")
+  );
+  const installedServerManifestPath = await realpath(
+    generatedServiceRequire.resolve("@orpc/server/package.json")
+  );
+  const installedEffectManifestPath = await realpath(
+    generatedServiceRequire.resolve("effect/package.json")
+  );
+  expect(await realpath(installedSdkRequire.resolve("@orpc/server/package.json"))).toBe(
+    installedServerManifestPath
+  );
+  expect(await realpath(installedSdkRequire.resolve("effect/package.json"))).toBe(
+    installedEffectManifestPath
+  );
+  expect(
+    await realpath(installedSdkRequire.resolve("@orpc/experimental-effect/extensions/effect"))
+  ).toBe(installedEffectExtensionPath);
+  expect(await realpath(installedEffectExtensionRequire.resolve("@orpc/server/package.json"))).toBe(
+    installedServerManifestPath
+  );
+  expect(await realpath(installedEffectExtensionRequire.resolve("effect/package.json"))).toBe(
+    installedEffectManifestPath
+  );
+
   const telemetryTypeConsumerPath = path.join(serviceRoot, "src/telemetry-type-consumer.ts");
   const runtimeTypeConsumerPath = path.join(serviceRoot, "src/runtime-type-consumer.ts");
+  const serviceImplementationPath = path.join(serviceRoot, "src/service/impl.ts");
+  const generatedServiceImplementation = await readFile(serviceImplementationPath, "utf8");
+  const pluginImplementationConsumerPath = path.join(
+    serviceRoot,
+    "src/installed-plugin-implementation-consumer.ts"
+  );
+  await writeFile(
+    serviceImplementationPath,
+    `${generatedServiceImplementation.trimEnd()}\n\nimport "@habitat-ai/sdk/plugins/server/effect";\n`
+  );
   await writeFile(
     telemetryTypeConsumerPath,
     [
@@ -1888,16 +2033,251 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "",
     ].join("\n")
   );
+  await writeFile(
+    pluginImplementationConsumerPath,
+    [
+      'import "./service/impl";',
+      "",
+      'import { oc } from "@orpc/contract";',
+      'import { createRouterClient, implement as nativeImplement } from "@orpc/server";',
+      'import { Effect as NativeEffect } from "effect";',
+      'import { Type } from "typebox";',
+      'import { Effect as HabitatEffect } from "@habitat-ai/sdk/effect";',
+      "import {",
+      "  defineAsyncConsumerPlugin,",
+      "  defineAsyncSchedulePlugin,",
+      "  defineAsyncWorkflowPlugin,",
+      "  defineConsumer,",
+      "  defineSchedule,",
+      "  defineWorkflow,",
+      '} from "@habitat-ai/sdk/plugins/async";',
+      'import { defineAsyncStepEffect, type AsyncStepExecutionContext } from "@habitat-ai/sdk/plugins/async/effect";',
+      "import {",
+      "  defineServerApiPlugin,",
+      "  defineServerInternalPlugin,",
+      "  implementServerApiPlugin,",
+      "  implementServerInternalPlugin,",
+      '} from "@habitat-ai/sdk/plugins/server";',
+      'import { RuntimeSchema } from "@habitat-ai/sdk/runtime/schema";',
+      "",
+      "type Equal<TLeft, TRight> =",
+      "  (<T>() => T extends TLeft ? 1 : 2) extends",
+      "  (<T>() => T extends TRight ? 1 : 2)",
+      "    ? (<T>() => T extends TRight ? 1 : 2) extends",
+      "      (<T>() => T extends TLeft ? 1 : 2)",
+      "      ? true",
+      "      : false",
+      "    : false;",
+      "type Assert<T extends true> = T;",
+      "",
+      "let bodyRuns = 0;",
+      "const publicContract = oc.router({ sync: oc, promise: oc, effect: oc });",
+      "const internalContract = oc.router({ sync: oc });",
+      "const publicImplementation = implementServerApiPlugin(publicContract);",
+      "const internalImplementation = implementServerInternalPlugin(internalContract);",
+      "const publicRouter = publicImplementation.router({",
+      "  sync: publicImplementation.sync.handler(() => {",
+      "    bodyRuns += 1;",
+      '    return "sync";',
+      "  }),",
+      "  promise: publicImplementation.promise.handler(async () => {",
+      "    bodyRuns += 1;",
+      '    return Promise.resolve("promise");',
+      "  }),",
+      "  effect: publicImplementation.effect.effect(function* () {",
+      "    bodyRuns += 1;",
+      '    return yield* NativeEffect.succeed("effect");',
+      "  }),",
+      "});",
+      "const internalRouter = internalImplementation.router({",
+      "  sync: internalImplementation.sync.handler(() => {",
+      "    bodyRuns += 1;",
+      '    return "internal";',
+      "  }),",
+      "});",
+      "const publicClient = createRouterClient(publicRouter, { context: {} });",
+      "const internalClient = createRouterClient(internalRouter, { context: {} });",
+      "const operationOutcomes = {",
+      "  effect: await publicClient.effect(),",
+      "  internal: await internalClient.sync(),",
+      "  promise: await publicClient.promise(),",
+      "  sync: await publicClient.sync(),",
+      "};",
+      "",
+      "const createServerApiPlugin = defineServerApiPlugin.factory()({",
+      '  capability: "installed-candidate",',
+      '  routeBase: "/installed-candidate",',
+      "  services: {},",
+      "  api: () => publicRouter,",
+      "});",
+      "const createServerInternalPlugin = defineServerInternalPlugin.factory()({",
+      '  capability: "installed-candidate",',
+      '  routeBase: "/installed-candidate-internal",',
+      "  services: {},",
+      "  internal: () => internalRouter,",
+      "});",
+      "const serverApiPlugin = createServerApiPlugin();",
+      "const serverInternalPlugin = createServerInternalPlugin();",
+      "",
+      "const asyncStep = defineAsyncStepEffect({",
+      '  id: "installed-candidate-step",',
+      "  policy: {},",
+      "  effect: ({ event, clients, resources, telemetry, execution }) => {",
+      "    void event;",
+      "    void clients;",
+      "    void resources;",
+      "    void telemetry;",
+      "    void execution;",
+      "    bodyRuns += 1;",
+      "    return HabitatEffect.succeed({ accepted: true as const });",
+      "  },",
+      "});",
+      "const payloadSchema = RuntimeSchema.fromTypeBox(",
+      "  Type.Object({ value: Type.String() })",
+      ");",
+      "const workflow = defineWorkflow({",
+      '  id: "installed-candidate-workflow",',
+      "  inputSchema: payloadSchema,",
+      "  steps: [asyncStep],",
+      "});",
+      "const schedule = defineSchedule({",
+      '  id: "installed-candidate-schedule",',
+      '  cron: "0 0 * * *",',
+      "  steps: [asyncStep],",
+      "});",
+      "const consumer = defineConsumer({",
+      '  id: "installed-candidate-consumer",',
+      '  eventName: "installed.candidate.requested",',
+      "  eventSchema: payloadSchema,",
+      "  steps: [asyncStep],",
+      "});",
+      "const workflowPlugin = defineAsyncWorkflowPlugin.factory()({",
+      '  capability: "installed-candidate",',
+      "  services: {},",
+      "  workflows: [workflow],",
+      "})();",
+      "const schedulePlugin = defineAsyncSchedulePlugin.factory()({",
+      '  capability: "installed-candidate",',
+      "  services: {},",
+      "  schedules: [schedule],",
+      "})();",
+      "const consumerPlugin = defineAsyncConsumerPlugin.factory()({",
+      '  capability: "installed-candidate",',
+      "  services: {},",
+      "  consumers: [consumer],",
+      "})();",
+      "",
+      "export type InstalledPluginTypeOracle = readonly [",
+      "  Assert<Equal<typeof implementServerApiPlugin, typeof nativeImplement>>,",
+      "  Assert<Equal<typeof implementServerInternalPlugin, typeof nativeImplement>>,",
+      '  Assert<Equal<typeof serverApiPlugin.id, "server.api.installed-candidate">>,',
+      '  Assert<Equal<typeof serverInternalPlugin.id, "server.internal.installed-candidate">>,',
+      '  Assert<Equal<typeof workflow.kind, "async.workflow">>,',
+      '  Assert<Equal<typeof schedule.kind, "async.schedule">>,',
+      '  Assert<Equal<typeof consumer.kind, "async.consumer">>,',
+      '  Assert<Equal<typeof asyncStep.kind, "async.step-effect">>,',
+      "  Assert<Equal<Parameters<typeof asyncStep.effect>[0], AsyncStepExecutionContext>>,",
+      "];",
+      "",
+      "console.log(",
+      "  JSON.stringify({",
+      "    bodyRuns,",
+      "    declarations: {",
+      "      consumer: consumer.kind,",
+      "      schedule: schedule.kind,",
+      "      step: asyncStep.kind,",
+      "      workflow: workflow.kind,",
+      "    },",
+      "    factories: {",
+      "      asyncConsumer: consumerPlugin.id,",
+      "      asyncSchedule: schedulePlugin.id,",
+      "      asyncWorkflow: workflowPlugin.id,",
+      "      serverApi: serverApiPlugin.id,",
+      "      serverInternal: serverInternalPlugin.id,",
+      "    },",
+      "    nativeImplementers:",
+      "      implementServerApiPlugin === nativeImplement &&",
+      "      implementServerInternalPlugin === nativeImplement,",
+      "    operationOutcomes,",
+      "    officialEffectMethods: {",
+      "      api: typeof publicImplementation.effect.effect,",
+      "      internal: typeof internalImplementation.sync.effect,",
+      "    },",
+      "    routerKeys: {",
+      "      api: Object.keys(publicRouter).sort(),",
+      "      internal: Object.keys(internalRouter).sort(),",
+      "    },",
+      "  })",
+      ");",
+      "",
+    ].join("\n")
+  );
   const typechecked = await run(
     nx,
     ["run", "@fixture/greeting-service:typecheck", "--outputStyle=static"],
     { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
   );
+  const constructedPlugins = await run("bun", [pluginImplementationConsumerPath], {
+    cwd: serviceRoot,
+    timeoutMs: 60_000,
+  });
   await rm(telemetryTypeConsumerPath);
   await rm(runtimeTypeConsumerPath);
+  await rm(pluginImplementationConsumerPath);
+  const effectEnabledPolicy = await run(
+    nx,
+    ["run", "@fixture/greeting-service:check:policy", "--outputStyle=static", "--skipNxCache"],
+    { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+  );
+  await writeFile(serviceImplementationPath, generatedServiceImplementation);
+  await writeFile(servicePackagePath, generatedServiceManifest);
+  const restoredGeneratedService = await run("bun", ["install", "--ignore-scripts"], {
+    cwd: consumerRoot,
+    timeoutMs: 120_000,
+  });
   expect(typechecked, `${typechecked.stdout}\n${typechecked.stderr}`).toMatchObject({
     exitCode: 0,
   });
+  expect(constructedPlugins, constructedPlugins.stderr || constructedPlugins.stdout).toMatchObject({
+    exitCode: 0,
+    stderr: "",
+  });
+  expect(
+    effectEnabledPolicy,
+    `${effectEnabledPolicy.stdout}\n${effectEnabledPolicy.stderr}`
+  ).toMatchObject({ exitCode: 0 });
+  expect(JSON.parse(constructedPlugins.stdout)).toEqual({
+    bodyRuns: 4,
+    declarations: {
+      consumer: "async.consumer",
+      schedule: "async.schedule",
+      step: "async.step-effect",
+      workflow: "async.workflow",
+    },
+    factories: {
+      asyncConsumer: "async.consumer.installed-candidate",
+      asyncSchedule: "async.schedule.installed-candidate",
+      asyncWorkflow: "async.workflow.installed-candidate",
+      serverApi: "server.api.installed-candidate",
+      serverInternal: "server.internal.installed-candidate",
+    },
+    nativeImplementers: true,
+    operationOutcomes: {
+      effect: "effect",
+      internal: "internal",
+      promise: "promise",
+      sync: "sync",
+    },
+    officialEffectMethods: { api: "function", internal: "function" },
+    routerKeys: {
+      api: ["effect", "promise", "sync"],
+      internal: ["sync"],
+    },
+  });
+  expect(
+    restoredGeneratedService,
+    restoredGeneratedService.stderr || restoredGeneratedService.stdout
+  ).toMatchObject({ exitCode: 0 });
 
   const staleOutput = path.join(serviceRoot, "dist/stale.js");
   await mkdir(path.dirname(staleOutput), { recursive: true });
@@ -1988,6 +2368,17 @@ async function sha256File(filePath: string): Promise<string> {
   return createHash("sha256")
     .update(await readFile(filePath))
     .digest("hex");
+}
+
+async function sha256FileSet(root: string, relativePaths: readonly string[]): Promise<string> {
+  const hash = createHash("sha256");
+  for (const relativePath of [...relativePaths].sort()) {
+    hash.update(relativePath);
+    hash.update("\0");
+    hash.update(await readFile(path.join(root, relativePath)));
+    hash.update("\0");
+  }
+  return hash.digest("hex");
 }
 
 async function packPublicProducts(): Promise<void> {

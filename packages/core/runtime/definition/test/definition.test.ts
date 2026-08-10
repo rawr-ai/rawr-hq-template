@@ -1,10 +1,22 @@
 import { describe, expect, test } from "bun:test";
+import { call } from "@orpc/server";
 import { Type } from "typebox";
 import { Validator } from "typebox/schema";
 import { RuntimeSchema, standard } from "../../schema/src";
-import type { EffectExecutionDescriptor, HabitatEffect, ServiceDefinition } from "../src";
+import type {
+  AsyncStepEffectDescriptor,
+  AsyncStepExecutionContext,
+  EffectExecutionDescriptor,
+  HabitatEffect,
+  ServiceDefinition,
+} from "../src";
 import {
   defineApp,
+  defineAsyncConsumerPlugin,
+  defineAsyncSchedulePlugin,
+  defineAsyncStepEffect,
+  defineAsyncWorkflowPlugin,
+  defineConsumer,
   defineEffectExecution,
   defineEntrypoint,
   definePlugin,
@@ -12,8 +24,14 @@ import {
   defineRuntimeProfile,
   defineRuntimeProvider,
   defineRuntimeResource,
+  defineSchedule,
+  defineServerApiPlugin,
+  defineServerInternalPlugin,
   defineService,
+  defineWorkflow,
   Effect,
+  implementServerApiPlugin,
+  implementServerInternalPlugin,
   RuntimeObservationRecordSchema,
   readHabitatEffectOperation,
   resourceDep,
@@ -44,6 +62,16 @@ type ExecutionDescriptorChannels<TDescriptor> =
     infer TRequirements
   >
     ? readonly [TInput, TOutput, TError, TContext, TRequirements]
+    : never;
+
+type AsyncStepDescriptorChannels<TDescriptor> =
+  TDescriptor extends AsyncStepEffectDescriptor<
+    infer TOutput,
+    infer TError,
+    infer TRequirements,
+    infer TContext
+  >
+    ? readonly [TOutput, TError, TRequirements, TContext]
     : never;
 
 type ServiceSchemaChannels<TDefinition> =
@@ -537,5 +565,282 @@ describe("runtime definition", () => {
         select: () => undefined,
       })
     ).toBe(false);
+  });
+
+  test("fixes server lane identity while retaining native handler implementers", async () => {
+    const service = defineService({ id: "work-items", deps: {} });
+    const contract = service.oc
+      .input(standard(Type.Object({ id: Type.String() })))
+      .output(standard(Type.Object({ id: Type.String(), source: Type.String() })));
+    const nativeHandler = implementServerApiPlugin(contract).handler(({ input }) => ({
+      id: input.id,
+      source: "handler",
+    }));
+    const internalHandler = implementServerInternalPlugin(contract).handler(async ({ input }) => ({
+      id: input.id,
+      source: "promise",
+    }));
+    const services = { workItems: useService(service) } as const;
+    let apiRuns = 0;
+    const createApi = defineServerApiPlugin.factory()({
+      capability: "work-items",
+      routeBase: "/work-items",
+      services,
+      api: () => {
+        apiRuns += 1;
+        return nativeHandler;
+      },
+    });
+    let optionMappings = 0;
+    const createInternal = defineServerInternalPlugin.factory<{ readonly base: `/${string}` }>()(
+      (options) => {
+        optionMappings += 1;
+        return {
+          capability: "work-items-ops",
+          routeBase: options.base,
+          services,
+          internal: () => internalHandler,
+        };
+      }
+    );
+
+    expect(apiRuns).toBe(0);
+    expect(optionMappings).toBe(0);
+    const api = createApi();
+    const internal = createInternal({ base: "/work-items-ops" });
+
+    const mutableInput: {
+      capability: "mutable";
+      routeBase: `/${string}`;
+      services: typeof services;
+      api: () => typeof nativeHandler;
+    } = {
+      capability: "mutable",
+      routeBase: "/before",
+      services,
+      api: () => nativeHandler,
+    };
+    const mutableProjection = defineServerApiPlugin.factory()(mutableInput)();
+    mutableInput.routeBase = "/after";
+    expect(optionMappings).toBe(1);
+    expect(api).toMatchObject({
+      id: "server.api.work-items",
+      role: "server",
+      surface: "server/api",
+      routeBase: "/work-items",
+    });
+    expect(internal).toMatchObject({
+      id: "server.internal.work-items-ops",
+      role: "server",
+      surface: "server/internal",
+      routeBase: "/work-items-ops",
+    });
+    expect(api.services.workItems.service).toBe(service);
+    expect(api.api()).toBe(nativeHandler);
+    expect(apiRuns).toBe(1);
+    expect(Object.isFrozen(api)).toBe(true);
+    expect(Object.isFrozen(api.services)).toBe(true);
+    expect(Object.isFrozen(api.resourceRequirements)).toBe(true);
+    expect(mutableProjection.routeBase).toBe("/before");
+    expect(mutableProjection.project({ pluginId: mutableProjection.id }).facts.routeBase).toBe(
+      "/before"
+    );
+    await expect(call(nativeHandler, { id: "one" })).resolves.toEqual({
+      id: "one",
+      source: "handler",
+    });
+    await expect(call(internalHandler, { id: "two" })).resolves.toEqual({
+      id: "two",
+      source: "promise",
+    });
+
+    if (false) {
+      defineServerApiPlugin.factory()({
+        capability: "invalid",
+        routeBase: "/invalid",
+        services: {},
+        api: () => nativeHandler,
+        // @ts-expect-error Projection classification is fixed by the lane builder.
+        role: "server",
+      });
+      defineServerApiPlugin.factory()({
+        capability: "invalid-undefined",
+        routeBase: "/invalid",
+        services: {},
+        api: () => nativeHandler,
+        // @ts-expect-error Even undefined cannot override lane-owned classification.
+        role: undefined,
+      });
+    }
+
+    const classificationVariable = {
+      capability: "invalid-variable",
+      routeBase: "/invalid" as const,
+      services: {},
+      api: () => nativeHandler,
+      role: undefined,
+    };
+    expect(() => defineServerApiPlugin.factory()(classificationVariable)()).toThrow(
+      "lane classification is fixed"
+    );
+  });
+
+  test("keeps async declarations and step Effects cold and host-neutral", () => {
+    interface StepFailure {
+      readonly _tag: "StepFailure";
+    }
+    interface StepRequirement {
+      readonly store: true;
+    }
+    type StepContext = AsyncStepExecutionContext<
+      Readonly<{ itemId: string }>,
+      Readonly<Record<string, unknown>>
+    >;
+
+    let stepBodyRuns = 0;
+    const step = defineAsyncStepEffect({
+      id: "sync-item",
+      policy: { retry: { times: 2 }, interruptible: true },
+      effect: ({ event }: StepContext) => {
+        stepBodyRuns += 1;
+        return coldEffect<string, StepFailure, StepRequirement>(event.itemId, {
+          _tag: "StepFailure",
+        });
+      },
+    });
+    interface ParseFailure {
+      readonly _tag: "ParseFailure";
+    }
+    interface ClockRequirement {
+      readonly clock: true;
+    }
+    const mixedStep = defineAsyncStepEffect({
+      id: "mixed-step",
+      policy: {},
+      effect: function* ({ event, clients, resources, telemetry, execution }) {
+        void event;
+        void clients;
+        void resources;
+        void telemetry;
+        void execution;
+        const count = yield* coldEffect<number, StepFailure, StepRequirement>(1, {
+          _tag: "StepFailure",
+        });
+        const label = yield* coldEffect<string, ParseFailure, ClockRequirement>("ready", {
+          _tag: "ParseFailure",
+        });
+        return `${label}:${count}`;
+      },
+    });
+    const mixedChannels: TypesEqual<
+      AsyncStepDescriptorChannels<typeof mixedStep>,
+      readonly [
+        string,
+        StepFailure | ParseFailure,
+        StepRequirement | ClockRequirement,
+        AsyncStepExecutionContext,
+      ]
+    > = true;
+    expect(mixedChannels).toBe(true);
+    const inputSchema = RuntimeSchema.fromTypeBox(Type.Object({ itemId: Type.String() }));
+    const eventSchema = RuntimeSchema.fromTypeBox(Type.Object({ itemId: Type.String() }));
+    const workflow = defineWorkflow({ id: "items.sync", inputSchema, steps: [step] as const });
+    const schedule = defineSchedule({
+      id: "items.nightly",
+      cron: "0 0 * * *",
+      steps: [step] as const,
+    });
+    const consumer = defineConsumer({
+      id: "items.changed",
+      eventName: "items/changed",
+      eventSchema,
+      steps: [step] as const,
+    });
+    const service = defineService({ id: "items", deps: {} });
+    const services = { items: useService(service) } as const;
+    const workflowPlugin = defineAsyncWorkflowPlugin.factory()({
+      capability: "item-sync",
+      services,
+      workflows: [workflow] as const,
+    })();
+    const schedulePlugin = defineAsyncSchedulePlugin.factory()({
+      capability: "item-schedules",
+      services,
+      schedules: [schedule] as const,
+    })();
+    const consumerPlugin = defineAsyncConsumerPlugin.factory()({
+      capability: "item-consumers",
+      services,
+      consumers: [consumer] as const,
+    })();
+
+    expect(stepBodyRuns).toBe(0);
+    expect(step).toMatchObject({ kind: "async.step-effect", id: "sync-item" });
+    expect(workflow.steps[0]).toBe(step);
+    expect(schedule.steps[0]).toBe(step);
+    expect(consumer.steps[0]).toBe(step);
+    expect(workflowPlugin).toMatchObject({
+      id: "async.workflow.item-sync",
+      role: "async",
+      surface: "async/workflow",
+    });
+    expect(schedulePlugin).toMatchObject({
+      id: "async.schedule.item-schedules",
+      role: "async",
+      surface: "async/schedule",
+    });
+    expect(consumerPlugin).toMatchObject({
+      id: "async.consumer.item-consumers",
+      role: "async",
+      surface: "async/consumer",
+    });
+    for (const value of [
+      step,
+      workflow,
+      schedule,
+      consumer,
+      workflowPlugin,
+      schedulePlugin,
+      consumerPlugin,
+    ]) {
+      expect(Object.isFrozen(value)).toBe(true);
+    }
+    expect(Object.isFrozen(step.policy)).toBe(true);
+    expect(Object.isFrozen(step.policy.retry)).toBe(true);
+    expect(Object.isFrozen(workflow.steps)).toBe(true);
+    expect("run" in workflow).toBe(false);
+    expect("FunctionBundle" in workflowPlugin).toBe(false);
+    expect("stepEffect" in workflowPlugin).toBe(false);
+
+    if (false) {
+      // @ts-expect-error Consumer event payloads require a RuntimeSchema.
+      defineConsumer({ id: "invalid", eventName: "invalid", steps: [step] });
+      defineWorkflow({
+        id: "invalid",
+        inputSchema,
+        steps: [step],
+        // @ts-expect-error Native run functions do not belong in cold task-4.2 declarations.
+        run: async () => undefined,
+      });
+      defineWorkflow({
+        id: "fake-step",
+        inputSchema,
+        steps: [
+          // @ts-expect-error Async membership requires a complete cold Effect descriptor.
+          { kind: "async.step-effect", id: "fake" },
+        ],
+      });
+      defineAsyncWorkflowPlugin.factory()({
+        capability: "wrong-lane",
+        services,
+        // @ts-expect-error Workflow plugins cannot contain schedule declarations.
+        workflows: [schedule],
+      });
+      // @ts-expect-error Every async step descriptor carries an explicit policy.
+      defineAsyncStepEffect({
+        id: "missing-policy",
+        effect: () => Effect.succeed("invalid"),
+      });
+    }
   });
 });

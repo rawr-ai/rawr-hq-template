@@ -2,7 +2,7 @@ schemaVersion = 1
 id = <%- nameLiteral %>
 ownerProject = <%- nameLiteral %>
 blueprint = "service"
-blueprintVersion = 2
+blueprintVersion = 3
 
 [roots]
 project = <%- directoryLiteral %>

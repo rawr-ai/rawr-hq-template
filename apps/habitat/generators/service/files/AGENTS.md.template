@@ -23,8 +23,8 @@
   than claiming runtime erasure.
 - Module and service routers only compose already-authored operations.
 - The initial operation uses an inline native `.handler(...)`. When authored operations genuinely
-  require Effect, install the official `.effect(...)` extension once in `src/service/impl.ts` and
-  author their generators directly in the operation routers.
+  require Effect, import `@habitat-ai/sdk/plugins/server/effect` once in `src/service/impl.ts` and
+  author their `.effect(...)` generators directly in the operation routers.
 
 ## Validation
 
