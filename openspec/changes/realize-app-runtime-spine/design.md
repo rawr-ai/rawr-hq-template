@@ -60,6 +60,20 @@ project is classified `delete`: its frozen commit remains provenance, and later
 runtime owners may port admitted algorithms or tests only into the owner-local
 implementation they verify.
 
+Task 4.9 audits that exact frozen commit, whole tree
+`7fff3eaf6d80a4609dd0d511696212a38133753d`, and subtree against landed
+`runtime-derivation@2`. The comparison closes as an authority-only no-op:
+task 4.8 already re-authored reference identity/agreement, service-binding
+deduplication, surface grouping, workflow inventory, async ownership/laziness,
+cold tables, and refs-only portability. No distinct derivation algorithm
+remains to port. The lab's `stableJson`/`exec:*` identity, explicit binding
+inputs, mutable shapes, public types, Oracle, alternate `deriveRuntimeSpine`,
+and route derivation without an admitted carrier are rejected. Provider graph
+matching, closure, cycles, and diagnostics remain compiler work in tasks 5.2
+and 5.4. Task 4.9 changes no source, test, project, blueprint, SDK face, public
+contract, Oracle, optional interior, version 3, or alternate path; the landed
+version-2 owner remains exact.
+
 Magic Migration contributes three distinct evidence snapshots. Clean `main` at
 `4e2f5d63e964f8299a25172ece4d5d38f6f18655`, tree
 `88f0f24e98ba057c43f5aa6e93de4c7a510c0b11`, is the stable blueprint snapshot.
@@ -1355,7 +1369,8 @@ project, or downstream product as another package.
   shared mount/stop shape generic and prove each vendor with native fixtures and
   exact installed-source review.
 - **The lab reintroduces stale public types** -> port algorithms and behavior
-  tests selectively; never import or publish the lab package.
+  tests only at their admitted later owner; task 4.9's derivation audit is a
+  no-op, and the lab package is never imported or published.
 - **Runtime observation becomes lifecycle authority** -> keep observation
   write-only from the realization path and prove observation failures do not
   change product outcomes or release ordering.
