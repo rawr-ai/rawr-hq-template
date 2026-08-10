@@ -50,6 +50,11 @@
       "id": "service",
       "version": 2,
       "path": "dist/blueprints/service/versions/2/blueprint.toml"
+    },
+    {
+      "id": "service",
+      "version": 3,
+      "path": "dist/blueprints/service/versions/3/blueprint.toml"
     }
   ]
 }

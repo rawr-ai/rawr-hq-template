@@ -20,6 +20,16 @@
   analytics and observability middleware, and their required capability ports.
 - `standard` and `TypeBoxStandardSchema` are available only through
   `@habitat-ai/sdk/service/schema`.
+- `@habitat-ai/sdk/plugins/server` exposes the public and trusted-internal
+  server plugin builders plus native oRPC implementers. Synchronous and Promise
+  handlers stay native oRPC handlers; Effect handlers stay owned by the
+  official Effect-oRPC extension. `@habitat-ai/sdk/plugins/server/effect` is
+  the service-implementation-owned, side-effect-only bootstrap for that exact
+  extension and exports no Habitat runner.
+- `@habitat-ai/sdk/plugins/async` exposes cold workflow, schedule, and consumer
+  declarations. `@habitat-ai/sdk/plugins/async/effect` adds only the cold async
+  step Effect descriptor builder; neither face imports or materializes a native
+  async host.
 - Implemented app, Effect, execution, service, resource, provider, profile, and
   runtime-schema authoring faces project only cold definition capabilities.
   They expose no `startApp`, provider selection, provider Effect plan, managed
@@ -32,7 +42,9 @@
 - Other low-level service constructors, resource contracts, provider
   factories, and all implementation package identities stay private and must
   be bundled out of both JavaScript and declarations.
-- Third-party runtime libraries remain ordinary npm dependencies.
+- Third-party runtime libraries remain ordinary npm dependencies. Inngest is
+  absent from dependency, peer, optional, load, and public facade metadata
+  until its runtime-harness owner lands.
 - The SDK owns production Node composition, but no controller, package manager,
   retained store, compatibility export, or public implementation cohort.
 - Blueprint assets are copied only at build time. Do not create a second
@@ -53,10 +65,13 @@
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact sorted
   member set is `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
   `resource@1`, `resource@2`, `runtime-definition@1`, `service@1`, and
-  `service@2`. The version-1
+  `service@2`, and `service@3`. The version-1
   resource and service members preserve their released bytes; each version-2
   member is a complete successor with the same law and structure and narrowed
   Grit acquisition.
+  `service@3` preserves that complete service closure while projecting the
+  official Effect-oRPC bootstrap through the terminal SDK for SDK-consuming
+  services.
   Shipped files are not members merely by being present.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
@@ -73,7 +88,9 @@
   service authoring surface, while `src/service/schema.ts` separately assembles
   the private runtime-schema owner. App, Effect, execution, and runtime entry
   modules project only implemented cold definition capabilities.
-  `src/telemetry.ts` assembles the private
+  The `src/plugins/*` entries project only the corresponding private cold
+  definitions and native oRPC authoring values; they do not introduce a host,
+  loader, adapter, dispatcher, or execution runner. `src/telemetry.ts` assembles the private
   telemetry resource and OpenTelemetry Node provider without selecting or
   acquiring that provider for a consumer.
 - Later runtime and harness owners attach foundational telemetry exactly once
@@ -92,6 +109,10 @@
 - Public runtime: `@habitat-ai/sdk`.
 - Public service authoring substrate: `@habitat-ai/sdk/service`.
 - Public service schema adapter: `@habitat-ai/sdk/service/schema`.
+- Public server plugin authoring: `@habitat-ai/sdk/plugins/server` and the
+  implementation bootstrap `@habitat-ai/sdk/plugins/server/effect`.
+- Public host-neutral async authoring: `@habitat-ai/sdk/plugins/async` and
+  `@habitat-ai/sdk/plugins/async/effect`.
 - Public cold runtime authoring: `@habitat-ai/sdk/app`,
   `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
   `@habitat-ai/sdk/runtime/*` subpaths.

@@ -1,3 +1,4 @@
+import "@habitat-ai/sdk/plugins/server/effect";
 import { implement } from "@orpc/server";
 import type { Context } from "./base";
 import { contract } from "./contract";
@@ -9,5 +10,3 @@ export const impl = implement(contract).$context<Context>();
 
 /** Root implementer with service-owned observability and analytics. */
 export const service = impl.use(observability).use(analytics);
-
-import "@orpc/experimental-effect/extensions/effect";

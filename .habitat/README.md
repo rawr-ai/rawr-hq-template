@@ -58,9 +58,9 @@ The current selected generic kinds are:
 - `app`: one closed product-composition shell. Narrower app kinds own their
   host-specific runtime and entrypoint faces.
 
-The accepted SDK protocol-1 policy pack admits exactly ten sorted members:
+The accepted SDK protocol-1 policy pack admits exactly eleven sorted members:
 `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`, `resource@1`,
-`resource@2`, `runtime-definition@1`, `service@1`, and `service@2`.
+`resource@2`, `runtime-definition@1`, `service@1`, `service@2`, and `service@3`.
 Each member resolves its definition and runner assets from the selected
 package with policy-pack provenance. A repository activates one only through
 its own `habitat.toml` instance; an exact producer-source copy is inert, and a
@@ -77,6 +77,11 @@ successors retain the same structure and semantic law while narrowing Grit
 acquisition to definition-owned `rootPatterns`. Each definition exposes only
 its required `project` anchor, so repository manifests cannot redirect source
 independently.
+`service@3` is the complete terminal-SDK-consumer successor. It retains the
+version-2 structure and bounded acquisition while moving the official
+Effect-oRPC bootstrap behind `@habitat-ai/sdk/plugins/server/effect`; direct
+vendor bootstrap remains valid only for an SDK-internal service that cannot
+depend on the terminal SDK without reversing the package graph.
 Nested-member closure remains Habitat-owned. The closed package export law and
 Nx's `@nx/enforce-module-boundaries` rule own workspace-wide foreign-consumer
 direction.

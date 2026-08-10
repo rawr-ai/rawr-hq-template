@@ -1034,7 +1034,9 @@ Exactness: normative.
 
 ```text
 one admitted bootstrap in the selected physical oRPC realm:
-  import "@orpc/experimental-effect/extensions/effect"
+  terminal SDK consumers import "@habitat-ai/sdk/plugins/server/effect"
+  an SDK-internal service that cannot depend on the terminal SDK may import
+  "@orpc/experimental-effect/extensions/effect" directly under its selected law
 
 service and oRPC plugin operation leaves:
   use the patched native implementer's .effect(function* ...) method
@@ -5923,7 +5925,9 @@ Layer: enforcement law
 Exactness: normative.
 
 ```text
-admitted same-realm bootstrap: import "@orpc/experimental-effect/extensions/effect"
+admitted terminal-consumer bootstrap: import "@habitat-ai/sdk/plugins/server/effect"
+admitted SDK-internal acyclic bootstrap under an earlier selected service law:
+  import "@orpc/experimental-effect/extensions/effect"
 operation leaf: native .handler(...) or official .effect(...); no handlerGen import
 ```
 

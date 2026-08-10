@@ -1331,6 +1331,10 @@ describe("Habitat catalog resolve", () => {
         ".habitat/blueprints/nx-workspace/require_repository_script_topology/rule.json",
       ],
       [
+        "require_sdk_server_effect_facade_source",
+        ".habitat/overlays/repository/rules/require_sdk_server_effect_facade_source/rule.json",
+      ],
+      [
         "require_workstream_plugin_pack_hook_configuration",
         ".habitat/overlays/workstream-plugin-pack/rules/require_workstream_plugin_pack_hook_configuration/rule.json",
       ],
@@ -1349,6 +1353,18 @@ describe("Habitat catalog resolve", () => {
       "services/*/src/client.ts",
     ]);
     expect(documentationRule?.runner).toMatchObject({
+      acquisition: { entries: [{ kind: "directory", path: "." }] },
+      name: "grit",
+    });
+
+    const serverEffectFacadeRule = compatibility.rules.find(
+      ({ ruleId }) => ruleId === "require_sdk_server_effect_facade_source"
+    );
+    expect(serverEffectFacadeRule?.coveragePatterns).toEqual([
+      "packages/core/sdk/src/plugins/server/**/*.ts",
+      "packages/core/runtime/definition/src/plugin.ts",
+    ]);
+    expect(serverEffectFacadeRule?.runner).toMatchObject({
       acquisition: { entries: [{ kind: "directory", path: "." }] },
       name: "grit",
     });

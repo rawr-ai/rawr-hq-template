@@ -51,6 +51,26 @@
       "import": "./dist/service/schema.js",
       "default": "./dist/service/schema.js"
     },
+    "./plugins/server": {
+      "types": "./dist/plugins/server/index.d.ts",
+      "import": "./dist/plugins/server/index.js",
+      "default": "./dist/plugins/server/index.js"
+    },
+    "./plugins/server/effect": {
+      "types": "./dist/plugins/server/effect/index.d.ts",
+      "import": "./dist/plugins/server/effect/index.js",
+      "default": "./dist/plugins/server/effect/index.js"
+    },
+    "./plugins/async": {
+      "types": "./dist/plugins/async/index.d.ts",
+      "import": "./dist/plugins/async/index.js",
+      "default": "./dist/plugins/async/index.js"
+    },
+    "./plugins/async/effect": {
+      "types": "./dist/plugins/async/effect/index.d.ts",
+      "import": "./dist/plugins/async/effect/index.js",
+      "default": "./dist/plugins/async/effect/index.js"
+    },
     "./runtime/resources": {
       "types": "./dist/runtime/resources/index.d.ts",
       "import": "./dist/runtime/resources/index.js",

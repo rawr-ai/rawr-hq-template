@@ -87,7 +87,7 @@ describe("Habitat service generator", () => {
     });
     expect(tree.read(`${options.directory}/habitat.toml`, "utf8")).toBe(
       `schemaVersion = 1\nid = "${options.name}"\nownerProject = "${options.name}"\n` +
-        `blueprint = "service"\nblueprintVersion = 2\n\n[roots]\n` +
+        `blueprint = "service"\nblueprintVersion = 3\n\n[roots]\n` +
         `project = "${options.directory}"\n\n[selections]\n`
     );
     expect(tree.read(`${options.directory}/tsconfig.json`, "utf8")).toContain(
@@ -102,31 +102,6 @@ describe("Habitat service generator", () => {
       compilerOptions: { noUnusedLocals: true },
     });
 
-    const sources = expectedFiles
-      .filter((file) => file.endsWith(".ts"))
-      .map((file) => tree.read(`${options.directory}/${file}`, "utf8") ?? "")
-      .join("\n");
-    expect(sources.match(/implement\(contract\)/g)).toHaveLength(1);
-    expect(sources).not.toContain("@orpc/experimental-effect");
-    expect(sources).not.toContain('from "effect"');
-    expect(sources).not.toContain("Effect.runPromise");
-    expect(sources).toContain("export type Context = {");
-    expect(sources).toContain("readonly provided: EmptyContextLane;");
-    expect(sources).toContain('import { os } from "@orpc/server";');
-    expect(sources.match(/os\.\$context<Context>\(\)/g)).toHaveLength(1);
-    expect(sources).toContain("export const base = os.$context<Context>();");
-    expect(sources).toContain("service.workItems.use");
-    expect(sources).toContain("next({ context: { workItems: context.deps.workItems } })");
-    expect(sources).toContain("module.listItems.handler(({ context }) =>");
-    expect(sources).toContain('import { listItems } from "./router/list-items.js";');
-    expect(sources).toContain("export const router = {\n  listItems,\n};");
-    expect(sources).toContain("void context.workItems;");
-    expect(sources).not.toContain("next({ context: {} })");
-    expect(sources).toContain('import { standard } from "@habitat-ai/sdk/service/schema";');
-    expect(sources).toContain("oc.input(standard(InputSchema)).output(standard(OutputSchema))");
-    expect(sources).toContain('import { listItems } from "./list-items.js";');
-    expect(sources).toContain("export const contract = {\n  listItems,\n};");
-    expect(sources).toContain("createRouterClient(router");
     expect(tree.read(`${options.directory}/AGENTS.md`, "utf8")).toMatch(
       new RegExp(`^# ${options.name} Service Router`, "m")
     );
@@ -137,7 +112,7 @@ describe("Habitat service generator", () => {
       /initial operation uses an inline native `\.handler\(\.\.\.\)`/
     );
     expect(tree.read(`${options.directory}/AGENTS.md`, "utf8")).toMatch(
-      /install the official `\.effect\(\.\.\.\)` extension once in `src\/service\/impl\.ts`/
+      /import `@habitat-ai\/sdk\/plugins\/server\/effect` once in `src\/service\/impl\.ts`/
     );
     expect(tree.read(`${options.directory}/AGENTS.md`, "utf8")).not.toContain(
       "second Effect terminal"

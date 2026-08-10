@@ -93,7 +93,7 @@ cannot duplicate, weaken, or replace generic kind law.
 
 The accepted protocol-1 SDK pack contains `app@1`, `package@1`, `plugin@1`,
 `plugin-nx@1`, `provider@1`, `resource@1`, `resource@2`,
-`runtime-definition@1`, `service@1`, and `service@2`. Existing version-1
+`runtime-definition@1`, `service@1`, `service@2`, and `service@3`. Existing version-1
 members remain immutable for exact existing selections. `runtime-definition@1`
 closes only the cold private runtime-definition owner introduced by task 4.1;
 it does not create `app@2`, a live runtime, or a native host. The version-2
@@ -102,6 +102,10 @@ same semantic law and structure, narrower declared `rootPatterns`, and their
 own recursive package closure and installed-consumer proof. Retained Habitat
 owners select the successors explicitly; no inheritance, fallback, component
 engine, or relation engine is part of this gate.
+`service@3` preserves the complete version-2 service shape and acquisition but
+selects the terminal SDK's side-effect-only official Effect-oRPC bootstrap.
+SDK-internal services that would create a reverse dependency remain on their
+already-selected earlier version and direct vendor bootstrap.
 
 See [[README|the Habitat policy index]], [[AUTHORITY-ONTOLOGY|the authority
 ontology]], [[BLUEPRINT-COMPOSITION|blueprint composition]], and

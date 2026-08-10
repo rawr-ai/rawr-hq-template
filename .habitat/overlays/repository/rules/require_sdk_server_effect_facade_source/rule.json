@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "id": "require_sdk_server_effect_facade_source",
+  "title": "Require SDK Server Effect Facade Source",
+  "placement": {
+    "niche": "repository",
+    "blueprint": "_self",
+    "category": "boundary"
+  },
+  "operation": {
+    "kind": "check"
+  },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "a Habitat-authored server Effect runner, ManagedRuntime ownership, direct handlerGen use, or an SDK server Effect facade with behavior beyond loading the official extension",
+  "why": "The terminal SDK may hide the one official Effect-oRPC bootstrap, but neither its server face nor the runtime plugin definition may become a second execution bridge or runtime owner.",
+  "remediate": "Keep plugins/server/effect/index.ts to the one official extension side-effect import plus an empty export. Remove direct handlerGen use, ManagedRuntime imports, Effect execution terminals, helpers, and extra side effects from the SDK server authoring face and runtime plugin definition.",
+  "message": "The SDK server face and runtime plugin definition must delegate Effect execution and admit no ManagedRuntime ownership.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "packages/core/sdk/src/plugins/server/**/*.ts",
+        "packages/core/runtime/definition/src/plugin.ts"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/overlays/repository/rules/require_sdk_server_effect_facade_source/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/overlays/repository/rules/require_sdk_server_effect_facade_source/pattern.md"
+    },
+    "patternName": "require_sdk_server_effect_facade_source",
+    "acquisition": {
+      "kind": "check",
+      "roots": ["."]
+    }
+  }
+}

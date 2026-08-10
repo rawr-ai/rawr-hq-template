@@ -140,14 +140,18 @@ Application bounds execution.
 
 ## Current Realization
 
-The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits ten
+The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits eleven
 members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
 `resource@1`, `resource@2`, `runtime-definition@1`, `service@1`, and
-`service@2`. `runtime-definition@1` is the closed cold private definition owner,
+`service@2`, and `service@3`. `runtime-definition@1` is the closed cold private definition owner,
 not a live runtime or an `app@2` successor. The version-1 resource and service
 closures preserve their `habitat-cli-v0.5.13` bytes. Their complete version-2
 successors retain the same law and structure while narrowing Grit acquisition
 to definition-owned `rootPatterns`.
+`service@3` is not a new kind or relation. It is the complete consumer-facing
+service successor whose official Effect-oRPC bootstrap is projected through
+the terminal SDK while SDK-internal services preserve an acyclic earlier
+selection.
 
 Protocol 1 already supports nested declared rule assets. It does not realize
 blueprint relations, capability activation, niche admission, inheritance,

@@ -1,4 +1,4 @@
-import "@orpc/experimental-effect/extensions/effect";
+import "@habitat-ai/sdk/plugins/server/effect";
 import { procedureMetadata } from "@habitat-ai/sdk/service";
 import { standard } from "@habitat-ai/sdk/service/schema";
 import { ORPCError } from "@orpc/client";
