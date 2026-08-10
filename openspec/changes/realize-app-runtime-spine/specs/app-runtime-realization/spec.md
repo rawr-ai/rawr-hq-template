@@ -177,8 +177,9 @@ an app, entrypoint, adapter, harness, service, plugin, or provider.
 
 - **WHEN** an entrypoint starts a process with one selected role and one
   selected surface
-- **THEN** the Habitat core derivation owner emits a normalized graph before the
-  runtime compiler emits one `CompiledProcessPlan`
+- **THEN** the Habitat core derivation owner emits `NormalizedRuntimeTopology`
+  and then the complete `NormalizedAuthoringGraph` before the runtime compiler
+  emits one `CompiledProcessPlan`
 - **AND** provisioning and mounting consume that plan through their declared
   boundaries even when unused plan collections are empty
 
@@ -204,35 +205,352 @@ made unavailable after handoff.
 - **THEN** the immediate downstream owner completes from that artifact alone
 - **AND** an identity-mismatched artifact is refused before downstream mutation
 
-### Requirement: Definition and derivation remain import-safe
+### Requirement: Runtime topology normalization is deterministic and bounded
 
-Services, plugins, resources, providers, apps, profiles, and executable bodies MUST
-be declared without reading live config, acquiring resources, registering
+Private runtime derivation MUST first produce one `NormalizedRuntimeTopology`
+through the private operation
+`deriveNormalizedRuntimeTopology({ entrypoint, profileId })`. It MUST recursively
+copy and freeze the entrypoint's exact `RuntimeLaunchIdentity`, preserve exact
+`profileId`, take role requirements only from the selected process, and take
+plugin identities, surface requirements, and resource-requirement identities
+only from the selected app's plugins. It MUST follow service definitions
+transitively only through the definition witnesses carried by private
+`ServiceUse` carriers; it MUST NOT add a `plugin.service` edge or invoke an
+executable declaration while discovering topology.
+
+The exact nested value shapes MUST be:
+
+```ts
+type NormalizedPluginIdentity = {
+  readonly pluginId: string;
+  readonly instance?: string;
+};
+
+type NormalizedSurfaceRequirement = {
+  readonly plugin: NormalizedPluginIdentity;
+  readonly role: AppRole;
+  readonly surface: string;
+  readonly capability: string;
+};
+
+type NormalizedResourceRequirementIdentity = {
+  readonly resourceId: string;
+  readonly lifetime: ResourceLifetime;
+  readonly role?: AppRole;
+  readonly instance?: string;
+};
+```
+
+`NormalizedResourceRequirementIdentity.lifetime` MUST be the effective lifetime
+after declared defaulting, while `role` MUST be present only when authored. The
+topology's `resourceRequirementIdentities` MUST be the deterministically sorted
+unique projection of `resource` values from accepted `plugin.resource` edges.
+The same resource identity MAY be demanded by distinct plugin identities and
+MUST appear once in that projection; a duplicate exact `plugin.resource` edge
+MUST be refused. The edge union MUST contain exactly these typed variants and
+fields:
+
+```ts
+type NormalizedRuntimeTopologyEdge =
+  | {
+      readonly kind: "app.plugin";
+      readonly appId: string;
+      readonly plugin: NormalizedPluginIdentity;
+    }
+  | {
+      readonly kind: "plugin.resource";
+      readonly plugin: NormalizedPluginIdentity;
+      readonly resource: NormalizedResourceRequirementIdentity;
+    }
+  | {
+      readonly kind: "service.service";
+      readonly serviceId: string;
+      readonly dependencyServiceId: string;
+    }
+  | {
+      readonly kind: "service.resource";
+      readonly serviceId: string;
+      readonly resourceId: string;
+    }
+  | {
+      readonly kind: "service.semantic";
+      readonly serviceId: string;
+      readonly adapterId: string;
+    };
+```
+
+`service.service` MUST point from dependent `serviceId` to
+`dependencyServiceId`; a self-loop MUST be treated as a cycle. Derivation MUST
+refuse a mismatch in `identity.app`, `identity.process`, or
+`identity.entrypoint` against the selected declarations, a `profileId` mismatch,
+a duplicate plugin identity, role literal, surface tuple, exact edge tuple, and
+every cycle in the `service.service` subgraph before emitting topology. Shared
+resource demand across distinct plugin identities MUST NOT be treated as a
+duplicate.
+`identity.deployment` and `identity.source` MUST remain opaque values copied
+exactly rather than re-derived.
+
+Task-4.7 service-cycle acceptance MUST prove only order-independent refusal for
+a self-loop and a longer cycle. It MUST NOT prescribe an error class, select or
+expose a cycle path, prescribe diagnostic ordering, define a finding payload,
+or add an error API.
+
+Every emitted object and collection MUST be a fresh recursive copy and MUST be
+recursively frozen. Every tuple-bearing collection MUST use lexicographic
+ECMAScript code-unit ordering over its complete tuple; a missing optional field
+MUST compare as the empty string while remaining absent in output. Semantically
+equivalent inputs MUST therefore produce deeply equal topology independent of
+authored collection order.
+
+`runtime-derivation` MUST own the TypeBox schema for
+`NormalizedRuntimeTopology` and adapt it through
+`RuntimeSchema.fromTypeBox(...)`. That owner-local schema reference MUST be the
+real source/build edge to `runtime-schema`; the selected definition and launch
+identity references MUST establish the real edge to `runtime-definition`.
+Neither edge may be represented only by `implicitDependencies`. Every object in
+the schema MUST set `additionalProperties: false`; surplus properties and
+unknown edge variants MUST fail decode.
+
+The checked-in private owner MUST contain exactly the root shell `AGENTS.md`,
+`habitat.toml`, `project.json`, `src/`, `test/`, `tsconfig.json`,
+`tsconfig.test.json`, and `tsdown.config.ts`; only `src/index.ts` and
+`src/normalized-runtime-topology.ts`; and only
+`test/normalized-topology.test.ts` and `test/nx-cache.test.ts`. It MUST contain
+no optional interior or `package.json`. The bounded topology artifact alone
+MUST NOT require or authorize an SDK edge or export, complete
+`NormalizedAuthoringGraph`, descriptor or module table, or
+`PortableRuntimePlanArtifact`.
+
+#### Scenario: Equivalent topology declarations are reordered
+
+- **WHEN** the same cold declarations are supplied with plugin and dependency
+  collections in different authored orders
+- **THEN** derivation emits deeply equal `NormalizedRuntimeTopology` values
+- **AND** each emitted launch identity is field-for-field equal to but not the
+  same object as its corresponding input identity, and the emitted copy is
+  recursively frozen
+- **AND** every normalized tuple uses ECMAScript code-unit order with absent
+  optionals compared as empty strings
+
+#### Scenario: Invalid topology is refused
+
+- **WHEN** selected app/process/entrypoint or profile identity disagrees, a
+  plugin identity, role literal, surface tuple, or exact edge is duplicated, or
+  the dependent-to-dependency
+  `service.service` subgraph contains a self-loop or longer cycle
+- **THEN** derivation refuses the input before emitting a topology artifact
+- **AND** reordered edges for the same cycle are also refused without asserting
+  an error class, selected path, diagnostic order, or finding payload
+
+#### Scenario: Distinct plugins share one resource requirement
+
+- **WHEN** two distinct normalized plugin identities carry the same effective
+  resource-requirement identity through distinct `plugin.resource` edges
+- **THEN** both edges are admitted and `resourceRequirementIdentities` contains
+  one sorted projection entry
+- **AND** repeating either exact plugin/resource edge is refused
+
+#### Scenario: Closed topology schema receives surplus data
+
+- **WHEN** a topology value contains a surplus property or an unknown edge kind
+- **THEN** the owner-local TypeBox schema refuses it before handoff
+
+#### Scenario: Cold executable declarations participate in topology
+
+- **WHEN** the selected app contains a lazy web route-module loader and a cold
+  Effect body
+- **THEN** topology derives only their declarative plugin, surface, resource,
+  and reachable-service facts
+- **AND** neither executable body is called
+
+### Requirement: Complete-derivation contract and binding-source authority are closed before implementation
+
+Complete derivation MUST implement one previously frozen contract rather than
+settle any public or binding contract in source. Before complete implementation
+may start, the authority-only gate MUST replace every illustrative or undefined
+public `RuntimeDerivationResult` shape and nested public carrier with exact
+closed TypeBox schemas and TypeBox-derived readonly shapes. It MUST freeze the
+exact producer/consumer signatures and every method signature on
+`ExecutionDescriptorTable` and `WebRouteModuleTable`, plus exact
+complete-derivation finding, error/refusal, and deterministic ordering contracts,
+without adding a public error class, error type, or error value export.
+
+The sole public derivation face MUST have exactly one derivation operation,
+`deriveRuntimeArtifacts(input)`, and exactly three runtime value exports:
+`deriveRuntimeArtifacts`, `PortableRuntimePlanArtifactSchema`, and
+`decodePortableRuntimePlanArtifact`. Its exact finite type-only export inventory
+MUST be `RuntimeDerivationInput`, `RuntimeDerivationResult`,
+`NormalizedPluginIdentity`, `NormalizedSurfaceRequirement`,
+`NormalizedResourceRequirementIdentity`, `NormalizedRuntimeTopologyEdge`,
+`NormalizedRuntimeTopology`, `NormalizedAppDefinition`,
+`NormalizedPluginDefinition`, `DerivedRoleSurfaceIndex`,
+`NormalizedServiceUse`, `NormalizedServiceDependency`,
+`NormalizedSemanticDependency`, `ResourceRequirement`, `ProviderSelection`,
+`NormalizedRuntimeProfile`, `ServiceBindingPlan`, `SurfaceRuntimePlan`,
+`WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef`,
+`ExecutionDescriptorTable`, `WebRouteModuleRef`, `WebRouteModuleTableEntry`,
+`WebRouteModuleTable`, `PortableRuntimePlanArtifact`, and
+`DerivationFinding`. The decoder is a validation utility rather than a second
+derivation operation. No other runtime value, type-only export, or public error
+API is admitted.
+
+The same gate MUST name the scope/config binding authoring owner and declaration
+site; define exact closed TypeBox source and normalized-reference discriminated
+unions; state whether and how the sealed `ServiceUse` private carrier evolves;
+define required and forbidden bindings when scope/config schemas are present or
+absent; define transitive `serviceDep` propagation and override; define
+`RuntimeConfigSource` ordering, key identity, and missing-source semantics; and
+settle normalization, identity, cache, and public/private projection. The
+grammar MUST reject callbacks, closures, executable resolvers, provider
+acquisition, and live values. The authority-only gate's only allowed edit scope
+MUST be `docs/system/HABITAT_ARCHITECTURE.md`,
+`docs/system/HABITAT_RUNTIME_REALIZATION.md`, and the six active OpenSpec
+authority artifacts
+`openspec/changes/realize-app-runtime-spine/authority-amendment.md`,
+`openspec/changes/realize-app-runtime-spine/classification-ledger.md`,
+`openspec/changes/realize-app-runtime-spine/design.md`,
+`openspec/changes/realize-app-runtime-spine/execution-queue.md`,
+`openspec/changes/realize-app-runtime-spine/tasks.md`, and
+`openspec/changes/realize-app-runtime-spine/specs/app-runtime-realization/spec.md`.
+The gate MUST create or edit no implementation, project, blueprint, SDK edge,
+export map, or public export. It MUST replace every canonical placeholder
+contract before task 4.8 or archive; both transitions MUST remain blocked until
+the complete contract is deterministic and the two canonical documents and all
+six active OpenSpec authority artifacts agree.
+
+#### Scenario: Complete derivation receives an unsettled contract
+
+- **WHEN** any public shape, producer/consumer or table signature, finding,
+  refusal, ordering, export-inventory, binding-owner, union-member, carrier,
+  schema-presence, dependency-propagation, config-source, or projection decision
+  remains illustrative, undefined, or ambiguous
+- **THEN** complete derivation implementation remains blocked
+- **AND** no placeholder implementation, project, blueprint, SDK edge, export
+  map, public export, or error API is added
+- **AND** task 4.8 and archive remain blocked while any canonical placeholder or
+  canonical-to-active authority disagreement remains
+
+### Requirement: Complete derivation remains import-safe and separates references
+
+Complete runtime derivation MUST remain import-safe.
+Services, plugins, resources, providers, apps, profiles, and executable bodies
+MUST be declared without reading live config, acquiring resources, registering
 globals, creating native clients, starting processes, or running Effects.
-Habitat core derivation MUST produce canonical identities, dependency edges, resource
-requirements, provider selections, service binding plans, surface plans,
-execution descriptor references, one non-portable execution descriptor table,
-portable diagnostics, and one deployment-safe cold portable process plan
-without importing runtime compiler types into public authoring surfaces. The
-portable plan MUST carry immutable app, process, entrypoint, deployment, and
-source correlation plus declared handoff facts, but MUST NOT contain a provider
-lease, native handle, live client, deployment mutation, supervisor, or process
-lifecycle authority.
+Habitat core derivation MUST consume the qualified `NormalizedRuntimeTopology`
+without reconstruction, carry it into the complete `NormalizedAuthoringGraph`,
+and produce `NormalizedServiceUse`, normalized provider selections,
+`ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`,
+Effect-only `ExecutionDescriptorRef` values with one
+non-portable `ExecutionDescriptorTable`, separate `WebRouteModuleRef` values
+with one non-portable `WebRouteModuleTable`, and one deployment-safe cold
+`PortableRuntimePlanArtifact`. Public authoring surfaces MUST NOT import runtime
+compiler types.
+
+The Effect-only `ExecutionDescriptorRef` discriminated union MUST include
+`plugin.web-surface` with required `surfaceId`. That variant represents actual
+web-local Effect work. It MUST remain distinct from `WebRouteModuleRef`, which
+represents a lazy native route-module loader and never enters the Effect
+descriptor table or registry. Complete derivation MUST sort execution refs by
+their complete discriminated boundary-identity tuples using ECMAScript
+code-unit order, including every required identity field of the selected
+variant and comparing each missing optional identity field as the empty string.
+
+The sole public derivation face MUST be
+`@habitat-ai/sdk/runtime/derivation`. Its SDK assembly edge and export MUST land
+with the complete public derivation projection rather than with a private
+topology-only increment. No SDK root export, second derivation subpath, or
+individually distributed private runtime owner may become alternate authority.
+
+The accepted top-level outline MUST retain `RuntimeDerivationInput` with fields
+`entrypoint` and `profileId` and `RuntimeDerivationResult` with fields
+`topology`, `graph`, `executionDescriptorTable`, `webRouteModuleTable`, and
+`portableArtifact`. Task 4.7a MUST replace every illustrative or undefined
+nested carrier with the final exact closed TypeBox-derived shape before task
+4.8 starts. Task 4.8 MUST implement that frozen contract verbatim rather than
+inventing or widening it, and MUST expose only the operation, runtime values,
+and finite type-only inventory stated by the authority gate. The derivation
+operation MUST call private
+`deriveNormalizedRuntimeTopology` exactly once, MUST place that same recursively
+frozen object at both `result.topology` and `result.graph.topology`, MUST
+recursively freeze its returned artifacts, and MUST NOT invoke an Effect body or
+web route-module loader.
+
+The immutable topology-only blueprint MUST remain
+`runtime-derivation@1`. Complete derivation MUST select independent
+`runtime-derivation@2` with no inheritance or fallback. Version 2 MUST retain the
+same exact project shell and contain exactly source `index.ts`,
+`normalized-runtime-topology.ts`, `derive-runtime-artifacts.ts`,
+`normalized-authoring-graph.ts`, `execution-descriptor-ref.ts`,
+`derive-execution-descriptor-table.ts`, `identity-policy.ts`,
+`service-binding-plan.ts`, `surface-runtime-plan.ts`,
+`web-route-module-table.ts`, `workflow-dispatcher-descriptor.ts`, and
+`portable-runtime-plan-artifact.ts`, plus tests `normalized-topology.test.ts`,
+`complete-derivation.test.ts`, and `nx-cache.test.ts`. Later derivation and
+handoff work MUST edit those existing modules/tests and MUST NOT create an
+optional interior, fallback, alternate test, or `runtime-derivation@3`.
+
+`PortableRuntimePlanArtifact` MUST contain exactly `kind`, `artifactId`,
+`identity`, `profileId`, `roles`, `surfaces`, and
+`executionDescriptorRefs`. `identity` MUST equal the exact launch-identity copy
+carried by normalized topology, and `executionDescriptorRefs` MUST contain
+Effect execution references only in the deterministic order above. The sole
+public derivation face MUST export closed
+`PortableRuntimePlanArtifactSchema` and
+`decodePortableRuntimePlanArtifact`. `artifactId` MUST be exactly `sha256:` plus
+the 64 lowercase hexadecimal SHA-256 characters for the RFC 8785 canonical JSON
+encoding of the other six top-level fields. Decode MUST reject a surplus
+top-level or nested field, a malformed artifact id, or a digest mismatch. The
+portable artifact MUST NOT
+contain `derivedAt`, placement constraints, a web route-module ref or loader,
+either non-portable table, an executable value, a live resource or client, a
+runtime handle, a readiness gate, an observation port, a provider secret,
+supervision, or lifecycle authority.
 
 #### Scenario: Authoring modules are imported
 
 - **WHEN** every selected declaration is imported during graph construction
 - **THEN** no filesystem, network, timer, provider, host, or managed runtime is
   created
-- **AND** repeated derivation of identical inputs produces equivalent artifacts
+- **AND** repeated complete derivation of identical inputs produces equivalent
+  artifacts
+
+#### Scenario: Public derivation returns one coherent result
+
+- **WHEN** a consumer calls `deriveRuntimeArtifacts({ entrypoint, profileId })`
+- **THEN** the result contains exactly `topology`, `graph`,
+  `executionDescriptorTable`, `webRouteModuleTable`, and `portableArtifact`
+- **AND** private topology derivation was called once and
+  `result.graph.topology === result.topology`
+- **AND** the result is recursively frozen and no Effect body or web loader was
+  invoked
+
+#### Scenario: Effect and web module references are separated
+
+- **WHEN** complete derivation encounters a private web-local Effect descriptor
+  and a lazy native web route-module loader in one owner-local fixture
+- **THEN** the Effect body receives a `plugin.web-surface`
+  `ExecutionDescriptorRef` with its required `surfaceId` and remains only in the
+  non-portable `ExecutionDescriptorTable`
+- **AND** the web loader receives a `WebRouteModuleRef` and remains only in the
+  non-portable `WebRouteModuleTable`
+- **AND** the web loader never becomes an Effect execution reference or enters
+  the portable artifact
+- **AND** the fixture does not create an early
+  `@habitat-ai/sdk/plugins/web/effect` face
 
 #### Scenario: A deployment boundary consumes the portable plan
 
-- **WHEN** a deployment owner receives the derived portable process plan
-- **THEN** it can identify the exact app/process/entrypoint/source handoff
-  without importing non-portable descriptors or live runtime state
-- **AND** the plan neither starts, stops, supervises, nor claims readiness for a
-  process
+- **WHEN** a deployment owner receives the serialized
+  `PortableRuntimePlanArtifact`
+- **THEN** it observes exactly `kind`, `artifactId`, `identity`, `profileId`,
+  `roles`, `surfaces`, and `executionDescriptorRefs`
+- **AND** the exact launch identity supplies app, process, entrypoint,
+  deployment, and source correlation without a non-portable table
+- **AND** `artifactId` is `sha256:` followed by the 64 lowercase hexadecimal
+  SHA-256 characters for RFC 8785 canonical JSON of the other six fields and the
+  decoder verifies that exact value
+- **AND** no `derivedAt`, placement constraint, executable value, live state, or
+  process lifecycle authority is present
 
 ### Requirement: Service use is one cold typed relation
 
@@ -252,8 +570,8 @@ owners MAY use its internal accessor; the SDK MUST NOT export the carrier symbol
 or accessor. `ServiceContractOf` and services-map client projection MUST infer
 the exact contract while preserving every authored map key without a dynamic
 lookup. Every terminal SDK plugin face that admits service use MUST re-export
-the same `useService` helper rather than define a lane-local variant. Runtime
-derivation MUST normalize each `ServiceUse` and produce its
+the same `useService` helper rather than define a lane-local variant. Complete
+runtime derivation MUST normalize each `ServiceUse` and produce its
 `ServiceBindingPlan` with closed declarative scope/config binding-reference
 discriminants and no callback or executable resolver. The compiler MUST consume
 that derived plan, and only process runtime MAY construct or cache live service
@@ -279,7 +597,7 @@ bindings.
 
 #### Scenario: A private runtime owner normalizes service use
 
-- **WHEN** runtime derivation receives the cold relation
+- **WHEN** complete runtime derivation receives the cold relation
 - **THEN** the private accessor recovers the exact definition and contract
   witness from the non-enumerable carrier
 - **AND** derivation emits the normalized use and `ServiceBindingPlan` with only
@@ -405,8 +723,10 @@ A provider MUST NOT select itself or construct a managed runtime.
 
 ### Requirement: Process runtime owns live binding and execution
 
-Process runtime MUST consume one `CompiledProcessPlan`, the matching execution
-descriptor table, and one `ProvisionedProcess`. It MUST assemble runtime access,
+Process runtime MUST consume one `CompiledProcessPlan`, the matching Effect
+`ExecutionDescriptorTable`, and one `ProvisionedProcess`. The separate
+`WebRouteModuleTable` MUST remain on the web lowering path and MUST NOT enter the
+Effect execution registry. Process runtime MUST assemble runtime access,
 bound service clients, the service binding cache, execution registry,
 `ProcessExecutionRuntime`, adapter-lowered mount-ready surface records, and an
 idempotent process stop handle. It MUST NOT invoke a harness or project
@@ -504,14 +824,17 @@ order.
 The public runtime and authoring facade MUST be distributed as the single
 `@habitat-ai/sdk` package from the Nx project at `packages/core/sdk`. Its exact
 public export set MUST comprise the stable authoring and runtime exports
-`.`, `./app`, `./effect`, `./execution`, `./service`, `./service/schema`,
+`.`, `./app`, `./effect`, `./effect/context`, `./effect/wrap`, `./execution`,
+`./service`, `./service/schema`,
 `./plugins/server`, `./plugins/server/effect`, `./plugins/async`,
 `./plugins/async/effect`, `./plugins/cli`, `./plugins/cli/effect`,
 `./plugins/cli/schema`, `./plugins/web`, `./plugins/web/effect`,
 `./plugins/agent`, `./plugins/agent/effect`, `./plugins/agent/schema`,
 `./plugins/desktop`, `./plugins/desktop/effect`, `./runtime/resources`,
 `./runtime/providers`, `./runtime/providers/effect`, `./runtime/profiles`,
-`./runtime/harnesses`, and `./runtime/schema`; the optional integration exports `./telemetry`,
+`./runtime/derivation`, `./runtime/harnesses`, `./runtime/observation`, and
+`./runtime/schema`; the
+optional integration exports `./telemetry`,
 `./resources/semantic-ledger`, `./resources/semantic-ledger/fluree`,
 `./resources/temporal-inquiry`, and `./resources/temporal-inquiry/fluree`; and
 the data exports `./habitat-pack.json`,
@@ -519,6 +842,26 @@ the data exports `./habitat-pack.json`,
 present in the packed export map; "optional" describes conditional provider
 loading, not export-path membership. The closed private runtime inventory and
 completed direct dependency graph MUST be exactly:
+
+`./runtime/derivation` MUST be the sole public derivation face. It MUST expose
+exactly one derivation operation and exactly the three runtime values
+`deriveRuntimeArtifacts`, `PortableRuntimePlanArtifactSchema`, and
+`decodePortableRuntimePlanArtifact`. Its exact finite type-only inventory MUST
+be `RuntimeDerivationInput`, `RuntimeDerivationResult`,
+`NormalizedPluginIdentity`, `NormalizedSurfaceRequirement`,
+`NormalizedResourceRequirementIdentity`, `NormalizedRuntimeTopologyEdge`,
+`NormalizedRuntimeTopology`, `NormalizedAppDefinition`,
+`NormalizedPluginDefinition`, `DerivedRoleSurfaceIndex`,
+`NormalizedServiceUse`, `NormalizedServiceDependency`,
+`NormalizedSemanticDependency`, `ResourceRequirement`, `ProviderSelection`,
+`NormalizedRuntimeProfile`, `ServiceBindingPlan`, `SurfaceRuntimePlan`,
+`WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef`,
+`ExecutionDescriptorTable`, `WebRouteModuleRef`, `WebRouteModuleTableEntry`,
+`WebRouteModuleTable`, `PortableRuntimePlanArtifact`, and
+`DerivationFinding`. It MUST NOT expose another runtime value or type-only
+export, expose a public error API, re-export the private topology increment from
+the SDK root, create a second derivation subpath, serialize either non-portable
+table, or classify a web loader as an Effect execution descriptor.
 
 `./runtime/harnesses` MUST expose only the import-safe public companion
 `HarnessDescriptor`, `HarnessMountInput`, `NativeHarnessHandle` interface,
@@ -599,11 +942,14 @@ generated `check:policy` target MUST be a non-cacheable `nx:noop` composition
 target whose deterministic dependencies are the owner's cacheable policy leaves.
 Each leaf MUST declare only its exact closed owner/policy/toolchain/environment
 inputs and outputs `[]`.
-Project creation, direct edges, SDK assembly edge, and target realization MUST
-land with the first conforming implementation rather than as an empty topology
-slice. One unchanged rerun MUST restore every cacheable task without invoking
-its underlying command; changing one declared relevant input MUST invalidate
-the expected dependent work.
+Project creation, owner-internal direct edges, and target realization MUST land
+with the first conforming implementation rather than as an empty topology
+slice. An SDK assembly edge and export MUST land only with the owner's first
+public SDK projection, in the same semantic node as that projection and its
+installed proof. A private implementation increment MUST NOT create an empty
+public facade early. One unchanged rerun MUST restore every cacheable task
+without invoking its underlying command; changing one declared relevant input
+MUST invalidate the expected dependent work.
 
 The SDK root is a terminal core-authoring facade, and every subpath is its own
 terminal entry module; neither may load every subpath or vendor.
@@ -624,6 +970,17 @@ second runtime distribution.
   and its ordinary dependency closure
 - **AND** the consumer does not install internal runtime owners individually
 
+#### Scenario: Installed consumer derives a cold runtime plan
+
+- **WHEN** a disposable installed consumer imports
+  `@habitat-ai/sdk/runtime/derivation` and derives a selected process
+- **THEN** the sole derivation face returns the complete normalized graph and
+  exact-field portable artifact without resolving an internal workspace package
+- **AND** its public schema/decoder rejects surplus data and verifies the
+  exact `sha256:` plus 64-lowercase-hex artifact id over RFC 8785 canonical JSON
+- **AND** the portable artifact roundtrips without either non-portable table,
+  a web loader, `derivedAt`, placement constraints, or live runtime state
+
 #### Scenario: Nx and release inspect runtime owners
 
 - **WHEN** Nx resolves the SDK build graph and release membership
@@ -642,11 +999,20 @@ second runtime distribution.
 
 - **WHEN** a private runtime owner first receives conforming implementation
 - **THEN** its exact project root, Nx-only ID, inherited shared check/lint graph,
-  owner typecheck/test/build targets, direct project edges, and terminal SDK assembly
-  edge land in that same semantic node
+  owner typecheck/test/build targets, and owner-internal direct project edges
+  land in that same semantic node
 - **AND** an unchanged rerun restores every cacheable task without invoking its
   command, while one declared relevant-input change invalidates the expected work
 - **AND** no empty private runtime project is created in an earlier law-only node
+- **AND** no SDK edge or export is invented when the increment has no public
+  projection
+
+#### Scenario: A private owner first gains a public projection
+
+- **WHEN** a private runtime owner first exposes a supported terminal SDK face
+- **THEN** the real SDK assembly edge, the sole named export, and installed
+  package proof land with that complete public projection
+- **AND** no earlier empty facade or alternate public path remains
 
 #### Scenario: Selected application acceptance is scheduled
 
