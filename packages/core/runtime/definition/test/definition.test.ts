@@ -7,6 +7,7 @@ import type {
   AsyncStepEffectDescriptor,
   AsyncStepExecutionContext,
   EffectExecutionDescriptor,
+  Entrypoint,
   HabitatEffect,
   ProviderSelection,
   ServiceContractOf,
@@ -169,7 +170,205 @@ function coldEffect<TSuccess, TError, TRequirements>(
   });
 }
 
+function createEntrypointMismatchFixture(mismatchedField: "app" | "process" | "entrypoint") {
+  let executableCalls = 0;
+  const externalSentinel = { projected: false };
+  const plugin = definePlugin({
+    id: "selection.plugin",
+    role: "server",
+    surface: "server/internal",
+    capability: "selection",
+    services: {},
+    resourceRequirements: [],
+    project: ({ pluginId }) => {
+      executableCalls += 1;
+      externalSentinel.projected = true;
+      return {
+        kind: "plugin.projection",
+        facts: { pluginId, externalSentinel },
+      };
+    },
+  });
+  const app = defineApp({ id: "selection.app", plugins: [plugin] });
+  const profile = defineRuntimeProfile({ id: "selection.profile", providers: [] });
+  const process = defineProcessCatalog({
+    server: { id: "selection.process", roles: ["server"] },
+  }).server;
+  const identity = {
+    app: mismatchedField === "app" ? "other.app" : app.id,
+    process: mismatchedField === "process" ? "other.process" : process.id,
+    entrypoint: mismatchedField === "entrypoint" ? "other.entrypoint" : "selection.entrypoint",
+    deployment: "selection.deployment",
+    source: "selection.source",
+  };
+  const identitySnapshot = { ...identity };
+  const input = {
+    id: "selection.entrypoint",
+    app,
+    profile,
+    process,
+    identity,
+  };
+  const callerReferences = { id: input.id, app, profile, process, identity };
+  let output: Entrypoint<typeof app, typeof profile, typeof process> | undefined;
+
+  return {
+    input,
+    identity,
+    identitySnapshot,
+    callerReferences,
+    externalSentinel,
+    executableCalls: () => executableCalls,
+    output: () => output,
+    produce: () => {
+      output = defineEntrypoint(input);
+      return output;
+    },
+  };
+}
+
+function expectEntrypointMismatchRefusal(
+  fixture: ReturnType<typeof createEntrypointMismatchFixture>
+): void {
+  expect(fixture.produce).toThrow(TypeError);
+  expect(fixture.output()).toBeUndefined();
+  expect(Object.isFrozen(fixture.input)).toBe(false);
+  expect(Object.isFrozen(fixture.identity)).toBe(false);
+  expect(Object.keys(fixture.input)).toEqual(["id", "app", "profile", "process", "identity"]);
+  expect(Object.keys(fixture.identity)).toEqual([
+    "app",
+    "process",
+    "entrypoint",
+    "deployment",
+    "source",
+  ]);
+  expect(fixture.identity).toEqual(fixture.identitySnapshot);
+  expect(fixture.input.id).toBe(fixture.callerReferences.id);
+  expect(fixture.input.app).toBe(fixture.callerReferences.app);
+  expect(fixture.input.profile).toBe(fixture.callerReferences.profile);
+  expect(fixture.input.process).toBe(fixture.callerReferences.process);
+  expect(fixture.input.identity).toBe(fixture.callerReferences.identity);
+  expect(fixture.executableCalls()).toBe(0);
+  expect(fixture.externalSentinel).toEqual({ projected: false });
+}
+
 describe("runtime definition", () => {
+  test("selects one cold entrypoint from producer-local real definitions", () => {
+    let executableCalls = 0;
+    const externalSentinel = { projected: false };
+    const entrypoint = (() => {
+      const plugin = definePlugin({
+        id: "selected.plugin",
+        role: "server",
+        surface: "server/internal",
+        capability: "selected",
+        services: {},
+        resourceRequirements: [],
+        project: ({ pluginId }) => {
+          executableCalls += 1;
+          externalSentinel.projected = true;
+          return {
+            kind: "plugin.projection",
+            facts: { pluginId, externalSentinel },
+          };
+        },
+      });
+      const app = defineApp({ id: "selected.app", plugins: [plugin] });
+      const profile = defineRuntimeProfile({ id: "selected.profile", providers: [] });
+      const process = defineProcessCatalog({
+        server: { id: "selected.process", roles: ["server"] },
+      }).server;
+      const rawIdentity: {
+        app: string;
+        process: string;
+        entrypoint: string;
+        deployment: string;
+        source: string;
+      } = {
+        app: app.id,
+        process: process.id,
+        entrypoint: "selected.entrypoint",
+        deployment: "selected.deployment",
+        source: "selected.source",
+      };
+      const selection = defineEntrypoint({
+        id: "selected.entrypoint",
+        app,
+        profile,
+        process,
+        identity: rawIdentity,
+      });
+      const appTypeMatches: TypesEqual<typeof selection.app, typeof app> = true;
+      const profileTypeMatches: TypesEqual<typeof selection.profile, typeof profile> = true;
+      const processTypeMatches: TypesEqual<typeof selection.process, typeof process> = true;
+
+      expect(appTypeMatches).toBe(true);
+      expect(profileTypeMatches).toBe(true);
+      expect(processTypeMatches).toBe(true);
+      expect(selection.app).toBe(app);
+      expect(selection.profile).toBe(profile);
+      expect(selection.process).toBe(process);
+      expect(selection.identity).not.toBe(rawIdentity);
+      expect(Object.isFrozen(selection.identity)).toBe(true);
+      expect(Object.keys(selection.identity)).toEqual([
+        "app",
+        "process",
+        "entrypoint",
+        "deployment",
+        "source",
+      ]);
+
+      rawIdentity.app = "mutated.app";
+      rawIdentity.process = "mutated.process";
+      rawIdentity.entrypoint = "mutated.entrypoint";
+      rawIdentity.deployment = "mutated.deployment";
+      rawIdentity.source = "mutated.source";
+      expect(selection.identity).toEqual({
+        app: "selected.app",
+        process: "selected.process",
+        entrypoint: "selected.entrypoint",
+        deployment: "selected.deployment",
+        source: "selected.source",
+      });
+
+      return selection;
+    })();
+
+    expect(entrypoint.app.id).toBe("selected.app");
+    expect(entrypoint.profile.id).toBe("selected.profile");
+    expect(entrypoint.process.id).toBe("selected.process");
+    expect(Object.isFrozen(entrypoint)).toBe(true);
+    expect(executableCalls).toBe(0);
+    expect(externalSentinel).toEqual({ projected: false });
+  });
+
+  test("refuses an app launch-identity mismatch before publishing selection", () => {
+    const fixture = createEntrypointMismatchFixture("app");
+
+    expect(fixture.identity.app).not.toBe(fixture.input.app.id);
+    expect(fixture.identity.process).toBe(fixture.input.process.id);
+    expect(fixture.identity.entrypoint).toBe(fixture.input.id);
+    expectEntrypointMismatchRefusal(fixture);
+  });
+
+  test("refuses a process launch-identity mismatch before publishing selection", () => {
+    const fixture = createEntrypointMismatchFixture("process");
+
+    expect(fixture.identity.app).toBe(fixture.input.app.id);
+    expect(fixture.identity.process).not.toBe(fixture.input.process.id);
+    expect(fixture.identity.entrypoint).toBe(fixture.input.id);
+    expectEntrypointMismatchRefusal(fixture);
+  });
+
+  test("refuses an entrypoint launch-identity mismatch before publishing selection", () => {
+    const fixture = createEntrypointMismatchFixture("entrypoint");
+
+    expect(fixture.identity.app).toBe(fixture.input.app.id);
+    expect(fixture.identity.process).toBe(fixture.input.process.id);
+    expect(fixture.identity.entrypoint).not.toBe(fixture.input.id);
+    expectEntrypointMismatchRefusal(fixture);
+  });
+
   test("creates a frozen cold app, process, profile, and entrypoint graph", () => {
     const resource = defineRuntimeResource<"clock", { now(): Date }>({
       id: "clock",
