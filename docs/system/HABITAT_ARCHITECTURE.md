@@ -2155,8 +2155,19 @@ Task 4.8 creates exactly the independent complete definition files
 version 2 through the existing
 `packages/core/runtime/derivation/habitat.toml`. It never edits, widens,
 inherits from, or falls back to the root version-1 definition. It creates no
-version 3, new kind, new project, or private package. Task 4.9 edits the
-version-2 modules, and tasks 4.10 and 4.11 extend its proof.
+version 3, new kind, new project, or private package. Task 4.9 audits frozen
+Runtime Realization Lab commit
+`3147acbdcdd916883cee5b081c0868e3d1bf09b9`, whole tree
+`7fff3eaf6d80a4609dd0d511696212a38133753d`, and
+`tools/runtime-realization-type-env` subtree
+`d35cd11d21abf6831947a57638cbd7de8035bf0d` against the landed
+`runtime-derivation@2` owner. The audit is an authority-only no-op: task 4.8
+already re-authored reference identity and agreement, service-binding
+deduplication, surface grouping, workflow inventory, async ownership and
+laziness, cold tables, and refs-only portability under Habitat law. No source,
+test, project, blueprint, SDK face, public contract, Oracle, optional interior,
+version 3, or alternate derivation path is admitted by task 4.9. Tasks 4.10 and
+4.11 extend only the existing proof while `runtime-derivation@2` remains exact.
 
 The sole exact task-4.8 contract is distributed through the runtime realization
 specification: §11.8 owns the private `ServiceUse` carrier, §13.5 the cold

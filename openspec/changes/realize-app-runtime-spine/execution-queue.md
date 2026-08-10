@@ -38,7 +38,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.7e are sealed. The authority-only complete-derivation-contract,
+  4.1 through 4.9 are sealed. The authority-only complete-derivation-contract,
   binding-source, execution-identity, async-lowering, service-resource,
   execution-population, and public-entrypoint corrections changed no source and
   retained the exact eight-document scope through task 4.7c:
@@ -49,11 +49,15 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   eighth behavior-companion file. Task 4.7e returns to the same exact
   eight-document surface used by tasks 4.7a-c, excludes that router, and adds
   only the existing runtime-derivation `tsdown.config.ts` to task 4.8's exact
-  publication/assembly corpus. Only after completed task 4.7e,
-  task 4.8 is the sole active node and MUST follow canonical §§11.8, 13.5, 15,
-  23.1, and 27 plus the active
-  `app-runtime-realization` requirement/scenarios under independent
+  publication/assembly corpus. Task 4.8 then landed the complete canonical owner
+  at Habitat `main@7e99f8f94d6243fc45c4314a5bc5bcd5cd57bb54` / tree
+  `968e6998a7f1926002127b6de3a255e200118000` under independent
   `runtime-derivation@2`; immutable topology-only version 1 remains unchanged.
+  Task 4.9 audited frozen Runtime Realization Lab commit
+  `3147acbdcdd916883cee5b081c0868e3d1bf09b9`, whole tree
+  `7fff3eaf6d80a4609dd0d511696212a38133753d`, and subtree
+  `d35cd11d21abf6831947a57638cbd7de8035bf0d` against that landed owner and
+  closed as an authority-only no-op. Task 4.10 is the sole next node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -283,13 +287,25 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   topology-only `runtime-derivation@1`, and fresh recursively frozen normalized
   topology with deterministic identity, ordering, refusal, zero-execution, and
   cache proofs, without an SDK face or later derivation artifact.
+- [x] **Complete derivation and frozen-lab disposition**: task 4.8 lands the
+  independent exact `runtime-derivation@2` owner and sole SDK derivation face.
+  Task 4.9 finds no distinct lab derivation algorithm left to port after task
+  4.8 re-authored reference identity/agreement, service-binding deduplication,
+  surface grouping, workflow inventory, async ownership/laziness, cold tables,
+  and refs-only portability. The lab's `stableJson`/`exec:*` identity, explicit
+  binding inputs, mutable shapes, public types, Oracle, alternate
+  `deriveRuntimeSpine`, and route derivation without an admitted carrier remain
+  rejected. Provider graph matching, closure, cycles, and diagnostics remain
+  compiler tasks 5.2 and 5.4. No source, test, project, blueprint, SDK face,
+  public contract, Oracle, optional interior, version 3, or alternate path
+  changes in task 4.9; `runtime-derivation@2` remains exact.
 
 The active queue has one bounded source node:
 
-1. execute task 4.8 under independent no-inheritance/no-fallback
-   `runtime-derivation@2` through the canonical sections and active acceptance
-   owner. Tasks 4.7a through 4.7e are complete; no contract choice remains open in
-   source.
+1. execute task 4.10 by adding only the definition-to-selection handoff
+   assertions to existing `test/complete-derivation.test.ts`. Tasks 4.8 and 4.9
+   are sealed; `runtime-derivation@2` remains exact and no contract choice is
+   open in source.
 
 ## Task 4.7a Authority Routing
 
@@ -354,8 +370,9 @@ remain forbidden. The
 source/test and eight-file behavior corpora, other publication files, immutable
 v1, counts, and exports remain unchanged.
 
-Only after that completed correction, task 4.8 is the sole active source node
-under independent
+Task 4.8 is sealed on exact Habitat
+`main@7e99f8f94d6243fc45c4314a5bc5bcd5cd57bb54` / tree
+`968e6998a7f1926002127b6de3a255e200118000` under independent
 `runtime-derivation@2`, with the exact runtime-derivation closure, eight-file
 behavior companion corpus, and separate publication/assembly corpus named by
 the active spec. It proves cold
@@ -364,11 +381,31 @@ faces/results/tables/findings, and portable roundtrip with zero source I/O or
 decode. Task 5.2 owns normalized-handoff/dependency compiler defense, task 7.2
 owns all-ref config preflight before first acquisition, and task 8.2 owns live
 cache construction/reuse. Immutable topology-only version 1 remains unchanged.
+
+## Task 4.9 Frozen-Lab Disposition
+
+Task 4.9 is sealed without an implementation node. Its audit compares frozen
+Runtime Realization Lab commit
+`3147acbdcdd916883cee5b081c0868e3d1bf09b9`, whole tree
+`7fff3eaf6d80a4609dd0d511696212a38133753d`, and
+`tools/runtime-realization-type-env` subtree
+`d35cd11d21abf6831947a57638cbd7de8035bf0d` to landed
+`runtime-derivation@2`. Task 4.8 already re-authored reference
+identity/agreement, service-binding deduplication, surface grouping, workflow
+inventory, async ownership/laziness, cold tables, and refs-only portability, so
+no distinct derivation algorithm remains to port. Lab `stableJson`/`exec:*`
+identity, explicit binding inputs, mutable shapes, public types, Oracle,
+alternate `deriveRuntimeSpine`, and route derivation without an admitted carrier
+remain rejected. Provider graph matching, closure, cycles, and diagnostics
+remain compiler tasks 5.2 and 5.4. No source, test, project, blueprint, SDK
+face, public contract, Oracle, optional interior, blueprint version, or
+alternate path changes; task 4.10 is the sole next node.
+
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Complete derivation (`4.8-4.11`)**: create exactly the independent
+1. **Complete derivation (`4.10-4.11` remaining; `4.8-4.9` sealed)**: retain the independent
    `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
    closure, select version 2 in the existing derivation `habitat.toml`, retain
    the exact root shell, and use only the twelve named source files and three
@@ -422,9 +459,10 @@ write authority with the active one:
    The seven-field portable artifact sorts refs by full boundary identity and
    uses exactly `sha256:` plus 64 lowercase hexadecimal SHA-256 characters over
    RFC 8785 canonical JSON of the other six fields; it has no `derivedAt` or
-   placement constraints. Task 4.9 edits existing modules only, and tasks
-   4.10/4.11 add assertions only to `complete-derivation.test.ts`; no optional
-   interior, fallback, or version 3 is admitted. Land the definition-owned
+   placement constraints. Task 4.9 is sealed as the authority-only frozen-lab
+   no-op above; tasks 4.10/4.11 add assertions only to
+   `complete-derivation.test.ts`, with no optional interior, fallback, or
+   version 3. Land the definition-owned
    provider-effect plan from `6.1` after provider selection and before compiler
    consumption.
 2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete

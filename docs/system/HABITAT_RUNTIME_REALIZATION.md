@@ -7727,9 +7727,23 @@ packages/core/runtime/derivation/
 Version 2 retains the exact eight-entry root shell. Its `src/` and `test/`
 closures are exactly the files shown, with no optional interior or
 `package.json`. Task 4.8 alone adds the SDK assembly edge and sole public
-derivation face. Task 4.9 edits these existing modules rather than adding a
-source or test file. Tasks 4.10 and 4.11 add their assertions to
-`complete-derivation.test.ts`.
+derivation face. Task 4.9 is the authority-only audit of frozen Runtime
+Realization Lab commit `3147acbdcdd916883cee5b081c0868e3d1bf09b9`, whole
+tree `7fff3eaf6d80a4609dd0d511696212a38133753d`, and
+`tools/runtime-realization-type-env` subtree
+`d35cd11d21abf6831947a57638cbd7de8035bf0d` against landed
+`runtime-derivation@2`. It finds no distinct derivation algorithm to port:
+task 4.8 already re-authored reference identity and agreement, service-binding
+deduplication, surface grouping, workflow inventory, async ownership and
+laziness, cold execution and web tables, and refs-only portability through the
+canonical owner. The lab's `stableJson`/`exec:*` identity, explicit binding
+inputs, mutable shapes, public types, Oracle, alternate `deriveRuntimeSpine`,
+and route derivation without an admitted carrier remain rejected. Provider
+graph matching, closure, cycles, and diagnostics remain compiler tasks 5.2
+and 5.4. Task 4.9 changes no source, test, project, blueprint, SDK face, public
+contract, Oracle, optional interior, blueprint version, or alternate path;
+`runtime-derivation@2` remains exact. Tasks 4.10 and 4.11 add their assertions
+only to `complete-derivation.test.ts`.
 
 Task 4.8's exact eight-file behavior companion corpus is:
 

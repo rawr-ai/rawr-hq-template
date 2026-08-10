@@ -576,6 +576,20 @@ package topology, Oracle APIs, and runtime ownership are not authority. The live
 tool project is classified `delete`; the frozen commit remains provenance for
 later owner-local ports.
 
+Task 4.9 completes the derivation-specific comparison as an authority-only
+no-op against landed `runtime-derivation@2`. Task 4.8 already re-authored the
+lab's admissible reference identity/agreement, service-binding deduplication,
+surface grouping, workflow inventory, async ownership/laziness, cold tables,
+and refs-only portability under canonical Habitat schemas and ownership. No
+distinct lab derivation algorithm remains to port. The lab's
+`stableJson`/`exec:*` identity, explicit binding inputs, mutable shapes, public
+types, Oracle, alternate `deriveRuntimeSpine`, and route derivation without an
+admitted carrier remain rejected. Provider graph matching, closure, cycles,
+and diagnostics stay with compiler tasks 5.2 and 5.4. Task 4.9 changes no
+source, test, project, blueprint, SDK face, public contract, Oracle, optional
+interior, blueprint version, or alternate path and leaves
+`runtime-derivation@2` exact.
+
 ## Magic Migration Admission
 
 Magic Migration is implementation evidence, not product or specification
