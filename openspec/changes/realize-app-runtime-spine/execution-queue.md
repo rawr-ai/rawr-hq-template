@@ -38,7 +38,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.9a are sealed. The authority-only complete-derivation-contract,
+  4.1 through 4.10 are sealed. The authority-only complete-derivation-contract,
   binding-source, execution-identity, async-lowering, service-resource,
   execution-population, and public-entrypoint corrections changed no source and
   retained the exact eight-document scope through task 4.7c:
@@ -60,7 +60,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   closed as an authority-only no-op. Task 4.9a then sealed the
   definition-to-selection contract across exactly nine documents: the two
   canonical system documents, the runtime-definition router, and six active
-  OpenSpec artifacts. Task 4.10 is the sole next implementation node.
+  OpenSpec artifacts. Task 4.10's exact landing receipt is recorded in
+  [[tasks]]; task 4.11 is the sole next proof node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -311,17 +312,16 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   derivation defense because the exact five-field launch identity has no
   profile field.
 
-The active queue has one bounded source node:
+The active queue has one bounded proof node:
 
-1. execute task 4.10 in exactly
-   `packages/core/runtime/definition/src/app.ts` and
-   `packages/core/runtime/definition/test/definition.test.ts`. Preserve
-   signatures, inference, exact result references, freeze behavior, and SDK
-   export identity; use real constructors, make producer-local bindings
-   unavailable after handoff, and prove the three identity mismatches plus zero
-   executable work. Tasks 4.8, 4.9, and 4.9a are sealed;
-   `runtime-derivation@2` remains exact and no contract choice is open in
-   source.
+1. execute task 4.11 by changing only
+   `packages/core/runtime/derivation/test/complete-derivation.test.ts`. Use a
+   real `Entrypoint` plus `profileId`, complete after selection-producer
+   bindings are unavailable, and refuse each corrupted app, process, and
+   entrypoint identity plus profile mismatch before result with zero Effect or
+   web-loader calls. Task 4.10 is sealed by the exact receipt in [[tasks]];
+   `runtime-derivation@2` remains exact and no derivation source or public
+   surface changes.
 
 ## Task 4.7a Authority Routing
 
@@ -429,13 +429,14 @@ App/process/entrypoint identity disagreement throws built-in `TypeError` before
 output, external mutation, or authored executable work; no error API, text, or
 validation order is prescribed. Profile agreement stays in task 4.11 because
 launch identity has no profile field, and derivation retains every defensive
-check. Task 4.10 is the sole next implementation node.
+check. Task 4.10 is sealed by the exact receipt in [[tasks]]; task 4.11 is the
+sole next proof node.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Definition/derivation handoffs (`4.10-4.11` remaining; `4.8-4.9a` sealed)**: retain the independent
+1. **Definition/derivation handoffs (`4.11` remaining; `4.8-4.10` sealed)**: retain the independent
    `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
    closure, select version 2 in the existing derivation `habitat.toml`, retain
    the exact root shell, and use only the twelve named source files and three
@@ -491,7 +492,7 @@ write authority with the active one:
    RFC 8785 canonical JSON of the other six fields; it has no `derivedAt` or
    placement constraints. Task 4.9 is sealed as the authority-only frozen-lab
    no-op and task 4.9a is sealed as the documentation-only handoff correction
-   above. Task 4.10 changes only definition `src/app.ts` and
+   above. Task 4.10 is sealed after changing only definition `src/app.ts` and
    `test/definition.test.ts`; it preserves signatures, inference, exact result
    references, freeze behavior, and SDK identity while proving real-constructor
    success, unavailable producer-local bindings, three identity mismatches, and
