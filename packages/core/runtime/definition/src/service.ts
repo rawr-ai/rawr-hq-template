@@ -84,15 +84,49 @@ export function defineService<
 
 export type ServiceOf<TDefinition extends ServiceDefinition> = TDefinition;
 
-export interface ServiceUse<TService extends ServiceDefinition = ServiceDefinition> {
-  readonly kind: "plugin.service-use";
-  readonly service: TService;
-  readonly alias?: string;
+const serviceUseCarrier = Symbol("habitat.service-use.carrier");
+
+interface ServiceUseCarrier<TContract> {
+  readonly definition: ServiceDefinition;
+  readonly contract: TContract;
 }
 
-export function useService<const TService extends ServiceDefinition>(
-  service: TService,
-  options: { readonly alias?: string } = {}
-): ServiceUse<TService> {
-  return Object.freeze({ kind: "plugin.service-use", service, ...options });
+export interface ServiceUse<TContract = unknown> {
+  readonly kind: "service.use";
+  readonly serviceId: string;
+  readonly serviceInstance?: string;
+  readonly [serviceUseCarrier]: ServiceUseCarrier<TContract>;
+}
+
+export type ServiceUses = Readonly<Record<string, ServiceUse<unknown>>>;
+
+export type ServiceContractOf<TUse> = TUse extends ServiceUse<infer TContract> ? TContract : never;
+
+export function useService<const TContract>(
+  serviceDefinition: ServiceDefinition,
+  options: {
+    readonly contract: TContract;
+    readonly instance?: string;
+  }
+): ServiceUse<TContract> {
+  const serviceUse = {
+    kind: "service.use" as const,
+    serviceId: serviceDefinition.id,
+    ...(options.instance === undefined ? {} : { serviceInstance: options.instance }),
+  };
+
+  Object.defineProperty(serviceUse, serviceUseCarrier, {
+    configurable: false,
+    enumerable: false,
+    value: Object.freeze({ definition: serviceDefinition, contract: options.contract }),
+    writable: false,
+  });
+
+  return Object.freeze(serviceUse) as ServiceUse<TContract>;
+}
+
+export function readServiceUse<TContract>(
+  serviceUse: ServiceUse<TContract>
+): ServiceUseCarrier<TContract> {
+  return serviceUse[serviceUseCarrier];
 }

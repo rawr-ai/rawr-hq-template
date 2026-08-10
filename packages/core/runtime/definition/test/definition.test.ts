@@ -8,7 +8,9 @@ import type {
   AsyncStepExecutionContext,
   EffectExecutionDescriptor,
   HabitatEffect,
+  ServiceContractOf,
   ServiceDefinition,
+  ServiceUses,
 } from "../src";
 import {
   defineApp,
@@ -34,6 +36,7 @@ import {
   implementServerInternalPlugin,
   RuntimeObservationRecordSchema,
   readHabitatEffectOperation,
+  readServiceUse,
   resourceDep,
   runtimeLaunchIdentity,
   serviceDep,
@@ -118,18 +121,20 @@ describe("runtime definition", () => {
       id: "work",
       deps: { clock: resourceDep(resource) },
     });
+    const serviceContract = { operation: "list-work" } as const;
     const plugin = definePlugin({
       id: "work.api",
       role: "server",
       surface: "api.public",
       capability: "work",
-      serviceUses: [useService(service)],
+      services: { workItems: useService(service, { contract: serviceContract }) },
       resourceRequirements: [],
       project: ({ pluginId }) => ({
         kind: "plugin.projection",
         facts: { pluginId },
       }),
     });
+    const pluginServiceKeysMatch: TypesEqual<keyof typeof plugin.services, "workItems"> = true;
     const app = defineApp({ id: "example", plugins: [plugin] });
     const processes = defineProcessCatalog({
       server: { id: "example.server", roles: ["server"] },
@@ -167,7 +172,9 @@ describe("runtime definition", () => {
     });
 
     expect(service.deps.clock.resource).toBe(resource);
-    expect(plugin.serviceUses[0]?.service).toBe(service);
+    expect(pluginServiceKeysMatch).toBe(true);
+    expect(plugin.services.workItems.serviceId).toBe(service.id);
+    expect(readServiceUse(plugin.services.workItems).definition).toBe(service);
     expect(provider.configSchema?.redaction).toEqual({ paths: ["zone"] });
     expect(entrypoint.identity).toEqual(identity);
     expect(Object.keys(identity)).toEqual(["app", "process", "entrypoint", "deployment", "source"]);
@@ -194,6 +201,75 @@ describe("runtime definition", () => {
     ]);
     expect(profile.configSources.every(Object.isFrozen)).toBe(true);
     expect("build" in provider).toBe(false);
+  });
+
+  test("keeps service-use witnesses private while preserving contract and map inference", () => {
+    const service = defineService({ id: "work-items", deps: {} });
+    const contract = {
+      list: { method: "GET", path: "/work-items" },
+    } as const;
+    const defaultUse = useService(service, { contract });
+    const replicaUse = useService(service, { contract, instance: "replica" });
+    if (false) {
+      // @ts-expect-error A service use always carries an explicit contract witness.
+      useService(service);
+      // @ts-expect-error An empty options object cannot omit the contract witness.
+      useService(service, {});
+      // @ts-expect-error The predecessor alias field is not part of the cold relation.
+      useService(service, { contract, alias: "legacy" });
+    }
+    const services = {
+      workItems: defaultUse,
+      replicatedWorkItems: replicaUse,
+    } as const satisfies ServiceUses;
+    const contractMatches: TypesEqual<
+      ServiceContractOf<(typeof services)["workItems"]>,
+      typeof contract
+    > = true;
+    const mapKeysMatch: TypesEqual<keyof typeof services, "workItems" | "replicatedWorkItems"> =
+      true;
+    const publicFieldsMatch: TypesEqual<
+      Extract<keyof typeof defaultUse, string>,
+      "kind" | "serviceId" | "serviceInstance"
+    > = true;
+    const discriminantMatches: TypesEqual<typeof defaultUse.kind, "service.use"> = true;
+    const defaultCarrier = readServiceUse(defaultUse);
+    const replicaCarrier = readServiceUse(replicaUse);
+
+    expect(contractMatches).toBe(true);
+    expect(mapKeysMatch).toBe(true);
+    expect(publicFieldsMatch).toBe(true);
+    expect(discriminantMatches).toBe(true);
+    expect(Object.keys(defaultUse).sort()).toEqual(["kind", "serviceId"]);
+    expect(Object.getOwnPropertyNames(defaultUse)).toEqual(["kind", "serviceId"]);
+    expect(JSON.parse(JSON.stringify(defaultUse))).toEqual({
+      kind: "service.use",
+      serviceId: "work-items",
+    });
+    expect(Object.keys(replicaUse).sort()).toEqual(["kind", "serviceId", "serviceInstance"]);
+    expect(JSON.parse(JSON.stringify(replicaUse))).toEqual({
+      kind: "service.use",
+      serviceId: "work-items",
+      serviceInstance: "replica",
+    });
+    expect(Object.hasOwn(defaultUse, "serviceInstance")).toBe(false);
+    expect(replicaUse.serviceInstance).toBe("replica");
+    for (const field of ["service", "definition", "contract", "alias"] as const) {
+      expect(Object.hasOwn(defaultUse, field)).toBe(false);
+    }
+    expect(Object.getOwnPropertySymbols(defaultUse)).toHaveLength(1);
+    expect(
+      Object.getOwnPropertyDescriptor(defaultUse, Object.getOwnPropertySymbols(defaultUse)[0]!)
+    ).toMatchObject({ configurable: false, enumerable: false, writable: false });
+    expect(defaultCarrier.definition).toBe(service);
+    expect(defaultCarrier.contract).toBe(contract);
+    expect(replicaCarrier.definition).toBe(service);
+    expect(replicaCarrier.contract).toBe(contract);
+    expect(Object.isFrozen(defaultCarrier)).toBe(true);
+    expect(Object.isFrozen(defaultUse)).toBe(true);
+    expect(Object.isFrozen(replicaUse)).toBe(true);
+    expect(services.workItems).toBe(defaultUse);
+    expect(services.replicatedWorkItems).toBe(replicaUse);
   });
 
   test("keeps HabitatEffect programs and execution descriptors cold", () => {
@@ -580,7 +656,7 @@ describe("runtime definition", () => {
       id: input.id,
       source: "promise",
     }));
-    const services = { workItems: useService(service) } as const;
+    const services = { workItems: useService(service, { contract }) } as const;
     let apiRuns = 0;
     const createApi = defineServerApiPlugin.factory()({
       capability: "work-items",
@@ -635,7 +711,12 @@ describe("runtime definition", () => {
       surface: "server/internal",
       routeBase: "/work-items-ops",
     });
-    expect(api.services.workItems.service).toBe(service);
+    expect(api.services).toEqual(services);
+    expect(internal.services).toEqual(services);
+    expect(api.services.workItems).toBe(services.workItems);
+    expect(internal.services.workItems).toBe(services.workItems);
+    expect(api.services.workItems.serviceId).toBe(service.id);
+    expect(readServiceUse(api.services.workItems).definition).toBe(service);
     expect(api.api()).toBe(nativeHandler);
     expect(apiRuns).toBe(1);
     expect(Object.isFrozen(api)).toBe(true);
@@ -757,7 +838,8 @@ describe("runtime definition", () => {
       steps: [step] as const,
     });
     const service = defineService({ id: "items", deps: {} });
-    const services = { items: useService(service) } as const;
+    const serviceContract = { operation: "sync-items" } as const;
+    const services = { items: useService(service, { contract: serviceContract }) } as const;
     const workflowPlugin = defineAsyncWorkflowPlugin.factory()({
       capability: "item-sync",
       services,
@@ -794,6 +876,10 @@ describe("runtime definition", () => {
       role: "async",
       surface: "async/consumer",
     });
+    for (const plugin of [workflowPlugin, schedulePlugin, consumerPlugin]) {
+      expect(plugin.services).toEqual(services);
+      expect(plugin.services.items).toBe(services.items);
+    }
     for (const value of [
       step,
       workflow,

@@ -5,7 +5,7 @@ import type { RuntimeSchema } from "../../schema/src/runtime-schema";
 import type { AppRole } from "./app";
 import type { AsyncStepEffectDescriptor } from "./execution";
 import type { ResourceRequirement } from "./resource";
-import type { ServiceUse } from "./service";
+import type { ServiceUses } from "./service";
 
 export interface PluginProjectionInput {
   readonly pluginId: string;
@@ -31,6 +31,7 @@ export interface PluginDefinition<
   TRole extends AppRole = AppRole,
   TSurface extends string = string,
   TCapability extends string = string,
+  TServices extends ServiceUses = ServiceUses,
 > {
   readonly kind: "plugin.definition";
   readonly id: string;
@@ -38,7 +39,7 @@ export interface PluginDefinition<
   readonly surface: TSurface;
   readonly capability: TCapability;
   readonly instance?: string;
-  readonly serviceUses: readonly ServiceUse[];
+  readonly services: TServices;
   readonly resourceRequirements: readonly ResourceRequirement[];
   readonly project: PluginProjectionFunction;
 }
@@ -47,18 +48,19 @@ export function definePlugin<
   const TRole extends AppRole,
   const TSurface extends string,
   const TCapability extends string,
+  const TServices extends ServiceUses,
 >(
-  input: Omit<PluginDefinition<TRole, TSurface, TCapability>, "kind">
-): PluginDefinition<TRole, TSurface, TCapability> {
+  input: Omit<PluginDefinition<TRole, TSurface, TCapability, TServices>, "kind">
+): PluginDefinition<TRole, TSurface, TCapability, TServices> {
   return Object.freeze({
     ...input,
     kind: "plugin.definition",
-    serviceUses: Object.freeze([...input.serviceUses]),
+    services: Object.freeze({ ...input.services }) as TServices,
     resourceRequirements: Object.freeze([...input.resourceRequirements]),
   });
 }
 
-export type PluginServiceUses = Readonly<Record<string, ServiceUse>>;
+export type PluginServiceUses = ServiceUses;
 
 const forbiddenPluginClassificationFields = [
   "id",
@@ -180,7 +182,7 @@ function buildServerApiPlugin<
     surface: "server/api",
     capability: input.capability,
     ...(input.instance === undefined ? {} : { instance: input.instance }),
-    serviceUses: Object.freeze(Object.values(services)),
+    services,
     resourceRequirements: resources,
     project: ({ pluginId }) => frozenProjection({ pluginId, routeBase, lane: "server/api" }),
   });
@@ -213,7 +215,7 @@ function buildServerInternalPlugin<
     surface: "server/internal",
     capability: input.capability,
     ...(input.instance === undefined ? {} : { instance: input.instance }),
-    serviceUses: Object.freeze(Object.values(services)),
+    services,
     resourceRequirements: resources,
     project: ({ pluginId }) => frozenProjection({ pluginId, routeBase, lane: "server/internal" }),
   });
@@ -479,7 +481,7 @@ function buildAsyncPlugin<
     surface,
     capability: input.capability,
     ...(input.instance === undefined ? {} : { instance: input.instance }),
-    serviceUses: Object.freeze(Object.values(services)),
+    services,
     resourceRequirements: resources,
     project: ({ pluginId }) =>
       frozenProjection({

@@ -21,4 +21,9 @@ export {
   defineSchedule,
   defineWorkflow,
 } from "../../../../runtime/definition/src/plugin";
+export type {
+  ServiceContractOf,
+  ServiceUse,
+  ServiceUses,
+} from "../../../../runtime/definition/src/service";
 export { useService } from "../../../../runtime/definition/src/service";
