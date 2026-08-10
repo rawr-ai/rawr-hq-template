@@ -175,8 +175,9 @@ accepted delivery boundary is deliberately split across immutable topology task
 binding-source gate 4.7a, the completed matching execution-identity,
 async-lowering, and service-resource-normalization correction 4.7b, and the
 completed population/public-entrypoint correction 4.7c, the completed
-definition-router ownership correction 4.7d, and the sole active
-complete-derivation source task 4.8.
+definition-router ownership correction 4.7d, the completed crypto-build
+authority correction 4.7e, and the sole active complete-derivation source task
+4.8.
 
 Task 4.7 creates only the private package-less `runtime-derivation` Nx project
 at `packages/core/runtime/derivation`, selects the closed
@@ -322,7 +323,7 @@ cannot substitute arbitrary properties, project facts, casts, synthesized
 refs, or a direct table fixture.
 
 Task 4.7d is complete across exactly nine documents: the prior eight authority
-documents plus `packages/core/runtime/definition/AGENTS.md`. It is the final
+documents plus `packages/core/runtime/definition/AGENTS.md`. It is a sealed
 documentation-only correction before task 4.8 and admits that existing router
 as the eighth behavior-companion file solely for ownership and routing
 documentation. The publication/assembly corpus remains unchanged. The router
@@ -334,12 +335,30 @@ implementation, source, test, project, blueprint, SDK edge, export map, public
 export, stage, or commit, and immutable topology-only
 `runtime-derivation@1` remains unchanged.
 
+Task 4.7e is complete across exactly the same eight authority documents used by
+tasks 4.7a-c; it excludes the runtime-definition router and changes no
+implementation. It corrects only task 4.8's exact publication/assembly corpus
+by adding the existing
+`packages/core/runtime/derivation/tsdown.config.ts`. Task 4.8 may change that
+config only by adding `node:crypto` exactly once to `deps.onlyImport`, producing
+exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "typebox"]`
+while retaining `platform: "neutral"`, every prior entry, and every other
+option. The synchronous RFC 8785/SHA-256 identity implementation uses Node's
+native `createHash`; pinned tsdown 0.22.14's neutral-platform `onlyImport` audit
+otherwise rejects the emitted builtin. No platform change, hand-rolled digest,
+Bun-only crypto, async WebCrypto, dependency, package, Nx, public-surface, or
+source-semantic change is admitted. The exact source/test and eight-file
+behavior-companion corpora, every other publication file, immutable
+`runtime-derivation@1`, all package/blueprint/directory counts, and all exports
+remain unchanged.
+
 Canonical `HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5, 15, 23.1, and 27 own task
 4.8's exact mechanics. The active `app-runtime-realization` requirement and
 scenarios are the sole archive-safe OpenSpec acceptance owner. This amendment
 records routing only.
 
-Only after task 4.7d is sealed, task 4.8 is the sole active source node. It
+Only after task 4.7e is sealed, task 4.8 is the sole active source node. It
 creates exactly the independent
 `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
 closure and selects `runtime-derivation@2` in the existing derivation

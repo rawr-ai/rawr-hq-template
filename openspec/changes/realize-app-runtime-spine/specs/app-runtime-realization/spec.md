@@ -365,11 +365,12 @@ MUST NOT require or authorize an SDK edge or export, complete
 
 ### Requirement: Complete-derivation authority corrections are closed before implementation
 
-The task-4.7a, task-4.7b, task-4.7c, and task-4.7d authority gates MUST remain closed by
-the canonical routing and acceptance ownership recorded here. All four MUST
-remain documentation-only corrections and leave immutable topology-only
-`runtime-derivation@1` unchanged. Only after task 4.7d is complete MUST task 4.8
-become the sole source owner of independent `runtime-derivation@2`.
+The task-4.7a, task-4.7b, task-4.7c, task-4.7d, and task-4.7e authority gates MUST
+remain closed by the canonical routing and acceptance ownership recorded here.
+All five MUST remain documentation-only corrections and leave immutable
+topology-only `runtime-derivation@1` unchanged. Only after task 4.7e is complete
+MUST task 4.8 become the sole source owner of independent
+`runtime-derivation@2`.
 
 Task 4.7a MUST remain an authority-only correction across exactly eight
 documents: `HABITAT_ARCHITECTURE.md` as the architecture router,
@@ -403,7 +404,7 @@ changes no implementation, source, test, project, blueprint, SDK edge, export
 map, public export, stage, or commit, and it does not widen or otherwise change
 either exact task-4.8 corpus.
 
-Task 4.7d MUST remain the final documentation-only correction before task 4.8.
+Task 4.7d MUST remain a sealed documentation-only correction before task 4.8.
 Its exact nine-document surface is the prior eight authority documents plus
 `packages/core/runtime/definition/AGENTS.md`. It admits that existing router as
 the eighth task-4.8 behavior-companion file solely for ownership and routing
@@ -416,7 +417,26 @@ implementation, source, test, project, blueprint, SDK edge, export map, public
 export, stage, or commit, and immutable `runtime-derivation@1` remains
 unchanged.
 
-Only after task 4.7d is sealed, task 4.8 MUST select independent
+Task 4.7e MUST remain the final documentation-only correction before task 4.8
+across exactly the same eight authority documents used by tasks 4.7a-c. It MUST
+exclude `packages/core/runtime/definition/AGENTS.md` and change no
+implementation or config. It corrects only the exact task-4.8
+publication/assembly corpus by adding the existing
+`packages/core/runtime/derivation/tsdown.config.ts`. Task 4.8 may change that
+file only by adding `node:crypto` exactly once to `deps.onlyImport`, yielding
+exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "typebox"]`,
+while retaining `platform: "neutral"`, every prior entry, and every other
+option. The synchronous RFC 8785/SHA-256 implementation MUST use Node's native
+`createHash`; pinned tsdown 0.22.14's neutral-platform `onlyImport` audit
+otherwise rejects the emitted builtin. A platform change, hand-rolled digest,
+Bun-only crypto, async WebCrypto, new dependency or package, Nx change, public
+change, or source-semantic change is forbidden. The exact source/test and
+eight-file behavior-companion corpora, every other publication file, immutable
+version 1, all package/blueprint/directory counts, and all exports remain
+unchanged.
+
+Only after task 4.7e is sealed, task 4.8 MUST select independent
 no-inheritance/no-fallback
 `runtime-derivation@2` and implement those canonical sections without widening
 them. It MUST create exactly the independent blueprint closure
@@ -456,7 +476,8 @@ The separate exact task-4.8 publication/assembly corpus is `.gitattributes`;
 `.habitat/AUTHORITY.md`, `.habitat/AUTHORITY-ONTOLOGY.md`, and
 `.habitat/README.md`; `packages/core/runtime/derivation/AGENTS.md`,
 `packages/core/runtime/derivation/habitat.toml`, and
-`packages/core/runtime/derivation/project.json`; the new
+`packages/core/runtime/derivation/project.json`, plus
+`packages/core/runtime/derivation/tsdown.config.ts`; the new
 `packages/core/sdk/src/runtime/derivation/index.ts` plus the existing
 `packages/core/sdk/AGENTS.md`, `packages/core/sdk/README.md`,
 `packages/core/sdk/habitat-pack.json`, `packages/core/sdk/package.json`,
@@ -466,10 +487,17 @@ The separate exact task-4.8 publication/assembly corpus is `.gitattributes`;
 blueprint files named in this requirement. Task 4.8 MUST create no new
 `runtime-definition` file, project, blueprint, or blueprint version and no
 other blueprint kind, version, or project.
-Tasks 4.7b, 4.7c, and 4.7d add no source or test file, and
+Tasks 4.7b, 4.7c, 4.7d, and 4.7e add no source or test file, and
 `packages/core/runtime/definition/src/execution.ts` MUST remain outside task
 4.8 and unchanged; the exact source/test, eight-file behavior-companion, and
 separate publication/assembly corpora above remain otherwise exact.
+
+Within the existing runtime-derivation `tsdown.config.ts`, task 4.8 MUST make
+only the `node:crypto` addition sealed above. It MUST NOT change the neutral
+platform or another option, remove or reorder a prior `onlyImport` entry,
+substitute another crypto mechanism, or create a dependency, package, Nx,
+public-surface, or source-semantic change. This config correction changes none
+of the package, policy-pack, blueprint-directory, or export counts below.
 
 The SDK policy pack MUST grow from exactly 11 to exactly 13 sorted members by
 adding `runtime-derivation@1` at
@@ -787,6 +815,11 @@ construction and reuse.
 - **THEN** the pack contains exactly 13 sorted members, the SDK copies exactly
   nine blueprint directories, and the exact LF rule governs the derivation
   blueprint tree
+- **AND** the retained runtime-derivation build config keeps
+  `platform: "neutral"` and every prior option while its exact
+  `deps.onlyImport` array is
+  `["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "typebox"]`
+  for the synchronous Node-native `createHash` path
 - **AND** installed acceptance pins the immutable version-1 root closure while
   excluding its `versions/` subtree, pins the exact version-2 closure, proves
   canonical-to-packed byte parity and pack provenance, cold-imports

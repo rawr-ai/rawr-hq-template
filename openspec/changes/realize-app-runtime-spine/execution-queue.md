@@ -38,15 +38,18 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.7d are sealed. The authority-only complete-derivation-contract,
+  4.1 through 4.7e are sealed. The authority-only complete-derivation-contract,
   binding-source, execution-identity, async-lowering, service-resource,
   execution-population, and public-entrypoint corrections changed no source and
   retained the exact eight-document scope through task 4.7c:
   `HABITAT_ARCHITECTURE.md` routes,
   `HABITAT_RUNTIME_REALIZATION.md` is the sole exact canonical document, and six
   active OpenSpec artifacts preserve acceptance. Task 4.7d adds only the
-  runtime-definition router for a final nine-document authority surface and
-  eighth behavior-companion file. Only after completed task 4.7d,
+  runtime-definition router for its sealed nine-document authority surface and
+  eighth behavior-companion file. Task 4.7e returns to the same exact
+  eight-document surface used by tasks 4.7a-c, excludes that router, and adds
+  only the existing runtime-derivation `tsdown.config.ts` to task 4.8's exact
+  publication/assembly corpus. Only after completed task 4.7e,
   task 4.8 is the sole active node and MUST follow canonical §§11.8, 13.5, 15,
   23.1, and 27 plus the active
   `app-runtime-realization` requirement/scenarios under independent
@@ -285,7 +288,7 @@ The active queue has one bounded source node:
 
 1. execute task 4.8 under independent no-inheritance/no-fallback
    `runtime-derivation@2` through the canonical sections and active acceptance
-   owner. Tasks 4.7a through 4.7d are complete; no contract choice remains open in
+   owner. Tasks 4.7a through 4.7e are complete; no contract choice remains open in
    source.
 
 ## Task 4.7a Authority Routing
@@ -333,6 +336,24 @@ remain later runtime responsibilities. It changes no
 implementation, source, test, project, blueprint, SDK surface, or immutable
 version-1 law.
 
+## Task 4.7e Authority Routing
+
+Task 4.7e is sealed without an implementation node across exactly the same
+eight authority documents used by tasks 4.7a-c; it excludes the
+runtime-definition router. It adds only the existing
+`packages/core/runtime/derivation/tsdown.config.ts` to task 4.8's exact
+publication/assembly corpus. That active task may add only `node:crypto`
+exactly once to `deps.onlyImport`, yielding exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "typebox"]`,
+while retaining `platform: "neutral"`, every prior entry, and every other
+option. Node native `createHash` supplies synchronous RFC 8785/SHA-256 identity;
+pinned tsdown 0.22.14's neutral-platform `onlyImport` audit otherwise rejects
+the emitted builtin. Platform changes, hand-rolled digests, Bun-only crypto,
+async WebCrypto, and new dependency/package/Nx/public/source-semantic changes
+remain forbidden. The
+source/test and eight-file behavior corpora, other publication files, immutable
+v1, counts, and exports remain unchanged.
+
 Only after that completed correction, task 4.8 is the sole active source node
 under independent
 `runtime-derivation@2`, with the exact runtime-derivation closure, eight-file
@@ -357,8 +378,11 @@ write authority with the active one:
    `providerSelection(...)` in flat `profile.ts`, its SDK service/profile
    projections, and existing definition/SDK/installed acceptance; it retains
    the already-corrected runtime-definition router unchanged as the eighth
-   routing companion. The separate exact publication/assembly corpus owns the
-   new SDK derivation face and
+   routing companion. The separate exact publication/assembly corpus includes
+   the existing runtime-derivation `tsdown.config.ts`, whose only edit adds
+   `node:crypto` exactly once to the exact `deps.onlyImport` array while
+   retaining neutral platform and every other option. It also owns the new SDK
+   derivation face and
    version-2 law, SDK pack growth from 11 to 13 sorted members, blueprint
    copy/input growth from eight to nine directories, exact LF rule, and
    installed parity/provenance/public-import/application proof. It creates no
