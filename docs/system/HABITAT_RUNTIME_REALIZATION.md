@@ -7659,7 +7659,7 @@ definition membership and must enter through `deriveRuntimeArtifacts(...)`;
 arbitrary property or project-facts scanning, casts, synthesized owner or ref
 values, and direct test-only table injection are not derivation proof.
 
-Task 4.7d is the final documentation-only correction before task 4.8. Across
+Task 4.7d is a sealed documentation-only correction before task 4.8. Across
 the prior eight authority documents plus
 `packages/core/runtime/definition/AGENTS.md`, it admits that existing router as
 the eighth behavior-companion file solely for ownership documentation. It
@@ -7669,6 +7669,16 @@ unchanged. The router records that cold `providerSelection(...)` grammar is
 runtime-definition-owned in flat `profile.ts` and projected only through
 `@habitat-ai/sdk/runtime/profiles`; provider Effect plans and acquisition
 remain later runtime responsibilities.
+
+Task 4.7e is the final documentation-only build-authority correction before
+task 4.8. It spans exactly the same eight authority documents used by tasks
+4.7a-c and excludes the runtime-definition router. It adds the existing
+`packages/core/runtime/derivation/tsdown.config.ts` to the exact task-4.8
+publication/assembly corpus without changing the exact source/test or
+eight-file behavior-companion corpus, any other publication file, immutable
+`runtime-derivation@1`, or any package, blueprint, directory, or export count.
+Only after this correction is sealed does task 4.8 become the active source
+node.
 
 Task 4.8 implements this document's combined §§11.8, 13.5, 15, 23.1, and 27
 contract. It creates exactly the independent complete definition closure below:
@@ -7753,6 +7763,7 @@ which is exactly:
 packages/core/runtime/derivation/AGENTS.md
 packages/core/runtime/derivation/habitat.toml
 packages/core/runtime/derivation/project.json
+packages/core/runtime/derivation/tsdown.config.ts
 packages/core/sdk/src/runtime/derivation/index.ts
 packages/core/sdk/AGENTS.md
 packages/core/sdk/README.md
@@ -7777,6 +7788,21 @@ complete owner, the existing `habitat.toml` changes only its selected version,
 and the existing `project.json` adds
 `acceptance:deployment-cold-plan`. The project identity, root, package-less
 status, and its two direct private dependency edges remain unchanged.
+
+The existing runtime-derivation `tsdown.config.ts` may change only by adding
+`node:crypto` exactly once to `deps.onlyImport`. Its final array is exactly:
+
+```ts
+["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "typebox"]
+```
+
+The config retains `platform: "neutral"`, every prior `onlyImport` entry, and
+every other option. Complete derivation's synchronous RFC 8785/SHA-256 identity
+uses Node's native `createHash`; pinned tsdown 0.22.14's neutral-platform
+`onlyImport` audit otherwise rejects the emitted `node:crypto` builtin. Task
+4.8 MUST NOT change the platform, hand-roll a digest, use Bun-only crypto or
+async WebCrypto, add a dependency or package, alter Nx or a public surface, or
+change source semantics to avoid this exact build admission.
 
 The new SDK `src/runtime/derivation/index.ts` directly re-exports the private
 owner's public contract and creates the real `@habitat-ai/sdk ->

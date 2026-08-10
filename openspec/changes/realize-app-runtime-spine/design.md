@@ -358,7 +358,7 @@ direct edges `@habitat-ai/sdk -> runtime-schema`, `runtime-definition`,
 publication metadata or an `implicitDependencies` substitute, must establish
 those edges. No private runtime project imports the SDK facade.
 
-The final SDK edge to `runtime-derivation` is an explicit six-step delivery.
+The final SDK edge to `runtime-derivation` is an explicit seven-step delivery.
 Task 4.7 creates the private owner, its two private edges, immutable
 topology-only `runtime-derivation@1`, and bounded normalized topology with no SDK
 edge or export. Task 4.7a closes the exact eight-document authority scope:
@@ -370,8 +370,11 @@ correction across that same authority surface, also without source work. Task
 4.7c closes the matching task-4.8 population and public-entrypoint acceptance
 correction across the same surface without source work. Task 4.7d adds the
 existing runtime-definition router as the eighth behavior-companion file solely
-for ownership documentation across a final nine-document authority surface.
-Only then does task 4.8 select independent complete `runtime-derivation@2` with no
+for ownership documentation across its sealed nine-document authority surface.
+Task 4.7e closes the remaining build-authority gap across the same exact eight
+authority documents used by tasks 4.7a-c, excluding that router, without
+implementation work. Only then does task 4.8 select independent complete
+`runtime-derivation@2` with no
 inheritance or fallback and alone add
 `@habitat-ai/sdk -> runtime-derivation` when the complete derivation surface
 becomes public through exactly `@habitat-ai/sdk/runtime/derivation`. The
@@ -488,8 +491,9 @@ different nodes: task 4.7 is private topology, task 4.7a is the authority-only
 complete-derivation-contract and binding-source gate, task 4.7b is the matching
 authority-only identity/lowering/resource-normalization correction, task 4.7c
 is the authority-only population/public-entrypoint correction, task 4.7d is the
-authority-only definition-router ownership correction, and task 4.8 is the
-first public projection. Acceptance runs each new owner target once cold and once unchanged
+authority-only definition-router ownership correction, task 4.7e is the
+authority-only crypto-build correction, and task 4.8 is the first public
+projection. Acceptance runs each new owner target once cold and once unchanged
 to prove cached leaf replays, then changes one declared relevant input and
 proves only the affected leaf work invalidates. The composition target never
 executes a Habitat command, and the underlying command of any restored cacheable
@@ -777,7 +781,22 @@ cold `providerSelection(...)` grammar, projected only through
 remain later runtime responsibilities. The separate
 publication/assembly corpus is unchanged.
 
-Only after task 4.7d is sealed, task 4.8 alone creates the exact independent
+Task 4.7e closes the build-authority gap without implementation or config work
+across exactly the same eight authority documents used by tasks 4.7a-c; it
+excludes the runtime-definition router. It adds the existing
+`packages/core/runtime/derivation/tsdown.config.ts` to task 4.8's exact
+publication/assembly corpus. Task 4.8 may add only `node:crypto` exactly once to
+that config's `deps.onlyImport`, producing exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "typebox"]`
+while retaining `platform: "neutral"`, every prior entry, and every other
+option. Synchronous RFC 8785/SHA-256 identity uses Node's native `createHash`;
+pinned tsdown 0.22.14's neutral-platform `onlyImport` audit otherwise rejects
+the emitted builtin. No platform change, hand-rolled digest, Bun-only crypto, async
+WebCrypto, dependency, package, Nx, public-surface, or source-semantic change is
+admitted. The source/test and eight-file behavior-companion corpora, every
+other publication file, immutable v1, counts, and exports remain fixed.
+
+Only after task 4.7e is sealed, task 4.8 alone creates the exact independent
 `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
 closure, selects version 2 in the existing derivation `habitat.toml`, preserves
 the exact eight-file behavior companion corpus, and uses the separate exact
@@ -820,8 +839,9 @@ source and test files, SDK service/profile projection source/tests, and
 installed acceptance; it retains the already-corrected runtime-definition
 router unchanged as the eighth routing companion. Its separate exact
 publication/assembly corpus adds only
-the admitted SDK derivation face and independent version-2 law and updates their
-existing publication owners. Cold `providerSelection(...)` lives in flat
+the admitted SDK derivation face and independent version-2 law, updates their
+existing publication owners, and applies the sole config change sealed by task
+4.7e. Cold `providerSelection(...)` lives in flat
 `profile.ts` and is
 exported only through `@habitat-ai/sdk/runtime/profiles`, while the derivation
 face retains exactly three runtime values. It normalizes each `ServiceUse` and

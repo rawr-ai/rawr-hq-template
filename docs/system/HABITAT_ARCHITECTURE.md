@@ -2169,7 +2169,7 @@ Task 4.7c is a documentation-only authority correction. Its exact current
 execution-population and derivation-proof boundary is routed to runtime
 realization §§9.3, 15.3, and 27 rather than duplicated here.
 
-Task 4.7d is the final documentation-only routing correction before task 4.8.
+Task 4.7d is a sealed documentation-only routing correction before task 4.8.
 It admits `packages/core/runtime/definition/AGENTS.md` as the eighth existing
 task-4.8 behavior-companion file solely to document ownership and routing,
 making this correction's authority surface nine documents. The publication
@@ -2177,6 +2177,20 @@ corpus is unchanged. Cold `providerSelection(...)` grammar belongs to the flat
 runtime-definition profile module and is projected only through
 `@habitat-ai/sdk/runtime/profiles`; provider Effect plans and acquisition
 remain later runtime responsibilities.
+
+Task 4.7e is the final documentation-only build-authority correction before
+task 4.8. Across the same exact eight authority documents used by tasks 4.7a-c,
+it excludes the runtime-definition router and adds the existing
+`packages/core/runtime/derivation/tsdown.config.ts` to task 4.8's exact
+publication/assembly corpus. Task 4.8 may change that file only by adding
+`node:crypto` exactly once to `deps.onlyImport`, yielding exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "typebox"]`,
+while retaining `platform: "neutral"`, every prior entry, and every other
+option. Synchronous RFC 8785/SHA-256 identity uses Node's native `createHash`;
+pinned tsdown 0.22.14's neutral-platform `onlyImport` audit otherwise rejects
+the emitted builtin. No platform change, hand-rolled digest, Bun-only crypto,
+async WebCrypto, dependency, package, Nx, public-surface, or source-semantic
+change is admitted by this correction.
 
 The sole public derivation operation is exactly `deriveRuntimeArtifacts`. It
 accepts the closed `{ entrypoint, profileId }` input and returns exactly
