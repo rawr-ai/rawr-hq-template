@@ -590,6 +590,46 @@ source, test, project, blueprint, SDK face, public contract, Oracle, optional
 interior, blueprint version, or alternate path and leaves
 `runtime-derivation@2` exact.
 
+## Definition-To-Selection Authority Correction
+
+Task 4.9a is complete as a documentation-only correction across exactly nine
+documents: `HABITAT_ARCHITECTURE.md` as router,
+`HABITAT_RUNTIME_REALIZATION.md` as the sole exact canonical mechanics owner,
+`packages/core/runtime/definition/AGENTS.md` as the definition-owner router,
+and the six active OpenSpec artifacts. `Entrypoint` is the sole cold selection
+artifact. `defineEntrypoint(...)` synchronously produces it from a real
+`AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, entrypoint id, and the
+exact five-field `RuntimeLaunchIdentity`
+`{ app, process, entrypoint, deployment, source }`. Before it returns or
+publishes that artifact, `identity.app` MUST equal `app.id`,
+`identity.process` MUST equal `process.id`, and `identity.entrypoint` MUST equal
+the entrypoint id. Any disagreement throws built-in `TypeError` before output,
+external mutation, or invocation of an authored executable. No public error
+API, prescribed error text, or prescribed validation order is admitted.
+
+Profile agreement remains the selection-to-derivation responsibility in task
+4.11: launch identity deliberately has no profile field. Complete derivation
+retains all app/process/entrypoint identity and `profileId` checks defensively;
+the earlier producer check does not remove or weaken them.
+
+Task 4.10 is the sole next implementation node. Its exact corpus is only
+`packages/core/runtime/definition/src/app.ts` and
+`packages/core/runtime/definition/test/definition.test.ts`. It preserves the
+existing function signatures, TypeScript inference, exact app/profile/process
+result references, freeze behavior, and SDK export identity. Owner tests use
+real constructors, make producer-local bindings unavailable after handoff,
+exercise the three identity disagreements independently, and prove zero
+authored executable work. It adds no validator, schema, file, project, edge,
+blueprint, version, export, or error surface.
+
+Task 4.11 changes only
+`packages/core/runtime/derivation/test/complete-derivation.test.ts`. It passes a
+real `Entrypoint` plus `profileId`, proves successful derivation after selection
+source becomes unavailable, and corrupts each of the three launch-identity
+agreements plus profile agreement independently. Every mismatch is refused
+before a derivation result and with zero Effect-body or loader invocation. No
+derivation source or public surface changes.
+
 ## Magic Migration Admission
 
 Magic Migration is implementation evidence, not product or specification

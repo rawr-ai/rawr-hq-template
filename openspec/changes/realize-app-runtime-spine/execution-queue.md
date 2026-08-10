@@ -38,7 +38,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.9 are sealed. The authority-only complete-derivation-contract,
+  4.1 through 4.9a are sealed. The authority-only complete-derivation-contract,
   binding-source, execution-identity, async-lowering, service-resource,
   execution-population, and public-entrypoint corrections changed no source and
   retained the exact eight-document scope through task 4.7c:
@@ -57,7 +57,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `3147acbdcdd916883cee5b081c0868e3d1bf09b9`, whole tree
   `7fff3eaf6d80a4609dd0d511696212a38133753d`, and subtree
   `d35cd11d21abf6831947a57638cbd7de8035bf0d` against that landed owner and
-  closed as an authority-only no-op. Task 4.10 is the sole next node.
+  closed as an authority-only no-op. Task 4.9a then sealed the
+  definition-to-selection contract across exactly nine documents: the two
+  canonical system documents, the runtime-definition router, and six active
+  OpenSpec artifacts. Task 4.10 is the sole next implementation node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -299,13 +302,26 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   compiler tasks 5.2 and 5.4. No source, test, project, blueprint, SDK face,
   public contract, Oracle, optional interior, version 3, or alternate path
   changes in task 4.9; `runtime-derivation@2` remains exact.
+- [x] **Definition-to-selection authority correction**: task 4.9a establishes
+  `Entrypoint` as the sole cold selection artifact. `defineEntrypoint(...)`
+  synchronously requires app/process/entrypoint launch-identity agreement
+  before return or publication; mismatch throws built-in `TypeError` before
+  output, external mutation, or authored executable work, with no error API,
+  prescribed text, or prescribed order. Profile agreement remains task 4.11
+  derivation defense because the exact five-field launch identity has no
+  profile field.
 
 The active queue has one bounded source node:
 
-1. execute task 4.10 by adding only the definition-to-selection handoff
-   assertions to existing `test/complete-derivation.test.ts`. Tasks 4.8 and 4.9
-   are sealed; `runtime-derivation@2` remains exact and no contract choice is
-   open in source.
+1. execute task 4.10 in exactly
+   `packages/core/runtime/definition/src/app.ts` and
+   `packages/core/runtime/definition/test/definition.test.ts`. Preserve
+   signatures, inference, exact result references, freeze behavior, and SDK
+   export identity; use real constructors, make producer-local bindings
+   unavailable after handoff, and prove the three identity mismatches plus zero
+   executable work. Tasks 4.8, 4.9, and 4.9a are sealed;
+   `runtime-derivation@2` remains exact and no contract choice is open in
+   source.
 
 ## Task 4.7a Authority Routing
 
@@ -399,13 +415,27 @@ alternate `deriveRuntimeSpine`, and route derivation without an admitted carrier
 remain rejected. Provider graph matching, closure, cycles, and diagnostics
 remain compiler tasks 5.2 and 5.4. No source, test, project, blueprint, SDK
 face, public contract, Oracle, optional interior, blueprint version, or
-alternate path changes; task 4.10 is the sole next node.
+alternate path changes.
+
+## Task 4.9a Definition-To-Selection Authority Routing
+
+Task 4.9a is sealed without an implementation node across exactly nine
+documents: `HABITAT_ARCHITECTURE.md`, `HABITAT_RUNTIME_REALIZATION.md`,
+`packages/core/runtime/definition/AGENTS.md`, and the six active OpenSpec
+artifacts. It establishes `Entrypoint` as the sole cold selection artifact and
+requires synchronous `defineEntrypoint(...)` production from real app, profile,
+and process definitions, entrypoint id, and exact five-field launch identity.
+App/process/entrypoint identity disagreement throws built-in `TypeError` before
+output, external mutation, or authored executable work; no error API, text, or
+validation order is prescribed. Profile agreement stays in task 4.11 because
+launch identity has no profile field, and derivation retains every defensive
+check. Task 4.10 is the sole next implementation node.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Complete derivation (`4.10-4.11` remaining; `4.8-4.9` sealed)**: retain the independent
+1. **Definition/derivation handoffs (`4.10-4.11` remaining; `4.8-4.9a` sealed)**: retain the independent
    `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
    closure, select version 2 in the existing derivation `habitat.toml`, retain
    the exact root shell, and use only the twelve named source files and three
@@ -460,9 +490,18 @@ write authority with the active one:
    uses exactly `sha256:` plus 64 lowercase hexadecimal SHA-256 characters over
    RFC 8785 canonical JSON of the other six fields; it has no `derivedAt` or
    placement constraints. Task 4.9 is sealed as the authority-only frozen-lab
-   no-op above; tasks 4.10/4.11 add assertions only to
-   `complete-derivation.test.ts`, with no optional interior, fallback, or
-   version 3. Land the definition-owned
+   no-op and task 4.9a is sealed as the documentation-only handoff correction
+   above. Task 4.10 changes only definition `src/app.ts` and
+   `test/definition.test.ts`; it preserves signatures, inference, exact result
+   references, freeze behavior, and SDK identity while proving real-constructor
+   success, unavailable producer-local bindings, three identity mismatches, and
+   zero executable work. Task 4.11 changes only derivation
+   `test/complete-derivation.test.ts`; it uses real `Entrypoint` plus
+   `profileId`, proves completion with selection source unavailable, and
+   refuses three corrupted identities plus profile mismatch before result with
+   zero Effect/loader work. Neither node adds an optional interior, fallback,
+   version 3, validator, schema, file, project, edge, blueprint, export, or
+   error; task 4.11 changes no derivation source or public surface. Land the definition-owned
    provider-effect plan from `6.1` after provider selection and before compiler
    consumption.
 2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
