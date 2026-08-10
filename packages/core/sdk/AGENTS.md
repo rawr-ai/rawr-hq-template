@@ -25,6 +25,11 @@
   runtime-schema authoring faces project the private cold definition owner.
   They expose no `startApp`, provider selection, raw Effect runner, managed
   runtime, native harness, or observation read model.
+- `plugins/server` and `plugins/async` classify projections only through their
+  topology-specific builders. MCP is only a `server` surface; its declarations
+  have no transport or lifecycle authority. The server Effect face delegates
+  only to the official Effect-oRPC bridge, and async Effect declarations remain
+  step-local and host-neutral.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -98,6 +103,10 @@
 - Public cold runtime authoring: `@habitat-ai/sdk/app`,
   `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
   `@habitat-ai/sdk/runtime/*` subpaths.
+- Public cold plugin authoring: `@habitat-ai/sdk/plugins/server`,
+  `@habitat-ai/sdk/plugins/server/effect`,
+  `@habitat-ai/sdk/plugins/server/mcp`, `@habitat-ai/sdk/plugins/async`, and
+  `@habitat-ai/sdk/plugins/async/effect`.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and
   `@habitat-ai/sdk/blueprints/*`.

@@ -135,10 +135,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 The active queue has one bounded node:
 
-1. execute task 4.2: author the topology-specific server/internal face, generic
-   MCP server-surface face, and host-neutral async face through the terminal SDK
-   without introducing transport, lifecycle, manual Effect execution, or
-   predecessor wire authority.
+1. execute task 4.3: author cold `ProcessView`, `RoleView`, `ServiceBoundary`,
+   and `ServiceBinding` declarations in runtime-definition and the terminal SDK
+   service face without landing live binding or cache mechanics.
 
 The corrected authority admits sole `app@2`, peer `server` and `async` roles,
 MCP as a native `server` surface, Inngest Serve/Connect as final harness modes,
@@ -148,8 +147,14 @@ sole SDK to `packages/core/sdk` while deleting the mixed-core package identity,
 and task 3.4 has removed ownerless native-host dependencies without introducing
 placeholder peers. Task 4.1 has established the cold runtime-definition owner,
 its exact runtime-schema edge, TypeBox observation input, immutable process
-launch identity, cold authoring public faces, and closed source law. Runtime
-source remains open only in owner order from task 4.2.
+launch identity, cold authoring public faces, and closed source law.
+Task 4.2 has established topology-classified public and trusted internal server
+projections on native oRPC, direct official Effect-oRPC bridge reuse, generic
+MCP tools/resources/prompts as an ordinary server surface, and host-neutral
+workflow/schedule/consumer plus step-local Effect declarations. It introduced
+no MCP role, service, app, execution plane, transport or lifecycle owner,
+Inngest client, manual Effect terminal, predecessor builder, or placeholder
+adapter. Runtime source remains open only in owner order from task 4.3.
 Task 3.2a's exact adoption receipt remains a foundation checkpoint only. It is
 not a runtime/coexistence contract and authorizes no public runtime release.
 

@@ -31,6 +31,17 @@ providers, and runtime-carried schemas without starting a process or acquiring
 a resource. `providerSelection(...)` and live runtime mechanics remain absent
 until their owning runtime tasks land.
 
+The server and async plugin entries expose cold, topology-specific authoring:
+
+- `plugins/server` owns public API and trusted internal projection builders on
+  native oRPC implementers; `plugins/server/effect` reexports the official
+  Effect-oRPC `handlerGen` rather than implementing a runner.
+- `plugins/server/mcp` declares tools, resources, and prompts as an ordinary
+  `server` surface with no transport, session, acquisition, or lifecycle owner.
+- `plugins/async` declares host-neutral workflows, schedules, and consumers;
+  `plugins/async/effect` declares step-local Effect descriptors without
+  constructing an Inngest client or durable execution plane.
+
 The isolated `@habitat-ai/sdk/telemetry` entry exposes the provider-neutral
 technical telemetry contract and declarative OpenTelemetry Node configuration.
 It exports no provider acquisition, lease, exporter factory, or instrumentation

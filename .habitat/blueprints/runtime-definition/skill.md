@@ -25,4 +25,3 @@ Effect programs without doing any live work.
 Habitat owns the exact positive project topology. Nx owns the dependency and
 task graph. TypeScript owns public capability visibility and inference. Owner
 tests prove cold authoring behavior and cache restoration/invalidation.
-

@@ -1,6 +1,9 @@
 import type { HabitatEffect, HabitatRetryPolicy, HabitatTimeoutPolicy } from "./effect";
 
 export type ExecutionBoundaryKind =
+  | "plugin.server-mcp-tool"
+  | "plugin.server-mcp-resource"
+  | "plugin.server-mcp-prompt"
   | "plugin.async-step"
   | "plugin.cli-command"
   | "plugin.web-surface"
@@ -26,10 +29,16 @@ export type ExecutionDescriptor<TInput, TOutput, TError, TContext> = EffectExecu
   TContext
 >;
 
-export interface EffectExecutionDescriptor<TInput, TOutput, TError, TContext> {
+export interface EffectExecutionDescriptor<
+  TInput,
+  TOutput,
+  TError,
+  TContext,
+  TBoundary extends ExecutionBoundaryKind = ExecutionBoundaryKind,
+> {
   readonly kind: "execution.effect";
   readonly executionId: string;
-  readonly boundary: ExecutionBoundaryKind;
+  readonly boundary: TBoundary;
   readonly policy: EffectExecutionPolicy;
   run(input: {
     readonly input: TInput;
@@ -37,8 +46,18 @@ export interface EffectExecutionDescriptor<TInput, TOutput, TError, TContext> {
   }): HabitatEffect<TOutput, TError, unknown>;
 }
 
-export function defineEffectExecution<TInput, TOutput, TError, TContext>(
-  descriptor: EffectExecutionDescriptor<TInput, TOutput, TError, TContext>
-): EffectExecutionDescriptor<TInput, TOutput, TError, TContext> {
-  return Object.freeze({ ...descriptor, policy: Object.freeze({ ...descriptor.policy }) });
+export function defineEffectExecution<
+  TInput,
+  TOutput,
+  TError,
+  TContext,
+  const TBoundary extends ExecutionBoundaryKind = ExecutionBoundaryKind,
+>(
+  descriptor: Omit<EffectExecutionDescriptor<TInput, TOutput, TError, TContext, TBoundary>, "kind">
+): EffectExecutionDescriptor<TInput, TOutput, TError, TContext, TBoundary> {
+  return Object.freeze({
+    ...descriptor,
+    kind: "execution.effect",
+    policy: Object.freeze({ ...descriptor.policy }),
+  });
 }
