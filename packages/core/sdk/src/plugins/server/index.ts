@@ -1,3 +1,7 @@
+export {
+  implement as implementServerApiPlugin,
+  implement as implementServerInternalPlugin,
+} from "@orpc/server";
 export type {
   PluginServiceUses,
   ServerApiPluginBuilder,
@@ -10,8 +14,6 @@ export type {
 export {
   defineServerApiPlugin,
   defineServerInternalPlugin,
-  implementServerApiPlugin,
-  implementServerInternalPlugin,
 } from "../../../../runtime/definition/src/plugin";
 export type {
   ServiceContractOf,

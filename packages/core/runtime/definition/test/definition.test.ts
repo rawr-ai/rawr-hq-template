@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { call } from "@orpc/server";
+import { call, implement } from "@orpc/server";
 import { Type } from "typebox";
 import { Validator } from "typebox/schema";
 import { RuntimeSchema, standard } from "../../schema/src";
@@ -30,10 +30,9 @@ import {
   defineServerApiPlugin,
   defineServerInternalPlugin,
   defineService,
+  defineWebAppPlugin,
   defineWorkflow,
   Effect,
-  implementServerApiPlugin,
-  implementServerInternalPlugin,
   RuntimeObservationRecordSchema,
   readHabitatEffectOperation,
   readServiceUse,
@@ -55,6 +54,8 @@ type TypesEqual<TLeft, TRight> =
       ? true
       : false
     : false;
+
+type Assert<T extends true> = T;
 
 type ExecutionDescriptorChannels<TDescriptor> =
   TDescriptor extends EffectExecutionDescriptor<
@@ -87,6 +88,73 @@ type ServiceSchemaChannels<TDefinition> =
   >
     ? readonly [TScope, TConfig, TInvocation]
     : never;
+
+function createWebDefinitionTypeOracle() {
+  return defineWebAppPlugin.factory()({
+    capability: "work-items-board",
+    routes: [
+      {
+        id: "work-items-board.index",
+        path: "/work-items",
+        module: async () => ({ mount: "work-items-board" }) as const,
+        label: "not-a-route-field",
+      },
+    ] as const,
+  })();
+}
+
+type WebDefinitionTypeOracle = ReturnType<typeof createWebDefinitionTypeOracle>;
+
+export type WebProjectionTypeOracle = readonly [
+  Assert<TypesEqual<WebDefinitionTypeOracle["id"], "web.app.work-items-board">>,
+  Assert<TypesEqual<WebDefinitionTypeOracle["role"], "web">>,
+  Assert<TypesEqual<WebDefinitionTypeOracle["surface"], "web/app">>,
+  Assert<TypesEqual<WebDefinitionTypeOracle["routes"][0]["id"], "work-items-board.index">>,
+  Assert<TypesEqual<WebDefinitionTypeOracle["routes"][0]["path"], "/work-items">>,
+  Assert<
+    TypesEqual<
+      Awaited<ReturnType<WebDefinitionTypeOracle["routes"][0]["module"]>>,
+      Readonly<{ mount: "work-items-board" }>
+    >
+  >,
+  Assert<
+    TypesEqual<
+      Extract<keyof WebDefinitionTypeOracle["routes"][0], string>,
+      "id" | "path" | "module"
+    >
+  >,
+  Assert<TypesEqual<WebDefinitionTypeOracle["resourceRequirements"], readonly []>>,
+  Assert<TypesEqual<keyof WebDefinitionTypeOracle["services"], never>>,
+];
+
+declare const webDefinitionTypeOracle: WebDefinitionTypeOracle;
+
+if (false) {
+  // @ts-expect-error The frozen output never exposes mutable array operations.
+  webDefinitionTypeOracle.routes.push(undefined as never);
+  // @ts-expect-error The frozen route snapshot never exposes mutable fields.
+  webDefinitionTypeOracle.routes[0].path = "/changed";
+  // @ts-expect-error Surplus author fields are not part of the route snapshot.
+  webDefinitionTypeOracle.routes[0].label;
+  defineWebAppPlugin.factory()({
+    capability: "invalid-role",
+    routes: [],
+    // @ts-expect-error Projection classification is fixed by the lane builder.
+    role: "web",
+  });
+  defineWebAppPlugin.factory()({
+    capability: "invalid-services",
+    routes: [],
+    // @ts-expect-error Web projection cannot author service bindings.
+    services: {},
+  });
+  defineWebAppPlugin.factory()({
+    capability: "invalid-resources",
+    routes: [],
+    // @ts-expect-error Web projection cannot author runtime resource requirements.
+    resourceRequirements: [],
+  });
+}
 
 function coldEffect<TSuccess, TError, TRequirements>(
   value: TSuccess,
@@ -643,16 +711,16 @@ describe("runtime definition", () => {
     ).toBe(false);
   });
 
-  test("fixes server lane identity while retaining native handler implementers", async () => {
+  test("fixes server lane identity while retaining native handler routers", async () => {
     const service = defineService({ id: "work-items", deps: {} });
     const contract = service.oc
       .input(standard(Type.Object({ id: Type.String() })))
       .output(standard(Type.Object({ id: Type.String(), source: Type.String() })));
-    const nativeHandler = implementServerApiPlugin(contract).handler(({ input }) => ({
+    const nativeHandler = implement(contract).handler(({ input }) => ({
       id: input.id,
       source: "handler",
     }));
-    const internalHandler = implementServerInternalPlugin(contract).handler(async ({ input }) => ({
+    const internalHandler = implement(contract).handler(async ({ input }) => ({
       id: input.id,
       source: "promise",
     }));
@@ -763,6 +831,141 @@ describe("runtime definition", () => {
     };
     expect(() => defineServerApiPlugin.factory()(classificationVariable)()).toThrow(
       "lane classification is fixed"
+    );
+  });
+
+  test("keeps web route projections cold and snapshots only serializable route facts", () => {
+    let routeModuleRuns = 0;
+    const loadRouteModule = async () => {
+      routeModuleRuns += 1;
+      return { mount: "work-items-board" } as const;
+    };
+    const createWebApp = defineWebAppPlugin.factory()({
+      capability: "work-items-board",
+      routes: [
+        {
+          id: "work-items-board.index",
+          path: "/work-items",
+          module: loadRouteModule,
+        },
+      ] as const,
+    });
+    let optionMappings = 0;
+    const createSelectedWebApp = defineWebAppPlugin.factory<{
+      readonly instance: string;
+    }>()((options) => {
+      optionMappings += 1;
+      return {
+        capability: "work-items-board",
+        instance: options.instance,
+        routes: [
+          {
+            id: "work-items-board.index",
+            path: "/work-items",
+            module: loadRouteModule,
+          },
+        ] as const,
+      };
+    });
+
+    expect(routeModuleRuns).toBe(0);
+    expect(optionMappings).toBe(0);
+    const webApp = createWebApp();
+    const selectedWebApp = createSelectedWebApp({ instance: "secondary" });
+    const projection = webApp.project({ pluginId: webApp.id });
+    const projectedRoutes = projection.facts.routes as readonly Readonly<{
+      id: string;
+      path: string;
+    }>[];
+    expect(optionMappings).toBe(1);
+    expect(routeModuleRuns).toBe(0);
+    expect(webApp).toMatchObject({
+      kind: "plugin.definition",
+      id: "web.app.work-items-board",
+      role: "web",
+      surface: "web/app",
+      capability: "work-items-board",
+      services: {},
+      resourceRequirements: [],
+    });
+    expect(Object.hasOwn(webApp, "instance")).toBe(false);
+    expect(selectedWebApp.instance).toBe("secondary");
+    expect(webApp.routes[0]?.module).toBe(loadRouteModule);
+    expect(projection).toEqual({
+      kind: "plugin.projection",
+      facts: {
+        pluginId: "web.app.work-items-board",
+        lane: "web/app",
+        routes: [{ id: "work-items-board.index", path: "/work-items" }],
+      },
+    });
+    expect(Object.keys(projectedRoutes[0] ?? {})).toEqual(["id", "path"]);
+    for (const value of [
+      webApp,
+      webApp.services,
+      webApp.resourceRequirements,
+      webApp.routes,
+      webApp.routes[0],
+      projection,
+      projection.facts,
+      projectedRoutes,
+      projectedRoutes[0],
+    ]) {
+      expect(Object.isFrozen(value)).toBe(true);
+    }
+
+    const mutableRoute: {
+      id: string;
+      path: string;
+      module: () => Promise<Readonly<{ mount: string }>>;
+      label: string;
+    } = {
+      id: "mutable.before",
+      path: "/before",
+      module: loadRouteModule,
+      label: "not-part-of-the-route-contract",
+    };
+    const mutableInput = {
+      capability: "mutable",
+      routes: [mutableRoute],
+    };
+    const snapshottedWebApp = defineWebAppPlugin.factory()(mutableInput)();
+    mutableRoute.id = "mutable.after";
+    mutableRoute.path = "/after";
+    mutableRoute.module = async () => ({ mount: "replacement" as const });
+    expect(snapshottedWebApp.routes[0]).toEqual({
+      id: "mutable.before",
+      path: "/before",
+      module: loadRouteModule,
+    });
+    expect(Object.keys(snapshottedWebApp.routes[0] ?? {})).toEqual(["id", "path", "module"]);
+    expect(snapshottedWebApp.project({ pluginId: snapshottedWebApp.id }).facts.routes).toEqual([
+      { id: "mutable.before", path: "/before" },
+    ]);
+
+    const invalidClassification = {
+      capability: "invalid-variable",
+      routes: [],
+      role: undefined,
+    };
+    expect(() => defineWebAppPlugin.factory()(invalidClassification)()).toThrow(
+      "lane classification is fixed"
+    );
+    const invalidComposition = {
+      capability: "invalid-composition",
+      routes: [],
+      services: {},
+    };
+    expect(() => defineWebAppPlugin.factory()(invalidComposition)()).toThrow(
+      "does not accept 'services'"
+    );
+    const invalidResourceComposition = {
+      capability: "invalid-resource-composition",
+      routes: [],
+      resourceRequirements: undefined,
+    };
+    expect(() => defineWebAppPlugin.factory()(invalidResourceComposition)()).toThrow(
+      "does not accept 'resourceRequirements'"
     );
   });
 

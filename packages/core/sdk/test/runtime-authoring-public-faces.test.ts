@@ -10,6 +10,12 @@ import type {
   ServiceContractOf as ServerServiceContractOf,
   ServiceUses as ServerServiceUses,
 } from "../src/plugins/server";
+import type {
+  WebAppPluginBuilder,
+  WebAppPluginDefinition,
+  WebAppPluginInput,
+  WebRouteProjection,
+} from "../src/plugins/web";
 import type { ServiceContractOf, ServiceUses } from "../src/service";
 
 type TypesEqual<TLeft, TRight> =
@@ -34,6 +40,7 @@ const expectedPluginExports = [
   "./plugins/async/effect",
   "./plugins/server",
   "./plugins/server/effect",
+  "./plugins/web",
 ];
 
 describe("runtime authoring public faces", () => {
@@ -115,7 +122,7 @@ describe("runtime authoring public faces", () => {
         import("../../runtime/definition/src/plugin"),
         import("../../runtime/definition/src/execution"),
       ]);
-    const { os } = await import("@orpc/server");
+    const { implement, os } = await import("@orpc/server");
 
     expect((os as { readonly effect?: unknown }).effect).toBeUndefined();
 
@@ -144,10 +151,8 @@ describe("runtime authoring public faces", () => {
 
     expect(server.defineServerApiPlugin).toBe(pluginDefinitions.defineServerApiPlugin);
     expect(server.defineServerInternalPlugin).toBe(pluginDefinitions.defineServerInternalPlugin);
-    expect(server.implementServerApiPlugin).toBe(pluginDefinitions.implementServerApiPlugin);
-    expect(server.implementServerInternalPlugin).toBe(
-      pluginDefinitions.implementServerInternalPlugin
-    );
+    expect(server.implementServerApiPlugin).toBe(implement);
+    expect(server.implementServerInternalPlugin).toBe(implement);
     expect(asyncPlugin.defineAsyncWorkflowPlugin).toBe(pluginDefinitions.defineAsyncWorkflowPlugin);
     expect(asyncPlugin.defineAsyncSchedulePlugin).toBe(pluginDefinitions.defineAsyncSchedulePlugin);
     expect(asyncPlugin.defineAsyncConsumerPlugin).toBe(pluginDefinitions.defineAsyncConsumerPlugin);
@@ -220,7 +225,54 @@ describe("runtime authoring public faces", () => {
     expect(asyncEffect).not.toHaveProperty("stepEffect");
   });
 
-  test("declares exactly the task 4.2 plugin subpaths without native-host metadata", () => {
+  test("cold-imports only the task 4.6 web authoring operation", async () => {
+    const [web, pluginDefinitions] = await Promise.all([
+      import("../src/plugins/web"),
+      import("../../runtime/definition/src/plugin"),
+    ]);
+    let moduleLoads = 0;
+    const route: WebRouteProjection<{ readonly render: "work-items" }> = {
+      id: "work-items.index",
+      path: "/work-items",
+      module: async () => {
+        moduleLoads += 1;
+        return { render: "work-items" };
+      },
+    };
+    const input = {
+      capability: "work-items",
+      routes: [route] as const,
+    } satisfies WebAppPluginInput<"work-items", readonly [typeof route]>;
+    const builder: WebAppPluginBuilder = web.defineWebAppPlugin;
+    const definition: WebAppPluginDefinition<"work-items", readonly [typeof route]> =
+      builder.factory()(input)();
+
+    expect(Object.keys(web)).toEqual(["defineWebAppPlugin"]);
+    expect(web.defineWebAppPlugin).toBe(pluginDefinitions.defineWebAppPlugin);
+    expect(definition).toMatchObject({
+      id: "web.app.work-items",
+      role: "web",
+      surface: "web/app",
+    });
+    expect(moduleLoads).toBe(0);
+
+    for (const excludedSurface of [
+      "useService",
+      "host",
+      "router",
+      "mount",
+      "build",
+      "adapter",
+      "harness",
+      "Effect",
+      "React",
+      "Vite",
+    ]) {
+      expect(web).not.toHaveProperty(excludedSurface);
+    }
+  });
+
+  test("declares exactly the task 4.2 and 4.6 plugin subpaths without native-host metadata", () => {
     const packageJson = JSON.parse(
       readFileSync(new URL("../package.json", import.meta.url), "utf8")
     ) as {
@@ -259,8 +311,14 @@ describe("runtime authoring public faces", () => {
       import: "./dist/plugins/async/effect/index.js",
       default: "./dist/plugins/async/effect/index.js",
     });
+    expect(packageJson.exports["./plugins/web"]).toEqual({
+      types: "./dist/plugins/web/index.d.ts",
+      import: "./dist/plugins/web/index.js",
+      default: "./dist/plugins/web/index.js",
+    });
     expect(packageJson.exports).not.toHaveProperty("./plugins/server/mcp");
     expect(packageJson.exports).not.toHaveProperty("./plugins/async/inngest");
+    expect(packageJson.exports).not.toHaveProperty("./plugins/web/effect");
     expect(dependencyNames.filter((name) => /elysia|inngest/i.test(name))).toEqual([]);
   });
 });

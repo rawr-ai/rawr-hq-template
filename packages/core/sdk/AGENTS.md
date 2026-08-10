@@ -34,6 +34,11 @@
   declarations. `@habitat-ai/sdk/plugins/async/effect` adds only the cold async
   step Effect descriptor builder; neither face imports or materializes a native
   async host.
+- `@habitat-ai/sdk/plugins/web` exposes only the cold web app projection builder
+  and route projection contracts. Route-module loaders remain lazy definition
+  data and are excluded from serializable projection facts. This face exposes no
+  browser runtime, router vendor, DOM mount protocol, adapter, build execution,
+  app composition, native harness lifecycle, or Effect subpath.
 - Implemented app, Effect, execution, service, resource, provider, profile, and
   runtime-schema authoring faces project only cold definition capabilities.
   They expose no `startApp`, provider selection, provider Effect plan, managed
@@ -119,6 +124,7 @@
   implementation bootstrap `@habitat-ai/sdk/plugins/server/effect`.
 - Public host-neutral async authoring: `@habitat-ai/sdk/plugins/async` and
   `@habitat-ai/sdk/plugins/async/effect`.
+- Public cold web projection authoring: `@habitat-ai/sdk/plugins/web`.
 - Public cold runtime authoring: `@habitat-ai/sdk/app`,
   `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
   `@habitat-ai/sdk/runtime/*` subpaths.

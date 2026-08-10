@@ -1,5 +1,4 @@
 import type { AnyRouter } from "@orpc/server";
-import { implement } from "@orpc/server";
 
 import type { RuntimeSchema } from "../../schema/src/runtime-schema";
 import type { AppRole } from "./app";
@@ -288,8 +287,111 @@ export const defineServerInternalPlugin: ServerInternalPluginBuilder = Object.fr
       makePluginFactory(input, buildServerInternalPlugin)) as never,
 });
 
-export const implementServerApiPlugin: typeof implement = implement;
-export const implementServerInternalPlugin: typeof implement = implement;
+export interface WebRouteProjection<TModule = unknown> {
+  readonly id: string;
+  readonly path: string;
+  readonly module: () => Promise<TModule>;
+}
+
+export interface WebAppPluginInput<
+  TCapability extends string = string,
+  TRoutes extends readonly WebRouteProjection[] = readonly WebRouteProjection[],
+> {
+  readonly capability: TCapability;
+  readonly instance?: string;
+  readonly routes: TRoutes;
+}
+
+type WebRouteProjectionSnapshots<TRoutes extends readonly WebRouteProjection[]> = {
+  readonly [TIndex in keyof TRoutes]: TRoutes[TIndex] extends WebRouteProjection
+    ? Readonly<Pick<TRoutes[TIndex], "id" | "path" | "module">>
+    : never;
+};
+
+type EmptyWebPluginServices = Readonly<Record<never, never>>;
+
+export interface WebAppPluginDefinition<
+  TCapability extends string = string,
+  TRoutes extends readonly WebRouteProjection[] = readonly WebRouteProjection[],
+> extends PluginDefinition<"web", "web/app", TCapability, EmptyWebPluginServices> {
+  readonly id: `web.app.${TCapability}`;
+  readonly services: EmptyWebPluginServices;
+  readonly resourceRequirements: readonly [];
+  readonly routes: WebRouteProjectionSnapshots<TRoutes>;
+}
+
+function assertNoWebAppCompositionFields(input: object): void {
+  for (const field of ["services", "resourceRequirements"] as const) {
+    if (Object.hasOwn(input, field)) {
+      throw new TypeError(`Web app projection does not accept '${field}'.`);
+    }
+  }
+}
+
+function buildWebAppPlugin<
+  const TCapability extends string,
+  const TRoutes extends readonly WebRouteProjection[],
+>(input: WebAppPluginInput<TCapability, TRoutes>): WebAppPluginDefinition<TCapability, TRoutes> {
+  assertNoPluginClassificationFields(input);
+  assertNoWebAppCompositionFields(input);
+
+  const services = Object.freeze({}) as EmptyWebPluginServices;
+  const resourceRequirements = Object.freeze([]) as readonly [];
+  const routes = Object.freeze(
+    input.routes.map((route) =>
+      Object.freeze({
+        id: route.id,
+        path: route.path,
+        module: route.module,
+      })
+    )
+  ) as unknown as WebRouteProjectionSnapshots<TRoutes>;
+  const projectedRoutes = Object.freeze(routes.map(({ id, path }) => Object.freeze({ id, path })));
+  const base = definePlugin({
+    id: `web.app.${input.capability}` as const,
+    role: "web",
+    surface: "web/app",
+    capability: input.capability,
+    ...(input.instance === undefined ? {} : { instance: input.instance }),
+    services,
+    resourceRequirements,
+    project: ({ pluginId }) =>
+      frozenProjection({
+        pluginId,
+        lane: "web/app",
+        routes: projectedRoutes,
+      }),
+  });
+
+  return Object.freeze({
+    ...base,
+    id: `web.app.${input.capability}` as `web.app.${TCapability}`,
+    services,
+    resourceRequirements,
+    routes,
+  });
+}
+
+export interface WebAppPluginBuilder {
+  factory(): <
+    const TCapability extends string,
+    const TRoutes extends readonly WebRouteProjection[],
+  >(
+    input: WebAppPluginInput<TCapability, TRoutes>
+  ) => PluginFactory<void, WebAppPluginDefinition<TCapability, TRoutes>>;
+  factory<TOptions>(): <
+    const TCapability extends string,
+    const TRoutes extends readonly WebRouteProjection[],
+  >(
+    input: (options: TOptions) => WebAppPluginInput<TCapability, TRoutes>
+  ) => PluginFactory<TOptions, WebAppPluginDefinition<TCapability, TRoutes>>;
+}
+
+export const defineWebAppPlugin: WebAppPluginBuilder = Object.freeze({
+  factory: () =>
+    ((input: PluginInputResolver<unknown, WebAppPluginInput>) =>
+      makePluginFactory(input, buildWebAppPlugin)) as never,
+});
 
 type AnyAsyncStepEffectDescriptor = AsyncStepEffectDescriptor<unknown, unknown, unknown, never>;
 type AsyncStepMembership = readonly AnyAsyncStepEffectDescriptor[];

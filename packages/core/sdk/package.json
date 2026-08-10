@@ -71,6 +71,11 @@
       "import": "./dist/plugins/async/effect/index.js",
       "default": "./dist/plugins/async/effect/index.js"
     },
+    "./plugins/web": {
+      "types": "./dist/plugins/web/index.d.ts",
+      "import": "./dist/plugins/web/index.js",
+      "default": "./dist/plugins/web/index.js"
+    },
     "./runtime/resources": {
       "types": "./dist/runtime/resources/index.d.ts",
       "import": "./dist/runtime/resources/index.js",
