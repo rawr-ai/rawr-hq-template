@@ -38,7 +38,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.4 are sealed; the active source container is now task 4.5.
+  4.1 through 4.5 are sealed; the active source container is now task 4.6.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -107,6 +107,17 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   one project relation; push-to-main Repository Ratchet run `31383236907`
   passed the complete platform graph. No production reader, provider
   selection, analytics sink, telemetry adapter, or new owner landed.
+- Task 4.5 is sealed at Habitat
+  `main@9b9259b77f485e325d67c6cd726bcbb40932c207` / tree
+  `1c58af9b52ada101101f8b3be397d54e03dea69e`. The terminal SDK service face
+  now exposes the exact type-only readonly `deps`, `scope`, `config`,
+  `invocation`, and `provided` boundary lanes plus one disjoint module-context
+  projection that rejects every reserved lane through direct, optional, union,
+  and index-signature spellings. PR #951 passed Repository Ratchet and
+  installed-package acceptance on Ubuntu and Windows; push-to-main Repository
+  Ratchet run `31386014522` passed the complete platform graph. No runtime
+  value, binding, execution contract, provider selection, host, topology, or
+  blueprint changed.
 - Task 1.7 records Magic's committed consumer oracle
   `ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7` / tree
   `2b3c99700d5db8264b7ee42910575e8b877bda3a`, separately from clean blueprint
@@ -220,23 +231,25 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   named predecessor feedback/database/example corpus plus predecessor generic
   host-adapter/test-helper package closures absent without binding a reader or
   selecting a provider.
+- [x] **Canonical service context lanes**: task 4.5 exposes the exact five
+  readonly boundary lanes and a type-only disjoint module projection through
+  the terminal SDK service face, with no live binding or execution contract.
 
 The active queue has one bounded node:
 
-1. execute task 4.5 as the sole active node: author the canonical `deps`,
-   `scope`, `config`, `invocation`, and `provided` service context lanes in the
-   terminal SDK service face and prove module projection narrows those lanes
-   without overwriting them. Preserve no predecessor runtime-context package or
-   workflow/support state. Keep task 4.3's cold `ServiceUse` relation unchanged;
-   task 4.8 owns derivation binding references and task 8.3 owns
-   execution-facing contracts. Admit no live binding, acquisition, host, or
-   `app@2`.
+1. execute task 4.6 as the sole active node: author the canonical cold web route
+   projection and the definition-side contract consumed by the future web
+   harness in `@habitat-ai/sdk/plugins/web`. Keep route-module loaders lazy and
+   exclude them from serializable projection facts; expose no browser runtime,
+   router vendor, DOM/`HTMLElement` mount protocol, adapter, build execution,
+   app composition, or native harness lifecycle. Tasks 10.1/10.2 and 14.1/14.2
+   own adapter payloads and live web harness behavior.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Cold definition (`4.5-4.6`)**: continue from the sealed
+1. **Cold definition (`4.6`)**: continue from the sealed
    runtime-definition and plugin-face base through the one cold `ServiceUse`
    relation and bounded platform-reader audit with the five-lane service context
    and web declarations, without reader binding, acquisition, native hosts, or
