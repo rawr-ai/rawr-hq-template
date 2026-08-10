@@ -7,6 +7,27 @@ This amendment records which exact source governs each part of
 whole file, or an older project draft from silently replacing section-level
 authority.
 
+## Authority Order
+
+When two sources conflict, authority resolves in this order:
+
+1. Current explicit owner intent for this work, within the hard repository
+   boundary in `AGENTS.md` and `AGENTS_SPLIT.md`.
+2. Repository-local `HABITAT_ARCHITECTURE.md`,
+   `HABITAT_RUNTIME_REALIZATION.md`, `.habitat/AUTHORITY.md`, and
+   `.habitat/AUTHORITY-ONTOLOGY.md` for canonical platform, runtime, and
+   blueprint law, read at section level with any explicit accepted amendment.
+3. This active OpenSpec for those named amendments and execution sequencing.
+   An explicit amendment governs only its named clause; it never replaces a
+   canonical document wholesale.
+4. Exact repository-pinned installed vendor source for vendor mechanics.
+5. Current source and tests as implementation evidence.
+6. Consumer repositories and dated external documents as directional evidence
+   only.
+
+Nx remains workspace/project truth. The repository router remains destination
+truth. Neither changes the semantic authority order above.
+
 ## Reviewed Normative Parent
 
 The reviewed canonical Habitat authority landed on `main` at merge commit
@@ -113,6 +134,37 @@ The following later landed sources supersede only the named frozen clauses:
 These amendments change placement and selection ownership; they do not change
 the frozen realization phases or authorize a second runtime.
 
+## Official Effect Runtime Source Authority
+
+The exact `effect@4.0.0-beta.101` source installed in this repository governs
+the runtime primitives used by this change:
+
+- `node_modules/effect/src/ManagedRuntime.ts`, SHA-256
+  `4212b73dc4b36228c078ddb72a9b711ed49b0cd43faa1fb7334cb04f9a4f4767`;
+- `node_modules/effect/src/Layer.ts`, SHA-256
+  `079a2d0cb72efe6930e00e4b4fddd53907b78badb52619e2950c48d6f36ea29b`;
+  and
+- `node_modules/effect/src/Scope.ts`, SHA-256
+  `7454a86440c0c8514f3c08dbd02f62c6bb6b190086d51e2808381673083384f2`.
+
+Each started process owns exactly one `ManagedRuntime`. `ManagedRuntime.make(...)`
+owns its internal root scope and forked layer scope, and builds its layer
+lazily. Provisioning therefore MUST force `await managedRuntime.context()` and
+obtain the completed resource Context before it may produce
+`ProvisionedProcess` or allow mounting. Disposal of that one managed runtime is
+the process resource-lifetime close. Runtime substrate code MUST NOT create a
+second root `Scope`, use `managedRuntime.scope` as an application-owned scope,
+or build another process managed runtime.
+
+The substrate owns one lifecycle adapter expressed as
+`Layer.effectContext(...)`. That adapter consumes compiled provider plans plus
+bootgraph order and rollback/reverse-release metadata, executes the plans in
+that order inside the managed runtime's layer scope, and returns the resource
+Context. Bootgraph remains an ordering data graph; it never becomes an Effect
+`Layer` DAG and never executes provider plans. Domain services remain Habitat
+service contracts and live bindings. They are never Effect Context services,
+Effect `Layer` nodes, or inputs to a layer dependency graph.
+
 ## Official Effect-oRPC Source Authority
 
 The repository-selected bridge is exactly
@@ -132,10 +184,11 @@ published artifact is the source authority for its boundary mechanics:
   declares the exact family dependencies, Effect peer, exports, and extension
   side effects.
 
-`handlerGen(...)` constructs the handler Effect, turns handler-originated
-`ORPCError` failures into returned values, provides native `effect/context`,
-applies native `effect/wrap`, calls `Effect.runPromiseExit` with the request
-signal, maps the resulting Cause, and returns the Promise to native oRPC.
+As underlying vendor mechanics, `handlerGen(...)` constructs the handler Effect,
+turns handler-originated `ORPCError` failures into returned values, provides
+native `effect/context`, applies native `effect/wrap`, calls
+`Effect.runPromiseExit` with the request signal, maps the resulting Cause, and
+returns the Promise to native oRPC.
 The same implementation remains present in beta.25, but beta.25 is comparison
 evidence rather than the selected repository artifact.
 
@@ -145,7 +198,12 @@ Habitat Effect imitation, a manual `Effect.run*` call, or a custom runner.
 Native `.handler(...)` remains valid for synchronous and Promise operations.
 Effect-backed Habitat service operations MUST use the official `.effect(...)`
 extension installed once in `src/service/impl.ts`; the extension delegates to
-official `handlerGen(...)`. The application/process owns Effect Context
+official `handlerGen(...)` internally. `handlerGen(...)` is source authority for
+the bridge mechanism, not an authoring choice or operation-leaf import.
+Habitat-authored authoring, adapter, and operation code MUST NOT directly
+import, call, wrap, or reimplement it; the selected official extension's
+internal call is required and remains admitted. The
+application/process owns Effect Context
 construction, resource lifetime, policy, telemetry, and shutdown through the
 native context and wrap hooks; the selected bridge alone owns the request
 fiber/signal/Cause/Promise boundary. `ProcessExecutionRuntime` remains available
@@ -155,6 +213,70 @@ The extension and native oRPC builders it patches MUST resolve to one physical
 module realm. Source identity proves the mechanism, not the application
 lifecycle, abort behavior, resource release, or module realm; those remain
 executable acceptance obligations.
+
+## Public Companion Harness Contract Authority
+
+`@habitat-ai/sdk/runtime/harnesses` exports the import-safe
+`HarnessDescriptor`, bounded `HarnessMountInput`, `NativeHarnessHandle`
+interface, `HarnessHealthReport`, owner-local report sink, and their supporting
+structural types. `HarnessDescriptor.mount(...)` accepts the frozen
+`RuntimeLaunchIdentity`, roles, adapter-lowered mount-ready payloads, read-only
+required-resource readiness, bounded process access, and report sink, and
+returns `Promise<NativeHarnessHandle>`, never `StartedHarness`. The native
+handle has required idempotent `stop()` and may have distinct readiness and
+liveness probes. Every health report carries the same launch identity, harness
+id, truthful kind/status, and bounded findings.
+
+`StartedHarness` is private to runtime mounting. Only mounting creates it after
+successful native mount from descriptor identity, returned native handle,
+accepted findings, frozen launch identity, and mount metadata, and only
+mounting coordinates its reverse stop before process release. Exporting the
+native handle interface type is required; exporting a live handle value,
+accessor, registry, or `StartedHarness` is forbidden.
+
+## Future Native Inngest Harness Authority
+
+The future durable-async harness selects native `inngest@4.18.0`. This
+amendment lands no Inngest dependency. Implementation must add and prove the
+exact dependency only in the task that realizes the owner-local harness.
+`effect-inngest` is explicitly rejected: Habitat adapts native Inngest at the
+step and harness boundaries instead of installing a second Effect integration.
+
+The step boundary is exact. A native Inngest function calls `step.run(...)`;
+the callback delegates the pre-derived step descriptor to
+`ProcessExecutionRuntime` and returns its Promise. Replay re-enters the native
+function and `step.run(...)` registration; it does not resume a retained Effect
+fiber. A completed memoized step returns native memoized state without invoking
+the callback or `ProcessExecutionRuntime`; a failed or otherwise un-memoized
+attempt invokes the callback anew.
+Cancellation is observed between durable steps. The adapter MUST NOT invent an
+`AbortSignal` or claim interruption of an already-running `step.run(...)`
+callback unless the selected native API supplies and proves that signal.
+
+The async adapter produces a private registration factory, `FunctionBundle`,
+which the Inngest harness materializes with the same provisioned native client
+supplied to the selected Serve or Connect harness. It carries no
+`dispatcherDescriptor` without a named consumer; no such consumer is admitted
+by this change. `WorkflowDispatcher` is a separate named consumer and
+process-runtime materialization, not part of `FunctionBundle` materialization.
+`WorkflowDispatcher.send(...)` returns event/admission identity, not workflow
+run identity. Status and cancellation by run identity require a separately
+selected control capability; they are not implied by event admission.
+
+In Serve mode, the Habitat/Bun host owns HTTP admission and tracks every
+admitted native handler Promise through settlement before releasing process
+resources. In Connect mode, Habitat passes `handleShutdownSignals: []` and
+keeps the owner-local callback tracker because exact 4.18 source proves an
+uncovered lease-loss path: `RequestProcessor.handleExtendLeaseAck` deletes the
+request from `requestLeases` when renewal is denied while explicitly allowing
+the user callback to continue; `ConnectionCore.close` and `reconcileLoop` gate
+on `requestLeases`; `waitForInProgress` exists, but
+`SameThreadStrategy.close` does not call it. Runtime mounting owns one outer
+single-flight stop, invokes and awaits native `close()` once, then waits for
+owner callback-tracker zero before provider release. Native close or flush is
+useful transport lifecycle behavior, never proof of callback completion,
+delivery, checkpoint, or workflow completion. Reports preserve only
+evidence-backed `presented`, `confirmed`, `dropped`, or `unknown` truth.
 
 ## Explicit Rejections
 
@@ -169,6 +291,9 @@ executable acceptance obligations.
   Their useful parts move to the exact Habitat or Rawr owner in the destination
   ledger, and each predecessor package disappears after its last reader moves.
 - A separate `@habitat-ai/blueprints` package is superseded and MUST NOT return.
+- `effect-inngest` and any equivalent second Effect-owned durable-workflow
+  runtime are rejected. The native Inngest harness is the only selected future
+  durable-async integration.
 - Habitat initializer, hook, pack-resolution, and version-coexistence mechanics
   remain owned by their existing lifecycle record and are not redesigned here.
 - Unreviewed branch copies and stale canonical documents are not whole-file
@@ -212,28 +337,30 @@ authority. Its repository is
 `/Users/mateicanavra/Documents/.nosync/DEV/magic-apply/magic-migration`.
 Clean `main` at `4e2f5d63e964f8299a25172ece4d5d38f6f18655`, tree
 `88f0f24e98ba057c43f5aa6e93de4c7a510c0b11`, is the stable blueprint snapshot.
-The latest applicable committed implementation is
-`c4d9aa83917c303510f9621494dd9c7e6933587a`, tree
-`f062e173a14d787fc43adfa9c7061f605b6074ea`, on
-`codex/activate-assistant-led-submission` in worktree
-`/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-codex-cleanup-organization-slice`.
-That worktree is dirty, so only the exact commit object is admitted.
+The latest applicable committed behavior oracle is
+`ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7`, tree
+`2b3c99700d5db8264b7ee42910575e8b877bda3a`, on
+`codex/realize-async-runtime-process-boundary`. The stable clean blueprint
+snapshot and latest behavior oracle are separate evidence classes; neither
+replaces the other. Only that committed object is admitted; working-tree state
+is excluded.
 
-At that commit, the relevant generic blueprint subtrees are app
-`45b5bc60b5be2f2a986adc8ea923c3b9a2096a8b`, app-server
-`b5d3b7c20e639b5d152a0d5596870bfde62765b7`, plugin-server-api
-`c7885833f4066820a9413c0ffed37d50decf2499`, service
-`e360635137cb3901fe4d99423773043bcf949491`, resource
-`878fda04025362ba0d09b01f2dfcdc0eb2ed9dd1`, and provider
-`218afe721e58774f56af2b9a0d40fefb3d068dc1`.
+The frozen generic assertions are limited to app/composer/entrypoint/runtime
+boundary separation; five service context lanes and module narrowing; one
+implementer lineage and base-rooted native middleware; direct
+resource/provider faces; scoped resource lifetime and provider-local
+acquire/release; typed failure and finalizer ordering; one semantic app lowered
+into independently started process identities; and process-local resource
+leases, admission, stop, and observation. MCP is a server surface and an
+external companion seam, not a Habitat role or kind. This evidence does not
+claim that Habitat has implemented a native MCP adapter.
 
-Admitted evidence is limited to its abstract app package, composer, entrypoint,
-and runtime-boundary separation; five service context lanes and module
-narrowing; one implementer lineage and base-rooted native middleware; direct
-resource/provider faces; root `Effect.scoped` lifetime; provider-local
-`Effect.acquireRelease`; typed failures; interruption; cancellation; and
-finalizer ordering. Magic's concrete `apps/server` topology, direct provider
-selection and acquisition, service-client factories, Elysia/oRPC route
-composition, Inngest mounting, product identities, and telemetry-completeness
-claims are excluded. None replaces the canonical compiler, bootgraph, process
-runtime, harness, or seven-phase realization law.
+Magic's concrete app/server topology, product service clients, direct provider
+selection and acquisition, Elysia/oRPC route composition, Inngest function
+inventory and mounting, MCP product wiring, product identities, deployment
+policy, and telemetry-completeness claims are excluded. Consumer evidence may
+be lifted only by tracing the exact behavior oracle, mapping it to a named
+Habitat owner and task, freezing generic assertions, re-authoring under Habitat
+and pinned-vendor law, proving and releasing the Habitat artifact, migrating
+Magic, and deleting only the superseded prototype. None replaces the canonical
+compiler, bootgraph, process runtime, harness, or seven-phase realization law.

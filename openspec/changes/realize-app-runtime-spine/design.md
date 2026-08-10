@@ -60,23 +60,45 @@ project is classified `delete`: its frozen commit remains provenance, and later
 runtime owners may port admitted algorithms or tests only into the owner-local
 implementation they verify.
 
-Magic Migration contributes two distinct evidence snapshots. Clean `main` at
+Magic Migration contributes three distinct evidence snapshots. Clean `main` at
 `4e2f5d63e964f8299a25172ece4d5d38f6f18655`, tree
 `88f0f24e98ba057c43f5aa6e93de4c7a510c0b11`, is the stable blueprint snapshot.
-The latest applicable committed implementation is
+The earlier applicable committed implementation is
 `c4d9aa83917c303510f9621494dd9c7e6933587a`, tree
 `f062e173a14d787fc43adfa9c7061f605b6074ea`, on local branch
 `codex/activate-assistant-led-submission`. Only that committed object is
-admitted; its dirty worktree is excluded. Together they confirm useful native
-mechanics: an abstract app/composer/entrypoint/runtime-boundary split, service
-context lanes and narrowing, one root `Effect.scoped` application lifetime,
-provider-owned `Effect.acquireRelease`, typed resource errors,
-cancellation-preserving oRPC translation, and direct resource/provider faces.
-They do not implement the canonical realization pipeline: provider selection
-and acquisition remain in concrete app wiring, derivation and compilation are
-absent, mounting is direct, and no runtime telemetry backend is configured or
-proven. Those mechanics are implementation evidence beneath the reviewed
-normative parent, not a runtime or source topology to port wholesale.
+admitted; its dirty worktree is excluded. The later committed consumer oracle is
+`ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7`, whole tree
+`2b3c99700d5db8264b7ee42910575e8b877bda3a`. It proves, in Magic's own
+temporary realization, that one semantic app can expose separately started
+server and async process boundaries with distinct resources, native stops,
+health identities, and sibling restart/failure behavior. Its native Inngest
+Serve boundary and external `mcp-openapi@1.0.0` process are consumer evidence,
+not Habitat implementation authority.
+
+Across those snapshots Habitat admits only generic assertions: the abstract
+app/composer/entrypoint/runtime-boundary split, service context lanes and
+narrowing, process-local acquisition and release, typed resource errors,
+cancellation-preserving oRPC translation, direct resource/provider faces,
+required-resource refusal before mount, and independent sibling process
+lifecycle. Magic's concrete app/resource catalog, service clients, route and
+function inventories, Railway placement, deployment files, copied
+`vendor/mcp-openapi/mcp-openapi-1.0.0.tgz`, and dirty deployment evidence are
+excluded. The snapshots do not implement the canonical realization pipeline:
+provider selection and acquisition remain in product wiring, derivation and
+compilation are absent, mounting is direct, and no canonical runtime telemetry
+proof exists. These are behavior oracles beneath Habitat law, never source
+topology to port wholesale.
+
+Two competing Habitat proposal commits are provenance only. Commit
+`203c9c686b0c18644218de5583902bcb180544a8` correctly surfaced immutable
+`app@1`, complete `app@2`, process-local launch identity, companion attachment,
+and sibling isolation; this change selectively re-authors those assertions and
+does not cherry-pick the commit. Commit
+`419d5286bf83a41175a001233de244699c1b72da` is rejected as a landing unit because
+it removes `app@1` from current resolution and selects an unexercised direct
+official-MCP-SDK implementation. Its SHA remains provenance, not source or
+authority.
 
 ### Authority and destination ledger
 
@@ -177,13 +199,24 @@ the owner, and native acceptance proves that an instance cannot bypass it.
 **Goals:**
 
 - Realize the canonical seven-phase runtime once, as generic platform kinds.
-- Make app, profile, compiler, provider plan, bootgraph, process runtime,
+- Preserve byte-identical `app@1` and add complete, independently resolvable
+  `app@2` as its future successor. Keep one semantic app/Nx project around one
+  finite cold `ProcessCatalog`, with one process record selected by each thin
+  one-call entrypoint.
+- Make app, profile, compiler, provider plan, bootgraph data, process runtime,
   adapter, harness, and observation ownership mechanically visible and closed.
 - Give each app/process one Effect `Context`, resource lifetime, policy, and
   telemetry wrapper through the public `effect/context` and `effect/wrap`
   faces. Preserve the selected native bridge's execution authority:
   `ProcessExecutionRuntime`, if retained for other invocation classes, never
   executes oRPC service Effects.
+- Give each started process exactly one `effect@4.0.0-beta.101`
+  `ManagedRuntime`, created from one substrate `Layer.effectContext` lifecycle
+  adapter and forced before mount. Let that managed runtime own its scopes;
+  never turn boot order or domain services into a Layer graph.
+- Make every `startApp(...)` invocation process-local: it owns only one lease,
+  runtime, resource closure, native-handle set, immutable launch identity, and
+  stop, with no sibling control or health aggregation.
 - Realize the Habitat self-host on the substrate after all downstream product
   source and flattened process-app owners have left the repository.
 - Keep `@habitat-ai/sdk` as the sole public runtime and authoring distribution
@@ -201,6 +234,12 @@ the owner, and native acceptance proves that an instance cannot bypass it.
 - Implementing deployment placement, authentication, persistent catalog
   storage, generic config precedence, every reusable platform provider, or every future
   harness.
+- Making a process an app, blueprint kind, child Nx project, supervisor,
+  deployment unit, or whole-app controller.
+- Authoring an MCP SDK face or direct official-MCP-SDK server in Habitat. MCP is
+  a `server` surface/process projection. Conditional acceptance of an external
+  `mcp-openapi@1.0.0` companion waits for an independent versioned artifact and
+  makes no prompts claim.
 - Moving product/domain behavior into runtime, adapters, or harnesses.
 - Publishing Rawr, internal runtime owners, resources, services, or plugins as
   a public package cohort.
@@ -234,7 +273,8 @@ orders cold provider plans. The Effect kernel acquires one process scope. The
 process runtime binds and assembles execution, and its idempotent stop handle
 releases process-owned resources. The execution runtime invokes. Adapters lower
 compiled surfaces. Harnesses mount native payloads and own their native stop
-behavior. Runtime mounting owns cross-owner finalization. Runtime observation
+behavior. Runtime mounting owns cross-owner finalization for that one process;
+it has no sibling or whole-app control. Runtime observation
 projects bounded read models of that outcome without becoming product or
 execution authority.
 
@@ -300,9 +340,9 @@ inventory is:
 | `packages/core/runtime/bootgraph` | `runtime-bootgraph` | `runtime-compiler` |
 | `packages/core/runtime/substrate/effect` | `runtime-substrate-effect` | `runtime-definition`, `runtime-compiler`, `runtime-bootgraph` |
 | `packages/core/runtime/process-runtime` | `runtime-process-runtime` | `runtime-derivation`, `runtime-compiler`, `runtime-substrate-effect` |
-| `packages/core/runtime/harnesses` | `runtime-harnesses` | `runtime-compiler`, `runtime-process-runtime` |
+| `packages/core/runtime/harnesses` | `runtime-harnesses` | `runtime-definition`, `runtime-compiler`, `runtime-process-runtime` |
 | `packages/core/runtime/observation` | `runtime-observation` | `runtime-definition` |
-| `packages/core/runtime/mounting` | `runtime-mounting` | `runtime-definition`, `runtime-process-runtime`, `runtime-harnesses`, `runtime-observation` |
+| `packages/core/runtime/mounting` | `runtime-mounting` | `runtime-definition`, `runtime-process-runtime`, `runtime-harnesses` |
 
 The IDs in this table are unscoped Nx scheduler identities only. They MUST NOT
 appear as package names, workspace links, import specifiers, registry
@@ -318,6 +358,11 @@ direct edges `@habitat-ai/sdk -> runtime-schema`, `runtime-definition`,
 publication metadata or an `implicitDependencies` substitute, must establish
 those edges. No private runtime project imports the SDK facade.
 
+The SDK composition root supplies the definition-owned observation port
+implementation to `runtime-mounting`. Mounting publishes through that port and
+does not import `runtime-observation`; the SDK independently assembles both
+private owners.
+
 The closed runtime graph is distinct from three qualified integration pairs.
 The SDK may also assemble only telemetry/OpenTelemetry Node,
 semantic-ledger/Fluree HTTP, and temporal-inquiry/Fluree HTTP through their
@@ -329,14 +374,25 @@ There is no `standard` root or Nx project. A generic runtime package would hide
 ownership rather than name a capability; reusable private code stays with the
 qualified runtime owner whose invariant it serves.
 
-`runtime-definition` remains cold. It owns app/profile/entrypoint declarations,
-the TypeBox `RuntimeObservationRecord` accepted from upstream owners, and the
-narrow non-authorizing `RuntimeObservationPort` earlier phases can consume.
+`runtime-definition` remains cold. It owns app/profile/process-catalog/
+entrypoint declarations, immutable `RuntimeLaunchIdentity` with exactly
+`{ app, process, entrypoint, deployment, source }`, the TypeBox
+`RuntimeObservationRecord` accepted from upstream owners, and the narrow
+non-authorizing `RuntimeObservationPort` earlier phases can consume. Immutable
+`app@1` remains byte-identical; complete `app@2` is a separate independently
+resolvable future successor with no inherited file or fallback. One semantic
+app/Nx project owns one finite cold process catalog and thin one-`startApp(...)`
+entrypoints. Catalog records are not apps, kinds, child projects, supervisors,
+deployment units, or live registries.
 `runtime-observation` implements that port and projects read models only.
 `runtime-mounting` owns the live `startApp(...)` path, harness invocation, and
-cross-owner finalization. The terminal SDK exposes `startApp(...)`, but no
+process-local cross-owner finalization. Each invocation owns only its process
+lease, managed runtime, resources, native handles, frozen identity, and stop; a
+sibling invocation remains independent. The terminal SDK exposes
+`startApp(...)`, but no
 upstream private owner imports the SDK facade, mounting owner, or observation
-implementation.
+implementation. There is no whole-app handle, readiness aggregate, supervisor,
+deployment controller, or cross-process stop/restart authority.
 
 There is no `adapters` root or generic adapter Nx project. The generic
 `SurfaceAdapter` contract and coordination stay owner-local inside
@@ -357,6 +413,27 @@ private Oclif apps. It accepts the selected app definition and native process
 inputs, supplies the loader and harness, and selects no topic. Habitat and
 downstream app definitions therefore share released host mechanics without
 sharing command membership or executable identity.
+
+The SDK re-exports the import-safe `HarnessDescriptor`, `HarnessMountInput`,
+read-only required-resource readiness gate, `HarnessReportSink`,
+`HarnessHealthReport`, and `NativeHarnessHandle` interface with idempotent stop
+and distinct optional liveness/readiness probes through
+`@habitat-ai/sdk/runtime/harnesses`. Private `StartedHarness` remains
+mounting-owned. No live handle value, accessor, or registry is public. Required acquisition fails before
+mount. Liveness claims only process/native-host response; readiness fails closed
+over every required resource and required selected harness contribution.
+Missing, negative, rejected, or timed-out evidence remains not ready, and logs
+or observations cannot promote it. This public contract admits external
+companions without creating a controller or importing vendor semantics into
+Habitat.
+
+MCP is only a `server` surface and process projection. It is not a role, kind,
+app, service, provider, deployment unit, or lifecycle owner. Habitat adds no MCP
+authoring face or direct official-MCP-SDK implementation. The Magic oracle's
+copied `mcp-openapi@1.0.0` tarball proves consumer demand only. Task 13.6 may
+attach that external companion through the public contract only after the same
+version exists as an independently versioned ordinary artifact, and acceptance
+may claim its real tool and OpenAPI-resource projection but no prompts surface.
 
 The repository keeps one scheduler vocabulary rather than manufacturing a
 private-runtime variant. `habitat:lint` remains the sole workspace-owned
@@ -468,6 +545,7 @@ The exact public export contract is:
 @habitat-ai/sdk/runtime/providers
 @habitat-ai/sdk/runtime/providers/effect
 @habitat-ai/sdk/runtime/profiles
+@habitat-ai/sdk/runtime/harnesses
 @habitat-ai/sdk/runtime/schema
 @habitat-ai/sdk/resources/semantic-ledger
 @habitat-ai/sdk/resources/semantic-ledger/fluree
@@ -498,7 +576,11 @@ later owner-local realization rule, not a task-3.4 output: Elysia optional peer
 metadata and its conditional import co-land with the first conforming
 `runtime-harnesses` owner in task 13.1, while Inngest metadata and its import
 co-land in the task 13.3/13.4 owner sequence. Task 4.2's async face remains cold
-and host-neutral. The installed Habitat CLI must not install, load, or declare
+and host-neutral: it emits only declarations plus stable identity/descriptor
+references for task 13 lowering, with no `FunctionBundle`, registration
+factory, native client, adapter, native function, loader, or harness. Native
+Inngest 4.18 source is future vendor evidence, not a task-4.2 installed
+dependency. The installed Habitat CLI must not install, load, or declare
 direct dependencies on server- or async-only vendor packages. Oclif remains a
 direct `@habitat-ai/cli` dependency and native owner rather than an SDK peer;
 OpenTelemetry, Effect, and oRPC retain their current substrate or mechanism
@@ -567,7 +649,13 @@ compilation proves coverage before any provider builds.
 The private core derivation owner converts import-safe app, profile, resource, provider, service,
 plugin, and executable declarations into the normalized graph, descriptor
 references and table, service binding plans, surface runtime plans, provider
-selections, and portable diagnostics. It performs no acquisition or mounting.
+selections, portable diagnostics, and a deployment-safe cold portable process
+plan. That portable handoff contains immutable app/process/entrypoint/source/
+deployment identity, placement constraints, role/surface requirements, and
+descriptor references only. Deployment may select placement and supply opaque
+deployment/source correlation, but it does not own a process lifecycle. The
+handoff contains no executable closure, live value, runtime handle, readiness
+gate, observation port, provider secret, supervisor, acquisition, or mounting.
 
 The runtime compiler consumes only derived artifacts and selected process facts
 and emits one complete `CompiledProcessPlan`. Empty service, workflow, or
@@ -592,10 +680,22 @@ the downstream observation implementation. Its
 policy and telemetry labels; it does not own dependency order or live
 registration. Bootgraph owns resource keys, dependency order, deduplication,
 rollback order, static finalization order/policy metadata, and the provider
-reference. The Effect kernel owns one root `ManagedRuntimeHandle`, scope,
-provider-owned config decoding, provider build after dependencies exist,
-acquisition, registration of that plan's release after successful acquisition,
-and reverse release for one OS process.
+reference as ordinary data, never as a Layer dependency graph. For each started
+process the Effect substrate creates exactly one `effect@4.0.0-beta.101`
+`ManagedRuntime` from exactly one `Layer.effectContext` lifecycle adapter. That
+adapter consumes bootgraph order, decodes provider-owned config, builds only
+after dependencies exist, acquires resources, registers each plan's release
+after successful acquisition, and returns the assembled process Context. The
+substrate forces the managed context before mount and exposes only one
+`ManagedRuntimeHandle`. `ManagedRuntime` owns its scopes, fibers, and reverse
+release; Habitat constructs no second root `Scope`, second ManagedRuntime, or
+per-execution runtime.
+
+Domain services remain Habitat services bound by process runtime. They are not
+Effect services, Context tags, or Layer nodes, and service dependency direction
+does not become Layer composition. `Layer.effectContext` is the one lifecycle
+adapter around the ordered provider acquisition Effect, not a second bootgraph
+or service graph.
 
 `ProcessRuntimeAccess` never exposes raw `Layer`, `Context`, `Scope`,
 `ManagedRuntime`, provider internals, or secrets. Services and plugins declare
@@ -603,10 +703,11 @@ requirements; apps select providers; only provisioning acquires them.
 
 The lab's provider dependency, rollback, redaction, and release-continuation
 fixtures are retained as behavior oracles. Its Promise boot modules, WeakMap
-plan identity, and per-`ProcessExecutionRuntime` managed runtimes are rejected.
-Magic's root `Effect.scoped` ordering and provider-local
-`Effect.acquireRelease` implementations are additional vendor-shaped evidence;
-its live product resource bag and entrypoint-selected providers are not.
+plan identity, Layer-shaped bootgraph, separately created root Scope, and
+per-`ProcessExecutionRuntime` managed runtimes are rejected. Magic's
+process-local scoped acquisition and provider release order are behavior
+evidence only; its live product resource bag, direct `Layer.build`, domain
+service construction, and entrypoint-selected providers are not ported.
 
 ### Centralize process context without stealing native execution
 
@@ -626,21 +727,29 @@ The execution registry admits an executable only when compiled plan and
 descriptor identity agree exactly. `effect/context` assembles the one
 process-owned environment from provisioned values; `effect/wrap` decorates an
 owner-authored Effect with the selected lifetime, policy, and telemetry without
-calling an Effect terminal. Native callbacks may return Promises. A boundary
-delegates to `ProcessExecutionRuntime` only when Habitat owns that execution
-terminal. Effect-backed oRPC service operations instead use the selected
-official bridge and MUST NOT pass through `ProcessExecutionRuntime`.
+calling an Effect terminal. Synchronous or Promise-returning native operations
+use native `.handler`. A boundary delegates to `ProcessExecutionRuntime` only
+when Habitat owns that execution terminal. Effect-backed oRPC service operations
+instead use official implementation-owned `.effect`, installed once in
+`src/service/impl.ts`, and MUST NOT pass through `ProcessExecutionRuntime`. The
+extension's internal `handlerGen` is the underlying vendor mechanism that
+delegates to `.handler`. Habitat-authored authoring, adapter, and operation code
+neither directly imports, calls, wraps, nor reimplements it; the selected
+official extension's internal call remains admitted.
 
 The lab's exact registry matching and post-stop refusal logic are ported after
 removing its runtime construction and incomplete invocation context.
 
 ### Define harness once, then realize native interiors
 
-The generic harness contract consists of an import-safe descriptor, a runtime
-mount input containing only adapter-lowered payloads and bounded access, and an
-owner-local native handle with idempotent stop. Runtime mounting invokes the
-harness and owns `StartedHarness`, including bounded native-handle references
-and observation records. It orders mount, reverse stop, and process release;
+The generic harness contract consists of an import-safe descriptor,
+`HarnessMountInput` containing frozen launch identity, roles, adapter-lowered
+mount-ready payloads, bounded access, read-only required-resource readiness,
+and report sink, plus a `NativeHarnessHandle` with idempotent stop and optional
+distinct health probes. Runtime mounting invokes the harness, receives the
+native handle, and only after successful mount creates private
+`StartedHarness` from descriptor identity, native handle, accepted findings,
+launch identity, and mount metadata. It orders mount, reverse stop, and process release;
 it does not
 define a drain protocol or interpret command, HTTP, durable workflow, or web
 semantics. When a native host drains, its idempotent `stop()` owns that behavior.
@@ -659,21 +768,45 @@ Vendor realizations retain their native laws:
   provider release; deadline expiry remains a
   truthful `draining` outcome and never triggers a second `stop(true)` call.
 - oRPC native callbacks retain validation, middleware, declared-error,
-  transport, and abort semantics. Plain non-Effect operations use native
-  `.handler`; Effect-backed Habitat service operations use the official
-  `@orpc/experimental-effect` `.effect` extension installed once in
-  `src/service/impl.ts`. Exact beta.23 and beta.25 source establishes that the
-  extension delegates to `handlerGen`, which owns the request-fiber signal,
-  Cause reconciliation, `Effect.runPromiseExit`, and Promise boundary. The
+  transport, and abort semantics. Synchronous or Promise-returning non-Effect
+  operations use native `.handler`; Effect-backed Habitat service operations
+  use official implementation-owned
+  `@orpc/experimental-effect@2.0.0-beta.23` `.effect`, installed once in
+  `src/service/impl.ts`. Its internal `handlerGen` delegates into native
+  `.handler` and owns the request-fiber signal, Cause reconciliation,
+  `Effect.runPromiseExit`, and Promise boundary. Habitat-authored authoring,
+  adapter, and operation code never directly imports, calls, wraps, or
+  reimplements it; the official extension's internal call remains admitted. The
   app/process supplies the
   one Context, resource lifetime, policy, and telemetry decoration through
   `effect/context` plus `effect/wrap`; it does not replace the bridge terminal.
   Acceptance resolves oRPC, the official bridge, and Effect through one module
   realm and rejects a manual/custom runner or `ProcessExecutionRuntime` for
   oRPC service Effects.
-- Inngest Serve drains with the owning HTTP harness; Connect uses native
-  `close()` and disables vendor signal ownership; stable `step.run` callbacks
-  delegate Effect work to process execution.
+- Native `inngest@4.18.0` owns Serve and Connect retry, memoization, history,
+  replay, cancellation, and transport outcomes; `effect-inngest` is rejected.
+  Private `FunctionBundle` registration factories receive the same native
+  client as the selected Serve or Connect harness; `WorkflowDispatcher` is a
+  separate named consumer/materialization. The exact step boundary is
+  `step.run(id, () => ProcessExecutionRuntime...)`. Replay re-enters the native
+  function and `step.run(...)` registration and never resumes a suspended
+  Effect fiber. A completed memoized step returns native memoized state without
+  invoking the callback or `ProcessExecutionRuntime`; a failed or otherwise
+  un-memoized attempt invokes the callback anew. Native cancellation does
+  not interrupt an already active step, so Habitat injects no synthetic signal.
+  Serve tracks admitted handler Promises. Connect uses
+  `handleShutdownSignals: []` and retains the owner callback tracker because
+  `handleExtendLeaseAck` may delete `requestLeases` while the callback
+  continues, native close/reconcile gate on those leases, and
+  `SameThreadStrategy.close` does not call the available `waitForInProgress`.
+  Runtime mounting owns one outer single-flight stop, invokes and awaits native
+  `close()` once, then waits for callback-tracker zero before release. Native
+  close/flush proves neither callback completion nor delivery, so observation reports only evidenced
+  `presented`, `confirmed`, `dropped`, or `unknown` outcomes.
+- MCP remains an external companion projection of a `server` surface. Habitat
+  authors no MCP protocol face or direct official-SDK harness. Conditional
+  `mcp-openapi@1.0.0` acceptance uses its independent package's public lifecycle
+  and tool/OpenAPI-resource surface only, never Magic's tarball or prompts.
 - Web mounting remains a distinct native harness; it is not another app.
 
 The lab's native passage fixtures are ported as black-box acceptance tests, not
@@ -693,12 +826,17 @@ single vendor substrate; no compatibility blueprint or legacy construction
 branch survives. Habitat law asserts durable ownership and topology rather than
 vendor-syntax snapshots.
 
-Within that spine, a non-Effect operation uses an inline native `.handler`; an
-Effect-backed operation uses the once-installed official `.effect` extension
-after `effect/context` and `effect/wrap` apply the app/process-owned environment,
-lifetime, policy, and telemetry. Service law rejects service-authored direct
-`Effect.run*`, a manual Promise bridge, a custom Effect runner, or routing an
-oRPC service Effect through `ProcessExecutionRuntime`.
+Within that spine, a synchronous or Promise-returning operation uses native
+`.handler`; an Effect-backed operation uses exact
+`@orpc/experimental-effect@2.0.0-beta.23` implementation-owned `.effect`,
+installed once in `src/service/impl.ts`, after `effect/context` and
+`effect/wrap` apply the app/process-owned environment, lifetime, policy, and
+telemetry. The extension's `handlerGen` is an internal vendor mechanism only;
+Habitat-authored authoring, adapter, and operation code does not directly
+import, call, wrap, or reimplement it, while the selected extension's internal
+call remains admitted. Service law rejects
+service-authored direct `Effect.run*`, a manual Promise bridge, a custom Effect
+runner, or routing an oRPC service Effect through `ProcessExecutionRuntime`.
 
 Blueprint definition composition is separate from instance realization. In
 Gate A, `component` is informal shorthand for authoring-tree organization only:
@@ -795,15 +933,21 @@ acquisition, release, and public reachability. No manual phase-gate or structure
 script is introduced when those owners can express the invariant; Grit does not
 claim process-wide semantic proofs.
 
-Magic's abstract app package, composer, entrypoint, and runtime-boundary
-separation plus its service and resource/provider laws are admitted as useful
-deltas after comparison with the existing Habitat packets. Its concrete
-`apps/server` source topology, direct provider selection/acquisition, service
-client factories, route composition, Inngest mounting, and product-specific
-runtime inventory are not ported. Habitat adds the missing generic profile,
-compiler-before-acquisition, process-runtime, harness, diagnostic-catalog, and
-observation laws and projects the settled law back to Magic as the consumer
-authority.
+Magic's committed consumer oracle
+`ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7` / tree
+`2b3c99700d5db8264b7ee42910575e8b877bda3a` confirms only generic process
+assertions after comparison with the clean blueprint snapshot: one semantic
+app can expose separate server and async entrypoints; each process can retain
+its own identity, scoped resource lease, health state, native handle, and stop;
+and a native Inngest Serve boundary can remain separate from a built Elysia
+server. Its concrete Magic app/resource/service/route/function wiring, direct
+`Layer.build`, entrypoint-selected providers, Railway deployment evidence, and
+copied `vendor/mcp-openapi/mcp-openapi-1.0.0.tgz` are not ported. The external
+MCP companion proves demand only and supplies no prompts claim. Habitat adds the
+missing generic profile, compiler-before-acquisition, process-runtime, public
+companion descriptor/health contract, harness, diagnostic-catalog, and
+observation laws; conditional task 13.6 waits for an independently versioned
+`mcp-openapi@1.0.0` artifact.
 
 ### Keep generic law distinct from downstream products
 
@@ -1101,11 +1245,16 @@ project, or downstream product as another package.
    Write generic packets as design material, then activate each closed kind law
    only with its first conforming owner. The first live private runtime
    implementation opens only after this gate.
-8. Build and seal one artifact handoff at a time: normalized derivation,
-   compilation, provider-effect plans, ordered boot plan, scoped acquisition,
-   process access, service binding, registry, execution runtime, adapter result,
-   native harness handle, mounting-owned `StartedHarness`, and non-authorizing
-   observation. After provider-plan law exists, adopt the semantic-ledger and
+8. Build and seal one artifact handoff at a time: one finite cold
+   `ProcessCatalog`, normalized derivation, compilation, provider-effect plans,
+   ordered boot plan, one `effect@4.0.0-beta.101` `ManagedRuntime` created from
+   one substrate `Layer.effectContext` lifecycle adapter, forced context before
+   mount, process access, service binding, registry, execution runtime, adapter
+   result, native harness handle, mounting-owned `StartedHarness`, and
+   non-authorizing observation. The bootgraph remains ordinary order data,
+   domain services remain Habitat services rather than Effect Layer nodes, and
+   no second root Scope or per-execution ManagedRuntime is admitted. After
+   provider-plan law exists, adopt the semantic-ledger and
    temporal-inquiry resource/provider sinks, assemble their public contracts
    and optional Fluree providers through the exact SDK subpaths, and publish no
    separate resource/provider package.
@@ -1121,13 +1270,21 @@ project, or downstream product as another package.
    authoring topic/command projections at task 12.3; native
    plugin management is already transferred by task 2.10a rather than rebuilt
    here.
-10. Add Elysia/oRPC, Inngest, and web adapter/harness realizations only with
-   indispensable owner-local Habitat conformance fixtures. The oRPC fixture
-   proves inline native `.handler`, the official `.effect` extension,
-   bridge-owned
-   request-fiber execution, process-owned `effect/context`/`effect/wrap`, abort,
-   resource release, and one module realm; it rejects every manual/custom Effect
-   runner. No fixture becomes a production app, service, plugin, or package.
+10. Add Elysia/oRPC, native `inngest@4.18.0`, and web adapter/harness
+   realizations only with indispensable owner-local Habitat conformance
+   fixtures. The oRPC fixture proves synchronous/Promise native `.handler`,
+   implementation-owned official `.effect`, bridge-owned request-fiber
+   execution, process-owned `effect/context`/`effect/wrap`, abort, resource
+   release, and one module realm; `handlerGen` remains vendor-internal and every
+   manual/custom Effect runner is rejected. A real built Elysia child and native
+   Inngest Serve child prove distinct process identities and leases, sibling
+   stop/restart independence, async pre-mount failure without server teardown,
+   and native stop before process release. `effect-inngest` is rejected. A
+   conditional external `mcp-openapi@1.0.0` companion may run only after an
+   independently versioned artifact exists, through the public companion
+   descriptor/health contract, with no copied tarball, prompts claim, or direct
+   official-MCP-SDK implementation. No fixture becomes a production app,
+   service, plugin, or package.
 11. Audit unreachable residue and pass the complete local Habitat gate. Audit
    the already-landed telemetry resource/provider, runtime-owner, app-selected
    Oclif, server, and async receipts, then retire the held mixed source only when

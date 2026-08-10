@@ -42,12 +42,13 @@ Task 2.8 therefore uses a three-gate publication barrier rather than claiming an
 atomic producer-and-reader deletion on a false main.
 
 The same foundation accepts native oRPC execution authority. A generated
-`service@1` uses `.handler` for non-Effect operations and official
-`@orpc/experimental-effect` `.effect` for Effect-backed operations after one
-service-implementation bootstrap import. Exact beta.23/beta.25 source shows the
-extension delegates to `handlerGen`, whose native request bridge owns
-`Effect.runPromiseExit`; Habitat supplies process-owned `effect/context` and
-`effect/wrap` but no custom runner.
+`service@1` uses `.handler` for synchronous and Promise-returning operations and
+exact `@orpc/experimental-effect@2.0.0-beta.23` implementation-owned `.effect`
+for Effect-backed operations after one service-implementation bootstrap import.
+Exact beta.23 source shows `handlerGen` as the extension's internal underlying
+mechanism; Habitat never imports, calls, or reimplements it. The native bridge
+owns `Effect.runPromiseExit`; Habitat supplies process-owned `effect/context`
+and `effect/wrap` but no custom runner.
 
 Rawr task 2.7 landed independently on `rawr-ai/rawr` canonical `main` at
 `749e344a49e454b075f80914d420488be3f40119`. That checkpoint contains the
@@ -59,6 +60,8 @@ or unpublished Habitat dependency crossed the repository boundary.
 | Stack | Semantic destination | Disposition | Landing condition |
 |---|---|---|---|
 | `codex/classify-habitat-runtime-inventory` | Habitat | Active retained lineage | Land this whole-board cut and the exact project/capability inventory as one small direct child of `main`. |
+| Proposal object `203c9c686b0c18644218de5583902bcb180544a8` | no direct landing | Preserve as provenance, then retire any source branch | Selectively re-author only immutable `app@1`, complete independently resolvable future `app@2`, finite cold `ProcessCatalog`, process-local launch identity/lifecycle, companion attachment, and sibling isolation into the canonical change. Never cherry-pick the proposal object. |
+| `agent-codex-record-app-v2-runtime-handoff` / proposal object `419d5286bf83a41175a001233de244699c1b72da` | no landing | Reject as a landing unit; preserve SHA provenance and retire the source lineage | It removes immutable `app@1` and selects an unexercised direct official-MCP-SDK implementation. Neither choice enters Habitat. Only the separately re-authored MCP ontology and conditional external-companion task survive. |
 | `codex/correct-app-runtime-authority` | none | Retire merged residue | PR #882 is already on `main`; allow normal Graphite sync to prune the unoccupied branch. |
 | `codex/close-hq-ops-journal-module` | none as a branch | Retire merged residue after the protected local note is accounted for | PR #708 is already on `main`; do not remove its dirty occupied worktree until its owner releases it. |
 | `codex/frame-native-platform-telemetry` through `codex/prove-native-telemetry-receipt` | Habitat | Held while occupied, then adopt through the ledger below and retire the complete predecessor root | The provider-neutral resource/provider implementation lands through one qualified Habitat sink. Host integrations are behavior inputs for fresh runtime-owner acceptance, not branches to merge. The receipt tip has another owner's staged work; do not restack, edit, or partition this lineage before handoff. |
@@ -151,10 +154,11 @@ acceptance become its authority.
   capability; Gate A leaves the remaining private readers unchanged, Gate B
   records the fixed SDK/CLI registry release, and Gate C migrates retained
   readers and deletes the predecessor model.
-- Effect/oRPC review was amended after exact beta.23/beta.25 source established
-  the official bridge as request-fiber terminal owner. Process-owned Context,
-  lifetime, policy, and telemetry now enter through `effect/context` and
-  `effect/wrap`; `ProcessExecutionRuntime` excludes oRPC service Effects.
+- Effect/oRPC review was amended after exact beta.23 source established the
+  official implementation-owned `.effect` bridge as request-fiber terminal
+  owner and `handlerGen` as internal vendor machinery only. Process-owned
+  Context, lifetime, policy, and telemetry now enter through `effect/context`
+  and `effect/wrap`; `ProcessExecutionRuntime` excludes oRPC service Effects.
 - Structural-quality and behavior-first reviews passed after bounded P1s in
   source-adoption wording, final identities, predecessor Oclif law, executable
   command/deletion oracles, prepublication `nx add`, and fresh-owner versus

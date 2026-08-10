@@ -3,22 +3,38 @@
 ### Requirement: Application owners own cold composition and selection
 
 Every application built on Habitat MUST own one import-safe `AppDefinition`, its
-plugin membership, runtime profiles, process declarations, and thin
-entrypoints. `apps/habitat` is the platform's self-hosted application for
-non-core platform capabilities; a downstream product owns its app in its own
-repository. Those roles MUST remain distinguishable in project metadata even
-though both conform to the same app contract. A profile MUST select providers, config
-sources, process defaults, and harness choices as cold data. An app, profile,
-or entrypoint MUST NOT construct a provider, create an Effect scope or managed
-runtime, bind a live service, lower a native payload, or mount a host.
+plugin membership, runtime profiles, one finite cold `ProcessCatalog`, and thin
+entrypoints inside one semantic app and one app Nx project. `apps/habitat` is
+the platform's self-hosted application for non-core platform capabilities; a
+downstream product owns its app in its own repository. Those roles MUST remain
+distinguishable in project metadata even though both conform to the same app
+contract. A profile MUST select providers, config sources, process defaults,
+and harness choices as cold data. A process is a catalog record, not another
+app, blueprint kind, child Nx project, supervisor, or deployment unit. MCP is a
+`server` surface/process projection, not a role, kind, app, service, provider,
+or lifecycle owner. An app, profile, process record, or entrypoint MUST NOT
+construct a provider, create an Effect scope or managed runtime, bind a live
+service, lower a native payload, mount a host, or control a sibling process.
 
-The app definition MUST live at `apps/<app-id>/<app-id>.app.ts`. Every
-entrypoint MUST call the terminal SDK `startApp(...)` facade and select one
-process role set without redefining app membership or provider selection. An
-entrypoint filename MUST name its mount or process role. A surface suffix such
-as `<name>.mcp.ts` is valid only for an intentionally single-surface mount; an
-entrypoint that mounts several plugin surfaces MUST use its mount or role
-identity.
+The app definition MUST live at `apps/<app-id>/<app-id>.app.ts`, and its catalog
+MUST live at `apps/<app-id>/runtime/processes.ts`. Every thin entrypoint MUST
+make exactly one `startApp(...)` call selecting exactly one catalog process
+record without redefining app membership, provider selection, lifecycle, or a
+sibling. Each invocation MUST receive an immutable `RuntimeLaunchIdentity`
+`{ app, process, entrypoint, deployment, source }` and MUST own only that
+process's lease, ManagedRuntime, resources, native handles, health, and
+idempotent stop. Readiness and liveness MUST be distinct process-local facts.
+An entrypoint filename MUST name its mount or process role. A surface suffix
+such as `<name>.mcp.ts` is valid only for an intentionally single-surface
+server-process projection; an entrypoint that mounts several plugin surfaces
+MUST use its mount or role identity.
+
+The existing `app@1` blueprint and every packed byte in its declared closure
+MUST remain unchanged. A future `app@2` successor MUST be complete and
+independently resolvable from its own declared closure; it MUST NOT inherit,
+fallback to, or mutate `app@1`. No current app selection advances to `app@2`
+before its complete law, conforming owner, pack parity, and installed proof
+co-land.
 
 #### Scenario: Application process is selected
 
@@ -46,9 +62,28 @@ identity.
 - **WHEN** a Habitat self-host or downstream product app definition and each process
   entrypoint are inspected
 - **THEN** the app definition is named `<app-id>.app.ts`
-- **AND** each entrypoint calls `startApp(...)` with one selected process-role
-  set and contains no provider acquisition or native mounting
+- **AND** `runtime/processes.ts` owns one finite cold process catalog and each
+  entrypoint calls `startApp(...)` exactly once with one selected process record
+- **AND** each entrypoint contains no provider acquisition, native mounting,
+  sibling-process control, or lifecycle implementation
 - **AND** a surface suffix appears only on a single-surface mount
+
+#### Scenario: App blueprint versions resolve independently
+
+- **WHEN** packed source and an isolated installed consumer resolve `app@1` and
+  the future `app@2`
+- **THEN** `app@1` remains byte-identical to its immutable current closure
+- **AND** `app@2` resolves from a complete closure without reading, mutating, or
+  falling back to `app@1`
+
+#### Scenario: Two records from one app start independently
+
+- **WHEN** server and async entrypoints select two records from the same app
+  process catalog
+- **THEN** their immutable launch identities, leases, ManagedRuntimes,
+  resources, native handles, readiness, liveness, and stop handles are distinct
+- **AND** stopping, restarting, or failing either invocation does not control or
+  release its sibling
 
 ### Requirement: Habitat self-hosts its qualified non-core catalog service
 
@@ -177,8 +212,12 @@ globals, creating native clients, starting processes, or running Effects.
 Habitat core derivation MUST produce canonical identities, dependency edges, resource
 requirements, provider selections, service binding plans, surface plans,
 execution descriptor references, one non-portable execution descriptor table,
-and portable diagnostics without importing runtime compiler types into public
-authoring surfaces.
+portable diagnostics, and one deployment-safe cold portable process plan
+without importing runtime compiler types into public authoring surfaces. The
+portable plan MUST carry immutable app, process, entrypoint, deployment, and
+source correlation plus declared handoff facts, but MUST NOT contain a provider
+lease, native handle, live client, deployment mutation, supervisor, or process
+lifecycle authority.
 
 #### Scenario: Authoring modules are imported
 
@@ -186,6 +225,14 @@ authoring surfaces.
 - **THEN** no filesystem, network, timer, provider, host, or managed runtime is
   created
 - **AND** repeated derivation of identical inputs produces equivalent artifacts
+
+#### Scenario: A deployment boundary consumes the portable plan
+
+- **WHEN** a deployment owner receives the derived portable process plan
+- **THEN** it can identify the exact app/process/entrypoint/source handoff
+  without importing non-portable descriptors or live runtime state
+- **AND** the plan neither starts, stops, supervises, nor claims readiness for a
+  process
 
 ### Requirement: Resource and provider selection has one direct authoring owner
 
@@ -255,12 +302,20 @@ execution policy and telemetry labels; it MUST NOT own dependency ordering or a
 live finalizer registry. Compiled bootgraph inputs MUST own dependency and
 static finalization order/policy metadata plus the provider reference; they MUST
 NOT copy acquire/release execution. The Effect provisioning kernel MUST own one
-root managed runtime, scope, provider-owned config decoding and validation,
-provider build once dependency resources exist, acquisition, registration of
-that plan's release after successful acquisition, and reverse release for each
-started OS process. The full validated provider-local config MUST reach build,
-acquire, and release; provider-owned redaction applies only to diagnostic,
-telemetry, and catalog observation projections.
+`effect@4.0.0-beta.101` `ManagedRuntime` created from exactly one substrate
+`Layer.effectContext` lifecycle adapter for each started process. The adapter
+MUST consume bootgraph dependency order as ordinary data, decode and validate
+provider-owned config, build a provider only after its dependencies exist,
+acquire it, register that plan's release after successful acquisition, and
+return the assembled process Context. The substrate MUST force that managed
+context before any mount. `ManagedRuntime` MUST own all process scopes, fibers,
+and reverse release; Habitat MUST NOT create a second root `Scope`, a second or
+per-execution ManagedRuntime, or reinterpret bootgraph order as Layer
+composition. Domain services MUST remain Habitat services bound by process
+runtime, not Effect services, Context tags, or Layer nodes. The full validated
+provider-local config MUST reach build, acquire, and release; provider-owned
+redaction applies only to diagnostic, telemetry, and catalog observation
+projections.
 A provider MUST NOT select itself or construct a managed runtime.
 
 #### Scenario: Process provisioning succeeds
@@ -271,6 +326,7 @@ A provider MUST NOT select itself or construct a managed runtime.
   dependency order
 - **AND** provisioning emits `ProvisionedProcess` plus one runtime-owned
   `ManagedRuntimeHandle`
+- **AND** the one managed context is forced before mounting begins
 
 #### Scenario: Acquisition fails midway
 
@@ -278,6 +334,14 @@ A provider MUST NOT select itself or construct a managed runtime.
 - **THEN** the kernel releases the acquired prefix once in reverse dependency
   order
 - **AND** no process runtime or harness is mounted
+
+#### Scenario: Effect substrate ownership is inspected
+
+- **WHEN** one process is provisioned and later stopped
+- **THEN** one beta.101 ManagedRuntime owns its scopes, fibers, Context, and
+  reverse provider release through the one `Layer.effectContext` adapter
+- **AND** no second root Scope, Layer-shaped bootgraph, service Layer node, or
+  per-execution ManagedRuntime exists
 
 ### Requirement: Process runtime owns live binding and execution
 
@@ -290,8 +354,12 @@ observation-owned read models. Every app- or plugin-owned Effect body in a
 non-oRPC descriptor lane invoked from a native callback through Habitat runtime
 MUST execute through `ProcessExecutionRuntime`. An Effect-backed oRPC operation
 MUST instead execute through exact `@orpc/experimental-effect@2.0.0-beta.23`
-`.effect(...)`, installed once in the service implementation and delegated by
-the official extension to `handlerGen(...)`.
+implementation-owned `.effect(...)`, installed once in `src/service/impl.ts`.
+Synchronous and Promise-returning oRPC operations MUST use native
+`.handler(...)`. The official extension's underlying `handlerGen` is internal
+vendor machinery. Habitat-authored authoring, adapter, and operation code MUST
+NOT directly import, call, wrap, or reimplement it; the selected official
+extension's internal call remains admitted.
 `ProcessExecutionRuntime` MUST NOT execute that oRPC Effect or
 insert a second runner around it. The application/process MUST construct the
 Effect Context, resource lifetime, policy, telemetry, and shutdown behavior
@@ -299,6 +367,10 @@ supplied through native `effect/context` and `effect/wrap`; the official bridge
 MUST own the request fiber, signal, Cause mapping, and Promise boundary.
 Runtime access MUST NOT expose raw Effect layers, contexts, scopes, managed
 runtimes, provider leases, provider internals, or unredacted secrets.
+Each `startApp(...)` invocation MUST own only the lease, ManagedRuntime,
+resources, native handles, readiness, liveness, and stop associated with its
+immutable `RuntimeLaunchIdentity`. It MUST NOT observe, restart, stop, or
+release a sibling process.
 
 #### Scenario: Non-oRPC native callback invokes an Effect body
 
@@ -315,11 +387,20 @@ runtimes, provider leases, provider internals, or unredacted secrets.
 - **AND** no Habitat descriptor runner, manual `Effect.run*`, custom runner, or
   `ProcessExecutionRuntime` execution path invokes that Effect
 
+#### Scenario: Native oRPC callback invokes a non-Effect body
+
+- **WHEN** a synchronous or Promise-returning oRPC service operation is invoked
+- **THEN** the official native builder invokes its `.handler(...)` directly
+- **AND** no Effect bridge, direct Habitat-authored `handlerGen` import, or
+  `ProcessExecutionRuntime` terminal is introduced
+
 #### Scenario: Two OS processes start
 
 - **WHEN** two entrypoints start distinct OS processes from the same app profile
-- **THEN** each process receives its own root runtime and process-scoped leases
-- **AND** neither process observes or releases the other's live values
+- **THEN** each process receives its own immutable launch identity, ManagedRuntime,
+  process-scoped leases, native handles, readiness/liveness, and stop
+- **AND** neither process observes, controls, restarts, stops, or releases the
+  other's live values
 
 ### Requirement: Observation records without controlling realization
 
@@ -329,8 +410,10 @@ observation port. `runtime-observation` MUST implement that port and project
 `RuntimeDiagnostic`, `RuntimeTelemetry`, and `RuntimeCatalog` only.
 `runtime-mounting` MUST own the live path exposed as SDK `startApp(...)`,
 harness invocation, `StartedHarness`, reverse native stop, process-stop
-coordination, and cross-owner single-flight finalization; cold definition and
-runtime observation MUST NOT start a process. Observation MAY
+coordination, and process-local cross-owner single-flight finalization; cold
+definition and runtime observation MUST NOT start a process. That finalizer MAY
+coordinate owners participating in the same launch identity but MUST NOT become
+a supervisor or control a sibling process. Observation MAY
 record derivation, compilation, provisioning, binding, execution, adapter,
 harness, rollback, and finalization facts, but MUST NOT select providers,
 acquire resources, mutate runtime state, expose live values, or become a shadow
@@ -345,6 +428,7 @@ order.
 - **THEN** provisioned resources release and the root runtime disposes once
 - **AND** observation failure does not replace the product result or process
   exit classification
+- **AND** no sibling launch identity is stopped or released
 
 #### Scenario: Native stop remains pending after its deadline
 
@@ -366,8 +450,8 @@ public export set MUST comprise the stable authoring and runtime exports
 `./plugins/cli/schema`, `./plugins/web`, `./plugins/web/effect`,
 `./plugins/agent`, `./plugins/agent/effect`, `./plugins/agent/schema`,
 `./plugins/desktop`, `./plugins/desktop/effect`, `./runtime/resources`,
-`./runtime/providers`, `./runtime/providers/effect`, `./runtime/profiles`, and
-`./runtime/schema`; the optional integration exports `./telemetry`,
+`./runtime/providers`, `./runtime/providers/effect`, `./runtime/profiles`,
+`./runtime/harnesses`, and `./runtime/schema`; the optional integration exports `./telemetry`,
 `./resources/semantic-ledger`, `./resources/semantic-ledger/fluree`,
 `./resources/temporal-inquiry`, and `./resources/temporal-inquiry/fluree`; and
 the data exports `./habitat-pack.json`,
@@ -375,6 +459,15 @@ the data exports `./habitat-pack.json`,
 present in the packed export map; "optional" describes conditional provider
 loading, not export-path membership. The closed private runtime inventory and
 completed direct dependency graph MUST be exactly:
+
+`./runtime/harnesses` MUST expose only the import-safe public companion
+`HarnessDescriptor`, `HarnessMountInput`, `NativeHarnessHandle` interface,
+`HarnessHealthReport`, owner-local report sink, and supporting process-local
+contract types needed to attach an independently packaged external server
+companion. Exporting the handle interface type is required. It MUST NOT expose
+a live handle value, live-handle accessor or registry, private
+`StartedHarness`, sibling controller, MCP protocol authoring face, or an
+official-MCP-SDK implementation.
 
 | Exact project root | Nx-only project ID | Direct private dependencies |
 |---|---|---|
@@ -385,9 +478,9 @@ completed direct dependency graph MUST be exactly:
 | `packages/core/runtime/bootgraph` | `runtime-bootgraph` | `runtime-compiler` |
 | `packages/core/runtime/substrate/effect` | `runtime-substrate-effect` | `runtime-definition`, `runtime-compiler`, `runtime-bootgraph` |
 | `packages/core/runtime/process-runtime` | `runtime-process-runtime` | `runtime-derivation`, `runtime-compiler`, `runtime-substrate-effect` |
-| `packages/core/runtime/harnesses` | `runtime-harnesses` | `runtime-compiler`, `runtime-process-runtime` |
+| `packages/core/runtime/harnesses` | `runtime-harnesses` | `runtime-definition`, `runtime-compiler`, `runtime-process-runtime` |
 | `packages/core/runtime/observation` | `runtime-observation` | `runtime-definition` |
-| `packages/core/runtime/mounting` | `runtime-mounting` | `runtime-definition`, `runtime-process-runtime`, `runtime-harnesses`, `runtime-observation` |
+| `packages/core/runtime/mounting` | `runtime-mounting` | `runtime-definition`, `runtime-process-runtime`, `runtime-harnesses` |
 
 Dependency direction in this table is consumer to dependency, and no other
 private edge is admitted. These unscoped names are Nx scheduler identities
@@ -399,6 +492,11 @@ listed project and MUST remain the sole downstream assembler of their outputs
 into one package. Real source/build references MUST establish the edges;
 `implicitDependencies` and publication metadata are not substitutes. No private
 runtime project may import the public facade.
+
+`runtime-mounting` MUST publish only through the definition-owned observation
+port supplied by the terminal SDK composition root. It MUST NOT import
+`runtime-observation`; that owner remains a separate implementation and
+read-model projection dependency of the SDK.
 
 The SDK MAY additionally assemble only these qualified source-owned integration
 pairs: telemetry resource/OpenTelemetry Node provider, semantic-ledger
@@ -513,6 +611,16 @@ second runtime distribution.
   conditional dynamic import resolves it
 - **AND** packed SDK metadata, static reachability, and real process loading
   prove unselected hosts are not installed or evaluated
+
+#### Scenario: Installed consumer attaches an external companion
+
+- **WHEN** an independently versioned companion package is available and an app
+  selects its server-process record
+- **THEN** the packed `@habitat-ai/sdk/runtime/harnesses` subpath supplies the
+  import-safe descriptor, bounded mount input, native-handle interface, and
+  process-local health-report contract
+- **AND** the SDK neither bundles the companion, copies its source, authors its
+  protocol face, nor gains sibling-process control
 
 #### Scenario: Structural runtime data is authored
 

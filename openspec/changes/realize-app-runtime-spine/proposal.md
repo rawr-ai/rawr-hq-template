@@ -17,7 +17,12 @@ The exact sectional source ledger is [[authority-amendment]].
   the substrate and realizes its non-core tooling through a self-hosted app,
   while downstream product apps own their composition, profiles, process
   declarations, and thin entrypoints. Runtime owns compilation, provisioning,
-  execution, mounting coordination, and process finalization for both.
+  execution, mounting coordination, and process finalization for both. Preserve
+  immutable `app@1` byte-for-byte and add a complete, independently resolvable
+  `app@2` as its future successor. One semantic app and Nx project own one cold,
+  finite `ProcessCatalog`; each thin entrypoint selects exactly one process
+  record and calls `startApp(...)` once. A process is not an app, kind, child Nx
+  project, supervisor, or deployment unit.
 - Apply a semantic sieve before runtime implementation: a current Rawr name
   conveys no ownership. Retain reusable platform capability in Habitat, move
   only proven downstream product capability to Rawr, and delete duplicate,
@@ -33,14 +38,28 @@ The exact sectional source ledger is [[authority-amendment]].
 - Keep Effect lifetime authority with the app/process and native execution
   authority with the selected bridge. Public `effect/context` and `effect/wrap`
   carry the process-owned Context, resource lifetime, policy, and telemetry;
-  plain oRPC operations use inline `.handler`, Effect-backed operations use
-  the official `@orpc/experimental-effect` `.effect` extension installed once
-  in the service implementation, and
+  synchronous or Promise-returning oRPC operations use inline `.handler`, while
+  Effect-backed operations use the official implementation-owned
+  `@orpc/experimental-effect` `.effect` extension installed once in the service
+  implementation. Its internal `handlerGen` is mechanism evidence, not a
+  Habitat-authored or directly callable API, and
   `ProcessExecutionRuntime` never executes oRPC service Effects. Reject manual
   or custom Effect runners.
 - Define harness as one platform kind with a shared lifecycle contract, then
   realize Oclif first and retain explicit Elysia and Inngest extension points
   without encoding their native semantics in runtime mounting or observation.
+  Export the import-safe descriptor, native-handle, and process-local
+  liveness/readiness contract needed by external companion harnesses. Each
+  `startApp(...)` invocation owns only its selected process lease, managed
+  runtime, resources, native handles, immutable
+  `{ app, process, entrypoint, deployment, source }` launch identity, and stop;
+  it cannot control a sibling invocation. MCP remains a `server` surface and
+  process projection, never a role, kind, app, service, provider, deployment
+  unit, or lifecycle owner. Habitat authors no MCP face or native MCP SDK
+  implementation in the runtime spine. A later conditional fixture may attach
+  independently versioned `mcp-openapi@1.0.0` through the public companion
+  contract, but never from Magic's copied tarball or with an unsupported prompts
+  claim.
 - **BREAKING** Remove the flattened `apps/cli`, `apps/server`, `apps/hq`, and
   `apps/web` identities from Habitat. Platform capability moves to the Habitat
   self-host, its control-plane API plugin, or another qualified platform owner;
@@ -90,8 +109,9 @@ The exact sectional source ledger is [[authority-amendment]].
 - `app-runtime-realization`: The constitutional app, profile, compiler,
   provisioning, process-runtime, adapter, and observation lifecycle.
 - `runtime-harness-boundary`: The generic native-host mount and stop contract
-  plus bounded Oclif, Elysia, and Inngest realizations whose native stop
-  operations own any drain semantics.
+  plus bounded Oclif, Elysia, and native Inngest realizations whose native stop
+  operations own any drain semantics, and the public descriptor/health contract
+  for independently versioned external companions.
 - `repository-separation`: Habitat contains no downstream product source, Rawr
   owns its product closure, and Marketplace remains an independent content
   repository.
