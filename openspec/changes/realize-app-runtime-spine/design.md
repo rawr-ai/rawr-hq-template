@@ -74,6 +74,35 @@ and 5.4. Task 4.9 changes no source, test, project, blueprint, SDK face, public
 contract, Oracle, optional interior, version 3, or alternate path; the landed
 version-2 owner remains exact.
 
+Task 4.9a closes the definition-to-selection contract before implementation
+across exactly nine documents: the architecture router, the sole canonical
+runtime-realization document, the runtime-definition owner router, and six
+active OpenSpec artifacts. `Entrypoint` is the sole cold selection artifact,
+produced synchronously by `defineEntrypoint(...)` from real `AppDefinition`,
+`RuntimeProfile`, and `ProcessDefinition` values, the entrypoint id, and exact
+five-field `RuntimeLaunchIdentity`. Before return or publication, the launch
+identity's app, process, and entrypoint fields agree respectively with
+`app.id`, `process.id`, and the entrypoint id. Disagreement throws built-in
+`TypeError` before output, external mutation, or authored executable work; no
+public error API, error text, or validation order is designed. Profile
+agreement stays at the selection-to-derivation edge because launch identity has
+no profile field, and complete derivation retains all four defensive checks.
+
+Task 4.10 is therefore the sole next implementation node and changes only
+`packages/core/runtime/definition/src/app.ts` and
+`packages/core/runtime/definition/test/definition.test.ts`. It preserves the
+existing signatures and inference, the returned entrypoint's exact
+app/profile/process references, freeze behavior, and SDK export identity. Its
+real-constructor tests make producer-local bindings unavailable after handoff,
+exercise the three mismatches separately, and prove zero executable work. It
+adds no validator, schema, file, project, edge, blueprint, version, export, or
+error surface. Task 4.11 later changes only
+`packages/core/runtime/derivation/test/complete-derivation.test.ts`: a real
+`Entrypoint` plus `profileId` completes after selection source is unavailable,
+while each corrupted app/process/entrypoint identity and a profile mismatch is
+refused before result with zero Effect-body or loader invocation. Derivation
+source and public surfaces remain exact.
+
 Magic Migration contributes three distinct evidence snapshots. Clean `main` at
 `4e2f5d63e964f8299a25172ece4d5d38f6f18655`, tree
 `88f0f24e98ba057c43f5aa6e93de4c7a510c0b11`, is the stable blueprint snapshot.
@@ -215,8 +244,10 @@ the owner, and native acceptance proves that an instance cannot bypass it.
 - Realize the canonical seven-phase runtime once, as generic platform kinds.
 - Preserve byte-identical `app@1` and add complete, independently resolvable
   `app@2` as its future successor. Keep one semantic app/Nx project around one
-  finite cold `ProcessCatalog`, with one process record selected by each thin
-  one-call entrypoint.
+  finite cold `ProcessCatalog`, with each thin entrypoint module producing one
+  `Entrypoint` through `defineEntrypoint(...)`, thereby selecting one process
+  record, then passing that exact artifact to its sole future `startApp(...)`
+  call without reconstruction.
 - Make app, profile, compiler, provider plan, bootgraph data, process runtime,
   adapter, harness, and observation ownership mechanically visible and closed.
 - Give each app/process one Effect `Context`, resource lifetime, policy, and
@@ -228,9 +259,11 @@ the owner, and native acceptance proves that an instance cannot bypass it.
   `ManagedRuntime`, created from one substrate `Layer.effectContext` lifecycle
   adapter and forced before mount. Let that managed runtime own its scopes;
   never turn boot order or domain services into a Layer graph.
-- Make every `startApp(...)` invocation process-local: it owns only one lease,
-  runtime, resource closure, native-handle set, immutable launch identity, and
-  stop, with no sibling control or health aggregation.
+- Make every `startApp(...)` invocation consume one exact `Entrypoint` artifact
+  without reconstructing selection or identity and remain process-local: it
+  owns only one lease, runtime, resource closure, native-handle set, immutable
+  launch identity carried by that artifact, and stop, with no sibling control
+  or health aggregation.
 - Realize the Habitat self-host on the substrate after all downstream product
   source and flattened process-app owners have left the repository.
 - Keep `@habitat-ai/sdk` as the sole public runtime and authoring distribution
@@ -418,14 +451,19 @@ entrypoint declarations, immutable `RuntimeLaunchIdentity` with exactly
 non-authorizing `RuntimeObservationPort` earlier phases can consume. Immutable
 `app@1` remains byte-identical; complete `app@2` is a separate independently
 resolvable future successor with no inherited file or fallback. One semantic
-app/Nx project owns one finite cold process catalog and thin one-`startApp(...)`
-entrypoints. Catalog records are not apps, kinds, child projects, supervisors,
-deployment units, or live registries.
+app/Nx project owns one finite cold process catalog and thin entrypoint modules.
+Each module produces one `Entrypoint` through `defineEntrypoint(...)`, thereby
+selecting one catalog record, then passes that exact artifact to its sole future
+`startApp(...)` call without reconstructing selection or identity. Catalog
+records are not apps, kinds, child projects, supervisors, deployment units, or
+live registries.
 `runtime-observation` implements that port and projects read models only.
 `runtime-mounting` owns the live `startApp(...)` path, harness invocation, and
-process-local cross-owner finalization. Each invocation owns only its process
-lease, managed runtime, resources, native handles, frozen identity, and stop; a
-sibling invocation remains independent. The terminal SDK exposes
+process-local cross-owner finalization. It consumes the exact `Entrypoint`
+artifact and its carried frozen identity without reconstructing either. Each
+invocation owns only its process lease, managed runtime, resources, native
+handles, frozen identity, and stop; a sibling invocation remains independent.
+The terminal SDK exposes
 `startApp(...)`, but no
 upstream private owner imports the SDK facade, mounting owner, or observation
 implementation. There is no whole-app handle, readiness aggregate, supervisor,

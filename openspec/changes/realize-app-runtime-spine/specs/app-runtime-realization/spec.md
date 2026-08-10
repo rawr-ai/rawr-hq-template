@@ -18,12 +18,15 @@ service, lower a native payload, mount a host, or control a sibling process.
 
 The app definition MUST live at `apps/<app-id>/<app-id>.app.ts`, and its catalog
 MUST live at `apps/<app-id>/runtime/processes.ts`. Every thin entrypoint MUST
-make exactly one `startApp(...)` call selecting exactly one catalog process
-record without redefining app membership, provider selection, lifecycle, or a
-sibling. Each invocation MUST receive an immutable `RuntimeLaunchIdentity`
-`{ app, process, entrypoint, deployment, source }` and MUST own only that
-process's lease, ManagedRuntime, resources, native handles, health, and
-idempotent stop. Readiness and liveness MUST be distinct process-local facts.
+produce exactly one `Entrypoint` through `defineEntrypoint(...)`, thereby
+selecting exactly one catalog process record, and then pass that exact artifact
+to its sole future `startApp(...)` call. `startApp(...)` MUST consume the
+artifact without reconstructing app, profile, process, entrypoint, or identity.
+The artifact carries the immutable `RuntimeLaunchIdentity`
+`{ app, process, entrypoint, deployment, source }`; each live invocation MUST
+own only that process's lease, ManagedRuntime, resources, native handles,
+health, and idempotent stop. Readiness and liveness MUST be distinct
+process-local facts.
 An entrypoint filename MUST name its mount or process role. A surface suffix
 such as `<name>.mcp.ts` is valid only for an intentionally single-surface
 server-process projection; an entrypoint that mounts several plugin surfaces
@@ -36,11 +39,13 @@ fallback to, or mutate `app@1`. No current app selection advances to `app@2`
 before its complete law, conforming owner, pack parity, and installed proof
 co-land.
 
-#### Scenario: Application process is selected
+#### Scenario: Application process Entrypoint is selected and consumed
 
-- **WHEN** a Habitat self-host or downstream product entrypoint selects an app,
-  profile, process, and role set
-- **THEN** it passes only cold selected facts into the runtime start boundary
+- **WHEN** a Habitat self-host or downstream product entrypoint module calls
+  `defineEntrypoint(...)` with an app, profile, process, entrypoint id, and
+  exact launch identity
+- **THEN** it passes that exact selected `Entrypoint` artifact to its sole
+  future `startApp(...)` call without reconstructing selection or identity
 - **AND** no live resource exists before runtime provisioning
 
 #### Scenario: Repository app topology is inspected
@@ -63,7 +68,8 @@ co-land.
   entrypoint are inspected
 - **THEN** the app definition is named `<app-id>.app.ts`
 - **AND** `runtime/processes.ts` owns one finite cold process catalog and each
-  entrypoint calls `startApp(...)` exactly once with one selected process record
+  thin entrypoint module produces one `Entrypoint` via `defineEntrypoint(...)`
+  and passes that exact artifact to its sole future `startApp(...)` call
 - **AND** each entrypoint contains no provider acquisition, native mounting,
   sibling-process control, or lifecycle implementation
 - **AND** a surface suffix appears only on a single-surface mount
@@ -78,8 +84,8 @@ co-land.
 
 #### Scenario: Two records from one app start independently
 
-- **WHEN** server and async entrypoints select two records from the same app
-  process catalog
+- **WHEN** server and async entrypoint modules each produce an `Entrypoint` via
+  `defineEntrypoint(...)` for two records from the same app process catalog
 - **THEN** their immutable launch identities, leases, ManagedRuntimes,
   resources, native handles, readiness, liveness, and stop handles are distinct
 - **AND** stopping, restarting, or failing either invocation does not control or
@@ -194,16 +200,88 @@ an app, entrypoint, adapter, harness, service, plugin, or provider.
 At every phase edge, the downstream owner MUST accept the exact artifact emitted
 by the upstream owner and MUST NOT reread source, reconstruct an earlier
 decision, or substitute an equivalent-looking artifact. A mismatched artifact
-MUST fail before the downstream owner's first side effect. Behavior proof MUST
-exercise each producer-to-consumer edge independently with the upstream source
-made unavailable after handoff.
+MUST fail before the downstream owner emits output or invokes executable work;
+for a mutating boundary it MUST also fail before external mutation. Behavior
+proof MUST exercise each producer-to-consumer edge independently with the
+upstream source made unavailable after handoff.
 
 #### Scenario: Qualified phase artifact is consumed
 
 - **WHEN** a phase producer emits its canonical artifact and the upstream source
   becomes unavailable
 - **THEN** the immediate downstream owner completes from that artifact alone
-- **AND** an identity-mismatched artifact is refused before downstream mutation
+- **AND** an identity-mismatched artifact is refused before downstream output
+  or executable work and, where applicable, before external mutation
+
+### Requirement: Definition-to-selection authority is closed before implementation
+
+Task 4.9a MUST remain a completed documentation-only authority correction
+across exactly nine documents: `HABITAT_ARCHITECTURE.md` as router,
+`HABITAT_RUNTIME_REALIZATION.md` as the sole exact canonical mechanics owner,
+`packages/core/runtime/definition/AGENTS.md` as the definition-owner router,
+and the six active OpenSpec artifacts. It MUST change no implementation,
+source, test, project, blueprint, SDK face, public contract, export, package,
+or runtime behavior. Task 4.10 MUST be the sole next implementation node.
+
+`Entrypoint` MUST be the sole cold selection artifact.
+`defineEntrypoint(...)` MUST synchronously produce it from a real
+`AppDefinition`, `RuntimeProfile`, and `ProcessDefinition`, the entrypoint id,
+and an exact `RuntimeLaunchIdentity`
+`{ app, process, entrypoint, deployment, source }`. Before returning or
+publishing the artifact, it MUST require `identity.app === app.id`,
+`identity.process === process.id`, and `identity.entrypoint === id`. Each
+disagreement MUST throw built-in `TypeError` before output, external mutation,
+or authored executable invocation. No public error API, prescribed error text,
+or prescribed validation order is admitted.
+
+Task 4.10 MUST change exactly
+`packages/core/runtime/definition/src/app.ts` and
+`packages/core/runtime/definition/test/definition.test.ts`. It MUST preserve
+the existing signatures and TypeScript inference, the result's exact
+app/profile/process references, freeze behavior, and SDK export identity. Its
+proof MUST use real constructors, make producer-local bindings unavailable
+after handoff, exercise all three identity disagreements independently, and
+observe zero authored executable work. It MUST add no validator, schema, file,
+project, edge, blueprint, version, export, or error surface.
+
+Task 4.11 MUST change only
+`packages/core/runtime/derivation/test/complete-derivation.test.ts`. It MUST use
+a real `Entrypoint` plus `profileId`, complete with selection source unavailable
+after handoff, and independently exercise corrupt app, process, and entrypoint
+identity plus profile mismatch. Each mismatch MUST throw built-in `TypeError`
+before a derivation result with zero Effect-body or loader invocation.
+Derivation MUST retain all four checks defensively and task 4.11 MUST change no
+derivation source or public surface. Profile agreement belongs here because the
+exact launch identity has no profile field.
+
+#### Scenario: Real definition selection completes from its artifact
+
+- **WHEN** real app, runtime-profile, and process constructors supply
+  `defineEntrypoint(...)` with an agreeing entrypoint id and exact five-field
+  launch identity
+- **THEN** it returns the sole frozen cold `Entrypoint` selection artifact with
+  the exact app, profile, and process references and existing inference
+- **AND** the consumer completes from that artifact after producer-local
+  bindings become unavailable, without invoking an authored executable
+
+#### Scenario: Definition selection refuses all identity disagreements
+
+- **WHEN** each of launch identity app, process, and entrypoint is separately
+  made inconsistent with its real definition input
+- **THEN** `defineEntrypoint(...)` throws built-in `TypeError` before returning
+  an artifact, mutating external state, or invoking an authored executable
+- **AND** acceptance prescribes neither validation order nor error text and
+  introduces no public error API
+
+#### Scenario: Derivation retains complete selection defense
+
+- **WHEN** task 4.11 consumes a real `Entrypoint` plus `profileId` after
+  selection source becomes unavailable and separately corrupts the three
+  launch-identity agreements or profile agreement
+- **THEN** the valid artifact completes and every mismatch throws built-in
+  `TypeError` before a derivation result
+- **AND** no Effect body or web loader is invoked and no derivation source or
+  public surface changes
 
 ### Requirement: Runtime topology normalization is deterministic and bounded
 

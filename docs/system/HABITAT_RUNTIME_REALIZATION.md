@@ -582,7 +582,12 @@ materialization; it is not part of `FunctionBundle` materialization. The bundle
 owns no product API meaning, workflow semantics, live dispatcher authority, or
 app selection.
 
-An entrypoint is a selected process-start boundary. It chooses one app, one runtime profile, one entrypoint id, and one role set for a single `startApp(...)` invocation. It owns process-start selection facts. It does not redefine app membership, service domain authority, plugin projection, provider implementation, execution grammar, harness internals, or deployment placement.
+`Entrypoint` is the sole cold selection artifact. It carries one selected app,
+runtime profile, process definition, entrypoint id, and exact five-field launch
+identity for one future `startApp(...)` invocation. It owns process-start
+selection facts but performs no live start. It does not redefine app membership,
+service domain authority, plugin projection, provider implementation, execution
+grammar, harness internals, or deployment placement.
 
 A runtime profile is an app-owned runtime selection boundary. It selects provider implementations, config sources, process defaults, and environment-shaped wiring for an app. It does not acquire resources, construct providers, execute `HabitatEffect`, mount harnesses, own service domain authority, or become deployment placement.
 
@@ -1046,8 +1051,8 @@ composition, execute `HabitatEffect`, or mount native hosts.
 | Plugin modules | One plugin factory, lane-specific definitions, native oRPC routers/contracts where selected, workflow definitions, command definitions, web/agent/desktop surface definitions, and non-oRPC Effect execution descriptors |
 | Resource modules | `RuntimeResource` descriptors, requirement helpers, value types, and no provider imports |
 | Provider modules | Cold `RuntimeProvider` descriptors, provider-local config schemas, and `ProviderEffectPlan` acquisition/release plans behind direct package public faces |
-| App modules | App membership declarations and runtime profile selection |
-| Entrypoints | `startApp(...)` invocation and selected process shape |
+| App modules | App membership, runtime profile, and process declarations |
+| Entrypoint authoring modules | Synchronous `defineEntrypoint(...)` production of one cold selected process-shape artifact; no live start |
 
 `HabitatEffect` values are lazy execution descriptions. They are not running work.
 
@@ -1167,7 +1172,7 @@ Names remain layer-specific. Similar concepts in different layers use different 
 
 | Layer | Canonical terms | Consumer |
 | --- | --- | --- |
-| App authoring | `defineApp(...)`, `startApp(...)`, `AppDefinition`, `Entrypoint`, `RuntimeProfile` | Runtime mounting, which drives runtime derivation and compilation through private owners |
+| App authoring and selection | `defineApp(...)`, `defineEntrypoint(...)`, `startApp(...)`, `AppDefinition`, `ProcessDefinition`, `Entrypoint`, `RuntimeProfile` | `defineEntrypoint(...)` produces the cold selection artifact; future `startApp(...)` consumes that exact artifact and delegates live realization to runtime mounting |
 | Service authoring | `defineService(...)`, `resourceDep(...)`, `serviceDep(...)`, `semanticDep(...)`, `deps`, `scope`, `config`, `invocation`, `provided` | Runtime derivation and service binding |
 | Plugin authoring | `PluginFactory`, `PluginDefinition`, `useService(...)`, `ServiceUse`, lane-specific builders, lane-native definitions, `.effect(...)` terminal bodies | Runtime derivation and surface runtime plans |
 | Author-facing Effect facade | `Effect`, `HabitatEffect`, `TaggedError`, `HabitatRetryPolicy`, `HabitatTimeoutPolicy`, `HabitatConcurrencyPolicy` | Services, plugins, resources, providers, repositories where allowed |
@@ -1194,7 +1199,11 @@ compiled, and live service-binding nouns remain distinct downstream artifacts.
 
 `HabitatEffect`, `ExecutionDescriptor`, `CompiledExecutionPlan`, `ExecutionDescriptorTable`, `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, and `ProviderEffectPlan` are operational execution nouns. They are not top-level ontology kinds.
 
-`startApp(...)` is the canonical app start operation. Roles, surfaces, harnesses, profiles, and process hosts are selected data passed to the entrypoint operation. There is no role-specific public start verb.
+`defineEntrypoint(...)` is the synchronous cold definition-to-selection
+producer. `startApp(...)` is the distinct canonical live app start operation;
+its future contract consumes the exact accepted `Entrypoint` rather than
+receiving or reconstructing the artifact's constituent selection facts. There
+is no role-specific public start verb.
 
 ## 7. Code block exactness rule
 
@@ -1742,9 +1751,10 @@ The process runtime receives the table in-process and uses it to assemble
 
 Task 4.8's reachable execution population is exactly the async-step operational
 descriptors derived from definition-owned workflow, schedule, and consumer
-`steps` membership. Complete derivation imports those declarations directly and
-eagerly indexes the derived operational `EffectExecutionDescriptor` values fixed
-by §15.3 without executing them; it does not preserve the authoring
+`steps` membership. Complete derivation reaches those selected declarations
+only through the accepted `Entrypoint` and eagerly indexes the derived
+operational `EffectExecutionDescriptor` values fixed by §15.3 without executing
+them; it does not preserve the authoring
 `AsyncStepEffectDescriptor` as the table value.
 
 The closed five-variant ref and table API remains generic and conditional for
@@ -2105,12 +2115,14 @@ and definition id.
 
 #### 10.1.1 Process launch identity
 
-`runtime-definition` owns the immutable launch identity carried by each cold
-process-catalog record into one `startApp(...)` invocation. The identity is
-operational app-owned data, not a process kind, live registry, supervisor, or
-deployment controller.
+`runtime-definition` owns the immutable launch-identity contract. Deployment
+supplies an exact identity as a separate `defineEntrypoint(...)` input; it is not
+a field of `ProcessDefinition` or a process-catalog record. The resulting frozen
+`Entrypoint` carries that identity into one future `startApp(...)` invocation.
+The identity is operational app-owned data, not a process kind, live registry,
+supervisor, or deployment controller.
 
-File: `packages/core/runtime/definition/src/app/runtime-launch-identity.ts`  
+File: `packages/core/runtime/definition/src/app.ts`  
 Layer: private runtime-definition contract re-exported by `@habitat-ai/sdk/app`
 and `@habitat-ai/sdk/runtime/harnesses`  
 Exactness: normative for the owner, fields, immutability, and re-exported type
@@ -2235,58 +2247,101 @@ and catalog types.
 
 ### 10.3 Entrypoint
 
-Entrypoints start processes.
+`Entrypoint` is the sole cold selection artifact. Entrypoints do not themselves
+start processes.
 
-`startApp(...)` is the canonical app start operation. It receives selected app
-definition, runtime profile, process roles, and optional process/harness
-selection facts. The terminal SDK exposes it, `runtime-mounting` implements its
-live coordination over the complete private graph, and `runtime-definition`
-owns only the cold declarations and selection inputs. It starts one process.
+Synchronous `defineEntrypoint(...)` is the definition-to-selection producer. It
+receives one real `AppDefinition`, one real `RuntimeProfile`, one real
+`ProcessDefinition`, one entrypoint id, and one exact five-field
+`RuntimeLaunchIdentity`, then returns the frozen selected artifact. Before any
+return or other publication it requires `identity.app === app.id`,
+`identity.process === process.id`, and `identity.entrypoint === id`. Any
+mismatch throws built-in `TypeError` with no output, external mutation, or
+authored executable call. Error text and check order are noncontractual.
+
+The launch identity has no profile field. The profile remains the selected
+`entrypoint.profile`, and `profileId === entrypoint.profile.id` remains a
+selection-to-derivation agreement check.
+
+`startApp(...)` is the separate canonical live start operation. The terminal
+SDK exposes it and `runtime-mounting` owns its live coordination over the
+complete private graph. Its future contract consumes the exact accepted
+`Entrypoint`, does not reconstruct selection, and starts one process.
 
 File (independent downstream Rawr repository): `apps/rawr/server.ts`  
 Layer: entrypoint authoring  
-Exactness: normative for `startApp(...)` as the only start verb and for the
-fields that select one process-role set; illustrative for the Rawr entrypoint
-id, profile, and selected role set.
+Exactness: normative for `defineEntrypoint(...)` as the synchronous cold
+producer, its five input categories and agreement refusal, and future
+`startApp(...)` consumption of the exact artifact; illustrative for the Rawr
+entrypoint id, profile, process, deployment, and source values.
 
 ```ts
-import { startApp } from "@habitat-ai/sdk/app";
+import { defineEntrypoint, startApp } from "@habitat-ai/sdk/app";
 import { rawrApp } from "./rawr.app";
+import { rawrProcesses } from "./runtime/processes";
 import { productionProfile } from "./runtime/profiles/production";
 
-await startApp(rawrApp, {
-  entrypointId: "rawr.server",
+const rawrServerEntrypoint = defineEntrypoint({
+  id: "rawr.server",
+  app: rawrApp,
   profile: productionProfile,
-  roles: ["server"],
+  process: rawrProcesses.server,
+  identity: {
+    app: "rawr",
+    process: "rawr.server",
+    entrypoint: "rawr.server",
+    deployment: "production",
+    source: "rawr-production",
+  },
 });
+
+await startApp(rawrServerEntrypoint);
 ```
 
 File (independent downstream Rawr repository): `apps/rawr/dev.ts`  
 Layer: cohosted entrypoint authoring  
-Exactness: normative for cohosted process shape as explicit role selection in
-one process rather than semantic reclassification; illustrative for the Rawr
-entrypoint id, profile, and selected role set.
+Exactness: normative for cohosted process shape as one selected
+`ProcessDefinition` rather than semantic reclassification; illustrative for
+the Rawr entrypoint id, profile, process, deployment, and source values.
 
 ```ts
-import { startApp } from "@habitat-ai/sdk/app";
+import { defineEntrypoint, startApp } from "@habitat-ai/sdk/app";
 import { rawrApp } from "./rawr.app";
+import { rawrProcesses } from "./runtime/processes";
 import { localProfile } from "./runtime/profiles/local";
 
-await startApp(rawrApp, {
-  entrypointId: "rawr.dev",
+const rawrDevEntrypoint = defineEntrypoint({
+  id: "rawr.dev",
+  app: rawrApp,
   profile: localProfile,
-  roles: ["server", "async", "web", "agent", "desktop"],
+  process: rawrProcesses.dev,
+  identity: {
+    app: "rawr",
+    process: "rawr.dev",
+    entrypoint: "rawr.dev",
+    deployment: "development",
+    source: "rawr-local",
+  },
 });
+
+await startApp(rawrDevEntrypoint);
 ```
 
 The entrypoint does not redefine what belongs to the app. It selects which role slices start in this process. App membership, provider selection, execution ownership, and process shape remain distinct facts.
 
-An entrypoint filename names its mount or process role. A surface suffix such
-as `<name>.mcp.ts` is valid only when that entrypoint is intentionally a single
-surface mount. An entrypoint that mounts several plugin surfaces must use its
-mount or role identity rather than masquerading as one selected surface.
+An entrypoint authoring filename names its mount or process role. A surface
+suffix such as `<name>.mcp.ts` is valid only when its produced artifact selects
+a deliberately single-surface mount. A file that produces an entrypoint
+selecting several plugin surfaces must use its mount or role identity rather
+than masquerading as one selected surface.
 
-An entrypoint must not construct `ManagedRuntime`, call raw Effect runtime APIs, run `HabitatEffect` programs directly, construct effect-oRPC adapters, or bypass `startApp(...)` to mount service/plugin execution manually.
+Neither `defineEntrypoint(...)` nor an entrypoint authoring module may construct
+`ManagedRuntime`, call raw Effect runtime APIs, run `HabitatEffect` programs,
+construct effect-oRPC adapters, or mount service/plugin execution manually.
+For this boundary, source-unavailable means that producer-local authoring
+bindings or factory scope needed to author a different selection are gone. It
+does not mean that implementation source code or already-produced artifacts are
+unavailable, and it never authorizes a consumer to reconstruct selection.
 
 ## 11. Service runtime boundary contract
 
@@ -4203,6 +4258,15 @@ terminal SDK exposes the complete-derivation artifact contracts at
 runtime compiler consumes the complete normalized graph, not arbitrary
 authoring shorthand or the lossy portable projection.
 
+Both derivation handoffs consume the exact `Entrypoint` already produced by
+`defineEntrypoint(...)`. They do not recreate selection from declarations or
+producer-local authoring bindings.
+
+Every pure lifecycle handoff refuses invalid input before publishing output or
+performing executable work. The absence of an external side effect is not
+sufficient when a rejected artifact or authored executable call has already
+crossed the boundary.
+
 The complete handoff is synchronous and exact. It has no async overload,
 options bag, topology-only public sibling, incremental mode, callback, resolver,
 or environment input. The closed SDK export inventory remains exactly §4's
@@ -4250,7 +4314,8 @@ public data and canonical table snapshots independent of authored collection
 order, except that config-source arrays deliberately preserve authored
 precedence.
 
-Derivation imports and inspects cold declarations only. It does not choose
+Derivation inspects only selected cold declarations reachable through the exact
+accepted `Entrypoint`. It does not choose
 deployment placement, acquire a provider, read or decode config, construct a
 managed runtime, bind a service, invoke an Effect body, invoke a web loader,
 materialize a workflow dispatcher, mount a host, or retain any live runtime,
@@ -4382,11 +4447,16 @@ export declare function deriveNormalizedRuntimeTopology(input: {
 ```
 
 `deriveNormalizedRuntimeTopology({ entrypoint, profileId })` is the private
-task-4.7 operation. Before emitting anything it requires
+task-4.7 operation. `defineEntrypoint(...)` is the primary owner of the three
+identity-agreement checks before it publishes the selected artifact. Derivation
+retains those checks defensively so a corrupted or substituted selected artifact
+cannot cross the next handoff. Before emitting anything it therefore requires
 `entrypoint.identity.app === entrypoint.app.id`,
 `entrypoint.identity.process === entrypoint.process.id`,
 `entrypoint.identity.entrypoint === entrypoint.id`, and
-`profileId === entrypoint.profile.id`. It then recursively copies all five
+`profileId === entrypoint.profile.id`. The fourth check remains exclusively a
+selection-to-derivation agreement because the five-field
+`RuntimeLaunchIdentity` contains no profile. It then recursively copies all five
 launch-identity fields without sharing references and recursively freezes the
 copy. `deployment` and `source` are opaque selected values: they are copied
 unchanged and never interpreted or re-derived.
@@ -6318,7 +6388,7 @@ ownership boundary.
 
 ```ts
 import type { RuntimeLaunchIdentity } from
-  "../definition/src/app/runtime-launch-identity.js";
+  "../definition/src/app.js";
 
 export type { RuntimeLaunchIdentity };
 
@@ -7025,8 +7095,9 @@ sequenceDiagram
   participant Harness as Native harness
   participant Observation as Runtime observation
 
-  Authoring->>SDK: declarations + cold Effect terminals + cold web module loaders
-  SDK->>Derivation: synchronous deriveRuntimeArtifacts({ entrypoint, profileId })
+  Authoring->>SDK: synchronous defineEntrypoint(...) from exact app/profile/process/id/identity inputs
+  SDK->>SDK: refuse identity disagreement before output or executable work; otherwise freeze the sole Entrypoint
+  SDK->>Derivation: synchronous deriveRuntimeArtifacts({ entrypoint, profileId }) with that exact selected artifact
   Derivation->>Derivation: call topology derivation exactly once; refuse duplicate plugin identities, process-role literals, surface full tuples, full edge tuples, and service cycles
   Derivation->>Derivation: complete frozen graph over that exact topology; derive exact refs, plans, tables, finding, and seven-field artifact
   Derivation->>Compiler: exact NormalizedAuthoringGraph
@@ -7065,8 +7136,8 @@ sequenceDiagram
 
 | Phase | Required output | Producer | Consumer | Gate |
 | --- | --- | --- | --- | --- |
-| Definition | Import-safe declarations for services, plugins, resources, providers, apps, profiles, native oRPC operations, cold non-oRPC Effect executable bodies, and cold web route-module loaders | Authors | Private runtime derivation invoked by `deriveRuntimeArtifacts(...)` through `@habitat-ai/sdk/runtime/derivation`; native oRPC implementers | Declaration import safety, topology/builder check, native handler/official Effect bridge gate, and web-loader/Effect separation |
-| Selection | App membership, profile, provider choices, process roles, selected harnesses | App/entrypoint | Runtime derivation/runtime compiler | App/profile/entrypoint snapshot |
+| Definition | Import-safe declarations for services, plugins, resources, providers, apps, profiles, processes, native oRPC operations, cold non-oRPC Effect executable bodies, and cold web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint`; native oRPC implementers consume declaration types during authoring | Declaration import safety, topology/builder check, native handler/official Effect bridge gate, and web-loader/Effect separation |
+| Selection | One frozen `Entrypoint` carrying the selected app, profile, process, entrypoint id, and exact five-field launch identity | Synchronous `defineEntrypoint(...)` | Runtime derivation; future `startApp(...)` consumes the exact same artifact without reconstruction | Three identity-agreement checks before output or authored executable work; mismatch is built-in `TypeError` with noncontractual text/order |
 | Derivation | Exact once-derived private `NormalizedRuntimeTopology`; exact closed `NormalizedAuthoringGraph` with one normalized profile; normalized refs and service-binding/surface/workflow plans; `ExecutionDescriptorRef` plus non-portable `ExecutionDescriptorTable`; distinct `WebRouteModuleRef` plus non-portable `WebRouteModuleTable`; and exact seven-field `PortableRuntimePlanArtifact` | Private runtime derivation; complete-derivation public contracts through `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; compiler consumes the graph; process runtime consumes the Effect table; web adapter/host consumes the web table; pre-runtime tooling consumes the portable artifact | Exact closed schemas and refs; canonical ordering and ids; full-ref table lookup; one optional-provider finding; built-in `TypeError` for every fatal issue; no body/loader execution or live values |
 | Compilation | `CompiledProcessPlan`, provider dependency graph, compiled service/surface/harness plans, `CompiledExecutionPlan[]`, `CompiledExecutionRegistryInput` | Runtime compiler | Bootgraph/process runtime/adapters | Normalized provider-handoff referential consistency, provider dependency closure/cycles, and compiler validation; no second missing-selection outcome |
 | Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; eagerly built `ProvisionedProcess`, `ManagedRuntimeHandle`, resources, layer-owned finalizers, owner-local provisioning findings | Runtime config before acquisition; bootgraph for metadata; runtime substrate alone for `ProvisionedProcess` | Runtime substrate; then process runtime | Exact-key precedence and winning decode complete before acquisition; ordering validation; one `Layer.effectContext(...)` lifecycle adapter; forced managed-runtime context; scoped acquisition/rollback |
@@ -7099,7 +7170,8 @@ apps/rawr/runtime/profiles/production.ts
   places generic providerSelection(...) results only in profile.providers
 
 apps/rawr/server.ts
-  calls startApp(rawrApp, { profile: productionProfile, roles: ["server"] })
+  produces rawrServerEntrypoint with defineEntrypoint(...) from exact app/profile/process/id/identity inputs
+  future startApp(...) consumes that exact artifact without reconstructing selection
 
 deriveRuntimeArtifacts(...) through @habitat-ai/sdk/runtime/derivation
   calls foundational topology derivation once
@@ -7575,7 +7647,7 @@ Gate families are:
 | Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, `ServiceContractOf` inference from private-carried `ServiceUse`, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, contract errors |
 | Runtime behavior gates | one lazy `ManagedRuntime` forced through `context()` before mount; one `Layer.effectContext(...)` provider adapter; no second root `Scope`; non-oRPC descriptor execution through `ProcessExecutionRuntime`; native oRPC Effect execution through official `.effect(...)` and its internal bridge; `effect/context` and `effect/wrap`; abort/finalizer/resource-release order; single physical bridge/oRPC realm; `EffectRuntimeAccess` internal-only; service binding cache invocation exclusion; provider acquire/release finalization |
 | Registry gates | Effect descriptor table is present; full structural ref lookup returns the exact matching operational descriptor or throws `TypeError`; frozen readonly tuple snapshots use canonical ref order; every Effect ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation; full structural web ref lookup returns the exact preserved loader or throws `TypeError`; frozen web-entry snapshots use `(ownerId, routeId, path)`; web refs never enter `ExecutionRegistry` |
-| Fixture/plan gates | private `NormalizedRuntimeTopology` exact-copy and unchanged §15.1 law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; no body/loader/acquisition/live-value access; compiled plan, catalog, startup rollback, and finalization records |
+| Fixture/plan gates | primary `defineEntrypoint(...)` identity-agreement refusal before output or authored executable work; private `NormalizedRuntimeTopology` exact-copy and defensive §15.1 agreement law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; no body/loader/acquisition/live-value access; compiled plan, catalog, startup rollback, and finalization records |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
 | Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
 | Provider separation gates | provider acquire/release represented as `ProviderEffectPlan`; bootgraph modules carry identity/dependency ordering facts only; neither is an ordinary `EffectExecutionDescriptor` procedure plan |
@@ -7590,7 +7662,7 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Ownership | Services govern domains, plugins project capabilities, apps compose products, runtime realizes | New service domains, plugin capabilities, provider families |
 | Topology | Locked roots, public faces, projection lanes, and closed test directories | Additional private files only through explicitly admitted, versioned blueprint test layout |
 | Lifecycle | `definition -> selection -> derivation -> compilation -> provisioning -> mounting -> observation` | Additional owner-local findings, observation records, and derived artifacts within phases |
-| App start | `defineApp(...)`, `startApp(...)` | Entrypoint count and selected role combinations |
+| App selection and start | `defineApp(...)`, synchronous `defineEntrypoint(...)`, future `startApp(entrypoint)` with no selection reconstruction | Entrypoint count and selected role combinations |
 | Service lanes | `deps`, `scope`, `config`, `invocation`, `provided` | Service-specific schemas and middleware |
 | Service dependencies | `serviceDep(...)`; no sibling internals | Semantic adapters via `semanticDep(...)` |
 | Plugin classification | Topology plus lane-specific builder | Surface-local route, command, workflow, shell, desktop facts |
@@ -7856,9 +7928,10 @@ and proves `ServiceBindingCache`, cache-key construction, and live binding in
 | Component/artifact | Owner | Reference placement | Produced by | Consumed by | Phase | Finding / observation channel | Enforcement / acceptance gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `RuntimeSchema` | `runtime-schema`, exposed by SDK | `packages/core/runtime/schema` | Runtime schema adaptation | Compiler, config, diagnostics, harness payload validators | Definition through observation | Schema decode/validation/redaction findings | Schema-backed boundary gate |
-| `AppDefinition` | App | `apps/<app>/<app>.app.ts` | `defineApp(...)` | Runtime derivation | Definition | App identity and plugin membership findings | App composition snapshot |
-| `Entrypoint` | App | `apps/<app>/<entrypoint>.ts` | `startApp(...)` call | Runtime mounting, then runtime derivation/compiler | Selection | Entrypoint/process shape findings | Entrypoint selection gate |
-| `RuntimeProfile` | App runtime profile | `apps/<app>/runtime/profiles/*` | `defineRuntimeProfile(...)` | Runtime derivation/runtime compiler | Selection/compilation | Sole optional-provider derivation finding; all fatal derivation issues are `TypeError` | Exact five-source authored profile snapshot |
+| `AppDefinition` | App | `apps/<app>/<app>.app.ts` | `defineApp(...)` | `defineEntrypoint(...)`, then runtime derivation through the selected artifact | Definition | App identity and plugin membership findings | App composition snapshot |
+| `ProcessDefinition` | App | `apps/<app>/runtime/processes.ts` | `defineProcessCatalog(...)` | `defineEntrypoint(...)`, then runtime derivation through the selected artifact | Definition | Process identity and role-shape findings | Process-definition snapshot |
+| `Entrypoint` | `runtime-definition`; app-owned selected data | `apps/<app>/<entrypoint>.ts` | Synchronous `defineEntrypoint(...)` from real `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, entrypoint id, and exact five-field identity | Runtime derivation; future `startApp(...)` consumes the exact artifact without reconstruction | Selection | Identity mismatch is built-in `TypeError` before output, external mutation, or authored executable call; text/order noncontractual | Frozen sole-selection-artifact and three-way identity-agreement gate |
+| `RuntimeProfile` | App runtime profile | `apps/<app>/runtime/profiles/*` | `defineRuntimeProfile(...)` | `defineEntrypoint(...)`, then runtime derivation/compiler through the selected artifact | Definition through compilation | Sole optional-provider derivation finding; all fatal derivation issues are `TypeError` | Exact five-source authored profile snapshot |
 | `RuntimeResource` | Resource contract family | Provider-neutral root face of `resources/<capability>` | Resource package `defineRuntimeResource(...)` call | Runtime derivation/compiler/providers | Definition through provisioning | Resource coverage, lifetime, observation contributor findings | Resource contract gate |
 | `RuntimeProvider` | Nested provider | Direct public face under `resources/<capability>/providers/<provider>` | Nested provider `defineRuntimeProvider(...)` call | Runtime derivation/compiler/substrate | Definition through provisioning | Derivation-owned selection coverage plus owner-local provider dependency, config, acquisition, and release findings | Provider selection/dependency gate |
 | `ProviderSelection` | App/runtime profile, normalized by runtime derivation | `providers` field in `apps/<app>/runtime/profiles/*`; normalized contract in `packages/core/runtime/derivation` | Generic SDK `providerSelection({ resource, provider, config, lifetime?, role?, instance? })`, then complete derivation | Runtime compiler | Selection/compilation | Unselected optional requirement is the sole finding; required missing/ambiguous or config-iff violation is `TypeError` | Exact normalized selection and config-ref iff-schema gate |
@@ -7879,7 +7952,7 @@ and proves `ServiceBindingCache`, cache-key construction, and live binding in
 | `NormalizedRuntimeTopology` | Private `runtime-derivation` foundation | `packages/core/runtime/derivation` | Private runtime derivation from selected launch facts | Complete derivation within the same owner | Derivation | Owner-local refusal channel; task 4.7 proves only order-independent refusal of duplicate facts, service self-loops, and longer service cycles, without prescribing an error class, chosen cycle path, diagnostic order, or finding payload | Owner-local TypeBox decode plus exact-copy, deterministic-order, and refusal gate |
 | `RuntimeDerivationResult` | `runtime-derivation`, exact public contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Synchronous `deriveRuntimeArtifacts({ entrypoint, profileId })` after exactly one topology call | Runtime compiler, process runtime, web adapter/host, and pre-runtime tooling by exact result field | Derivation | One exact optional-provider finding inside graph; every fatal complete-derivation issue is built-in `TypeError` | Exact five-field frozen result and `graph.topology === topology` gate |
 | `DerivationFinding` | `runtime-derivation`, type-only SDK export | `packages/core/runtime/derivation` | Complete derivation only when an optional requirement lacks a selection | Runtime compiler / admitted observation adapter | Derivation | Exactly `provider-selection.optional-missing` with requirement id and resource identity | Sole nonfatal derivation finding gate |
-| `NormalizedAuthoringGraph` | `runtime-derivation`; structurally reachable from the complete result but not a named SDK export | `packages/core/runtime/derivation` | Complete runtime derivation from the exact once-produced `NormalizedRuntimeTopology` and remaining cold declarations | Runtime compiler | Derivation | Exact optional-provider finding array only; every fatal issue is `TypeError` | Closed graph schema, singular profile, canonical id/order, fresh-freeze snapshot |
+| `NormalizedAuthoringGraph` | `runtime-derivation`; structurally reachable from the complete result but not a named SDK export | `packages/core/runtime/derivation` | Complete runtime derivation from the exact once-produced `NormalizedRuntimeTopology` and selected cold declarations reachable only through the accepted `Entrypoint` | Runtime compiler | Derivation | Exact optional-provider finding array only; every fatal issue is `TypeError` | Closed graph schema, singular profile, canonical id/order, fresh-freeze snapshot |
 | `ServiceBindingPlan` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation from private-carried selected `ServiceUse` declarations | Runtime compiler | Derivation/compilation | Missing/forbidden refs, invalid override keys, or divergent diamonds are `TypeError` | Exact reduced plan, iff-schema, inheritance, identity, and diamond gate |
 | `CompiledServiceBindingPlan` | Runtime compiler | `packages/core/runtime/compiler` | Runtime compiler from exact `ServiceBindingPlan` | Process runtime | Compilation/mounting/invocation | Unresolved ids or schema-presence mismatch is `TypeError` | Resolved-ref plan with no decoded value or invocation |
 | `SurfaceRuntimePlan` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler | Derivation/compilation | Invalid/dangling/duplicate id or ref is `TypeError` | Exact eleven-field closed surface-plan snapshot |
@@ -7949,6 +8022,8 @@ providers
 runtime definition
   owns cold HabitatEffect, execution-policy, authoring, and descriptor contracts
   owns observation record schemas and the narrow observation port
+  owns synchronous defineEntrypoint from exact app/profile/process/id/identity inputs
+  refuses app/process/entrypoint identity disagreement before publishing the frozen Entrypoint
   never starts a process
 
 runtime derivation
@@ -8077,7 +8152,7 @@ harnesses
   own native interiors only after Habitat adapter lowering
 
 runtime mounting
-  implements startApp
+  implements the future startApp terminal over the exact accepted Entrypoint without reconstructing selection
   invokes harnesses and creates/collects private StartedHarness wrappers after success
   coordinates reverse-order harness stop before the process-runtime stop handle
   adapts admitted owner-local findings into RuntimeObservationRecord values

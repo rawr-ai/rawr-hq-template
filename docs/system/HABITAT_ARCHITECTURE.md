@@ -104,8 +104,9 @@ app -> app composition -> role -> surface
 ```
 
 `apps/<app>/<app>.app.ts` is the app-owned source file. Its `defineApp(...)`
-call produces the `AppDefinition` record consumed by runtime derivation; there
-is no separate manifest or bootgraph authority.
+call produces the `AppDefinition` record selected into an `Entrypoint` by
+`defineEntrypoint(...)`. Runtime derivation reaches that definition only through
+the accepted `Entrypoint`; there is no separate manifest or bootgraph authority.
 
 Runtime realization follows this lifecycle:
 
@@ -274,7 +275,7 @@ app composition  = AppDefinition record produced by defineApp(...) in apps/<app>
 role             = selected process responsibility inside an app
 surface          = what a role exposes or runs
 repository       = service-internal persistence mechanic under semantic ownership
-entrypoint       = executable file that calls startApp(...) for one process shape
+entrypoint       = sole cold selection artifact produced by defineEntrypoint(...) for one process shape
 ```
 
 ### 3.3 Runtime realization nouns
@@ -1977,10 +1978,20 @@ topology-record, and catalog types.
 
 ### 9.5 Entrypoints
 
-`startApp(...)` is the canonical app start operation. The SDK exports the public
-terminal; `runtime-mounting` implements its live lifecycle.
+`Entrypoint` is the sole cold selection artifact. Synchronous
+`defineEntrypoint(...)` produces it from one real `AppDefinition`, one real
+`RuntimeProfile`, one real `ProcessDefinition`, one entrypoint id, and one exact
+five-field `RuntimeLaunchIdentity`. The future live `startApp(...)` terminal
+must consume that exact artifact and must not reconstruct selection from its
+constituent declarations.
 
-An entrypoint is the concrete file that selects one app definition, one runtime profile, one process role set, and optional process/harness selection facts.
+Before returning or otherwise publishing the frozen artifact,
+`defineEntrypoint(...)` requires `identity.app === app.id`,
+`identity.process === process.id`, and `identity.entrypoint === id`. A mismatch
+throws built-in `TypeError` without output, external mutation, or invocation of
+an authored executable. Error text and check order are noncontractual.
+`RuntimeLaunchIdentity` has no profile field; exact profile-id agreement remains
+a selection-to-derivation check against `entrypoint.profile.id`.
 
 It answers:
 
@@ -1988,7 +1999,9 @@ It answers:
 Which roles from this app start in this process?
 ```
 
-Each `startApp(...)` invocation starts exactly one process runtime assembly.
+Each accepted `Entrypoint` selects exactly one process shape. Each future
+`startApp(...)` invocation starts exactly one process runtime assembly from that
+same selected artifact.
 
 An entrypoint does not:
 
@@ -2000,33 +2013,37 @@ An entrypoint does not:
 - manually instantiate raw Effect runtimes;
 - manually mount native harnesses from raw declarations.
 
-Canonical entrypoints look like:
+Canonical entrypoint selection looks like:
 
 ```ts
-import { startApp } from "@habitat-ai/sdk/app";
+import { defineEntrypoint } from "@habitat-ai/sdk/app";
 import { rawrApp } from "./rawr.app";
+import { rawrProcesses } from "./runtime/processes";
 import { productionProfile } from "./runtime/profiles/production";
 
-await startApp(rawrApp, {
-  entrypointId: "rawr.server",
+export const rawrServerEntrypoint = defineEntrypoint({
+  id: "rawr.server",
+  app: rawrApp,
   profile: productionProfile,
-  roles: ["server"],
+  process: rawrProcesses.server,
+  identity: {
+    app: "rawr",
+    process: "rawr.server",
+    entrypoint: "rawr.server",
+    deployment: "production",
+    source: "rawr-production",
+  },
 });
 ```
 
-The entrypoint filename names the mount or process role. A surface-kind suffix
-is appropriate only for a deliberately single-surface mount; an entrypoint that
-mounts several plugin surfaces keeps the name of its mount or role.
+An entrypoint authoring filename names the mount or process role. A surface-kind
+suffix is appropriate only for a deliberately single-surface mount; a file that
+produces an entrypoint selecting several plugin surfaces keeps the name of its
+mount or role.
 
-A cohosted development entrypoint is still one process shape:
-
-```ts
-await startApp(rawrApp, {
-  entrypointId: "rawr.dev",
-  profile: localProfile,
-  roles: ["server", "async", "web", "agent", "desktop"],
-});
-```
+A cohosted development entrypoint is still one artifact selecting one process
+whose `ProcessDefinition.roles` contains `server`, `async`, `web`, `agent`, and
+`desktop`.
 
 The entrypoint does not redefine what belongs to the app. It selects which role slices start in this process. App membership, provider selection, and process shape remain distinct facts.
 
@@ -2102,8 +2119,8 @@ definition -> selection -> derivation -> compilation -> provisioning -> mounting
 
 | Phase | Required output | Producer | Consumer |
 | --- | --- | --- | --- |
-| Definition | Import-safe service, plugin, resource, provider, app, and profile declarations, including cold Effect bodies and web route-module loaders | Authors | Private runtime derivation invoked by `deriveRuntimeArtifacts(...)` through `@habitat-ai/sdk/runtime/derivation` |
-| Selection | App membership, one runtime profile containing provider selections and ordered config sources, process roles, selected harnesses | App/entrypoint | Runtime derivation and runtime compiler |
+| Definition | Import-safe service, plugin, resource, provider, app, profile, and process declarations, including cold Effect bodies and web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint` |
+| Selection | One frozen `Entrypoint` carrying the selected `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, entrypoint id, and exact five-field launch identity | Synchronous `defineEntrypoint(...)` | Runtime derivation; future `startApp(...)` consumes the same artifact without reconstructing selection |
 | Derivation | Private foundational `NormalizedRuntimeTopology`; complete `NormalizedAuthoringGraph`, provider/service-binding/surface/workflow artifacts, Effect refs/table, distinct web route-module refs/table, and exact-field `PortableRuntimePlanArtifact` — shapes defined in runtime-spec §15 | Private `runtime-derivation` owner; complete-derivation contracts exposed at `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; the runtime compiler consumes the complete graph and plan refs; process runtime consumes the Effect table; the web adapter consumes the web table; pre-runtime tooling consumes the portable artifact |
 | Compilation | Compiled process plan, provider dependency graph, compiled service/surface/harness plans | Runtime compiler | Bootgraph, process runtime, adapters |
 | Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; then `ProvisionedProcess` with managed runtime, resource values, finalizers, and owner-local findings | Pre-acquisition runtime config for decoded values; bootgraph for metadata; Effect provisioning kernel for `ProvisionedProcess` | Provisioning kernel; then process runtime |
@@ -2116,7 +2133,14 @@ All declarations are import-safe.
 
 A service, plugin, resource, provider, app, or profile module declares facts, factories, descriptors, selectors, schemas, and contracts. Importing a declaration does not acquire resources, read secrets, connect providers, start processes, register globals, mutate app composition, or mount native hosts.
 
-A provider may contain Effect-native acquisition code, but it remains cold until provisioning. A plugin may contain native oRPC, Inngest-shaped, OCLIF, web, OpenShell, desktop, or host declarations, but those declarations remain cold until `deriveRuntimeArtifacts(...)` is invoked through `@habitat-ai/sdk/runtime/derivation`, the runtime compiler compiles, the provisioning kernel provisions, the process runtime binds, the surface adapters lower, and the harnesses mount. A preserved web route-module loader remains cold and distinct from an Effect execution descriptor throughout derivation.
+Cold definition-to-selection production is distinct from live start.
+`defineEntrypoint(...)` may synchronously inspect its supplied app, profile, and process declarations
+and publish only an accepted frozen `Entrypoint`; it never starts a process or
+invokes authored executable code. More generally, a pure lifecycle boundary
+must refuse invalid input before publishing output or performing executable
+work, not merely before an external side effect.
+
+A provider may contain Effect-native acquisition code, but it remains cold until provisioning. A plugin may contain native oRPC, Inngest-shaped, OCLIF, web, OpenShell, desktop, or host declarations, but runtime derivation reaches those selected declarations only through the accepted `Entrypoint`; they remain cold while `deriveRuntimeArtifacts(...)` runs through `@habitat-ai/sdk/runtime/derivation`, the runtime compiler compiles, the provisioning kernel provisions, the process runtime binds, the surface adapters lower, and the harnesses mount. A preserved web route-module loader remains cold and distinct from an Effect execution descriptor throughout derivation.
 
 ### 10.4 Runtime derivation and SDK facade
 
@@ -2504,6 +2528,7 @@ Each boundary names the architecture-spec section that establishes it, the runti
 | Boundary name | Arch-spec section | Runtime-spec section | Naming owner | Mechanics owner | Named interface contract types | Companion specs that attach |
 |---|---|---|---|---|---|---|
 | Lifecycle vocabulary | §10.2 | §24.2, §22.1 | Arch-spec: canonical phase names | Runtime-spec: phase implementation, diagnostics, telemetry correlation | Seven phase names: `definition`, `selection`, `derivation`, `compilation`, `provisioning`, `mounting`, `observation` | Runtime realization spec; TBD: deployment spec |
+| Definition-to-selection handoff | §9.5, §10.2–§10.3 | §10.3, §15.1, §24.2, §27 | Arch-spec: `Entrypoint` as the sole cold selection artifact and `defineEntrypoint(...)` as its producer | Runtime-spec: exact inputs, agreement refusal, freezing, and non-execution mechanics | `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, `RuntimeLaunchIdentity`, `Entrypoint` | Runtime realization spec |
 | Runtime derivation handoff | §10.4 | §15 | Arch-spec: sole public face, finite export inventory, artifact category names, exact top-level result, and private-foundation/public-completion split | Runtime-spec: exact schemas and method signatures, portability classification, ordering/refusal law, and producer/consumer contracts | Private `NormalizedRuntimeTopology`; structurally reachable nonexported `NormalizedAuthoringGraph`; complete `PortableRuntimePlanArtifact`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef` / `ExecutionDescriptorTable` (non-portable), and distinct `WebRouteModuleRef` / `WebRouteModuleTable` (non-portable) | Runtime realization spec |
 | Runtime compiler | §10.5 | §16 | Arch-spec: compiler role in the chain | Runtime-spec: validation list, CompiledProcessPlan shape, emission contract | `CompiledProcessPlan`, `CompiledServiceBindingPlan`, `CompiledExecutionPlan` | Runtime realization spec |
 | Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: Habitat-vs-Effect control split naming | Runtime-spec: bootgraph ordering, Effect kernel construction, ProvisionedProcess, rollback mechanics | `Bootgraph`, `ProvisionedProcess` | Runtime realization spec |
@@ -2908,8 +2933,10 @@ The server process stack is:
 ```text
 services/*
   -> plugins/server/api/* and plugins/server/internal/*
-  -> AppDefinition
-  -> startApp(...)
+  -> AppDefinition + RuntimeProfile + ProcessDefinition + separate exact launch identity
+  -> defineEntrypoint(...)
+  -> Entrypoint
+  -> future startApp(...)
   -> @habitat-ai/sdk facade
   -> runtime derivation
   -> runtime compiler
@@ -2941,8 +2968,10 @@ The async process stack is:
 ```text
 services/*
   -> plugins/async/workflows/*, schedules/*, consumers/*
-  -> AppDefinition
-  -> startApp(...)
+  -> AppDefinition + RuntimeProfile + ProcessDefinition + separate exact launch identity
+  -> defineEntrypoint(...)
+  -> Entrypoint
+  -> future startApp(...)
   -> @habitat-ai/sdk facade
   -> runtime derivation
   -> runtime compiler
@@ -2985,8 +3014,10 @@ The CLI process stack is:
 ```text
 services/*
   -> plugins/cli/topics/*
-  -> AppDefinition
-  -> startApp(...)
+  -> AppDefinition + RuntimeProfile + ProcessDefinition + separate exact launch identity
+  -> defineEntrypoint(...)
+  -> Entrypoint
+  -> future startApp(...)
   -> deriveRuntimeArtifacts(...) through @habitat-ai/sdk/runtime/derivation
   -> runtime compiler
   -> bootgraph and provisioning kernel
@@ -3016,8 +3047,10 @@ The web process stack is:
 ```text
 services/* and selected API/client surfaces
   -> plugins/web/app/*
-  -> AppDefinition
-  -> startApp(...)
+  -> AppDefinition + RuntimeProfile + ProcessDefinition + separate exact launch identity
+  -> defineEntrypoint(...)
+  -> Entrypoint
+  -> future startApp(...)
   -> @habitat-ai/sdk facade
   -> runtime derivation
   -> runtime compiler
@@ -3045,8 +3078,10 @@ The agent process stack is:
 ```text
 services/*, resources/*, and agent policy hooks
   -> plugins/agent/channels/*, shell/*, tools/*
-  -> AppDefinition
-  -> startApp(...)
+  -> AppDefinition + RuntimeProfile + ProcessDefinition + separate exact launch identity
+  -> defineEntrypoint(...)
+  -> Entrypoint
+  -> future startApp(...)
   -> @habitat-ai/sdk facade
   -> runtime derivation
   -> runtime compiler
@@ -3093,8 +3128,10 @@ The desktop process stack is:
 ```text
 services/*, resources/*, and desktop host resources
   -> plugins/desktop/menubar/*, windows/*, background/*
-  -> AppDefinition
-  -> startApp(...)
+  -> AppDefinition + RuntimeProfile + ProcessDefinition + separate exact launch identity
+  -> defineEntrypoint(...)
+  -> Entrypoint
+  -> future startApp(...)
   -> @habitat-ai/sdk facade
   -> runtime derivation
   -> runtime compiler
@@ -3694,12 +3731,19 @@ RuntimeAccess != diagnostics
 ### 17.4 App and entrypoint invariants
 
 - `defineApp(...)` produces the app definition;
+- synchronous `defineEntrypoint(...)` produces the sole cold selection artifact
+  from real app, profile, and process definitions, one entrypoint id, and the
+  exact five-field launch identity;
+- `defineEntrypoint(...)` refuses app/process/entrypoint identity disagreement
+  with built-in `TypeError` before publishing output or invoking authored
+  executable code; error text and check order are noncontractual;
 - app composition is upstream of process start;
 - app composition selects plugin membership;
 - app composition does not own runtime realization;
 - the selected runtime profile owns provider selections, ordered config
   sources, process defaults, and harness defaults;
-- `startApp(...)` starts exactly one process runtime assembly;
+- future `startApp(...)` consumes the exact accepted `Entrypoint`, reconstructs
+  no selection, and starts exactly one process runtime assembly;
 - role selection remains explicit;
 - entrypoints stay thin.
 
@@ -3762,6 +3806,9 @@ RuntimeAccess != diagnostics
 ### 17.8 Runtime subsystem invariants
 
 - runtime realization follows `definition -> selection -> derivation -> compilation -> provisioning -> mounting -> observation`;
+- `Entrypoint` is the sole cold selection artifact; identity agreement is
+  enforced primarily by `defineEntrypoint(...)` before publication and retained
+  defensively by derivation for a corrupted or substituted selected artifact;
 - the foundational derivation handoff is private `NormalizedRuntimeTopology` only: exact launch identity, profile id, sorted plugin identities, role/surface/resource requirements, five admitted edge kinds, refusal of duplicate plugin identities, process-role literals, surface full tuples, and full edge tuples, shared resource demand across distinct plugins, and order-independent refusal of service self-loops and longer cycles; task 4.7 fixes no error class, chosen cycle path, diagnostic order, or finding payload;
 - exactly one public derivation face exists at `@habitat-ai/sdk/runtime/derivation`, with exactly the three runtime values and finite type-only inventory in §5.1 and no public error API;
 - `deriveRuntimeArtifacts(...)` returns exactly `topology`, `graph`, `executionDescriptorTable`, `webRouteModuleTable`, and `portableArtifact`, with `graph.topology === topology`;
@@ -3940,7 +3987,7 @@ flowchart LR
     A["apps/<app>"]
     M["<app>.app.ts\nAppDefinition"]
     RP["one runtime profile\nprovider selections + ordered config sources"]
-    E["entrypoints\nstartApp(...)"]
+    E["Entrypoint\ndefineEntrypoint(...)"]
   end
 
   subgraph Derivation["Runtime derivation"]
@@ -4007,8 +4054,8 @@ definition
   service / plugin / resource / provider / app / profile declarations
 
 selection
-  AppDefinition + one runtime profile containing provider selections and ordered config
-  sources + process roles + entrypoint
+  defineEntrypoint produces one frozen Entrypoint from AppDefinition + one runtime profile
+  containing provider selections and ordered config sources + ProcessDefinition + exact identity
 
 derivation
   private runtime-derivation first emits NormalizedRuntimeTopology only:
@@ -4048,7 +4095,7 @@ observation
 The canonical public SDK family is:
 
 ```text
-app: defineApp(...), startApp(...)
+app: defineApp(...), defineEntrypoint(...), startApp(...)
 service: defineService(...), resourceDep(...), serviceDep(...), semanticDep(...)
 plugins: role/surface builders plus useService(...)
 runtime resources: defineRuntimeResource(...), defineRuntimeProvider(...), defineRuntimeProfile(...), providerSelection(...), RuntimeSchema
