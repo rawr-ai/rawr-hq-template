@@ -17,8 +17,12 @@
 - Definitions may describe apps, services, plugins, resources, providers,
   Effects, and observations, but never start, acquire, mount, supervise, or
   project live read models.
-- Provider effect plans and provider selection belong to later accepted tasks;
-  this owner currently exposes only provider identity and config metadata.
+- The flat `src/profile.ts` module owns the cold object-shaped
+  `providerSelection(...)` authoring grammar. The terminal SDK projects that
+  helper only through `@habitat-ai/sdk/runtime/profiles`; it does not become a
+  second definition owner.
+- Provider Effect plans and acquisition remain later runtime responsibilities
+  and are not admitted by the cold helper.
 - The process catalog is app-owned cold data. It is not a kind, child project,
   registry, supervisor, deployment unit, or cross-process controller.
 - Deployment supplies launch identity once. Habitat copies and freezes its
@@ -27,6 +31,7 @@
 ## Interfaces
 
 - Private assembly interface: `src/index.ts`.
+- Cold provider-selection authoring owner: `src/profile.ts`.
 - Terminal public projections belong to the `@habitat-ai/sdk` facade.
 - Nx scheduler identity: `runtime-definition`.
 

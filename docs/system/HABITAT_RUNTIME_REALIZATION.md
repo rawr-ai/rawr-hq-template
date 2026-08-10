@@ -3757,7 +3757,8 @@ same name on `@habitat-ai/sdk/runtime/derivation`.
 
 The public authoring operation is projected only through
 `@habitat-ai/sdk/runtime/profiles`; no second provider-selection implementation
-or SDK face is admitted.
+or SDK face is admitted. This cold grammar does not admit provider Effect
+plans or acquisition; those remain later runtime responsibilities.
 
 ```ts
 export interface ProviderSelection<
@@ -7658,6 +7659,17 @@ definition membership and must enter through `deriveRuntimeArtifacts(...)`;
 arbitrary property or project-facts scanning, casts, synthesized owner or ref
 values, and direct test-only table injection are not derivation proof.
 
+Task 4.7d is the final documentation-only correction before task 4.8. Across
+the prior eight authority documents plus
+`packages/core/runtime/definition/AGENTS.md`, it admits that existing router as
+the eighth behavior-companion file solely for ownership documentation. It
+changes no implementation, source, test, blueprint, SDK surface, or
+publication/assembly corpus, and immutable `runtime-derivation@1` remains
+unchanged. The router records that cold `providerSelection(...)` grammar is
+runtime-definition-owned in flat `profile.ts` and projected only through
+`@habitat-ai/sdk/runtime/profiles`; provider Effect plans and acquisition
+remain later runtime responsibilities.
+
 Task 4.8 implements this document's combined §§11.8, 13.5, 15, 23.1, and 27
 contract. It creates exactly the independent complete definition closure below:
 
@@ -7709,9 +7721,10 @@ derivation face. Task 4.9 edits these existing modules rather than adding a
 source or test file. Tasks 4.10 and 4.11 add their assertions to
 `complete-derivation.test.ts`.
 
-Task 4.8's exact seven-file behavior companion corpus is:
+Task 4.8's exact eight-file behavior companion corpus is:
 
 ```text
+packages/core/runtime/definition/AGENTS.md
 packages/core/runtime/definition/src/service.ts
 packages/core/runtime/definition/src/profile.ts
 packages/core/runtime/definition/test/definition.test.ts
@@ -7721,10 +7734,13 @@ packages/core/sdk/test/runtime-authoring-public-faces.test.ts
 apps/habitat/test/installed-package.test.ts
 ```
 
-Those seven existing files alone evolve or prove the companion authoring,
-facade, and installed behavior. Task 4.8 creates no file, project, blueprint, or
-blueprint version for `runtime-definition`. `providerSelection(...)` remains
-exposed only through `@habitat-ai/sdk/runtime/profiles`.
+Those eight existing files alone evolve, route, or prove the companion
+authoring, facade, and installed behavior. The router changes only ownership
+documentation. Task 4.8 creates no file, project, blueprint, or blueprint
+version for `runtime-definition`. The flat runtime-definition `profile.ts`
+owns cold `providerSelection(...)` grammar, which remains projected only
+through `@habitat-ai/sdk/runtime/profiles`; provider Effect plans and
+acquisition remain later work.
 
 The behavior corpus is distinct from the finite publication/assembly corpus,
 which is exactly:
@@ -7753,7 +7769,8 @@ apps/habitat/test/installed-package.test.ts
 The two acceptance files intentionally belong to both corpora; the distinction
 is behavioral responsibility versus publication/assembly responsibility, not
 disjoint membership. No other publication or assembly file is part of task
-4.8.
+4.8. In particular, `packages/core/runtime/definition/AGENTS.md` is not added
+to the publication/assembly corpus.
 
 Within that corpus, the existing runtime-derivation `AGENTS.md` describes the
 complete owner, the existing `habitat.toml` changes only its selected version,

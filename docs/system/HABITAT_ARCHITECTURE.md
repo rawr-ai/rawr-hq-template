@@ -1541,9 +1541,11 @@ invalid; a provider without a config schema forbids a key and `configRef`.
 Provisioning, not selection or derivation, resolves the ref and decodes the
 value against the provider-owned schema before acquisition.
 
-Provider selection authority remains with the app profile. The SDK constructor
-supplies the sole authoring relationship while complete derivation produces the
-one normalized public record grammar, and
+Provider selection authority remains with the app profile. The private
+runtime-definition profile module owns the cold constructor grammar, and the
+SDK facade supplies its sole public projection while complete derivation
+produces the one normalized public record grammar. Provider Effect plans and
+acquisition remain later runtime responsibilities, and
 `RuntimeProfile.providers` is the one selected-record destination. The resource
 family exposes the contract and admitted provider faces defined in §7.8.
 
@@ -2166,6 +2168,15 @@ alone does not own all task-4.8 mechanics.
 Task 4.7c is a documentation-only authority correction. Its exact current
 execution-population and derivation-proof boundary is routed to runtime
 realization §§9.3, 15.3, and 27 rather than duplicated here.
+
+Task 4.7d is the final documentation-only routing correction before task 4.8.
+It admits `packages/core/runtime/definition/AGENTS.md` as the eighth existing
+task-4.8 behavior-companion file solely to document ownership and routing,
+making this correction's authority surface nine documents. The publication
+corpus is unchanged. Cold `providerSelection(...)` grammar belongs to the flat
+runtime-definition profile module and is projected only through
+`@habitat-ai/sdk/runtime/profiles`; provider Effect plans and acquisition
+remain later runtime responsibilities.
 
 The sole public derivation operation is exactly `deriveRuntimeArtifacts`. It
 accepts the closed `{ entrypoint, profileId }` input and returns exactly

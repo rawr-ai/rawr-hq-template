@@ -365,10 +365,10 @@ MUST NOT require or authorize an SDK edge or export, complete
 
 ### Requirement: Complete-derivation authority corrections are closed before implementation
 
-The task-4.7a, task-4.7b, and task-4.7c authority gates MUST remain closed by
-the canonical routing and acceptance ownership recorded here. All three MUST
+The task-4.7a, task-4.7b, task-4.7c, and task-4.7d authority gates MUST remain closed by
+the canonical routing and acceptance ownership recorded here. All four MUST
 remain documentation-only corrections and leave immutable topology-only
-`runtime-derivation@1` unchanged. Only after task 4.7c is complete MUST task 4.8
+`runtime-derivation@1` unchanged. Only after task 4.7d is complete MUST task 4.8
 become the sole source owner of independent `runtime-derivation@2`.
 
 Task 4.7a MUST remain an authority-only correction across exactly eight
@@ -403,7 +403,20 @@ changes no implementation, source, test, project, blueprint, SDK edge, export
 map, public export, stage, or commit, and it does not widen or otherwise change
 either exact task-4.8 corpus.
 
-Only after that correction is sealed, task 4.8 MUST select independent
+Task 4.7d MUST remain the final documentation-only correction before task 4.8.
+Its exact nine-document surface is the prior eight authority documents plus
+`packages/core/runtime/definition/AGENTS.md`. It admits that existing router as
+the eighth task-4.8 behavior-companion file solely for ownership and routing
+documentation and leaves the publication/assembly corpus unchanged. It records
+that cold object-shaped `providerSelection(...)` grammar belongs to flat
+runtime-definition `profile.ts` and is projected only through
+`@habitat-ai/sdk/runtime/profiles`; provider Effect plans and acquisition
+remain later runtime responsibilities. It changes no
+implementation, source, test, project, blueprint, SDK edge, export map, public
+export, stage, or commit, and immutable `runtime-derivation@1` remains
+unchanged.
+
+Only after task 4.7d is sealed, task 4.8 MUST select independent
 no-inheritance/no-fallback
 `runtime-derivation@2` and implement those canonical sections without widening
 them. It MUST create exactly the independent blueprint closure
@@ -424,7 +437,8 @@ root shell has no `package.json`. Its exact source closure is `index.ts`,
 `nx-cache.test.ts`. Tasks 4.9 through 4.11 MAY only edit those admitted
 version-2 modules/tests. No optional interior or alternate test is admitted.
 
-The exact seven-file task-4.8 behavior companion corpus is the existing
+The exact eight-file task-4.8 behavior companion corpus is the existing
+`packages/core/runtime/definition/AGENTS.md`,
 `packages/core/runtime/definition/src/service.ts`,
 `packages/core/runtime/definition/src/profile.ts`,
 `packages/core/runtime/definition/test/definition.test.ts`,
@@ -434,7 +448,9 @@ The exact seven-file task-4.8 behavior companion corpus is the existing
 `apps/habitat/test/installed-package.test.ts`. It evolves only the private
 `ServiceUse` carrier in `service.ts` and adds the cold object-shaped
 `providerSelection(...)` helper to the flat `profile.ts`; that helper MUST be
-exported only through `@habitat-ai/sdk/runtime/profiles`.
+exported only through `@habitat-ai/sdk/runtime/profiles`. Task 4.7d already
+corrected the router, and task 4.8 MUST retain it unchanged as the eighth
+routing companion; it is not implementation or publication authority.
 
 The separate exact task-4.8 publication/assembly corpus is `.gitattributes`;
 `.habitat/AUTHORITY.md`, `.habitat/AUTHORITY-ONTOLOGY.md`, and
@@ -450,9 +466,9 @@ The separate exact task-4.8 publication/assembly corpus is `.gitattributes`;
 blueprint files named in this requirement. Task 4.8 MUST create no new
 `runtime-definition` file, project, blueprint, or blueprint version and no
 other blueprint kind, version, or project.
-Tasks 4.7b and 4.7c add no source or test file, and
+Tasks 4.7b, 4.7c, and 4.7d add no source or test file, and
 `packages/core/runtime/definition/src/execution.ts` MUST remain outside task
-4.8 and unchanged; the exact source/test, seven-file behavior-companion, and
+4.8 and unchanged; the exact source/test, eight-file behavior-companion, and
 separate publication/assembly corpora above remain otherwise exact.
 
 The SDK policy pack MUST grow from exactly 11 to exactly 13 sorted members by
@@ -783,7 +799,7 @@ Task 4.8 MUST implement canonical `HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5,
 15, 23.1, and 27 through the sole `@habitat-ai/sdk/runtime/derivation` face and
 the archive-safe acceptance requirement/scenarios in this capability under
 independent `runtime-derivation@2`. It MUST remain synchronous and import-safe,
-retain the exact source/test closure, exact seven-file behavior companion
+retain the exact source/test closure, exact eight-file behavior companion
 corpus, and separate exact publication/assembly corpus named by the acceptance
 requirement, create no new `runtime-definition` file/project/blueprint/version
 or any other kind/version/project, call private topology once, preserve

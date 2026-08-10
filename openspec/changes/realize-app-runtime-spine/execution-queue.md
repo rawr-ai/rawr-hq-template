@@ -38,13 +38,15 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.7c are sealed. The authority-only complete-derivation-contract,
+  4.1 through 4.7d are sealed. The authority-only complete-derivation-contract,
   binding-source, execution-identity, async-lowering, service-resource,
   execution-population, and public-entrypoint corrections changed no source and
-  retained the exact
-  eight-document scope: `HABITAT_ARCHITECTURE.md` routes,
+  retained the exact eight-document scope through task 4.7c:
+  `HABITAT_ARCHITECTURE.md` routes,
   `HABITAT_RUNTIME_REALIZATION.md` is the sole exact canonical document, and six
-  active OpenSpec artifacts preserve acceptance. Only after completed task 4.7c,
+  active OpenSpec artifacts preserve acceptance. Task 4.7d adds only the
+  runtime-definition router for a final nine-document authority surface and
+  eighth behavior-companion file. Only after completed task 4.7d,
   task 4.8 is the sole active node and MUST follow canonical §§11.8, 13.5, 15,
   23.1, and 27 plus the active
   `app-runtime-realization` requirement/scenarios under independent
@@ -283,7 +285,7 @@ The active queue has one bounded source node:
 
 1. execute task 4.8 under independent no-inheritance/no-fallback
    `runtime-derivation@2` through the canonical sections and active acceptance
-   owner. Tasks 4.7a through 4.7c are complete; no contract choice remains open in
+   owner. Tasks 4.7a through 4.7d are complete; no contract choice remains open in
    source.
 
 ## Task 4.7a Authority Routing
@@ -317,9 +319,23 @@ actual SDK export with one async occurrence and one lazy web loader; arbitrary
 properties, project facts, casts, synthesized refs, and direct table fixtures
 cannot substitute. It changes no source or exact task-4.8 corpus.
 
+## Task 4.7d Authority Routing
+
+Task 4.7d is sealed without an implementation node across exactly nine
+documents: the prior eight authority documents plus
+`packages/core/runtime/definition/AGENTS.md`. It admits that existing router as
+the eighth task-4.8 behavior-companion file solely for ownership and routing
+documentation and leaves the publication/assembly corpus unchanged. Flat
+runtime-definition `profile.ts` owns cold object-shaped
+`providerSelection(...)` grammar, projected only through
+`@habitat-ai/sdk/runtime/profiles`; provider Effect plans and acquisition
+remain later runtime responsibilities. It changes no
+implementation, source, test, project, blueprint, SDK surface, or immutable
+version-1 law.
+
 Only after that completed correction, task 4.8 is the sole active source node
 under independent
-`runtime-derivation@2`, with the exact runtime-derivation closure, seven-file
+`runtime-derivation@2`, with the exact runtime-derivation closure, eight-file
 behavior companion corpus, and separate publication/assembly corpus named by
 the active spec. It proves cold
 source/ref normalization, binding ids/equal-diamond deduplication, exact public
@@ -335,12 +351,14 @@ write authority with the active one:
    `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
    closure, select version 2 in the existing derivation `habitat.toml`, retain
    the exact root shell, and use only the twelve named source files and three
-   named tests. Task 4.8 also evolves only the seven-file behavior companion
+   named tests. Task 4.8 also evolves only the eight-file behavior companion
    corpus named by the active requirement: the private binding carrier in
    `service.ts`, cold
    `providerSelection(...)` in flat `profile.ts`, its SDK service/profile
-   projections and existing definition/SDK/installed acceptance. The separate
-   exact publication/assembly corpus owns the new SDK derivation face and
+   projections, and existing definition/SDK/installed acceptance; it retains
+   the already-corrected runtime-definition router unchanged as the eighth
+   routing companion. The separate exact publication/assembly corpus owns the
+   new SDK derivation face and
    version-2 law, SDK pack growth from 11 to 13 sorted members, blueprint
    copy/input growth from eight to nine directories, exact LF rule, and
    installed parity/provenance/public-import/application proof. It creates no
