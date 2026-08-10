@@ -188,19 +188,26 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 The active queue has one bounded node:
 
-1. execute task 4.3 as the sole active node: author the cold `ProcessView`,
-   `RoleView`, `ServiceBoundary`, and `ServiceBinding` declarations in
-   `runtime-definition` and the SDK service face. Leave live `BoundService`,
-   `bindService`, and cache mechanics for task 8.3.
+1. execute task 4.3 as the sole active node: author only the cold
+   `useService(...) -> ServiceUse<TContract>` relation in `runtime-definition`
+   and the terminal SDK service face. Seal `kind: "service.use"`, exact
+   `serviceId`, optional genuine `serviceInstance`, services-map-key client
+   inference, and the private non-enumerable definition/contract carrier. Admit
+   no `ProcessView`, `RoleView`, `ServiceBoundary`, author-facing
+   `ServiceBinding`, public service/contract field, alias identity, five-lane
+   context, normalized/binding plan, live client, binding, or cache. Task 4.5
+   owns the five lanes, task 4.8 owns normalization and `ServiceBindingPlan`, and
+   consolidated task 8.2 owns live `BoundService`, `bindService`, cache-key
+   construction, and `ServiceBindingCache`.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
 1. **Cold definition (`4.3-4.6`)**: continue from the sealed
-   runtime-definition and plugin-face base through service-view, reader-binding,
-   service-context, and web declarations without acquisition, native hosts, or
-   `app@2`.
+   runtime-definition and plugin-face base through the one cold `ServiceUse`
+   relation, reader binding, five-lane service context, and web declarations
+   without acquisition, native hosts, or `app@2`.
 2. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
    deployment-safe cold portable process plan. Land the definition-owned
    provider-effect plan from `6.1` after provider selection and before the

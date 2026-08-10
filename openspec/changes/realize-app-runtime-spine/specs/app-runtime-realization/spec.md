@@ -234,6 +234,66 @@ lifecycle authority.
 - **AND** the plan neither starts, stops, supervises, nor claims readiness for a
   process
 
+### Requirement: Service use is one cold typed relation
+
+Plugin authoring MUST declare projected service clients only through
+`useService(serviceDefinition, { contract, instance? })`. The operation MUST
+produce a frozen `ServiceUse<TContract>` whose public enumerable shape contains
+only `kind: "service.use"`, the exact definition `serviceId`, and optional
+`serviceInstance`. `serviceInstance` MUST be present only when composition
+selects a genuine distinct instance. The containing services-map key MUST remain
+the consumer-local injected-client property and MUST NOT become an alias,
+service identity, binding identity, or cache-key ingredient. The public relation
+MUST NOT expose the service definition, contract object, or an `alias` field.
+
+`runtime-definition` MUST retain the exact service definition and contract
+witness in a private non-enumerable symbol-keyed carrier. Only private runtime
+owners MAY use its internal accessor; the SDK MUST NOT export the carrier symbol
+or accessor. `ServiceContractOf` and services-map client projection MUST infer
+the exact contract while preserving every authored map key without a dynamic
+lookup. Every terminal SDK plugin face that admits service use MUST re-export
+the same `useService` helper rather than define a lane-local variant. Runtime
+derivation MUST normalize each `ServiceUse` and produce its
+`ServiceBindingPlan` with closed declarative scope/config binding-reference
+discriminants and no callback or executable resolver. The compiler MUST consume
+that derived plan, and only process runtime MAY construct or cache live service
+bindings.
+
+#### Scenario: A plugin declares one service use
+
+- **WHEN** a plugin places `useService(...)` under a services-map key
+- **THEN** the frozen public record contains `kind`, `serviceId`, and only a
+  genuinely selected `serviceInstance` when one was supplied
+- **AND** enumeration reveals no `service`, `contract`, `alias`, callback, live
+  client, or binding plan
+- **AND** the services-map key remains only the injected-client property name
+
+#### Scenario: Service-use inference is checked
+
+- **WHEN** TypeScript projects construction-bound or invocation-bound clients
+  from a services map
+- **THEN** every map key is preserved and `ServiceContractOf` resolves the exact
+  contract carried by its `ServiceUse<TContract>`
+- **AND** no public runtime lookup or duplicate contract field is required
+- **AND** server and async SDK faces expose the identical `useService` helper
+
+#### Scenario: A private runtime owner normalizes service use
+
+- **WHEN** runtime derivation receives the cold relation
+- **THEN** the private accessor recovers the exact definition and contract
+  witness from the non-enumerable carrier
+- **AND** derivation emits the normalized use and `ServiceBindingPlan` with only
+  closed declarative scope/config binding references
+- **AND** live binding, cache-key construction, and cache ownership remain
+  absent until process runtime
+
+#### Scenario: Predecessor service views are attempted
+
+- **WHEN** authoring introduces `ProcessView`, `RoleView`, `ServiceBoundary`, an
+  author-facing `ServiceBinding`, cosmetic alias identity, or a callback-backed
+  binding reference
+- **THEN** the declaration is rejected before derivation
+
 ### Requirement: Resource and provider selection has one direct authoring owner
 
 A resource package MUST expose one provider-neutral root face. Each concrete

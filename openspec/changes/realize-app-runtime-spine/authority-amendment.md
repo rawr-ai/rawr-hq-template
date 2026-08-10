@@ -134,6 +134,33 @@ The following later landed sources supersede only the named frozen clauses:
 These amendments change placement and selection ownership; they do not change
 the frozen realization phases or authorize a second runtime.
 
+## Service-Use Authority Correction
+
+Task 4.3 owns one cold authoring relation only. `useService(serviceDefinition,
+{ contract, instance? })` produces a frozen `ServiceUse<TContract>` whose public
+enumerable shape is `kind: "service.use"`, the exact definition `serviceId`, and
+an optional `serviceInstance` only when composition selects a genuine distinct
+instance. The containing services-map key is the consumer-local injected-client
+property. It is not an alias, a service identity, a binding identity, or a cache
+key ingredient. The public relation exposes neither the service definition nor
+the contract object.
+
+`runtime-definition` retains the exact definition and contract witness behind a
+non-enumerable symbol-keyed private carrier. Only private runtime owners may use
+its internal accessor; the terminal SDK MUST NOT re-export that symbol or
+accessor. `ServiceContractOf` and services-map client inference remain purely
+TypeScript relationships over `ServiceUse<TContract>` and preserve the authored
+map keys.
+
+Runtime derivation owns normalization of `ServiceUse` and production of
+`ServiceBindingPlan`, including closed declarative scope/config binding-reference
+discriminants with no callbacks or executable resolvers. The SDK service owner
+separately owns the five context lanes. Process runtime alone owns live
+`BoundService`, `bindService`, cache-key construction, and
+`ServiceBindingCache`. `ProcessView`, `RoleView`, `ServiceBoundary`, an
+author-facing `ServiceBinding`, public `service`/`contract` fields, and cosmetic
+alias identity are rejected predecessor vocabulary and preserve no public API.
+
 ## Official Effect Runtime Source Authority
 
 The exact `effect@4.0.0-beta.101` source installed in this repository governs
