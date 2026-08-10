@@ -481,6 +481,67 @@ describe("complete runtime derivation", () => {
     expect(Object.isFrozen(webEntries)).toBe(true);
   });
 
+  test("completes the real selection handoff and defensively refuses every disagreement", () => {
+    const { counters, entrypoint, profileId } = makeFixture();
+    const result = deriveRuntimeArtifacts({ entrypoint, profileId });
+
+    expect(result.topology.identity).toEqual(entrypoint.identity);
+    expect(result.topology.profileId).toBe(profileId);
+    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+
+    const appMismatch = Object.freeze({
+      ...entrypoint,
+      identity: Object.freeze({ ...entrypoint.identity, app: "corrupt.app" }),
+    });
+    let appMismatchResult: RuntimeDerivationResult | undefined;
+    expect(() => {
+      appMismatchResult = deriveRuntimeArtifacts({
+        entrypoint: appMismatch,
+        profileId,
+      });
+    }).toThrow(TypeError);
+    expect(appMismatchResult).toBeUndefined();
+    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+
+    const processMismatch = Object.freeze({
+      ...entrypoint,
+      identity: Object.freeze({ ...entrypoint.identity, process: "corrupt.process" }),
+    });
+    let processMismatchResult: RuntimeDerivationResult | undefined;
+    expect(() => {
+      processMismatchResult = deriveRuntimeArtifacts({
+        entrypoint: processMismatch,
+        profileId,
+      });
+    }).toThrow(TypeError);
+    expect(processMismatchResult).toBeUndefined();
+    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+
+    const entrypointMismatch = Object.freeze({
+      ...entrypoint,
+      identity: Object.freeze({ ...entrypoint.identity, entrypoint: "corrupt.entrypoint" }),
+    });
+    let entrypointMismatchResult: RuntimeDerivationResult | undefined;
+    expect(() => {
+      entrypointMismatchResult = deriveRuntimeArtifacts({
+        entrypoint: entrypointMismatch,
+        profileId,
+      });
+    }).toThrow(TypeError);
+    expect(entrypointMismatchResult).toBeUndefined();
+    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+
+    let profileMismatchResult: RuntimeDerivationResult | undefined;
+    expect(() => {
+      profileMismatchResult = deriveRuntimeArtifacts({
+        entrypoint,
+        profileId: "corrupt.profile",
+      });
+    }).toThrow(TypeError);
+    expect(profileMismatchResult).toBeUndefined();
+    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+  });
+
   test("returns fresh deterministic schema data while preserving table executable references", () => {
     const firstFixture = makeFixture();
     const secondFixture = makeFixture();
