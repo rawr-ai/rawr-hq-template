@@ -1,0 +1,44 @@
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "runtime-derivation",
+  "root": "packages/core/runtime/derivation",
+  "sourceRoot": "packages/core/runtime/derivation/src",
+  "projectType": "library",
+  "tags": ["type:runtime", "capability:habitat", "role:runtime-derivation"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bunx tsc -p packages/core/runtime/derivation/tsconfig.json --noEmit",
+          "bunx tsc -p packages/core/runtime/derivation/tsconfig.test.json --noEmit"
+        ]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "parallelism": false,
+      "options": {
+        "command": "bun test packages/core/runtime/derivation/test"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsdown --config packages/core/runtime/derivation/tsdown.config.ts"
+      }
+    },
+    "acceptance:normalized-topology": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "outputs": [],
+      "options": {
+        "command": "bun test packages/core/runtime/derivation/test/normalized-topology.test.ts"
+      }
+    },
+    "check": {
+      "executor": "nx:noop"
+    }
+  }
+}

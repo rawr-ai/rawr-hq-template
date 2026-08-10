@@ -49,6 +49,7 @@
 - [Public Habitat SDK](sdk/AGENTS.md)
 - [Private runtime-schema owner](runtime/schema/AGENTS.md)
 - [Private runtime-definition owner](runtime/definition/AGENTS.md)
+- [Private runtime-derivation owner](runtime/derivation/AGENTS.md)
 
 ## Validation
 

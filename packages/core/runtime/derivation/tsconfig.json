@@ -1,0 +1,20 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo",
+    "types": ["bun-types"]
+  },
+  "include": ["src"],
+  "references": [
+    {
+      "path": "../schema"
+    },
+    {
+      "path": "../definition"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+schemaVersion = 1
+id = "runtime-derivation"
+version = 1
+
+[[rules]]
+id = "runtime_derivation_v1_structure"
+lane = "enforced"
+message = "The runtime derivation owner must remain one package-less topology-only project with its exact source and proof faces."
+remediate = "Restore the runtime-derivation project shell, two topology source modules, and two owner-local proofs without adding package, SDK, complete-derivation, provider, execution, or lifecycle authority."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
