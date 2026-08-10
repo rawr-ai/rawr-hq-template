@@ -38,7 +38,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 and 4.2 are sealed; the active source container is now task 4.3.
+  4.1 through 4.3 are sealed; the active source container is now task 4.4.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -83,6 +83,18 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   and Windows, and push-to-main Repository Ratchet run `31376301029` passed the
   complete platform graph. No native host, MCP face, live runtime owner, or
   dispatcher materialization landed early.
+- Task 4.3 is sealed at Habitat
+  `main@da74c92df9164c67ca2b8622bb8f297f806802f9` / tree
+  `b8c48d572839eef34e2dfa55239bde4cb720731b`. The sole cold
+  `ServiceUse<TContract>` relation carries only exact service identity and an
+  optional genuine instance identity publicly, retains the definition and
+  contract behind a private non-enumerable carrier, and preserves exact
+  services-map keys across every server and async declaration. PR #947 passed
+  Repository Ratchet and installed-package acceptance on Ubuntu and Windows;
+  push-to-main Repository Ratchet run `31381519180` passed the complete
+  platform graph. No provider selection, normalized or compiled binding plan,
+  five-lane context, live client, binding cache, host, or runtime surface
+  landed early.
 - Task 1.7 records Magic's committed consumer oracle
   `ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7` / tree
   `2b3c99700d5db8264b7ee42910575e8b877bda3a`, separately from clean blueprint
@@ -185,29 +197,34 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   topology-specific server/internal authoring face, the official
   implementation-owned Effect-oRPC bootstrap, host-neutral async declarations,
   and complete `service@3` without a native host or live runtime owner.
+- [x] **Cold service use**: task 4.3 establishes the one frozen
+  `useService(...) -> ServiceUse<TContract>` relation, exact service and
+  optional instance identity, private definition/contract carriage, and
+  map-key-preserving inference across the terminal SDK service, server, and
+  async faces without live binding or provider selection.
 
 The active queue has one bounded node:
 
-1. execute task 4.3 as the sole active node: author only the cold
-   `useService(...) -> ServiceUse<TContract>` relation in `runtime-definition`
-   and the terminal SDK service face. Seal `kind: "service.use"`, exact
-   `serviceId`, optional genuine `serviceInstance`, services-map-key client
-   inference, and the private non-enumerable definition/contract carrier. Admit
-   no `ProcessView`, `RoleView`, `ServiceBoundary`, author-facing
-   `ServiceBinding`, public service/contract field, alias identity, five-lane
-   context, normalized/binding plan, live client, binding, or cache. Task 4.5
-   owns the five lanes, task 4.8 owns normalization and `ServiceBindingPlan`, and
-   consolidated task 8.2 owns live `BoundService`, `bindService`, cache-key
-   construction, and `ServiceBindingCache`.
+1. execute task 4.4 as the sole active node: audit and seal the post-task-4.3
+   platform-reader boundary without binding a production reader or selecting a
+   provider. Prove analytics/logger doubles remain owner-local, preserve the
+   landed task-4.2 SDK middleware behavior and lifecycle semantic events, and
+   prove the deleted feedback/database/example closures and predecessor generic
+   host-adapter/test-helper package closures remain absent. Task 4.8 owns cold
+   provider selection, consolidated task 8.2 owns live reader binding and
+   cutover, and tasks 11.3/12.1 own Habitat app/profile selection. Create or
+   select no analytics sink, Logger-to-telemetry adapter, resource, provider,
+   package, project, kind, or blueprint in task 4.4.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Cold definition (`4.3-4.6`)**: continue from the sealed
+1. **Cold definition (`4.4-4.6`)**: continue from the sealed
    runtime-definition and plugin-face base through the one cold `ServiceUse`
-   relation, reader binding, five-lane service context, and web declarations
-   without acquisition, native hosts, or `app@2`.
+   relation with the bounded platform-reader audit, five-lane service context,
+   and web declarations without reader binding, acquisition, native hosts, or
+   `app@2`.
 2. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
    deployment-safe cold portable process plan. Land the definition-owned
    provider-effect plan from `6.1` after provider selection and before the
