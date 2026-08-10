@@ -2,6 +2,23 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, test } from "vitest";
 
+import type {
+  ServiceContractOf as AsyncServiceContractOf,
+  ServiceUses as AsyncServiceUses,
+} from "../src/plugins/async";
+import type {
+  ServiceContractOf as ServerServiceContractOf,
+  ServiceUses as ServerServiceUses,
+} from "../src/plugins/server";
+import type { ServiceContractOf, ServiceUses } from "../src/service";
+
+type TypesEqual<TLeft, TRight> =
+  (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2
+    ? (<T>() => T extends TRight ? 1 : 2) extends <T>() => T extends TLeft ? 1 : 2
+      ? true
+      : false
+    : false;
+
 const expectedRuntimeExports = [
   "./app",
   "./effect",
@@ -140,6 +157,44 @@ describe("runtime authoring public faces", () => {
     expect(asyncEffect.defineAsyncStepEffect).toBe(executionDefinitions.defineAsyncStepEffect);
     expect(server.useService).toBe(service.useService);
     expect(asyncPlugin.useService).toBe(service.useService);
+
+    const serviceDefinition = service.defineService({ id: "work-items", deps: {} });
+    const contract = serviceDefinition.oc.router({ read: serviceDefinition.oc });
+    const serviceUse = server.useService(serviceDefinition, { contract });
+    const selectedServiceUse = asyncPlugin.useService(serviceDefinition, {
+      contract,
+      instance: "secondary",
+    });
+    const services = { workItems: serviceUse } as const satisfies ServiceUses;
+    const serverServices = services satisfies ServerServiceUses;
+    const asyncServices = services satisfies AsyncServiceUses;
+    const contractIsExact: TypesEqual<
+      ServiceContractOf<(typeof services)["workItems"]>,
+      typeof contract
+    > = true;
+    const serverContractIsExact: TypesEqual<
+      ServerServiceContractOf<(typeof serverServices)["workItems"]>,
+      typeof contract
+    > = true;
+    const asyncContractIsExact: TypesEqual<
+      AsyncServiceContractOf<(typeof asyncServices)["workItems"]>,
+      typeof contract
+    > = true;
+    const serviceKeyIsExact: TypesEqual<keyof typeof services, "workItems"> = true;
+
+    expect(Object.keys(serviceUse)).toEqual(["kind", "serviceId"]);
+    expect(JSON.parse(JSON.stringify(serviceUse))).toEqual({
+      kind: "service.use",
+      serviceId: "work-items",
+    });
+    expect(Object.keys(selectedServiceUse)).toEqual(["kind", "serviceId", "serviceInstance"]);
+    expect(selectedServiceUse.serviceInstance).toBe("secondary");
+    expect(Object.isFrozen(serviceUse)).toBe(true);
+    expect(Object.isFrozen(selectedServiceUse)).toBe(true);
+    expect(contractIsExact).toBe(true);
+    expect(serverContractIsExact).toBe(true);
+    expect(asyncContractIsExact).toBe(true);
+    expect(serviceKeyIsExact).toBe(true);
 
     for (const face of [server, serverEffect, asyncPlugin, asyncEffect]) {
       for (const futureSurface of [

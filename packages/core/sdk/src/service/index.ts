@@ -1,11 +1,13 @@
 export type {
   ResourceDependency,
   SemanticDependency,
+  ServiceContractOf,
   ServiceDefinition,
   ServiceDependency,
   ServiceDependencyDeclaration,
   ServiceOf,
   ServiceUse,
+  ServiceUses,
 } from "../../../runtime/definition/src/service";
 export {
   defineService,
