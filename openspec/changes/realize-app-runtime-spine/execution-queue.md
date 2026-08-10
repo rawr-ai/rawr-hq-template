@@ -37,8 +37,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   closed from clean canonical worktrees at Habitat
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
-  `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 are
-  sealed; the active source container is now task 4.1.
+  `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and task
+  4.1 are sealed; the active source container is now task 4.2.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -60,6 +60,19 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   public exports remain cold without either host; and push-to-main Repository
   Ratchet run `31342319663` passed the complete platform graph. No host peer
   metadata, loader, runtime owner, or blueprint landed early.
+- Task 4.1 is sealed at Habitat
+  `main@2c0aa807a1d3a2c8b2e843be92e2088170e4fbba` / tree
+  `a08884381c2e50cf58c7f4f51398f9eb016165c9`. The private package-less
+  `runtime-definition` owner, exact task-4.1 terminal SDK authoring faces, and
+  `runtime-definition@1` are live while immutable `app@1` remains
+  byte-identical. The named `runtime-definition:test` cache proof passed in
+  Repository Ratchet; the
+  `@habitat-ai/cli:acceptance:oclif-installed-package` installed
+  `runtime-definition-acceptance` / `runtime_definition_v1_structure` proof
+  passed on Ubuntu and Windows; push-to-main Repository Ratchet run
+  `31358233213` passed the complete platform graph. No `app@2`, provider
+  selection, acquisition, execution, mount, native host, MCP face, deployment
+  implementation, or sibling-process control landed early.
 - Task 1.7 records Magic's committed consumer oracle
   `ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7` / tree
   `2b3c99700d5db8264b7ee42910575e8b877bda3a`, separately from clean blueprint
@@ -152,33 +165,39 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   root declarations and their lock closure, proves every current packed SDK/CLI
   public export stays cold and host-isolated, and leaves optional peer metadata
   plus owner-local loading for the first conforming runtime harness.
+- [x] **Cold runtime definition**: task 4.1 establishes the private package-less
+  `runtime-definition` owner, its cold app/process/entrypoint/profile and
+  launch-identity records, definition descriptors and observation contract,
+  exact terminal SDK authoring faces, and `runtime-definition@1`. Its graph,
+  cache, policy, and installed-artifact proofs pass with `app@1` byte-identical
+  and no live runtime or `app@2`.
 
 The active queue has one bounded node:
 
-1. execute task 4.1 as the first private runtime owner: reconcile the canonical
-   Habitat authority frame, pinned Effect primitives, and frozen consumer
-   behavior oracles before authorship, then create the cold `runtime-definition`
-   project. Define `AppDefinition`, the finite cold `ProcessCatalog`,
-   `Entrypoint`, `RuntimeProfile`, the immutable `RuntimeLaunchIdentity` with
-   exactly `{ app, process, entrypoint, deployment, source }`, cold
-   service/plugin/Effect descriptors, provider-neutral resources,
-   provider-owned config declarations, and the definition-owned observation
-   record/port. Re-export only the task-4.1 authoring faces through the terminal
-   SDK, add `runtime-definition@1` to the policy pack, and prove the exact
-   graph/cache and installed-artifact boundary. Preserve immutable `app@1`
-   byte-for-byte. Task 11.3 alone authors and proves the complete independently
-   resolvable `app@2` successor. Task 4.1 MUST NOT create or claim complete
-   `app@2`, live provider selection, acquisition, Effect execution, mounting,
-   native host, MCP authoring face, deployment implementation,
-   sibling-process control, or an empty SDK family.
+1. execute task 4.2 as the sole active node: freshly author the
+   topology-specific server/internal plugin face and host-neutral async plugin
+   face at `@habitat-ai/sdk/plugins/server` and
+   `@habitat-ai/sdk/plugins/async`. Use inline native `.handler` for synchronous
+   and Promise operations and the official implementation-owned
+   `@orpc/experimental-effect@2.0.0-beta.23` `.effect` once in
+   `src/service/impl.ts` for Effect-backed operations; Habitat-authored code
+   must not touch `handlerGen`. Keep the async face to cold declarations and
+   stable identity/descriptor references, with no installed or runtime-loaded
+   Inngest, `FunctionBundle`, registration factory, native client/function,
+   loader, adapter, harness, peer metadata, or unnamed dispatcher descriptor.
+   Preserve no predecessor API/workflow builders, names, or wire authority;
+   keep the server spine projection-capable but add no MCP authoring face or
+   lifecycle owner; and consume the landed service contracts without
+   redefining them or adding a placeholder adapter or product policy.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Cold definition (`4.1-4.6`)**: establish `runtime-definition` and the exact
-   terminal SDK authoring faces, then add plugin and service-context declarations
-   without acquisition, native hosts, or `app@2`.
+1. **Cold definition (`4.2-4.6`)**: continue from the sealed
+   `runtime-definition` base through plugin, service-view, reader-binding,
+   service-context, and web declarations without acquisition, native hosts, or
+   `app@2`.
 2. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
    deployment-safe cold portable process plan. Land the definition-owned
    provider-effect plan from `6.1` after provider selection and before the
