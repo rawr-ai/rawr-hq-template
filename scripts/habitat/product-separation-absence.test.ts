@@ -45,6 +45,7 @@ const EXPECTED_PROJECT_ROOTS = {
   "@habitat-ai/resource-agent-plugin-package-output": "resources/agent-plugin-package-output",
   "@habitat-ai/agent-plugin-lifecycle-service": "services/agent-plugin-lifecycle",
   "@habitat-ai/resource-native-agent-provider": "resources/native-agent-provider",
+  "runtime-definition": "packages/core/runtime/definition",
   "runtime-schema": "packages/core/runtime/schema",
   "workstream-plugin-pack": "tools/workstream-plugin-pack",
   "@habitat-ai/resource-content-workspace": "resources/content-workspace",
@@ -64,6 +65,7 @@ const EXPECTED_SDK_DEPENDENCIES = [
   "@habitat-ai/resource-rule-evaluation",
   "@habitat-ai/resource-source-inventory",
   "@habitat-ai/resource-telemetry",
+  "runtime-definition",
   "runtime-schema",
 ] as const;
 
@@ -424,7 +426,7 @@ function condemnedState(homeRoot: string, fixtureWorkspaceRoot: string): readonl
 }
 
 describe("task 2.11 product-separation absence", () => {
-  it("has exactly the 23 retained Nx projects at their canonical roots", async () => {
+  it("has exactly the 24 retained Nx projects at their canonical roots", async () => {
     const graph = await createProjectGraphAsync({ exitOnError: true });
     const projects = readProjectsConfigurationFromProjectGraph(graph).projects;
     const actualProjectIds = Object.keys(projects).sort();
@@ -440,10 +442,13 @@ describe("task 2.11 product-separation absence", () => {
       )
     ).toEqual(EXPECTED_PROJECT_ROOTS);
     expect(
-      (graph.dependencies["@habitat-ai/sdk"] ?? [])
-        .map(({ target }) => target)
-        .filter((target) => target in graph.nodes)
-        .sort()
+      [
+        ...new Set(
+          (graph.dependencies["@habitat-ai/sdk"] ?? [])
+            .map(({ target }) => target)
+            .filter((target) => target in graph.nodes)
+        ),
+      ].sort()
     ).toEqual(EXPECTED_SDK_DEPENDENCIES);
     expect(
       Object.entries(graph.dependencies)
