@@ -38,7 +38,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.5 are sealed; the active source container is now task 4.6.
+  4.1 through 4.6 are sealed; the active container is now the task 4.7
+  authority correction. Source implementation remains stopped until the
+  normalized-artifact extent, portable-plan shape, descriptor sequencing,
+  constraint source, and SDK projection are reconciled.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -118,6 +121,18 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   Ratchet run `31386014522` passed the complete platform graph. No runtime
   value, binding, execution contract, provider selection, host, topology, or
   blueprint changed.
+- Task 4.6 is sealed at Habitat
+  `main@9c54fe541d8d093b5d0c99744f7ca4ae7bb5b29f` / tree
+  `7bc21fddd24755b680e85fff294f55d4464c60a7`. The terminal SDK now exposes
+  only the cold `plugins/web` face: one frozen `web/app` definition with
+  snapshotted `{ id, path, module }` route records and serializable projections
+  containing only `{ id, path }`, while route-module loaders remain lazy.
+  PR #953 passed Repository Ratchet and installed-package acceptance on Ubuntu
+  and Windows; push-to-main Repository Ratchet run `31390418177` passed the
+  complete platform graph. No browser runtime, web-selected router vendor,
+  DOM/`HTMLElement` mount protocol, service/resource selection, adapter, build
+  execution, app composition, Effect subpath, or native harness lifecycle
+  landed.
 - Task 1.7 records Magic's committed consumer oracle
   `ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7` / tree
   `2b3c99700d5db8264b7ee42910575e8b877bda3a`, separately from clean blueprint
@@ -234,58 +249,63 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 - [x] **Canonical service context lanes**: task 4.5 exposes the exact five
   readonly boundary lanes and a type-only disjoint module projection through
   the terminal SDK service face, with no live binding or execution contract.
+- [x] **Cold web route projection**: task 4.6 exposes the exact frozen
+  `web/app` definition and cold route projection through
+  `@habitat-ai/sdk/plugins/web`; module loaders remain lazy and serializable
+  facts contain only route identity and path, with no browser runtime, adapter,
+  build execution, app composition, or native harness lifecycle.
 
-The active queue has one bounded node:
+The active queue has one bounded authority node:
 
-1. execute task 4.6 as the sole active node: author the canonical cold web route
-   projection and the definition-side contract consumed by the future web
-   harness in `@habitat-ai/sdk/plugins/web`. Keep route-module loaders lazy and
-   exclude them from serializable projection facts; expose no browser runtime,
-   router vendor, DOM/`HTMLElement` mount protocol, adapter, build execution,
-   app composition, or native harness lifecycle. Tasks 10.1/10.2 and 14.1/14.2
-   own adapter payloads and live web harness behavior.
+1. correct task 4.7 before source work begins. Retain the accepted private
+   package-less `runtime-derivation` kind, root, and Nx edges plus the settled
+   canonical identity, role/surface and dependency-edge derivation,
+   duplicate-refusal, and cycle-refusal invariants. Do not yet allocate the
+   complete normalized artifact or portable plan to task 4.7. Reconcile their
+   exact extent with task 4.8's execution-reference and descriptor-table
+   ownership; remove nondeterministic `derivedAt` and broad future-plan fields;
+   identify the exact typed source of any placement constraints or omit them;
+   distinguish lazy native web module references from Effect execution
+   references; and name the exact terminal SDK face. Do not create
+   `runtime-derivation` files until canonical docs, task/design, and the active
+   spec delta agree.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Cold definition (`4.6`)**: continue from the sealed
-   runtime-definition and plugin-face base through the one cold `ServiceUse`
-   relation and bounded platform-reader audit with the five-lane service context
-   and web declarations, without reader binding, acquisition, native hosts, or
-   `app@2`.
-2. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
+1. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
    deployment-safe cold portable process plan. Land the definition-owned
    provider-effect plan from `6.1` after provider selection and before the
    compiler consumes it; do not insert a placeholder compiler input.
-3. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
+2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
    process plan, deterministic boot artifact, and the two path-qualified Fluree
    integrations without acquiring a provider or publishing another package.
-4. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
+3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter, force its
    context before mount, and prove rollback and reverse release.
-5. **Process runtime (`8.1-9.2`, `10.1`)**: bind services, lower adapters, match
+4. **Process runtime (`8.1-9.2`, `10.1`)**: bind services, lower adapters, match
    execution descriptors, run only non-oRPC Effect lanes, and return one
    process-owned stop handle without invoking a harness.
-6. **Harness, observation, and mounting (`10.2-10.7`)**: seal the public
+5. **Harness, observation, and mounting (`10.2-10.7`)**: seal the public
    companion contract, private `StartedHarness`, non-authorizing read models,
    and stop-before-release finalization state machine.
-7. **Habitat self-host and Oclif (`11.1-11.8`)**: audit the already-qualified
+6. **Habitat self-host and Oclif (`11.1-11.8`)**: audit the already-qualified
    tool identity, co-land complete `app@2` with the self-host catalog, then
    realize `habitat resolve`, `check`, and `hook`, generators, child-process
    fixtures, and isolated-registry package acceptance.
-8. **Additional CLI verticals (`12.1-12.3`)**: freshly author and select the
+7. **Additional CLI verticals (`12.1-12.3`)**: freshly author and select the
    agent-plugin, development, and authoring topics from frozen behavior
    evidence; never revive predecessor source.
-9. **Native hosts (`13.1-13.6`)**: add Elysia/oRPC and native Inngest beside
+8. **Native hosts (`13.1-13.6`)**: add Elysia/oRPC and native Inngest beside
    `runtime-harnesses`, prove same-app child isolation, and treat the MCP
    companion as conditional rather than a release blocker.
-10. **Web (`14.1-14.2`)**: prove the cold build and native mount handoff through
+9. **Web (`14.1-14.2`)**: prove the cold build and native mount handoff through
     the terminal SDK web face without restoring a product web app.
-11. **Audit and runtime-spine release (`15.1-15.6`)**: close telemetry receipts
+10. **Audit and runtime-spine release (`15.1-15.6`)**: close telemetry receipts
     and residue, pass the complete graph and installed artifacts, land exact
     main, and publish only the SDK/CLI pair.
-12. **Consumer adoption and drain (`15.7-15.9`)**: issue lane-specific
+11. **Consumer adoption and drain (`15.7-15.9`)**: issue lane-specific
     informational handoffs and an exact receipt contract, accept owner-local
     migrations, retire each source only after its sink accepts, archive the
     change, and drain only dispositioned Graphite/worktree residue.
