@@ -1,3 +1,7 @@
+import type { AppRole } from "./app";
+import type { RuntimeProvider } from "./provider";
+import type { ResourceLifetime, RuntimeResource } from "./resource";
+
 export type RuntimeConfigSource =
   | { readonly kind: "env"; readonly prefix?: string }
   | {
@@ -12,6 +16,66 @@ export type RuntimeConfigSource =
     }
   | { readonly kind: "memory" }
   | { readonly kind: "test" };
+
+export interface ProviderSelection<TProvider extends RuntimeProvider = RuntimeProvider> {
+  readonly provider: TProvider;
+  readonly resource: RuntimeResource;
+  readonly lifetime?: ResourceLifetime;
+  readonly role?: AppRole;
+  readonly instance?: string;
+  readonly config?: {
+    readonly kind: "runtime.config";
+    readonly key: string;
+  };
+}
+
+function copyProviderConfigRef(value: unknown): NonNullable<ProviderSelection["config"]> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new TypeError("A provider selection config must be a plain object.");
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) {
+    throw new TypeError("A provider selection config must be a plain object.");
+  }
+  if (Reflect.ownKeys(value).some((key) => key !== "kind" && key !== "key")) {
+    throw new TypeError("A provider selection config contains an unknown field.");
+  }
+  if (
+    !("kind" in value) ||
+    value.kind !== "runtime.config" ||
+    !("key" in value) ||
+    typeof value.key !== "string" ||
+    value.key.length === 0
+  ) {
+    throw new TypeError("A provider selection config must contain a nonempty runtime config key.");
+  }
+
+  return Object.freeze({ kind: "runtime.config", key: value.key });
+}
+
+export function providerSelection(input: {
+  resource: RuntimeResource;
+  provider: RuntimeProvider;
+  lifetime?: ResourceLifetime;
+  role?: AppRole;
+  instance?: string;
+  config?: {
+    readonly kind: "runtime.config";
+    readonly key: string;
+  };
+}): ProviderSelection {
+  const config = input.config === undefined ? undefined : copyProviderConfigRef(input.config);
+
+  return Object.freeze({
+    provider: input.provider,
+    resource: input.resource,
+    ...(input.lifetime === undefined ? {} : { lifetime: input.lifetime }),
+    ...(input.role === undefined ? {} : { role: input.role }),
+    ...(input.instance === undefined ? {} : { instance: input.instance }),
+    ...(config === undefined ? {} : { config }),
+  });
+}
 
 export interface RuntimeProfile<
   TId extends string = string,

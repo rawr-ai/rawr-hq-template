@@ -29,11 +29,18 @@ const expectedRuntimeExports = [
   "./app",
   "./effect",
   "./execution",
+  "./runtime/derivation",
   "./runtime/profiles",
   "./runtime/providers",
   "./runtime/resources",
   "./runtime/schema",
 ];
+
+const expectedDerivationRuntimeExports = [
+  "PortableRuntimePlanArtifactSchema",
+  "decodePortableRuntimePlanArtifact",
+  "deriveRuntimeArtifacts",
+] as const;
 
 const expectedPluginExports = [
   "./plugins/async",
@@ -44,7 +51,7 @@ const expectedPluginExports = [
 ];
 
 describe("runtime authoring public faces", () => {
-  test("cold-imports only the task 4.1 runtime authoring operations", async () => {
+  test("cold-imports only the admitted runtime authoring operations", async () => {
     const [app, effect, execution, profiles, providers, resources, runtimeSchema, service] =
       await Promise.all([
         import("../src/app"),
@@ -65,7 +72,7 @@ describe("runtime authoring public faces", () => {
     ]);
     expect(Object.keys(effect).sort()).toEqual(["Effect", "TaggedError"]);
     expect(Object.keys(execution)).toEqual([]);
-    expect(Object.keys(profiles)).toEqual(["defineRuntimeProfile"]);
+    expect(Object.keys(profiles).sort()).toEqual(["defineRuntimeProfile", "providerSelection"]);
     expect(Object.keys(providers)).toEqual(["defineRuntimeProvider"]);
     expect(Object.keys(resources).sort()).toEqual(["defineRuntimeResource", "requireResource"]);
     expect(Object.keys(runtimeSchema).sort()).toEqual([
@@ -87,16 +94,18 @@ describe("runtime authoring public faces", () => {
 
     for (const face of [app, effect, execution, profiles, providers, resources, runtimeSchema]) {
       expect(face).not.toHaveProperty("startApp");
-      expect(face).not.toHaveProperty("providerSelection");
       expect(face).not.toHaveProperty("ProviderEffectPlan");
       expect(face).not.toHaveProperty("providerFx");
       expect(face).not.toHaveProperty("build");
       expect(face).not.toHaveProperty("ManagedRuntime");
       expect(face).not.toHaveProperty("runPromise");
     }
+    for (const face of [app, effect, execution, providers, resources, runtimeSchema]) {
+      expect(face).not.toHaveProperty("providerSelection");
+    }
   });
 
-  test("preserves the exact task 4.1 runtime package subpaths without future empty faces", () => {
+  test("preserves the exact admitted runtime package subpaths without future empty faces", () => {
     const packageJson = JSON.parse(
       readFileSync(new URL("../package.json", import.meta.url), "utf8")
     ) as { exports: Record<string, unknown> };
@@ -110,6 +119,123 @@ describe("runtime authoring public faces", () => {
     expect(runtimeExports).toEqual(expectedRuntimeExports);
     expect(packageJson.exports).not.toHaveProperty("./runtime/providers/effect");
     expect(packageJson.exports).not.toHaveProperty("./runtime/harnesses");
+  });
+
+  test("projects the exact complete derivation public face", async () => {
+    const [publicDerivation, privateDerivation] = await Promise.all([
+      import("../src/runtime/derivation"),
+      import("../../runtime/derivation/src/index"),
+    ]);
+    const packageJson = JSON.parse(
+      readFileSync(new URL("../package.json", import.meta.url), "utf8")
+    ) as { exports: Record<string, unknown> };
+    expect(Object.keys(publicDerivation).sort()).toEqual(expectedDerivationRuntimeExports);
+    expect(packageJson.exports["./runtime/derivation"]).toEqual({
+      types: "./dist/runtime/derivation/index.d.ts",
+      import: "./dist/runtime/derivation/index.js",
+      default: "./dist/runtime/derivation/index.js",
+    });
+    expect(publicDerivation.deriveRuntimeArtifacts).toBe(privateDerivation.deriveRuntimeArtifacts);
+    expect(publicDerivation.PortableRuntimePlanArtifactSchema).toBe(
+      privateDerivation.PortableRuntimePlanArtifactSchema
+    );
+    expect(publicDerivation.decodePortableRuntimePlanArtifact).toBe(
+      privateDerivation.decodePortableRuntimePlanArtifact
+    );
+  });
+
+  test("derives an admitted async occurrence and lazy web loader through the SDK", async () => {
+    const [
+      appFace,
+      asyncFace,
+      asyncEffectFace,
+      derivation,
+      effectFace,
+      profileFace,
+      schemaFace,
+      web,
+    ] = await Promise.all([
+      import("../src/app"),
+      import("../src/plugins/async"),
+      import("../src/plugins/async/effect"),
+      import("../src/runtime/derivation"),
+      import("../src/effect"),
+      import("../src/runtime/profiles"),
+      import("../src/runtime/schema"),
+      import("../src/plugins/web"),
+    ]);
+    const { Type } = await import("typebox");
+    let effectCalls = 0;
+    let loaderCalls = 0;
+    const authoredStep = asyncEffectFace.defineAsyncStepEffect({
+      id: "deliver",
+      policy: {},
+      effect: () => {
+        effectCalls += 1;
+        return effectFace.Effect.succeed("delivered");
+      },
+    });
+    const workflow = asyncFace.defineWorkflow({
+      id: "delivery",
+      inputSchema: schemaFace.RuntimeSchema.fromTypeBox(Type.Object({ id: Type.String() })),
+      steps: [authoredStep],
+    });
+    const asyncPlugin = asyncFace.defineAsyncWorkflowPlugin.factory()({
+      capability: "delivery",
+      services: {},
+      workflows: [workflow],
+    })();
+    const loadRouteModule = async () => {
+      loaderCalls += 1;
+      return { page: "delivery" } as const;
+    };
+    const webPlugin = web.defineWebAppPlugin.factory()({
+      capability: "delivery",
+      routes: [{ id: "delivery.index", path: "/delivery", module: loadRouteModule }],
+    })();
+    const app = appFace.defineApp({
+      id: "sdk-acceptance",
+      plugins: [asyncPlugin, webPlugin],
+    });
+    const process = appFace.defineProcessCatalog({
+      application: { id: "application", roles: ["async", "web"] },
+    }).application;
+    const profile = profileFace.defineRuntimeProfile({ id: "acceptance", providers: [] });
+    const entrypoint = appFace.defineEntrypoint({
+      id: "acceptance",
+      app,
+      profile,
+      process,
+      identity: {
+        app: "sdk-acceptance",
+        process: "application",
+        entrypoint: "acceptance",
+        deployment: "test",
+        source: "sdk-public-face",
+      },
+    });
+
+    const result = derivation.deriveRuntimeArtifacts({ entrypoint, profileId: "acceptance" });
+    const executionEntries = result.executionDescriptorTable.entries();
+    const webEntries = result.webRouteModuleTable.entries();
+
+    expect(Object.keys(result).sort()).toEqual([
+      "executionDescriptorTable",
+      "graph",
+      "portableArtifact",
+      "topology",
+      "webRouteModuleTable",
+    ]);
+    expect(result.graph.topology).toBe(result.topology);
+    expect(executionEntries).toHaveLength(1);
+    expect(executionEntries[0]?.[0]).toMatchObject({ boundary: "plugin.async-step" });
+    expect(result.executionDescriptorTable.get(executionEntries[0]![0])).toBe(
+      executionEntries[0]![1]
+    );
+    expect(webEntries).toHaveLength(1);
+    expect(result.webRouteModuleTable.get(webEntries[0]!.ref)).toBe(loadRouteModule);
+    expect(effectCalls).toBe(0);
+    expect(loaderCalls).toBe(0);
   });
 
   test("cold-imports only the task 4.2 server and async authoring operations", async () => {

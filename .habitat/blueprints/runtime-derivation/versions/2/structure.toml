@@ -1,0 +1,75 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "runtime-derivation-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "habitat.toml",
+  "project.json",
+  "src",
+  "test",
+  "tsconfig.json",
+  "tsconfig.test.json",
+  "tsdown.config.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-derivation-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|project.json|tsconfig.json|tsconfig.test.json|tsdown.config.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-derivation-source"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "closed"
+required = [
+  "derive-execution-descriptor-table.ts",
+  "derive-runtime-artifacts.ts",
+  "execution-descriptor-ref.ts",
+  "identity-policy.ts",
+  "index.ts",
+  "normalized-authoring-graph.ts",
+  "normalized-runtime-topology.ts",
+  "portable-runtime-plan-artifact.ts",
+  "service-binding-plan.ts",
+  "surface-runtime-plan.ts",
+  "web-route-module-table.ts",
+  "workflow-dispatcher-descriptor.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-derivation-source-files"
+rootRole = "project"
+relativePath = "src/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-derivation-proof"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+required = [
+  "complete-derivation.test.ts",
+  "normalized-topology.test.ts",
+  "nx-cache.test.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-derivation-proof-files"
+rootRole = "project"
+relativePath = "test/*.test.ts"
+kind = "file"
+mode = "closed"

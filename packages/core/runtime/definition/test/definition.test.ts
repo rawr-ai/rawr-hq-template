@@ -8,6 +8,7 @@ import type {
   AsyncStepExecutionContext,
   EffectExecutionDescriptor,
   HabitatEffect,
+  ProviderSelection,
   ServiceContractOf,
   ServiceDefinition,
   ServiceUses,
@@ -33,11 +34,13 @@ import {
   defineWebAppPlugin,
   defineWorkflow,
   Effect,
+  providerSelection,
   RuntimeObservationRecordSchema,
   readHabitatEffectOperation,
   readServiceUse,
   resourceDep,
   runtimeLaunchIdentity,
+  semanticDep,
   serviceDep,
   TaggedError,
   useService,
@@ -185,6 +188,18 @@ describe("runtime definition", () => {
       defaultConfigKey: "clock.primary",
       health: { kind: "provider.health", required: true },
     });
+    const providerConfig = { kind: "runtime.config", key: "clock.selected" } as const;
+    const selectedProvider = providerSelection({
+      resource,
+      provider,
+      lifetime: "role",
+      role: "server",
+      instance: "primary",
+      config: providerConfig,
+    });
+    const defaultProviderSelection = providerSelection({ resource, provider });
+    const providerSelectionTypeMatches: TypesEqual<typeof selectedProvider, ProviderSelection> =
+      true;
     const service = defineService({
       id: "work",
       deps: { clock: resourceDep(resource) },
@@ -214,7 +229,7 @@ describe("runtime definition", () => {
     });
     const profile = defineRuntimeProfile({
       id: "example.production",
-      providers: [],
+      providers: [selectedProvider],
       configSources: [
         { kind: "env" },
         { kind: "dotenv", path: ".env.production", optional: true },
@@ -241,14 +256,37 @@ describe("runtime definition", () => {
 
     expect(service.deps.clock.resource).toBe(resource);
     expect(pluginServiceKeysMatch).toBe(true);
+    expect(providerSelectionTypeMatches).toBe(true);
     expect(plugin.services.workItems.serviceId).toBe(service.id);
     expect(readServiceUse(plugin.services.workItems).definition).toBe(service);
     expect(provider.configSchema?.redaction).toEqual({ paths: ["zone"] });
+    expect(profile.providers[0]).toBe(selectedProvider);
+    expect(Object.keys(defaultProviderSelection)).toEqual(["provider", "resource"]);
+    expect(defaultProviderSelection.provider).toBe(provider);
+    expect(defaultProviderSelection.resource).toBe(resource);
+    expect(Object.hasOwn(defaultProviderSelection, "lifetime")).toBe(false);
+    expect(Object.hasOwn(defaultProviderSelection, "role")).toBe(false);
+    expect(Object.hasOwn(defaultProviderSelection, "instance")).toBe(false);
+    expect(Object.hasOwn(defaultProviderSelection, "config")).toBe(false);
+    expect(selectedProvider).toEqual({
+      provider,
+      resource,
+      lifetime: "role",
+      role: "server",
+      instance: "primary",
+      config: providerConfig,
+    });
+    expect(selectedProvider.provider).toBe(provider);
+    expect(selectedProvider.resource).toBe(resource);
+    expect(selectedProvider.config).not.toBe(providerConfig);
+    expect(selectedProvider.config?.key).toBe("clock.selected");
     expect(entrypoint.identity).toEqual(identity);
     expect(Object.keys(identity)).toEqual(["app", "process", "entrypoint", "deployment", "source"]);
     for (const value of [
       resource,
       provider,
+      selectedProvider,
+      defaultProviderSelection,
       service,
       plugin,
       app,
@@ -260,6 +298,7 @@ describe("runtime definition", () => {
       expect(Object.isFrozen(value)).toBe(true);
     }
     expect(Object.isFrozen(processes.server.roles)).toBe(true);
+    expect(Object.isFrozen(selectedProvider.config)).toBe(true);
     expect(profile.configSources.map(({ kind }) => kind)).toEqual([
       "env",
       "dotenv",
@@ -269,14 +308,65 @@ describe("runtime definition", () => {
     ]);
     expect(profile.configSources.every(Object.isFrozen)).toBe(true);
     expect("build" in provider).toBe(false);
+    expect(() =>
+      providerSelection({
+        resource,
+        provider,
+        config: { kind: "runtime.config", key: "" },
+      })
+    ).toThrow(TypeError);
   });
 
   test("keeps service-use witnesses private while preserving contract and map inference", () => {
-    const service = defineService({ id: "work-items", deps: {} });
+    const clock = defineRuntimeResource<"clock", { now(): Date }>({
+      id: "clock",
+      title: "Clock",
+      purpose: "Supplies process time.",
+    });
+    const laneSchema = RuntimeSchema.fromTypeBox(Type.String());
+    const auditLog = defineService({ id: "audit-log", deps: {}, config: laneSchema });
+    const query = defineService({
+      id: "work-query",
+      deps: {
+        auditLog: serviceDep(auditLog),
+        clock: resourceDep(clock),
+        audit: semanticDep("audit"),
+      },
+      scope: laneSchema,
+      config: laneSchema,
+    });
+    const metadataDefaults = { audit: { enabled: true } };
+    const service = defineService({
+      id: "work-items",
+      deps: {
+        query: serviceDep(query),
+        clock: resourceDep(clock),
+        audit: semanticDep("audit"),
+      },
+      scope: laneSchema,
+      config: laneSchema,
+      metadataDefaults,
+    });
     const contract = {
       list: { method: "GET", path: "/work-items" },
     } as const;
-    const defaultUse = useService(service, { contract });
+    const binding = {
+      scope: { kind: "runtime.config", key: " work.scope " },
+      config: { kind: "runtime.config", key: "work.config" },
+      dependencies: {
+        query: {
+          instance: "replica",
+          scope: { kind: "runtime.config", key: "query.scope" },
+          config: { kind: "runtime.config", key: "query.config" },
+          dependencies: {
+            auditLog: {
+              config: { kind: "runtime.config", key: "audit-log.config" },
+            },
+          },
+        },
+      },
+    } as const;
+    const defaultUse = useService(service, { contract, binding });
     const replicaUse = useService(service, { contract, instance: "replica" });
     if (false) {
       // @ts-expect-error A service use always carries an explicit contract witness.
@@ -285,6 +375,26 @@ describe("runtime definition", () => {
       useService(service, {});
       // @ts-expect-error The predecessor alias field is not part of the cold relation.
       useService(service, { contract, alias: "legacy" });
+      useService(service, {
+        contract,
+        binding: {
+          // @ts-expect-error Only dependency bindings may select an instance.
+          instance: "not-a-root-field",
+        },
+      });
+      useService(service, {
+        contract,
+        binding: {
+          dependencies: {
+            query: {
+              // @ts-expect-error Dependency bindings contain no alias field.
+              alias: "legacy",
+            },
+          },
+        },
+      });
+      // @ts-expect-error The private binding carrier is not a public string-keyed field.
+      defaultUse.binding;
     }
     const services = {
       workItems: defaultUse,
@@ -322,7 +432,7 @@ describe("runtime definition", () => {
     });
     expect(Object.hasOwn(defaultUse, "serviceInstance")).toBe(false);
     expect(replicaUse.serviceInstance).toBe("replica");
-    for (const field of ["service", "definition", "contract", "alias"] as const) {
+    for (const field of ["service", "definition", "contract", "binding", "alias"] as const) {
       expect(Object.hasOwn(defaultUse, field)).toBe(false);
     }
     expect(Object.getOwnPropertySymbols(defaultUse)).toHaveLength(1);
@@ -331,13 +441,86 @@ describe("runtime definition", () => {
     ).toMatchObject({ configurable: false, enumerable: false, writable: false });
     expect(defaultCarrier.definition).toBe(service);
     expect(defaultCarrier.contract).toBe(contract);
+    expect(defaultCarrier.binding).toEqual(binding);
+    expect(defaultCarrier.binding).not.toBe(binding);
+    expect(defaultCarrier.binding?.scope).not.toBe(binding.scope);
+    expect(defaultCarrier.binding?.config).not.toBe(binding.config);
+    expect(defaultCarrier.binding?.dependencies).not.toBe(binding.dependencies);
+    expect(defaultCarrier.binding?.dependencies?.query).not.toBe(binding.dependencies.query);
+    expect(defaultCarrier.binding?.dependencies?.query.scope).not.toBe(
+      binding.dependencies.query.scope
+    );
+    expect(defaultCarrier.binding?.dependencies?.query.dependencies).not.toBe(
+      binding.dependencies.query.dependencies
+    );
+    expect(defaultCarrier.binding?.scope?.key).toBe(" work.scope ");
     expect(replicaCarrier.definition).toBe(service);
     expect(replicaCarrier.contract).toBe(contract);
+    expect(Object.hasOwn(replicaCarrier, "binding")).toBe(false);
     expect(Object.isFrozen(defaultCarrier)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding?.scope)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding?.config)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding?.dependencies)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding?.dependencies?.query)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding?.dependencies?.query.scope)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding?.dependencies?.query.config)).toBe(true);
+    expect(Object.isFrozen(defaultCarrier.binding?.dependencies?.query.dependencies)).toBe(true);
+    expect(
+      Object.isFrozen(defaultCarrier.binding?.dependencies?.query.dependencies?.auditLog.config)
+    ).toBe(true);
+    expect(Object.isFrozen(binding)).toBe(false);
+    expect(Object.isFrozen(contract)).toBe(false);
+    expect(Object.isFrozen(contract.list)).toBe(false);
+    expect(Object.isFrozen(metadataDefaults)).toBe(false);
+    expect(Object.isFrozen(metadataDefaults.audit)).toBe(false);
     expect(Object.isFrozen(defaultUse)).toBe(true);
     expect(Object.isFrozen(replicaUse)).toBe(true);
     expect(services.workItems).toBe(defaultUse);
     expect(services.replicatedWorkItems).toBe(replicaUse);
+
+    expect(() =>
+      useService(service, {
+        contract,
+        binding: { scope: { kind: "runtime.config", key: "" } },
+      })
+    ).toThrow(TypeError);
+    expect(() =>
+      useService(service, {
+        contract,
+        binding: { dependencies: { unknown: {} } },
+      })
+    ).toThrow(TypeError);
+    expect(() =>
+      useService(service, {
+        contract,
+        binding: { dependencies: { clock: {} } },
+      })
+    ).toThrow(TypeError);
+    expect(() =>
+      useService(service, {
+        contract,
+        binding: { dependencies: { audit: {} } },
+      })
+    ).toThrow(TypeError);
+    expect(() =>
+      useService(service, {
+        contract,
+        binding: { dependencies: { query: { dependencies: { unknown: {} } } } },
+      })
+    ).toThrow(TypeError);
+    expect(() =>
+      useService(service, {
+        contract,
+        binding: { dependencies: { query: { dependencies: { clock: {} } } } },
+      })
+    ).toThrow(TypeError);
+    expect(() =>
+      useService(service, {
+        contract,
+        binding: { dependencies: { query: { dependencies: { audit: {} } } } },
+      })
+    ).toThrow(TypeError);
   });
 
   test("keeps HabitatEffect programs and execution descriptors cold", () => {

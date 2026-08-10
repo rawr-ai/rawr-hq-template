@@ -51,13 +51,22 @@ does not select a browser runtime or expose a router vendor, DOM mount protocol,
 adapter, build executor, app composition, native harness lifecycle, or Effect
 subpath.
 
-The app, Effect, execution, and implemented `runtime/*` entries expose the cold
-runtime-definition authoring contract. They declare app composition, finite
-process catalogs, immutable launch identity, profiles, lazy Effects, executable
-descriptors, resources, providers, observation records, and runtime-carried
-schemas without starting a process or acquiring a resource. Provider selection,
-provider Effect plans, and live runtime mechanics remain absent until their
+The app, Effect, execution, and definition-owned `runtime/*` entries expose the
+cold runtime-definition authoring contract. They declare app composition,
+finite process catalogs, immutable launch identity, profiles, lazy Effects,
+executable descriptors, resources, providers, observation records, and
+runtime-carried schemas without starting a process or acquiring a resource.
+`@habitat-ai/sdk/runtime/profiles` alone exposes cold provider selection.
+Provider Effect plans and live runtime mechanics remain absent until their
 owning runtime tasks land.
+
+The isolated `@habitat-ai/sdk/runtime/derivation` entry is the sole public
+derivation face. Its runtime surface is exactly `deriveRuntimeArtifacts`,
+`PortableRuntimePlanArtifactSchema`, and
+`decodePortableRuntimePlanArtifact`. Its twenty-six type-only exports describe
+the input, normalized facts, derived plans and tables, portable artifact, and
+findings. The facade directly projects the private owner and exposes no second
+implementation or public derivation error API.
 
 The isolated `@habitat-ai/sdk/telemetry` entry exposes the provider-neutral
 technical telemetry contract and declarative OpenTelemetry Node configuration.
@@ -94,9 +103,10 @@ their exact runtime and harness owners; none is repeated by an individual
 service or plugin.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
-exactly eleven sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
-`provider@1`, `resource@1`, `resource@2`, `runtime-definition@1`, `service@1`,
-`service@2`, and `service@3`.
+exactly thirteen sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
+`provider@1`, `resource@1`, `resource@2`, `runtime-definition@1`,
+`runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`, and
+`service@3`.
 Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; later versions
 resolve from `dist/blueprints/<id>/versions/<version>/blueprint.toml`. Presence in
 `dist/blueprints` alone grants no authority.
@@ -109,6 +119,9 @@ authoring copy is inert during resolution, while a different local definition
 at the same identity is rejected as drift.
 Each member path locates one immutable, complete definition and runner-asset
 closure. A version neither inherits nor traverses assets from another version.
+`runtime-derivation@1` preserves the topology-only predecessor closure.
+`runtime-derivation@2` independently closes the complete derivation owner and
+its behavior proofs, without inheritance, fallback, or cross-version assets.
 
 Each selected definition exposes only its required `project` anchor.
 Source-specific structure scopes carry blueprint-owned `src/**` relative

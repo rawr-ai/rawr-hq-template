@@ -13,6 +13,12 @@ export default defineConfig({
   },
   deps: {
     neverBundle: true,
-    onlyImport: ["@orpc/contract", "@orpc/server", "@standard-schema/spec", "typebox"],
+    onlyImport: [
+      "@orpc/contract",
+      "@orpc/server",
+      "@standard-schema/spec",
+      "node:crypto",
+      "typebox",
+    ],
   },
 });
