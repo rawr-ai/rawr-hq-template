@@ -38,11 +38,14 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.7 are sealed. The authority-only complete-derivation-contract
-  and binding-source task 4.7a gate is the sole active node. Complete source
-  work, SDK assembly, the complete graph, public face, descriptor/module tables,
-  and portable plan remain stopped until its contract is deterministic and the
-  two canonical documents and all six active OpenSpec authority artifacts agree.
+  4.1 through 4.7a are sealed. The authority-only complete-derivation-contract
+  and binding-source correction changed no source and retained the exact
+  eight-document scope: `HABITAT_ARCHITECTURE.md` routes,
+  `HABITAT_RUNTIME_REALIZATION.md` is the sole exact canonical document, and six
+  active OpenSpec artifacts preserve acceptance. Task 4.8 is the sole active
+  node and MUST follow canonical §§11.8, 13.5, 15, 23.1, and 27 plus the active
+  `app-runtime-realization` requirement/scenarios under independent
+  `runtime-derivation@2`; immutable topology-only version 1 remains unchanged.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -273,63 +276,63 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   topology with deterministic identity, ordering, refusal, zero-execution, and
   cache proofs, without an SDK face or later derivation artifact.
 
-The active queue has one bounded authority node:
+The active queue has one bounded source node:
 
-1. execute task 4.7a as the sole active authority node. Before complete source
-   work, replace every illustrative or undefined public
-   `RuntimeDerivationResult` and nested carrier with exact closed TypeBox-derived
-   shapes; freeze exact producer/consumer and `ExecutionDescriptorTable` /
-   `WebRouteModuleTable` method signatures plus finding, error/refusal, and
-   deterministic ordering contracts without a public error API. Freeze exactly
-   three runtime value exports, `deriveRuntimeArtifacts`,
-   `PortableRuntimePlanArtifactSchema`, and
-   `decodePortableRuntimePlanArtifact`, and exactly the type-only exports
-   `RuntimeDerivationInput`, `RuntimeDerivationResult`,
-   `NormalizedPluginIdentity`, `NormalizedSurfaceRequirement`,
-   `NormalizedResourceRequirementIdentity`, `NormalizedRuntimeTopologyEdge`,
-   `NormalizedRuntimeTopology`, `NormalizedAppDefinition`,
-   `NormalizedPluginDefinition`, `DerivedRoleSurfaceIndex`,
-   `NormalizedServiceUse`, `NormalizedServiceDependency`,
-   `NormalizedSemanticDependency`, `ResourceRequirement`, `ProviderSelection`,
-   `NormalizedRuntimeProfile`, `ServiceBindingPlan`, `SurfaceRuntimePlan`,
-   `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef`,
-   `ExecutionDescriptorTable`, `WebRouteModuleRef`, `WebRouteModuleTableEntry`,
-   `WebRouteModuleTable`, `PortableRuntimePlanArtifact`, and
-   `DerivationFinding`. Also settle the scope/config authoring owner/site, exact
-   closed source/ref unions, sealed `ServiceUse` carrier evolution,
-   schema-presence binding rules, transitive `serviceDep`
-   propagation/override, `RuntimeConfigSource` order/key/missing semantics, and
-   normalization/identity/cache/projection. Reject executable or live sources.
-   Its only allowed edit scope is `docs/system/HABITAT_ARCHITECTURE.md`,
-   `docs/system/HABITAT_RUNTIME_REALIZATION.md`, and the six active OpenSpec
-   authority artifacts
-   `openspec/changes/realize-app-runtime-spine/authority-amendment.md`,
-   `openspec/changes/realize-app-runtime-spine/classification-ledger.md`,
-   `openspec/changes/realize-app-runtime-spine/design.md`,
-   `openspec/changes/realize-app-runtime-spine/execution-queue.md`,
-   `openspec/changes/realize-app-runtime-spine/tasks.md`, and
-   `openspec/changes/realize-app-runtime-spine/specs/app-runtime-realization/spec.md`.
-   The gate creates or edits no implementation, project, blueprint, SDK edge,
-   export map, or public export. Every canonical placeholder contract must be
-   replaced before task 4.8 or archive; both transitions remain blocked until
-   the complete contract is deterministic and the two canonical documents and
-   all six active OpenSpec authority artifacts agree.
+1. execute task 4.8 under independent no-inheritance/no-fallback
+   `runtime-derivation@2` through the canonical sections and active acceptance
+   owner. Task 4.7a is complete; no contract choice remains open in source.
 
+## Task 4.7a Authority Routing
+
+Task 4.7a is sealed without an implementation node. Canonical
+`HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5, 15, 23.1, and 27 supply exact
+mechanics, and the active `app-runtime-realization` requirement/scenarios are
+the sole archive-safe acceptance owner. This queue routes execution and proof
+only.
+
+Task 4.8 is the sole active source node under independent
+`runtime-derivation@2`, with the exact runtime-derivation closure, seven-file
+behavior companion corpus, and separate publication/assembly corpus named by
+the active spec. It proves cold
+source/ref normalization, binding ids/equal-diamond deduplication, exact public
+faces/results/tables/findings, and portable roundtrip with zero source I/O or
+decode. Task 5.2 owns normalized-handoff/dependency compiler defense, task 7.2
+owns all-ref config preflight before first acquisition, and task 8.2 owns live
+cache construction/reuse. Immutable topology-only version 1 remains unchanged.
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Complete derivation (`4.8-4.11`)**: select independent no-fallback
-   `runtime-derivation@2`, retaining the exact root shell and using only the
-   twelve named source files and three named tests. Implement the accepted 4.7a
-   contract verbatim rather than inventing it. Expose exactly one derivation
-   operation and the three frozen runtime values plus the exact finite type-only
-   inventory through the sole public face. The
-   `deriveRuntimeArtifacts({ entrypoint, profileId })` result remains
+1. **Complete derivation (`4.8-4.11`)**: create exactly the independent
+   `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
+   closure, select version 2 in the existing derivation `habitat.toml`, retain
+   the exact root shell, and use only the twelve named source files and three
+   named tests. Task 4.8 also evolves only the seven-file behavior companion
+   corpus named by the active requirement: the private binding carrier in
+   `service.ts`, cold
+   `providerSelection(...)` in flat `profile.ts`, its SDK service/profile
+   projections and existing definition/SDK/installed acceptance. The separate
+   exact publication/assembly corpus owns the new SDK derivation face and
+   version-2 law, SDK pack growth from 11 to 13 sorted members, blueprint
+   copy/input growth from eight to nine directories, exact LF rule, and
+   installed parity/provenance/public-import/application proof. It creates no
+   new `runtime-definition` file/project/blueprint/version or other
+   kind/version/project, leaves version 1 untouched, and admits no fallback or
+   version 3. Export `providerSelection(...)` only through
+   `@habitat-ai/sdk/runtime/profiles`. Follow the canonical sections and active
+   acceptance owner rather than inventing either. Expose exactly
+   one derivation operation and the three runtime values plus the exact finite
+   type-only inventory through the sole public derivation face. The
+   `deriveRuntimeArtifacts({ entrypoint, profileId })` result is exactly
    `{ topology, graph, executionDescriptorTable, webRouteModuleTable,
    portableArtifact }`. Call private topology once, preserve
    `graph.topology === topology`, recursively freeze the result, and invoke no
-   body. Keep Effect and web reference/table families distinct, including
+   body. Emit the singular-profile graph, source defaults/authored order/ref
+   expansion, private-carrier-derived binding plans, sole optional-provider
+   finding, and built-in `TypeError` refusals. Task 4.8 proves zero source
+   I/O/decode plus binding-id/dedupe, not physical resolution or live cache
+   construction. Keep
+   Effect and web reference/table families distinct, including
    private `plugin.web-surface(surfaceId)` beside a lazy loader without an early
    web Effect face. Task 4.8 alone adds the SDK edge and sole derivation face.
    The seven-field portable artifact sorts refs by full boundary identity and
@@ -341,13 +344,19 @@ write authority with the active one:
    provider-effect plan from `6.1` after provider selection and before compiler
    consumption.
 2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
-   process plan, deterministic boot artifact, and the two path-qualified Fluree
-   integrations without acquiring a provider or publishing another package.
+   process plan, normalized-handoff referential consistency, provider dependency
+   closure/cycle defense, deterministic boot artifact, and the two
+   path-qualified Fluree integrations without acquiring a provider or
+   publishing another package. Missing or ambiguous authored provider selection
+   is already a derivation `TypeError`, not a reachable compiler diagnostic.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
-   `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter, force its
-   context before mount, and prove rollback and reverse release.
+   `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
+   every declared source and all provider plus service scope/config refs before
+   first acquisition, then wait for provider dependencies before `build`;
+   force the context before mount and prove rollback and reverse release.
 4. **Process runtime (`8.1-9.2`, `10.1`)**: bind services, lower adapters, match
-   execution descriptors, run only non-oRPC Effect lanes, and return one
+   execution descriptors, prove actual `{ identity, profileId, bindingId }`
+   cache construction/reuse, run only non-oRPC Effect lanes, and return one
    process-owned stop handle without invoking a harness.
 5. **Harness, observation, and mounting (`10.2-10.7`)**: seal the public
    companion contract, private `StartedHarness`, non-authorizing read models,
