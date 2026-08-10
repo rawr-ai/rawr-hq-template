@@ -135,19 +135,21 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
 
 The active queue has one bounded node:
 
-1. execute task 4.1 as the first private runtime owner: reconcile the canonical
-   Habitat authority frame, pinned Effect primitives, and frozen consumer
-   behavior oracles before authorship, then create the cold `runtime-definition`
-   project, its exact graph/cache edges, direct authoring faces, observation
-   contract, terminal SDK assembly, complete positive law, and owner-local
-   proof. Admit no selection, acquisition, execution, mounting, native host,
-   deployment implementation, or empty SDK family.
+1. execute task 4.2: author the topology-specific server/internal face, generic
+   MCP server-surface face, and host-neutral async face through the terminal SDK
+   without introducing transport, lifecycle, manual Effect execution, or
+   predecessor wire authority.
 
 The corrected authority admits sole `app@2`, peer `server` and `async` roles,
 MCP as a native `server` surface, Inngest Serve/Connect as final harness modes,
 process-local lifecycle/readiness/observation, and deployment's cold handoff.
-The app packet and policy-pack locator are corrected now; runtime source still
-opens only in owner order after task 3.3 and the remaining task-3 predecessors.
+The app packet and policy-pack locator are corrected, task 3.3 has moved the
+sole SDK to `packages/core/sdk` while deleting the mixed-core package identity,
+and task 3.4 has removed ownerless native-host dependencies without introducing
+placeholder peers. Task 4.1 has established the cold runtime-definition owner,
+its exact runtime-schema edge, TypeBox observation input, immutable process
+launch identity, cold authoring public faces, and closed source law. Runtime
+source remains open only in owner order from task 4.2.
 Task 3.2a's exact adoption receipt remains a foundation checkpoint only. It is
 not a runtime/coexistence contract and authorizes no public runtime release.
 

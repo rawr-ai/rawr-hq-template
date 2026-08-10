@@ -25,7 +25,11 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "bunx tsdown --config packages/core/runtime/schema/tsdown.config.ts"
+        "commands": [
+          "bunx tsdown --config packages/core/runtime/schema/tsdown.config.ts",
+          "bunx tsc -b packages/core/runtime/schema/tsconfig.json --emitDeclarationOnly --force"
+        ],
+        "parallel": false
       }
     },
     "check": {

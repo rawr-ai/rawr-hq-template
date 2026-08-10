@@ -1,4 +1,20 @@
 export type {
+  ResourceDependency,
+  SemanticDependency,
+  ServiceDefinition,
+  ServiceDependency,
+  ServiceDependencyDeclaration,
+  ServiceOf,
+  ServiceUse,
+} from "../../../runtime/definition/src/service";
+export {
+  defineService,
+  resourceDep,
+  semanticDep,
+  serviceDep,
+  useService,
+} from "../../../runtime/definition/src/service";
+export type {
   BaseMetadata,
   ServiceMetadataOf,
 } from "./metadata";

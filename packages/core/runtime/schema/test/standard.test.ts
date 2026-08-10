@@ -105,7 +105,7 @@ describe("TypeBox Standard Schema adapter", () => {
   test("publishes only the native adapter surface", async () => {
     const adapter = await import("../src");
 
-    expect(Object.keys(adapter)).toEqual(["standard"]);
+    expect(Object.keys(adapter).sort()).toEqual(["RuntimeSchema", "standard"]);
     expect(standard(Type.String())).not.toHaveProperty("__typebox");
   });
 });

@@ -72,6 +72,7 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "plugin-nx",
   "provider",
   "resource",
+  "runtime-definition",
   "service",
 ] as const;
 const GENERATED_SERVICE_INVENTORY = [
@@ -763,10 +764,18 @@ describe("installed Habitat products", () => {
         'const sdk = await import("@habitat-ai/sdk");',
         'const service = await import("@habitat-ai/sdk/service");',
         'const schema = await import("@habitat-ai/sdk/service/schema");',
+        'const app = await import("@habitat-ai/sdk/app");',
+        'const effect = await import("@habitat-ai/sdk/effect");',
+        'const execution = await import("@habitat-ai/sdk/execution");',
+        'const providers = await import("@habitat-ai/sdk/runtime/providers");',
+        'const providerEffect = await import("@habitat-ai/sdk/runtime/providers/effect");',
+        'const profiles = await import("@habitat-ai/sdk/runtime/profiles");',
+        'const resources = await import("@habitat-ai/sdk/runtime/resources");',
+        'const runtimeSchema = await import("@habitat-ai/sdk/runtime/schema");',
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
         'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
-        "console.log(JSON.stringify({ sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service), telemetry: Object.keys(telemetry).sort() }));",
+        "console.log(JSON.stringify({ app: Object.keys(app).sort(), effect: Object.keys(effect).sort(), execution: Object.keys(execution), providerEffect: Object.keys(providerEffect), providers: Object.keys(providers), profiles: Object.keys(profiles), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema), sdk: Object.keys(sdk), schema: Object.keys(schema), service: Object.keys(service), telemetry: Object.keys(telemetry).sort() }));",
       ].join("\n"),
       "utf8"
     );
@@ -777,6 +786,20 @@ describe("installed Habitat products", () => {
       stderr: "",
     });
     expect(JSON.parse(coldSdk.stdout)).toMatchObject({
+      app: [
+        "defineApp",
+        "defineEntrypoint",
+        "defineProcessCatalog",
+        "defineRuntimeProfile",
+        "runtimeLaunchIdentity",
+      ],
+      effect: ["Effect", "TaggedError"],
+      execution: ["defineEffectExecution"],
+      providerEffect: ["providerFx"],
+      providers: ["defineRuntimeProvider"],
+      profiles: ["defineRuntimeProfile"],
+      resources: ["defineRuntimeResource", "requireResource"],
+      runtimeSchema: ["RuntimeSchema"],
       sdk: ["createHabitatClientForWorkspace"],
       schema: ["standard"],
       service: expect.arrayContaining([
@@ -1022,6 +1045,11 @@ describe("installed Habitat products", () => {
         id: "resource",
         path: "dist/blueprints/resource/versions/2/blueprint.toml",
         version: 2,
+      },
+      {
+        id: "runtime-definition",
+        path: "dist/blueprints/runtime-definition/blueprint.toml",
+        version: 1,
       },
       { id: "service", path: "dist/blueprints/service/blueprint.toml", version: 1 },
       {

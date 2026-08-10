@@ -24,6 +24,13 @@ and the `AnalyticsClient` and `Logger` capability contracts they require. It
 does not expose binding, composition, workflow, database, feedback, or concrete
 adapter mechanics.
 
+The app, Effect, execution, and implemented `runtime/*` entries expose the
+cold runtime-definition authoring contract. They declare composition, process
+selection data, profiles, lazy Effects, executable descriptors, resources,
+providers, and runtime-carried schemas without starting a process or acquiring
+a resource. `providerSelection(...)` and live runtime mechanics remain absent
+until their owning runtime tasks land.
+
 The isolated `@habitat-ai/sdk/telemetry` entry exposes the provider-neutral
 technical telemetry contract and declarative OpenTelemetry Node configuration.
 It exports no provider acquisition, lease, exporter factory, or instrumentation
@@ -39,8 +46,8 @@ there is no second tracked authority tree in this package.
 
 ## Ownership boundary
 
-The service, resources, concrete providers, and runtime-schema adapter remain
-private workspace implementation owners. The SDK bundles their code and
+The service, resources, concrete providers, runtime-schema adapter, and
+runtime-definition remain private workspace implementation owners. The SDK bundles their code and
 declarations behind its qualified public surfaces, so consumers install and
 import only `@habitat-ai/sdk`; private package identities are not part of the
 published runtime or type interface. Third-party libraries remain ordinary
@@ -58,8 +65,9 @@ their exact runtime and harness owners; none is repeated by an individual
 service or plugin.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
-exactly nine sorted members: `app@2`, `package@1`, `plugin@1`, `plugin-nx@1`,
-`provider@1`, `resource@1`, `resource@2`, `service@1`, and `service@2`.
+exactly ten sorted members: `app@2`, `package@1`, `plugin@1`, `plugin-nx@1`,
+`provider@1`, `resource@1`, `resource@2`, `runtime-definition@1`, `service@1`,
+and `service@2`.
 Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; version 2
 resolves from `dist/blueprints/<id>/versions/2/blueprint.toml`. Presence in
 `dist/blueprints` alone grants no authority.

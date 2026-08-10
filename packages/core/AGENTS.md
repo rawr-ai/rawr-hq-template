@@ -41,6 +41,9 @@
 
 - The SDK's package exports are the public interface. Project-local contracts
   and Nx dependency edges govern private runtime composition.
+- [Public Habitat SDK](sdk/AGENTS.md)
+- [Runtime schema adapter](runtime/schema/AGENTS.md)
+- [Cold runtime definition](runtime/definition/AGENTS.md)
 
 ## Routing
 
@@ -55,3 +58,7 @@
 - Use the Nx graph to confirm private runtime dependency direction and the
   terminal SDK assembly edges.
 - Run the selected owner's focused typecheck, build, and behavior tests.
+- `bunx nx show project @habitat-ai/sdk --json`
+- `bunx nx run @habitat-ai/sdk:check`
+- `bunx nx run runtime-schema:check`
+- `bunx nx run runtime-definition:check`

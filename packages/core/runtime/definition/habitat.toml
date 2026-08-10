@@ -1,0 +1,11 @@
+schemaVersion = 1
+id = "runtime-definition"
+ownerProject = "runtime-definition"
+blueprint = "runtime-definition"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/definition"
+
+[selections]
+

@@ -8,13 +8,30 @@ const privateWorkspacePackages = [
   "@habitat-ai/catalog-service",
 ];
 
-const blueprintIds = ["app", "package", "plugin", "plugin-nx", "provider", "resource", "service"];
+const blueprintIds = [
+  "app",
+  "package",
+  "plugin",
+  "plugin-nx",
+  "provider",
+  "resource",
+  "runtime-definition",
+  "service",
+];
 
 export default defineConfig({
   entry: {
     index: "src/index.ts",
+    "app/index": "src/app/index.ts",
+    "effect/index": "src/effect/index.ts",
+    "execution/index": "src/execution/index.ts",
     "service/index": "src/service/index.ts",
     "service/schema": "src/service/schema.ts",
+    "runtime/resources/index": "src/runtime/resources/index.ts",
+    "runtime/providers/index": "src/runtime/providers/index.ts",
+    "runtime/providers/effect/index": "src/runtime/providers/effect/index.ts",
+    "runtime/profiles/index": "src/runtime/profiles/index.ts",
+    "runtime/schema": "src/runtime/schema.ts",
     telemetry: "src/telemetry.ts",
   },
   outDir: "dist",

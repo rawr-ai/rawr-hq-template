@@ -3,7 +3,8 @@
 ## Purpose
 
 - Ship Habitat's public local runtime as one conventional npm SDK.
-- Bundle the private service, resource, provider, and runtime-schema owners
+- Bundle the private service, resource, provider, runtime-schema, and cold
+  runtime-definition owners
   behind isolated public surfaces.
 - Transport the repository's generic Habitat blueprint bytes from the canonical
   `.habitat/blueprints` tree as generated package assets.
@@ -20,6 +21,10 @@
   analytics and observability middleware, and their required capability ports.
 - `standard` and `TypeBoxStandardSchema` are available only through
   `@habitat-ai/sdk/service/schema`.
+- Implemented app, Effect, execution, service, resource, provider, profile, and
+  runtime-schema authoring faces project the private cold definition owner.
+  They expose no `startApp`, provider selection, raw Effect runner, managed
+  runtime, native harness, or observation read model.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -48,7 +53,8 @@
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact sorted
   member set is `app@2`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
-  `resource@1`, `resource@2`, `service@1`, and `service@2`. The version-1
+  `resource@1`, `resource@2`, `runtime-definition@1`, `service@1`, and
+  `service@2`. The version-1
   resource and service members preserve their released bytes; each version-2
   member is a complete successor with the same law and structure and narrowed
   Grit acquisition. The published `app@1` locator remains immutable but is not
@@ -68,7 +74,9 @@
 - `src/index.ts` composes the private service and concrete Node providers into
   the public workspace-bound client. `src/service/index.ts` owns the generic
   service authoring surface, while `src/service/schema.ts` separately assembles
-  the private runtime-schema owner. `src/telemetry.ts` assembles the private
+  the private runtime-schema owner. App, Effect, execution, and runtime entry
+  modules project only implemented cold definition capabilities.
+  `src/telemetry.ts` assembles the private
   telemetry resource and OpenTelemetry Node provider without selecting or
   acquiring that provider for a consumer.
 - Later runtime and harness owners attach foundational telemetry exactly once
@@ -87,6 +95,9 @@
 - Public runtime: `@habitat-ai/sdk`.
 - Public service authoring substrate: `@habitat-ai/sdk/service`.
 - Public service schema adapter: `@habitat-ai/sdk/service/schema`.
+- Public cold runtime authoring: `@habitat-ai/sdk/app`,
+  `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
+  `@habitat-ai/sdk/runtime/*` subpaths.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and
   `@habitat-ai/sdk/blueprints/*`.
@@ -100,6 +111,7 @@
 - [[../../../resources/source-inventory/AGENTS|Private source-inventory resource]]
 - [[../../../resources/telemetry/AGENTS|Private telemetry resource]]
 - [[../runtime/schema/AGENTS|Private runtime-schema owner]]
+- [[../runtime/definition/AGENTS|Private runtime-definition owner]]
 
 ## Validation
 
