@@ -174,7 +174,8 @@ accepted delivery boundary is deliberately split across immutable topology task
 4.7, the completed authority-only complete-derivation-contract and
 binding-source gate 4.7a, the completed matching execution-identity,
 async-lowering, and service-resource-normalization correction 4.7b, and the
-completed population/public-entrypoint correction 4.7c, and the sole active
+completed population/public-entrypoint correction 4.7c, the completed
+definition-router ownership correction 4.7d, and the sole active
 complete-derivation source task 4.8.
 
 Task 4.7 creates only the private package-less `runtime-derivation` Nx project
@@ -283,8 +284,9 @@ Task 4.7b is complete across that same eight-document authority surface and is
 also documentation-only. It changes no implementation, source, project,
 blueprint, SDK edge, export map, public export, stage, or commit; in particular,
 it changes no `packages/core/runtime/definition/src/execution.ts`. It preserves
-the exact task-4.8 source/test, seven-file behavior-companion, and separate
-publication/assembly corpora.
+the then-current task-4.8 source/test, seven-file behavior-companion, and
+separate publication/assembly corpora; task 4.7d below alone advances the
+behavior companion to eight files.
 
 The matching correction closes three exact task-4.8 joins without duplicating
 their canonical mechanics here. Execution identity is
@@ -319,17 +321,30 @@ the actual SDK export with one async occurrence and one lazy web loader and
 cannot substitute arbitrary properties, project facts, casts, synthesized
 refs, or a direct table fixture.
 
+Task 4.7d is complete across exactly nine documents: the prior eight authority
+documents plus `packages/core/runtime/definition/AGENTS.md`. It is the final
+documentation-only correction before task 4.8 and admits that existing router
+as the eighth behavior-companion file solely for ownership and routing
+documentation. The publication/assembly corpus remains unchanged. The router
+records that flat runtime-definition `profile.ts` owns cold object-shaped
+`providerSelection(...)` grammar and that the terminal SDK projects it only
+through `@habitat-ai/sdk/runtime/profiles`; provider Effect plans and
+acquisition remain later runtime responsibilities. Task 4.7d changes no
+implementation, source, test, project, blueprint, SDK edge, export map, public
+export, stage, or commit, and immutable topology-only
+`runtime-derivation@1` remains unchanged.
+
 Canonical `HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5, 15, 23.1, and 27 own task
 4.8's exact mechanics. The active `app-runtime-realization` requirement and
 scenarios are the sole archive-safe OpenSpec acceptance owner. This amendment
 records routing only.
 
-Only after task 4.7c is sealed, task 4.8 is the sole active source node. It
+Only after task 4.7d is sealed, task 4.8 is the sole active source node. It
 creates exactly the independent
 `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
 closure and selects `runtime-derivation@2` in the existing derivation
 `habitat.toml`, without inheritance, fallback, an edit to version 1, or version
-3. It preserves the exact seven-file behavior companion corpus and uses the
+3. It preserves the exact eight-file behavior companion corpus and uses the
 separate exact publication/assembly corpus named by the active requirement;
 that corpus owns the SDK pack growth from 11 to 13 sorted members, blueprint
 copy/input growth from eight to nine directories, the exact LF rule, and
