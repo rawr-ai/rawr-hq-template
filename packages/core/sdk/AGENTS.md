@@ -16,8 +16,12 @@
 
 - The public root exports only `createHabitatClientForWorkspace` and
   `HabitatClient`.
-- `@habitat-ai/sdk/service` exposes only host-neutral procedure metadata,
-  analytics and observability middleware, and their required capability ports.
+- `@habitat-ai/sdk/service` exposes only the type-only canonical five-lane
+  service boundary, its disjoint module-context projection, host-neutral
+  procedure metadata, analytics and observability middleware, and their
+  required capability ports. The projection cannot contain `deps`, `scope`,
+  `config`, `invocation`, or `provided`; neither context type binds or executes
+  a service.
 - `standard` and `TypeBoxStandardSchema` are available only through
   `@habitat-ai/sdk/service/schema`.
 - `@habitat-ai/sdk/plugins/server` exposes the public and trusted-internal
@@ -85,8 +89,10 @@
 
 - `src/index.ts` composes the private service and concrete Node providers into
   the public workspace-bound client. `src/service/index.ts` owns the generic
-  service authoring surface, while `src/service/schema.ts` separately assembles
-  the private runtime-schema owner. App, Effect, execution, and runtime entry
+  service authoring surface; `src/service/procedure-context.ts` owns only the
+  readonly boundary-lane and disjoint module-projection types; and
+  `src/service/schema.ts` separately assembles the private runtime-schema owner.
+  App, Effect, execution, and runtime entry
   modules project only implemented cold definition capabilities.
   The `src/plugins/*` entries project only the corresponding private cold
   definitions and native oRPC authoring values; they do not introduce a host,

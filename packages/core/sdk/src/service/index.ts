@@ -29,3 +29,7 @@ export type {
 } from "./middleware/observability";
 export { createObservabilityMiddlewareCallback } from "./middleware/observability";
 export type { AnalyticsClient, Logger } from "./ports";
+export type {
+  ServiceBoundaryContext,
+  ServiceModuleContextProjection,
+} from "./procedure-context";

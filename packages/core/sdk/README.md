@@ -21,8 +21,13 @@ The isolated `@habitat-ai/sdk/service/schema` entry exposes:
 The isolated `@habitat-ai/sdk/service` entry exposes the host-neutral service
 authoring substrate: procedure metadata, analytics and observability middleware,
 service definitions and dependency declarations, and the `AnalyticsClient` and
-`Logger` capability contracts they require. It does not expose live binding,
-workflow, database, feedback, or concrete adapter mechanics.
+`Logger` capability contracts they require. Its type-only
+`ServiceBoundaryContext` carries exactly the readonly `deps`, `scope`, `config`,
+`invocation`, and `provided` lanes. `ServiceModuleContextProjection<T>`
+preserves an exact service-internal projection only when none of those five
+reserved lane names is present. Neither type constructs a context, binds a
+service, or defines an execution contract, and this entry exposes no workflow,
+database, feedback, or concrete adapter mechanics.
 
 The isolated `@habitat-ai/sdk/plugins/server` entry exposes the public and
 trusted-internal server plugin builders, their native oRPC implementers, and
