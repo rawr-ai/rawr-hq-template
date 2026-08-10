@@ -38,10 +38,15 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.6 are sealed; the active container is now the task 4.7
-  authority correction. Source implementation remains stopped until the
-  normalized-artifact extent, portable-plan shape, descriptor sequencing,
-  constraint source, and SDK projection are reconciled.
+  4.1 through 4.6 are sealed. The accepted derivation-authority correction
+  makes corrected task 4.7 the sole active source node: private package-less
+  `runtime-derivation`, selected immutable topology-only
+  `runtime-derivation@1`, its two exact
+  private edges, and bounded `NormalizedRuntimeTopology` plus normalized-topology
+  acceptance/cache proof only. SDK assembly, the complete graph, public face,
+  descriptor/module tables, and portable plan remain stopped behind the
+  authority-only complete-derivation-contract and binding-source task 4.7a gate
+  and then task 4.8.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -255,57 +260,138 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   facts contain only route identity and path, with no browser runtime, adapter,
   build execution, app composition, or native harness lifecycle.
 
-The active queue has one bounded authority node:
+The active queue has one bounded source node:
 
-1. correct task 4.7 before source work begins. Retain the accepted private
-   package-less `runtime-derivation` kind, root, and Nx edges plus the settled
-   canonical identity, role/surface and dependency-edge derivation,
-   duplicate-refusal, and cycle-refusal invariants. Do not yet allocate the
-   complete normalized artifact or portable plan to task 4.7. Reconcile their
-   exact extent with task 4.8's execution-reference and descriptor-table
-   ownership; remove nondeterministic `derivedAt` and broad future-plan fields;
-   identify the exact typed source of any placement constraints or omit them;
-   distinguish lazy native web module references from Effect execution
-   references; and name the exact terminal SDK face. Do not create
-   `runtime-derivation` files until canonical docs, task/design, and the active
-   spec delta agree.
+1. implement corrected task 4.7 and stop at its private topology handoff. Create
+   the package-less `runtime-derivation` root, inherit the scheduler contract,
+   select immutable topology-only `runtime-derivation@1`, and add only the exact
+   edges to
+   `runtime-schema` and `runtime-definition` through real source/build
+   references. Keep the exact root closure `AGENTS.md`, `habitat.toml`,
+   `project.json`, `src/`, `test/`, `tsconfig.json`, `tsconfig.test.json`, and
+   `tsdown.config.ts`; only source `index.ts` and
+   `normalized-runtime-topology.ts`; and only proofs
+   `normalized-topology.test.ts` and `nx-cache.test.ts`. Emit only
+   `deriveNormalizedRuntimeTopology({ entrypoint, profileId })` and
+   `NormalizedRuntimeTopology` with recursively copied/frozen identity; exact
+   `{ pluginId, instance? }` plugin identity; `{ plugin, role, surface,
+   capability }` surface requirement; and `{ resourceId, lifetime, role?,
+   instance? }` effective resource identity. Take roles from the process,
+   plugin/surface/resource facts from the app's plugins, and service edges only
+   from definitions transitively reachable through private `ServiceUse`
+   carriers. Admit no `plugin.service`. Use only typed `app.plugin(appId,
+   plugin)`, `plugin.resource(plugin, resource)`, dependent-to-dependency
+   `service.service(serviceId, dependencyServiceId)`,
+   `service.resource(serviceId, resourceId)`, and
+   `service.semantic(serviceId, adapterId)` edges; treat self-loops as cycles.
+   Refuse selected identity disagreement, duplicate plugin identities, role
+   literals, surface tuples, exact edges, and service cycles. For self-loops and
+   longer cycles, acceptance proves only order-independent refusal; it does not
+   prescribe an error class, selected cycle path, diagnostic ordering, or
+   finding payload and adds no error API. Make
+   `resourceRequirementIdentities` the sorted unique projection of accepted
+   plugin/resource edges: admit shared demand across distinct plugins and reject
+   a duplicate exact edge. Sort complete tuples by ECMAScript code-unit order
+   with missing optionals compared as empty, and close every TypeBox object with
+   `additionalProperties: false`. Co-land
+   `runtime-derivation:acceptance:normalized-topology` proving deep-equal but
+   nonidentical identity, recursive freeze, surplus/unknown rejection, zero cold
+   web-loader/Effect-body calls, deterministic equivalence, refusal, and cache
+   hit/invalidation. Add no optional interior, `package.json`, SDK edge/export,
+   complete graph, later derivation artifact, or portable plan.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
-   deployment-safe cold portable process plan. Land the definition-owned
-   provider-effect plan from `6.1` after provider selection and before the
-   compiler consumes it; do not insert a placeholder compiler input.
-2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
+1. **Complete-derivation contract and binding-source authority (`4.7a`)**:
+   before complete source work, replace every illustrative or undefined public
+   `RuntimeDerivationResult` and nested carrier with exact closed TypeBox-derived
+   shapes; freeze exact producer/consumer and `ExecutionDescriptorTable` /
+   `WebRouteModuleTable` method signatures plus finding, error/refusal, and
+   deterministic ordering contracts
+   without a public error API. Freeze exactly three runtime value exports,
+   `deriveRuntimeArtifacts`, `PortableRuntimePlanArtifactSchema`, and
+   `decodePortableRuntimePlanArtifact`, and exactly the type-only exports
+   `RuntimeDerivationInput`, `RuntimeDerivationResult`,
+   `NormalizedPluginIdentity`, `NormalizedSurfaceRequirement`,
+   `NormalizedResourceRequirementIdentity`, `NormalizedRuntimeTopologyEdge`,
+   `NormalizedRuntimeTopology`, `NormalizedAppDefinition`,
+   `NormalizedPluginDefinition`, `DerivedRoleSurfaceIndex`,
+   `NormalizedServiceUse`, `NormalizedServiceDependency`,
+   `NormalizedSemanticDependency`, `ResourceRequirement`, `ProviderSelection`,
+   `NormalizedRuntimeProfile`, `ServiceBindingPlan`, `SurfaceRuntimePlan`,
+   `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef`,
+   `ExecutionDescriptorTable`, `WebRouteModuleRef`, `WebRouteModuleTableEntry`,
+   `WebRouteModuleTable`, `PortableRuntimePlanArtifact`, and
+   `DerivationFinding`. Also settle the scope/config authoring owner/site, exact
+   closed source/ref unions, sealed `ServiceUse` carrier evolution,
+   schema-presence binding rules, transitive `serviceDep`
+   propagation/override, `RuntimeConfigSource` order/key/missing semantics, and
+   normalization/identity/cache/projection. Reject executable or live sources.
+   Its only allowed edit scope is `docs/system/HABITAT_ARCHITECTURE.md`,
+   `docs/system/HABITAT_RUNTIME_REALIZATION.md`, and the six active OpenSpec
+   authority artifacts
+   `openspec/changes/realize-app-runtime-spine/authority-amendment.md`,
+   `openspec/changes/realize-app-runtime-spine/classification-ledger.md`,
+   `openspec/changes/realize-app-runtime-spine/design.md`,
+   `openspec/changes/realize-app-runtime-spine/execution-queue.md`,
+   `openspec/changes/realize-app-runtime-spine/tasks.md`, and
+   `openspec/changes/realize-app-runtime-spine/specs/app-runtime-realization/spec.md`.
+   The gate creates or edits no implementation, project, blueprint, SDK edge,
+   export map, or public export. Every canonical placeholder contract must be
+   replaced before task 4.8 or archive; both transitions remain blocked until
+   the complete contract is deterministic and the two canonical documents and
+   all six active OpenSpec authority artifacts agree.
+2. **Complete derivation (`4.8-4.11`)**: select independent no-fallback
+   `runtime-derivation@2`, retaining the exact root shell and using only the
+   twelve named source files and three named tests. Implement the accepted 4.7a
+   contract verbatim rather than inventing it. Expose exactly one derivation
+   operation and the three frozen runtime values plus the exact finite type-only
+   inventory through the sole public face. The
+   `deriveRuntimeArtifacts({ entrypoint, profileId })` result remains
+   `{ topology, graph, executionDescriptorTable, webRouteModuleTable,
+   portableArtifact }`. Call private topology once, preserve
+   `graph.topology === topology`, recursively freeze the result, and invoke no
+   body. Keep Effect and web reference/table families distinct, including
+   private `plugin.web-surface(surfaceId)` beside a lazy loader without an early
+   web Effect face. Task 4.8 alone adds the SDK edge and sole derivation face.
+   The seven-field portable artifact sorts refs by full boundary identity and
+   uses exactly `sha256:` plus 64 lowercase hexadecimal SHA-256 characters over
+   RFC 8785 canonical JSON of the other six fields; it has no `derivedAt` or
+   placement constraints. Task 4.9 edits existing modules only, and tasks
+   4.10/4.11 add assertions only to `complete-derivation.test.ts`; no optional
+   interior, fallback, or version 3 is admitted. Land the definition-owned
+   provider-effect plan from `6.1` after provider selection and before compiler
+   consumption.
+3. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
    process plan, deterministic boot artifact, and the two path-qualified Fluree
    integrations without acquiring a provider or publishing another package.
-3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
+4. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter, force its
    context before mount, and prove rollback and reverse release.
-4. **Process runtime (`8.1-9.2`, `10.1`)**: bind services, lower adapters, match
+5. **Process runtime (`8.1-9.2`, `10.1`)**: bind services, lower adapters, match
    execution descriptors, run only non-oRPC Effect lanes, and return one
    process-owned stop handle without invoking a harness.
-5. **Harness, observation, and mounting (`10.2-10.7`)**: seal the public
+6. **Harness, observation, and mounting (`10.2-10.7`)**: seal the public
    companion contract, private `StartedHarness`, non-authorizing read models,
    and stop-before-release finalization state machine.
-6. **Habitat self-host and Oclif (`11.1-11.8`)**: audit the already-qualified
+7. **Habitat self-host and Oclif (`11.1-11.8`)**: audit the already-qualified
    tool identity, co-land complete `app@2` with the self-host catalog, then
    realize `habitat resolve`, `check`, and `hook`, generators, child-process
    fixtures, and isolated-registry package acceptance.
-7. **Additional CLI verticals (`12.1-12.3`)**: freshly author and select the
+8. **Additional CLI verticals (`12.1-12.3`)**: freshly author and select the
    agent-plugin, development, and authoring topics from frozen behavior
    evidence; never revive predecessor source.
-8. **Native hosts (`13.1-13.6`)**: add Elysia/oRPC and native Inngest beside
+9. **Native hosts (`13.1-13.6`)**: add Elysia/oRPC and native Inngest beside
    `runtime-harnesses`, prove same-app child isolation, and treat the MCP
    companion as conditional rather than a release blocker.
-9. **Web (`14.1-14.2`)**: prove the cold build and native mount handoff through
+10. **Web (`14.1-14.2`)**: prove the cold build and native mount handoff through
     the terminal SDK web face without restoring a product web app.
-10. **Audit and runtime-spine release (`15.1-15.6`)**: close telemetry receipts
+11. **Audit and runtime-spine release (`15.1-15.6`)**: close telemetry receipts
     and residue, pass the complete graph and installed artifacts, land exact
     main, and publish only the SDK/CLI pair.
-11. **Consumer adoption and drain (`15.7-15.9`)**: issue lane-specific
+12. **Consumer adoption and drain (`15.7-15.9`)**: issue lane-specific
     informational handoffs and an exact receipt contract, accept owner-local
     migrations, retire each source only after its sink accepts, archive the
     change, and drain only dispositioned Graphite/worktree residue.
