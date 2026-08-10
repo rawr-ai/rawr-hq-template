@@ -37,8 +37,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   closed from clean canonical worktrees at Habitat
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
-  `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and task
-  4.1 are sealed; the active source container is now task 4.2.
+  `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
+  4.1 and 4.2 are sealed; the active source container is now task 4.3.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -73,6 +73,16 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `31358233213` passed the complete platform graph. No `app@2`, provider
   selection, acquisition, execution, mount, native host, MCP face, deployment
   implementation, or sibling-process control landed early.
+- Task 4.2 is sealed at Habitat
+  `main@42c65376babeacae3058f865e1c680631879fc96` / tree
+  `fd151f1baa628d714fa61cd6f696d3683d0c4e55`. The terminal SDK now exposes
+  cold `plugins/server`, side-effect-only `plugins/server/effect`,
+  `plugins/async`, and `plugins/async/effect` faces; `service@3` selects the
+  terminal-SDK consumer contract while Catalog remains acyclic on `service@2`.
+  PR #944 passed Repository Ratchet and installed-package acceptance on Ubuntu
+  and Windows, and push-to-main Repository Ratchet run `31376301029` passed the
+  complete platform graph. No native host, MCP face, live runtime owner, or
+  dispatcher materialization landed early.
 - Task 1.7 records Magic's committed consumer oracle
   `ec7a49c596ca50d5c8ef8ce3f8e3e40cb08c33a7` / tree
   `2b3c99700d5db8264b7ee42910575e8b877bda3a`, separately from clean blueprint
@@ -171,31 +181,24 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   exact terminal SDK authoring faces, and `runtime-definition@1`. Its graph,
   cache, policy, and installed-artifact proofs pass with `app@1` byte-identical
   and no live runtime or `app@2`.
+- [x] **Cold server and async plugin faces**: task 4.2 establishes the
+  topology-specific server/internal authoring face, the official
+  implementation-owned Effect-oRPC bootstrap, host-neutral async declarations,
+  and complete `service@3` without a native host or live runtime owner.
 
 The active queue has one bounded node:
 
-1. execute task 4.2 as the sole active node: freshly author the
-   topology-specific server/internal plugin face and host-neutral async plugin
-   face at `@habitat-ai/sdk/plugins/server` and
-   `@habitat-ai/sdk/plugins/async`. Use inline native `.handler` for synchronous
-   and Promise operations and the official implementation-owned
-   `@orpc/experimental-effect@2.0.0-beta.23` `.effect` once in
-   `src/service/impl.ts` for Effect-backed operations; Habitat-authored code
-   must not touch `handlerGen`. Keep the async face to cold declarations and
-   stable identity/descriptor references, with no installed or runtime-loaded
-   Inngest, `FunctionBundle`, registration factory, native client/function,
-   loader, adapter, harness, peer metadata, or unnamed dispatcher descriptor.
-   Preserve no predecessor API/workflow builders, names, or wire authority;
-   keep the server spine projection-capable but add no MCP authoring face or
-   lifecycle owner; and consume the landed service contracts without
-   redefining them or adding a placeholder adapter or product policy.
+1. execute task 4.3 as the sole active node: author the cold `ProcessView`,
+   `RoleView`, `ServiceBoundary`, and `ServiceBinding` declarations in
+   `runtime-definition` and the SDK service face. Leave live `BoundService`,
+   `bindService`, and cache mechanics for task 8.3.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Cold definition (`4.2-4.6`)**: continue from the sealed
-   `runtime-definition` base through plugin, service-view, reader-binding,
+1. **Cold definition (`4.3-4.6`)**: continue from the sealed
+   runtime-definition and plugin-face base through service-view, reader-binding,
    service-context, and web declarations without acquisition, native hosts, or
    `app@2`.
 2. **Derivation (`4.7-4.11`)**: normalize the authored graph and emit the
