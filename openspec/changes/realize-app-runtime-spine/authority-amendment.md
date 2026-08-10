@@ -136,8 +136,9 @@ the frozen realization phases or authorize a second runtime.
 
 ## Service-Use Authority Correction
 
-Task 4.3 owns one cold authoring relation only. `useService(serviceDefinition,
-{ contract, instance? })` produces a frozen `ServiceUse<TContract>` whose public
+Task 4.3 landed one cold authoring relation. Task 4.8 preserves that relation and
+widens only its private-carrier option to `useService(serviceDefinition,
+{ contract, instance?, binding? })`; it produces a frozen `ServiceUse<TContract>` whose public
 enumerable shape is `kind: "service.use"`, the exact definition `serviceId`, and
 an optional `serviceInstance` only when composition selects a genuine distinct
 instance. The containing services-map key is the consumer-local injected-client
@@ -145,8 +146,9 @@ property. It is not an alias, a service identity, a binding identity, or a cache
 key ingredient. The public relation exposes neither the service definition nor
 the contract object.
 
-`runtime-definition` retains the exact definition and contract witness behind a
-non-enumerable symbol-keyed private carrier. Only private runtime owners may use
+`runtime-definition` retains the exact definition, contract witness, and
+optional closed binding tree behind a non-enumerable symbol-keyed private
+carrier. Only private runtime owners may use
 its internal accessor; the terminal SDK MUST NOT re-export that symbol or
 accessor. `ServiceContractOf` and services-map client inference remain purely
 TypeScript relationships over `ServiceUse<TContract>` and preserve the authored
@@ -166,12 +168,12 @@ alias identity are rejected predecessor vocabulary and preserve no public API.
 
 ## Runtime-Derivation Delivery Correction
 
-The canonical runtime documents remain authoritative for the derivation phase
-and its final private owner, but their illustrative section-15 artifact extent
-does not assign every derivation output to the first source node. The accepted
-delivery boundary is deliberately split across topology task 4.7, the
-authority-only complete-derivation-contract and binding-source gate 4.7a, and
-complete derivation task 4.8.
+`HABITAT_ARCHITECTURE.md` routes the derivation phase, while
+`HABITAT_RUNTIME_REALIZATION.md` is its sole exact canonical document. The
+accepted delivery boundary is deliberately split across immutable topology task
+4.7, the completed authority-only complete-derivation-contract and
+binding-source gate 4.7a, and the sole active complete-derivation source task
+4.8.
 
 Task 4.7 creates only the private package-less `runtime-derivation` Nx project
 at `packages/core/runtime/derivation`, selects the closed
@@ -269,134 +271,37 @@ The selected closed `runtime-derivation@1` blueprint is immutable and
 topology-only. Later complete derivation MUST NOT edit, widen, inherit from, or
 fall back to version 1.
 
-Task 4.7a is the complete-derivation-contract and binding-source authority-only
-gate, with no implementation. Before task 4.8 may start, it must replace every
-illustrative or undefined public `RuntimeDerivationResult` shape and nested
-public carrier with exact closed TypeBox schemas and TypeBox-derived readonly
-shapes; freeze the exact producer/consumer signatures and every method
-signature on `ExecutionDescriptorTable` and `WebRouteModuleTable`; and freeze
-complete-derivation finding, error/refusal, and deterministic ordering contracts
-without adding an error class, error type, or error value export. It must also
-name the scope/config binding authoring owner and declaration site; freeze the
-exact closed TypeBox source union and normalized-reference union; decide whether
-and how the sealed `ServiceUse` private carrier evolves; define required and
-forbidden bindings when scope/config schemas are present or absent; define
-transitive `serviceDep` propagation and override; define `RuntimeConfigSource`
-ordering, key identity, and missing-source semantics; and settle normalization,
-identity, cache, and public/private projection. It rejects every callback,
-closure, executable resolver, provider acquisition, and live value. Its only
-allowed edit scope is `docs/system/HABITAT_ARCHITECTURE.md`,
-`docs/system/HABITAT_RUNTIME_REALIZATION.md`, and the six active OpenSpec
-authority artifacts
-`openspec/changes/realize-app-runtime-spine/authority-amendment.md`,
-`openspec/changes/realize-app-runtime-spine/classification-ledger.md`,
-`openspec/changes/realize-app-runtime-spine/design.md`,
-`openspec/changes/realize-app-runtime-spine/execution-queue.md`,
-`openspec/changes/realize-app-runtime-spine/tasks.md`, and
-`openspec/changes/realize-app-runtime-spine/specs/app-runtime-realization/spec.md`.
-The gate creates or edits no implementation, project, blueprint, SDK edge,
-export map, or public export. Every canonical placeholder contract must be
-replaced before task 4.8 or archive; both transitions remain blocked until the
-complete contract is deterministic and the two canonical documents and all six
-active OpenSpec authority artifacts agree.
+Task 4.7a is complete across exactly eight authority documents:
+`HABITAT_ARCHITECTURE.md` as router, `HABITAT_RUNTIME_REALIZATION.md` as the sole
+exact canonical document, and six active OpenSpec artifacts. It changed no
+implementation, project, blueprint, SDK edge, export map, public export, stage,
+or commit. Immutable topology-only `runtime-derivation@1` remains unchanged.
 
-Task 4.8 selects a new, independent, complete `runtime-derivation@2` blueprint
-with no inheritance or fallback and implements the accepted task-4.7a contract
-verbatim rather than inventing or widening it.
-It retains the exact task-4.7 root shell. Its exact source closure is
-`index.ts`, `normalized-runtime-topology.ts`, `derive-runtime-artifacts.ts`,
-`normalized-authoring-graph.ts`, `execution-descriptor-ref.ts`,
-`derive-execution-descriptor-table.ts`, `identity-policy.ts`,
-`service-binding-plan.ts`, `surface-runtime-plan.ts`,
-`web-route-module-table.ts`, `workflow-dispatcher-descriptor.ts`, and
-`portable-runtime-plan-artifact.ts`; its exact test closure is
-`normalized-topology.test.ts`, `complete-derivation.test.ts`, and
-`nx-cache.test.ts`.
+Canonical `HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5, 15, 23.1, and 27 own task
+4.8's exact mechanics. The active `app-runtime-realization` requirement and
+scenarios are the sole archive-safe OpenSpec acceptance owner. This amendment
+records routing only.
 
-The accepted top-level call/result outline is fixed below, but task 4.7a must
-replace every illustrative or undefined nested carrier with its final exact
-closed TypeBox-derived shape before task 4.8 may implement it:
-
-```ts
-interface RuntimeDerivationInput {
-  readonly entrypoint: Entrypoint;
-  readonly profileId: string;
-}
-
-interface RuntimeDerivationResult {
-  readonly topology: NormalizedRuntimeTopology;
-  readonly graph: NormalizedAuthoringGraph;
-  readonly executionDescriptorTable: ExecutionDescriptorTable;
-  readonly webRouteModuleTable: WebRouteModuleTable;
-  readonly portableArtifact: PortableRuntimePlanArtifact;
-}
-
-declare function deriveRuntimeArtifacts(
-  input: RuntimeDerivationInput,
-): RuntimeDerivationResult;
-```
-
-The sole public face `@habitat-ai/sdk/runtime/derivation` has exactly one
-derivation operation, `deriveRuntimeArtifacts(input)`, and exactly three runtime
-value exports: `deriveRuntimeArtifacts`, `PortableRuntimePlanArtifactSchema`,
-and `decodePortableRuntimePlanArtifact`. Its exact finite type-only export
-inventory is `RuntimeDerivationInput`, `RuntimeDerivationResult`,
-`NormalizedPluginIdentity`, `NormalizedSurfaceRequirement`,
-`NormalizedResourceRequirementIdentity`, `NormalizedRuntimeTopologyEdge`,
-`NormalizedRuntimeTopology`, `NormalizedAppDefinition`,
-`NormalizedPluginDefinition`, `DerivedRoleSurfaceIndex`,
-`NormalizedServiceUse`, `NormalizedServiceDependency`,
-`NormalizedSemanticDependency`, `ResourceRequirement`, `ProviderSelection`,
-`NormalizedRuntimeProfile`, `ServiceBindingPlan`, `SurfaceRuntimePlan`,
-`WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef`,
-`ExecutionDescriptorTable`, `WebRouteModuleRef`, `WebRouteModuleTableEntry`,
-`WebRouteModuleTable`, `PortableRuntimePlanArtifact`, and
-`DerivationFinding`. The decoder is a validation utility, not a second
-derivation operation; no other runtime value, type-only export, or public error
-API is admitted.
-
-`deriveRuntimeArtifacts` calls private `deriveNormalizedRuntimeTopology` exactly
-once, places that exact frozen object at both `result.topology` and
-`result.graph.topology`, recursively freezes the result artifacts, and invokes
-no Effect body or web route-module loader. Complete derivation carries the
-topology into `NormalizedAuthoringGraph` alongside `NormalizedServiceUse`,
-direct-face provider selection and its normalized artifact,
-`ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`,
-Effect-only `ExecutionDescriptorRef` plus non-portable
-`ExecutionDescriptorTable`, separate `WebRouteModuleRef` plus non-portable
-`WebRouteModuleTable`, and `PortableRuntimePlanArtifact`. Only task 4.8 adds the
-real SDK assembly edge and this sole public face, together with installed-package
-and `runtime-derivation:acceptance:deployment-cold-plan` proof.
-
-The portable artifact has exactly the fields `kind`, `artifactId`, `identity`,
-`profileId`, `roles`, `surfaces`, and `executionDescriptorRefs`. `identity` is
-the exact launch-identity copy already admitted by topology, and
-`executionDescriptorRefs` contains Effect execution references only, sorted by
-their complete discriminated boundary-identity tuples in ECMAScript code-unit
-order with missing optional identity fields compared as the empty string. The
-public face owns `PortableRuntimePlanArtifactSchema` and
-`decodePortableRuntimePlanArtifact`; the closed decoder rejects surplus fields
-and an `artifactId` that is not exactly `sha256:` followed by the 64 lowercase
-hexadecimal SHA-256 characters for the RFC 8785 canonical JSON encoding of the
-other six top-level fields. The record
-has no clock-derived `derivedAt`, placement constraint, executable value,
-non-portable table, or additional plan collection. No placement-constraint
-grammar is inferred without a separately owned typed authoring source.
-
-A lazy native web route-module loader is never an Effect
-`ExecutionDescriptorRef` and never enters `ExecutionDescriptorTable` or the
-portable artifact. It remains only behind its `WebRouteModuleRef` in the
-non-portable `WebRouteModuleTable`. Actual private web-local Effect work uses the
-distinct `plugin.web-surface` `ExecutionDescriptorRef` variant with required
-`surfaceId`. The task-4.8 fixture proves one such descriptor beside one lazy web
-loader without creating `@habitat-ai/sdk/plugins/web/effect` early. This split
-corrects sequencing and exact artifact shape without changing the seven-phase
-realization chain or creating a second derivation owner.
-
-Task 4.9 may only edit the existing version-2 source modules. Tasks 4.10 and 4.11
-may only add their handoff assertions to `complete-derivation.test.ts`. Neither
-task may add an optional interior, alternate module, alternate test, blueprint
-fallback, or `runtime-derivation@3`; version 2 is the complete law.
+Task 4.8 is the sole active source node. It creates exactly the independent
+`.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
+closure and selects `runtime-derivation@2` in the existing derivation
+`habitat.toml`, without inheritance, fallback, an edit to version 1, or version
+3. It preserves the exact seven-file behavior companion corpus and uses the
+separate exact publication/assembly corpus named by the active requirement;
+that corpus owns the SDK pack growth from 11 to 13 sorted members, blueprint
+copy/input growth from eight to nine directories, the exact LF rule, and
+installed publication/application proof. No new `runtime-definition` file,
+project, blueprint, or version and no other kind, version, or project is
+admitted. Task 4.8 derives source defaults/order/ref expansion with zero source
+I/O or decode and derives binding ids plus equal-diamond deduplication without
+constructing a live cache.
+The private `ServiceUse` carrier retains definition and contract by exact
+reference and fresh-copies/freezes only its binding tree. Derivation owns
+authored missing or ambiguous provider selection as built-in `TypeError`;
+compiler owns normalized-handoff consistency and dependency closure/cycle
+defense. Task 7.2 owns physical config preflight before first acquisition, and
+task 8.2 owns actual `{ identity, profileId, bindingId }` cache construction and
+reuse.
 
 ## Official Effect Runtime Source Authority
 

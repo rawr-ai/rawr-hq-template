@@ -361,13 +361,15 @@ those edges. No private runtime project imports the SDK facade.
 The final SDK edge to `runtime-derivation` is an explicit three-step delivery.
 Task 4.7 creates the private owner, its two private edges, immutable
 topology-only `runtime-derivation@1`, and bounded normalized topology with no SDK
-edge or export. Task 4.7a freezes complete-derivation-contract and binding-source
-authority without source work.
-Task 4.8 selects independent complete `runtime-derivation@2` with no inheritance
-or fallback and alone adds `@habitat-ai/sdk -> runtime-derivation` when the
-complete derivation surface becomes public through exactly
-`@habitat-ai/sdk/runtime/derivation`. The completed graph above remains exact;
-the phased landing does not authorize an empty SDK shell or a second facade.
+edge or export. Task 4.7a closes the exact eight-document authority scope:
+`HABITAT_ARCHITECTURE.md` routes, `HABITAT_RUNTIME_REALIZATION.md` is the sole
+exact canonical document, and the six active OpenSpec artifacts preserve the
+archive-safe acceptance owner without source work. Task 4.8 selects independent
+complete `runtime-derivation@2` with no inheritance or fallback and alone adds
+`@habitat-ai/sdk -> runtime-derivation` when the complete derivation surface
+becomes public through exactly `@habitat-ai/sdk/runtime/derivation`. The
+completed graph remains exact; the phased landing does not authorize an empty
+SDK shell or a second facade.
 
 The SDK composition root supplies the definition-owned observation port
 implementation to `runtime-mounting`. Mounting publishes through that port and
@@ -656,10 +658,12 @@ An app profile imports the selected resource and provider faces and calls the
 core definition operation exposed as SDK
 `providerSelection({ resource, provider, config })`. A resource-owned
 selector wrapper or provider catalog would create a second app-selection path
-and is not admitted. The compiler owns the bounded diagnostic normalization its
-contract requires; later owners consume the compiler artifact rather than its
-private helpers. Derivation normalizes the selected direct faces, and
-compilation proves coverage before any provider builds.
+and is not admitted. Derivation owns authored missing or ambiguous selection as
+fatal built-in `TypeError`. The compiler owns bounded diagnostics for
+normalized-handoff referential inconsistency, provider dependency closure or
+cycles, and defense against a corrupt artifact; it does not retain a reachable
+missing-selection diagnostic. Later owners consume the compiler artifact rather
+than its private helpers.
 
 ### Derive first; compile only normalized facts
 
@@ -723,129 +727,32 @@ complete graph, reference/table family, or portable plan. The selected
 topology-only `runtime-derivation@1` law is immutable; complete derivation does
 not edit, inherit from, or fall back to it.
 
-Task 4.7a is the complete-derivation-contract and binding-source authority-only
-gate and authors no source. Before task 4.8 may start, it replaces every
-illustrative or undefined public `RuntimeDerivationResult` shape and nested
-public carrier with exact closed TypeBox schemas and TypeBox-derived readonly
-shapes; freezes exact producer/consumer signatures and every method signature
-on `ExecutionDescriptorTable` and `WebRouteModuleTable`; and freezes finding,
-error/refusal, and deterministic ordering contracts without adding a public error
-class, type, or value. It also names the scope/config binding authoring owner and
-declaration site; freezes the exact closed TypeBox source and normalized-ref
-unions; decides whether and how the sealed `ServiceUse` carrier evolves;
-defines required and forbidden bindings for present and absent schemas; defines
-transitive `serviceDep` propagation and override; fixes `RuntimeConfigSource`
-ordering, key, and missing-source semantics; and settles normalization,
-identity, cache, and public/private projection. The grammar admits no callback,
-closure, executable resolver, provider acquisition, or live value. Its only
-allowed edit scope is `docs/system/HABITAT_ARCHITECTURE.md`,
-`docs/system/HABITAT_RUNTIME_REALIZATION.md`, and the six active OpenSpec
-authority artifacts
-`openspec/changes/realize-app-runtime-spine/authority-amendment.md`,
-`openspec/changes/realize-app-runtime-spine/classification-ledger.md`,
-`openspec/changes/realize-app-runtime-spine/design.md`,
-`openspec/changes/realize-app-runtime-spine/execution-queue.md`,
-`openspec/changes/realize-app-runtime-spine/tasks.md`, and
-`openspec/changes/realize-app-runtime-spine/specs/app-runtime-realization/spec.md`.
-The gate creates or edits no implementation, project, blueprint, SDK edge,
-export map, or public export. Every canonical placeholder contract must be
-replaced before task 4.8 or archive; both transitions remain blocked until the
-complete contract is deterministic and the two canonical documents and all six
-active OpenSpec authority artifacts agree.
+Task 4.7a closes the design decision without source work. Canonical
+`HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5, 15, 23.1, and 27 are the sole exact
+mechanics route; the active `app-runtime-realization` requirement and scenarios
+are the sole archive-safe acceptance owner. This design records only ownership
+and phase boundaries.
 
-Task 4.8 selects independent complete `runtime-derivation@2`, with no inheritance
-or fallback, and implements the accepted task-4.7a contract verbatim rather than
-inventing or widening it. It preserves the exact root
-shell and expands source to exactly `index.ts`,
-`normalized-runtime-topology.ts`, `derive-runtime-artifacts.ts`,
-`normalized-authoring-graph.ts`, `execution-descriptor-ref.ts`,
-`derive-execution-descriptor-table.ts`, `identity-policy.ts`,
-`service-binding-plan.ts`, `surface-runtime-plan.ts`,
-`web-route-module-table.ts`, `workflow-dispatcher-descriptor.ts`, and
-`portable-runtime-plan-artifact.ts`. Its tests are exactly
-`normalized-topology.test.ts`, `complete-derivation.test.ts`, and
-`nx-cache.test.ts`.
-
-The accepted top-level call/result outline fixes `RuntimeDerivationInput` as
-`{ entrypoint, profileId }` and `RuntimeDerivationResult` as `{ topology, graph,
-executionDescriptorTable, webRouteModuleTable, portableArtifact }`; task 4.7a
-must replace every illustrative or undefined nested carrier with its final exact
-closed TypeBox-derived shape before implementation. The sole public
-`@habitat-ai/sdk/runtime/derivation` face has exactly one derivation operation,
-`deriveRuntimeArtifacts(input)`, and exactly three runtime value exports:
-`deriveRuntimeArtifacts`, `PortableRuntimePlanArtifactSchema`, and
-`decodePortableRuntimePlanArtifact`. Its exact finite type-only export inventory
-is `RuntimeDerivationInput`, `RuntimeDerivationResult`,
-`NormalizedPluginIdentity`, `NormalizedSurfaceRequirement`,
-`NormalizedResourceRequirementIdentity`, `NormalizedRuntimeTopologyEdge`,
-`NormalizedRuntimeTopology`, `NormalizedAppDefinition`,
-`NormalizedPluginDefinition`, `DerivedRoleSurfaceIndex`,
-`NormalizedServiceUse`, `NormalizedServiceDependency`,
-`NormalizedSemanticDependency`, `ResourceRequirement`, `ProviderSelection`,
-`NormalizedRuntimeProfile`, `ServiceBindingPlan`, `SurfaceRuntimePlan`,
-`WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef`,
-`ExecutionDescriptorTable`, `WebRouteModuleRef`, `WebRouteModuleTableEntry`,
-`WebRouteModuleTable`, `PortableRuntimePlanArtifact`, and
-`DerivationFinding`. The decoder is a validation utility rather than a second
-derivation operation; no other runtime value, type-only export, or public error
-API is admitted.
-
-The operation invokes private `deriveNormalizedRuntimeTopology` exactly once,
-uses the same frozen topology object at `result.topology` and
-`result.graph.topology`, recursively freezes its result artifacts, and invokes
-no Effect body or web loader. The complete graph adds normalized service uses
-and provider selections, service binding plans, surface runtime plans,
-`WorkflowDispatcherDescriptor` artifacts, and two distinct reference/table
-families.
-Effect execution bodies receive `ExecutionDescriptorRef` values and
-remain in the non-portable `ExecutionDescriptorTable`. Lazy native web
-route-module loaders receive `WebRouteModuleRef` values and remain only in the
-non-portable `WebRouteModuleTable`; a web loader is never an Effect execution
-reference. Actual web-local Effect work is represented by the distinct
-`plugin.web-surface` `ExecutionDescriptorRef` variant with required `surfaceId`.
-The task-4.8 owner-local fixture pairs one private web Effect descriptor with one
-lazy route-module loader and proves the channels remain distinct without
-creating `@habitat-ai/sdk/plugins/web/effect` early. Only task 4.8 adds the real
-SDK assembly edge and the sole terminal public face
-`@habitat-ai/sdk/runtime/derivation`.
-
-The task-4.8 `PortableRuntimePlanArtifact` contains exactly `kind`,
-`artifactId`, `identity`, `profileId`, `roles`, `surfaces`, and
-`executionDescriptorRefs`. Its `identity` is the exact topology-carried launch
-identity. Its descriptor refs are Effect-only and are sorted by the complete
-discriminated boundary-identity tuple using ECMAScript code-unit order, with
-missing optional identity fields compared as the empty string. The sole public
-face exports `PortableRuntimePlanArtifactSchema` and
-`decodePortableRuntimePlanArtifact`; every schema object is closed. `artifactId`
-is exactly `sha256:` followed by the 64 lowercase hexadecimal SHA-256 characters
-for the RFC 8785 canonical JSON of the six non-`artifactId` top-level fields,
-after canonical collection ordering.
-Decode rejects surplus fields, malformed ids, and digest disagreement. The
-artifact contains no `derivedAt`, placement constraints, executable closure,
-either non-portable table, live value, runtime handle, readiness gate,
-observation port, provider secret, supervisor, acquisition, mounting, or
-additional plan collection. A deployment owner may consume this cold record and
-make its separately owned placement decision, but no unowned
-placement-constraint grammar is inferred.
-
-The runtime compiler consumes only derived artifacts and selected process facts
-and emits one complete `CompiledProcessPlan`. Empty service, workflow, or
-surface collections remain explicit when a narrow vertical does not use them.
-The plan still contains resource, service, surface, execution, adapter, harness,
-and bootgraph inputs required by downstream phases.
-
-The pure identity, closure, cycle, duplicate, and route-matching algorithms in
-the lab may be ported after their inputs and outputs are reshaped to the frozen
-contracts, but task 4.9 only edits the existing version-2 modules. The lab's
-truncated `CompiledProcessPlan` is rejected. Tasks 4.10 and 4.11 add their
-handoff assertions only to `complete-derivation.test.ts`; neither they nor task
-4.9 creates an optional interior, fallback, alternate test, or
-`runtime-derivation@3`.
+Task 4.8 alone creates the exact independent
+`.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
+closure, selects version 2 in the existing derivation `habitat.toml`, preserves
+the exact seven-file behavior companion corpus, and uses the separate exact
+publication/assembly corpus named by the active requirement. It exposes the
+sole derivation face while leaving immutable topology-only version 1 untouched,
+with no fallback or version 3. It admits no new `runtime-definition` file,
+project, blueprint, or version and no other kind, version, or project.
+Derivation owns cold source/ref
+normalization, binding ids/equal-diamond deduplication, and authored
+missing/ambiguous provider-selection refusal with zero source I/O, decode,
+acquisition, or cache construction. The compiler owns normalized-handoff
+consistency and dependency closure/cycles; provisioning owns all-ref config
+preflight before acquisition; process runtime owns live cache construction and
+reuse. The owner-specific design sections carry those decisions.
 
 ### Keep service use cold until process binding
 
 Plugin service use is one relation, not a family of process, role, boundary, or
-binding views. `useService(serviceDefinition, { contract, instance? })` returns
+binding views. `useService(serviceDefinition, { contract, instance?, binding? })` returns
 a frozen `ServiceUse<TContract>` with the public enumerable shape
 `{ kind: "service.use", serviceId, serviceInstance? }`. `serviceInstance` is
 present only for a genuine composition-selected instance. The key containing a
@@ -853,18 +760,31 @@ use in a plugin's services map is the local injected-client property and has no
 alias, identity, or cache-key authority. Neither the complete service definition
 nor the contract object is public cold data.
 
-`runtime-definition` carries the exact definition and contract witness through
-a private non-enumerable symbol. Its accessor is available only to private
-runtime owners and is not re-exported by the SDK. The public SDK supplies
+`runtime-definition` carries the exact definition and contract witness
+references plus an optional closed binding tree through a private
+non-enumerable symbol. It neither copies nor recursively freezes the referenced
+definition or contract; it fresh-copies and recursively freezes only the binding
+tree before freezing the declaration and carrier. Its accessor is available
+only to private runtime owners and is not re-exported by the SDK. The public SDK supplies
 `ServiceContractOf` and map-key-preserving TypeScript inference without dynamic
 lookup or a second runtime record.
 
-Task 4.8's complete derivation increment implements the complete contract
-accepted by task 4.7a without inventing it, normalizes each `ServiceUse`, and
+Task 4.8's complete derivation increment follows the canonical sections and
+active acceptance owner without inventing either. Its exact seven-file behavior
+companion corpus evolves only existing `runtime-definition` service/profile
+source and test files, SDK service/profile projection source/tests, and
+installed acceptance. Its separate exact publication/assembly corpus adds only
+the admitted SDK derivation face and independent version-2 law and updates their
+existing publication owners. Cold `providerSelection(...)` lives in flat
+`profile.ts` and is
+exported only through `@habitat-ai/sdk/runtime/profiles`, while the derivation
+face retains exactly three runtime values. It normalizes each `ServiceUse` and
 produces the corresponding
 `ServiceBindingPlan`. Its scope and config binding references are closed
 declarative discriminated unions; they contain no callback, resolver, provider
-acquisition, or live value. The compiler consumes the derived plan rather than
+acquisition, source I/O/decode, or live value. Task 4.8 proves source defaults,
+authored order, expanded refs, binding ids, and pre-emission diamond dedupe only.
+The compiler consumes the derived plan rather than
 inventing it. The SDK service owner separately defines the five context lanes,
 and process runtime alone constructs `BoundService` values through
 `bindService`, creates the cache key, and owns `ServiceBindingCache`. The
@@ -875,8 +795,13 @@ predecessor `ProcessView`, `RoleView`, `ServiceBoundary`, and author-facing
 
 Providers are cold descriptors that own resource requirements, provider config
 schema/decoder, observation redaction metadata, health/refresh metadata, and
-`build(...)`. Provisioning validates provider-local config and passes the full
-validated value through provider build, acquire, and release. Only provider-
+`build(...)`. Before the first acquisition, provisioning materializes every
+declared source and preflights every provider config plus service scope/config
+ref using exact authored-order first-hit lookup and owning-schema decode. Any
+required-source, declared memory/test, malformed/unreadable source, exhausted
+key, or winning-decode refusal yields zero acquisition; only an absent optional
+dotenv/file source skips. The full validated provider value then passes through
+provider build, acquire, and release. Only provider-
 owned diagnostic, telemetry, and catalog projections apply redaction. The build
 context receives the definition-owned `RuntimeObservationPort`; it never imports
 the downstream observation implementation. Its
@@ -887,8 +812,8 @@ rollback order, static finalization order/policy metadata, and the provider
 reference as ordinary data, never as a Layer dependency graph. For each started
 process the Effect substrate creates exactly one `effect@4.0.0-beta.101`
 `ManagedRuntime` from exactly one `Layer.effectContext` lifecycle adapter. That
-adapter consumes bootgraph order, decodes provider-owned config, builds only
-after dependencies exist, acquires resources, registers each plan's release
+adapter consumes bootgraph order, receives already decoded provider config,
+builds only after dependencies exist, acquires resources, registers each plan's release
 after successful acquisition, and returns the assembled process Context. The
 substrate forces the managed context before mount and exposes only one
 `ManagedRuntimeHandle`. `ManagedRuntime` owns its scopes, fibers, and reverse
@@ -928,6 +853,15 @@ boundary does not already own Effect execution. It never invokes a harness or
 projects observation read models. Runtime mounting owns harness invocation and
 cross-owner single-flight settlement; runtime observation alone projects final
 read models.
+
+The live `ServiceBindingCache` key is exactly
+`{ identity, profileId, bindingId }`, with all five
+`RuntimeLaunchIdentity` fields. It excludes plugin
+`NormalizedServiceUse.localName`/services-map property name as a separate ingredient,
+plugin/surface/capability, contract/schema object identity, decoded values, and
+invocation. Service-owned dependency keys may influence reuse only through
+normalized dependency or requirement ids already represented by `bindingId`.
+Task 8.2 alone proves construction and reuse.
 
 The execution registry admits an executable only when compiled plan and
 descriptor identity agree exactly. `effect/context` assembles the one
