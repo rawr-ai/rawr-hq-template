@@ -110,6 +110,14 @@ export function defineEntrypoint<
     readonly identity: RuntimeLaunchIdentity;
   }
 ): Entrypoint<TApp, TProfile, TProcess> {
+  if (
+    input.identity.app !== input.app.id ||
+    input.identity.process !== input.process.id ||
+    input.identity.entrypoint !== input.id
+  ) {
+    throw new TypeError("Entrypoint selection does not agree with launch identity.");
+  }
+
   return Object.freeze({
     kind: "app.entrypoint",
     ...input,
