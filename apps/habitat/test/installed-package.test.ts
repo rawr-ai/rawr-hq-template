@@ -70,6 +70,7 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/plugins/server/effect",
     "@habitat-ai/sdk/plugins/async",
     "@habitat-ai/sdk/plugins/async/effect",
+    "@habitat-ai/sdk/plugins/web",
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
     "@habitat-ai/sdk/runtime/profiles",
@@ -795,6 +796,7 @@ describe("installed Habitat products", () => {
         vendorPackage
       ).toBeUndefined();
     }
+    await assertInstalledWebProjection(generatedServiceRoot);
 
     const coldCliEntrypoint = path.join(consumerRoot, "cold-habitat-cli.mjs");
     await writeFile(
@@ -1685,6 +1687,155 @@ async function assertColdPublicJavaScriptExport(
   }
 }
 
+async function assertInstalledWebProjection(callerRoot: string): Promise<void> {
+  const entrypoint = path.join(callerRoot, "cold-installed-web-projection.mjs");
+
+  try {
+    await writeFile(
+      entrypoint,
+      [
+        'import { registerHooks } from "node:module";',
+        "let routerVendorResolutions = 0;",
+        "registerHooks({",
+        "  resolve(specifier, context, nextResolve) {",
+        '    if (specifier === "@orpc/server" || specifier.startsWith("@orpc/server/")) {',
+        "      routerVendorResolutions += 1;",
+        '      throw new Error("The cold web face must not resolve the server router vendor.");',
+        "    }",
+        "    return nextResolve(specifier, context);",
+        "  },",
+        "});",
+        'const web = await import("@habitat-ai/sdk/plugins/web");',
+        "let loaderCalls = 0;",
+        "const loadRouteModule = async () => {",
+        "  loaderCalls += 1;",
+        '  throw new Error("Installed web route loader must remain cold.");',
+        "};",
+        "const definition = web.defineWebAppPlugin.factory()({",
+        '  capability: "installed-candidate",',
+        "  routes: [",
+        "    {",
+        '      id: "installed-candidate.index",',
+        '      path: "/installed-candidate",',
+        "      module: loadRouteModule,",
+        "    },",
+        "  ],",
+        "})();",
+        "const projection = definition.project({ pluginId: definition.id });",
+        "const projectedRoutes = projection.facts.routes;",
+        "const forbiddenRuntimeKeys = [",
+        '  "adapter",',
+        '  "browser",',
+        '  "harness",',
+        '  "host",',
+        '  "live",',
+        '  "mount",',
+        '  "runtime",',
+        "];",
+        "console.log(",
+        "  JSON.stringify({",
+        "    definition: {",
+        "      capability: definition.capability,",
+        "      frozen: Object.isFrozen(definition),",
+        "      id: definition.id,",
+        "      keys: Object.keys(definition).sort(),",
+        "      kind: definition.kind,",
+        "      resourceRequirements: definition.resourceRequirements,",
+        "      resourceRequirementsFrozen: Object.isFrozen(definition.resourceRequirements),",
+        "      role: definition.role,",
+        "      routeFrozen: Object.isFrozen(definition.routes[0]),",
+        "      routeLoaderIdentity: definition.routes[0]?.module === loadRouteModule,",
+        "      routesFrozen: Object.isFrozen(definition.routes),",
+        "      services: definition.services,",
+        "      servicesFrozen: Object.isFrozen(definition.services),",
+        "      surface: definition.surface,",
+        "    },",
+        "    exports: Object.keys(web).sort(),",
+        "    forbiddenRuntimeKeysPresent: forbiddenRuntimeKeys.filter((key) =>",
+        "      [web, definition, projection, projection.facts].some((value) =>",
+        "        Object.hasOwn(value, key)",
+        "      )",
+        "    ),",
+        "    loaderCalls,",
+        "    routerVendorResolutions,",
+        "    projection: {",
+        "      factsFrozen: Object.isFrozen(projection.facts),",
+        "      frozen: Object.isFrozen(projection),",
+        "      projectedRouteFrozen: Object.isFrozen(projectedRoutes[0]),",
+        "      projectedRoutesFrozen: Object.isFrozen(projectedRoutes),",
+        "      snapshot: JSON.parse(JSON.stringify(projection)),",
+        "    },",
+        "  })",
+        ");",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const projected = await run("node", [entrypoint], {
+      cwd: callerRoot,
+      timeoutMs: 30_000,
+    });
+    expect(projected, projected.stderr || projected.stdout).toMatchObject({
+      exitCode: 0,
+      stderr: "",
+    });
+    expect(JSON.parse(projected.stdout)).toEqual({
+      definition: {
+        capability: "installed-candidate",
+        frozen: true,
+        id: "web.app.installed-candidate",
+        keys: [
+          "capability",
+          "id",
+          "kind",
+          "project",
+          "resourceRequirements",
+          "role",
+          "routes",
+          "services",
+          "surface",
+        ],
+        kind: "plugin.definition",
+        resourceRequirements: [],
+        resourceRequirementsFrozen: true,
+        role: "web",
+        routeFrozen: true,
+        routeLoaderIdentity: true,
+        routesFrozen: true,
+        services: {},
+        servicesFrozen: true,
+        surface: "web/app",
+      },
+      exports: ["defineWebAppPlugin"],
+      forbiddenRuntimeKeysPresent: [],
+      loaderCalls: 0,
+      routerVendorResolutions: 0,
+      projection: {
+        factsFrozen: true,
+        frozen: true,
+        projectedRouteFrozen: true,
+        projectedRoutesFrozen: true,
+        snapshot: {
+          kind: "plugin.projection",
+          facts: {
+            pluginId: "web.app.installed-candidate",
+            lane: "web/app",
+            routes: [
+              {
+                id: "installed-candidate.index",
+                path: "/installed-candidate",
+              },
+            ],
+          },
+        },
+      },
+    });
+  } finally {
+    await rm(entrypoint, { force: true });
+  }
+}
+
 async function readPackageVersion(root: string): Promise<string> {
   const manifest = JSON.parse(
     await readFile(path.join(workspaceRoot, root, "package.json"), "utf8")
@@ -1961,6 +2112,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       'import type { implement as NativeImplement, os as NativeOs } from "@orpc/server";',
       'import type { HabitatEffect } from "@habitat-ai/sdk/effect";',
       'import type { EffectExecutionDescriptor } from "@habitat-ai/sdk/execution";',
+      'import { defineWebAppPlugin } from "@habitat-ai/sdk/plugins/web";',
       'import { defineService, serviceDep, useService } from "@habitat-ai/sdk/service";',
       'import type { ServiceBoundaryContext, ServiceContractOf, ServiceModuleContextProjection, ServiceUse, ServiceUses } from "@habitat-ai/sdk/service";',
       'import { RuntimeSchema, type RuntimeSchemaValue } from "@habitat-ai/sdk/runtime/schema";',
@@ -2024,6 +2176,21 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       '  instance: "secondary",',
       "});",
       "const siblingUses = { workItems: siblingUse } as const satisfies ServiceUses;",
+      "function createPackedWebDefinition() {",
+      "  return defineWebAppPlugin.factory()({",
+      '    capability: "installed-web",',
+      "    routes: [",
+      "      {",
+      '        id: "installed-web.index",',
+      '        path: "/installed-web",',
+      '        module: async () => ({ mount: "installed-web" } as const),',
+      '        label: "not-a-route-field" as const,',
+      "      },",
+      "    ] as const,",
+      "  })();",
+      "}",
+      "type PackedWebDefinition = ReturnType<typeof createPackedWebDefinition>;",
+      "declare const packedWebDefinition: PackedWebDefinition;",
       'type ServiceValues = typeof import("@habitat-ai/sdk/service");',
       "if (false) {",
       "  // @ts-expect-error Canonical dependency context is immutable.",
@@ -2042,6 +2209,10 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "  useService(sibling, {});",
       "  // @ts-expect-error The predecessor alias field is not part of the cold relation.",
       '  useService(sibling, { contract: siblingContract, alias: "legacy" });',
+      "  // @ts-expect-error Packed web route snapshots are readonly.",
+      '  packedWebDefinition.routes[0].path = "/changed";',
+      "  // @ts-expect-error Surplus author fields are absent from the packed route type.",
+      "  packedWebDefinition.routes[0].label;",
       "}",
       "",
       "export type PackedRuntimeDefinitionOracle = readonly [",
@@ -2118,6 +2289,25 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       '  Assert<Equal<typeof siblingUse.kind, "service.use">>,',
       "  Assert<Equal<typeof selectedSiblingUse.serviceInstance, string | undefined>>,",
       '  Assert<Equal<Extract<keyof ServiceValues, "readServiceUse">, never>>,',
+      '  Assert<Equal<PackedWebDefinition["id"], "web.app.installed-web">>,',
+      '  Assert<Equal<PackedWebDefinition["role"], "web">>,',
+      '  Assert<Equal<PackedWebDefinition["surface"], "web/app">>,',
+      '  Assert<Equal<PackedWebDefinition["routes"][0]["id"], "installed-web.index">>,',
+      '  Assert<Equal<PackedWebDefinition["routes"][0]["path"], "/installed-web">>,',
+      "  Assert<",
+      "    Equal<",
+      '      Awaited<ReturnType<PackedWebDefinition["routes"][0]["module"]>>,',
+      '      { readonly mount: "installed-web" }',
+      "    >",
+      "  >,",
+      "  Assert<",
+      "    Equal<",
+      '      Extract<keyof PackedWebDefinition["routes"][0], string>,',
+      '      "id" | "path" | "module"',
+      "    >",
+      "  >,",
+      '  Assert<Equal<PackedWebDefinition["resourceRequirements"], readonly []>>,',
+      '  Assert<Equal<keyof PackedWebDefinition["services"], never>>,',
       "];",
       "",
     ].join("\n")

@@ -44,6 +44,13 @@ descriptor and its definition function. These entries do not load Inngest or
 construct native functions, clients, registration bundles, loaders, adapters,
 harnesses, or dispatchers; those mechanics remain with later runtime owners.
 
+The isolated `@habitat-ai/sdk/plugins/web` entry exposes the cold web app
+projection builder and route projection contracts. Route-module loaders remain
+lazy definition data and do not enter serializable projection facts. This entry
+does not select a browser runtime or expose a router vendor, DOM mount protocol,
+adapter, build executor, app composition, native harness lifecycle, or Effect
+subpath.
+
 The app, Effect, execution, and implemented `runtime/*` entries expose the cold
 runtime-definition authoring contract. They declare app composition, finite
 process catalogs, immutable launch identity, profiles, lazy Effects, executable

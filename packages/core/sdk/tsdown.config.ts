@@ -31,6 +31,7 @@ export default defineConfig({
     "plugins/server/effect/index": "src/plugins/server/effect/index.ts",
     "plugins/async/index": "src/plugins/async/index.ts",
     "plugins/async/effect/index": "src/plugins/async/effect/index.ts",
+    "plugins/web/index": "src/plugins/web/index.ts",
     "runtime/resources/index": "src/runtime/resources/index.ts",
     "runtime/providers/index": "src/runtime/providers/index.ts",
     "runtime/profiles/index": "src/runtime/profiles/index.ts",
