@@ -365,10 +365,10 @@ MUST NOT require or authorize an SDK edge or export, complete
 
 ### Requirement: Complete-derivation authority corrections are closed before implementation
 
-The task-4.7a and task-4.7b authority gates MUST remain closed by the canonical
-routing and acceptance ownership recorded here. Both MUST remain
-documentation-only corrections and leave immutable topology-only
-`runtime-derivation@1` unchanged. Only after task 4.7b is complete MUST task 4.8
+The task-4.7a, task-4.7b, and task-4.7c authority gates MUST remain closed by
+the canonical routing and acceptance ownership recorded here. All three MUST
+remain documentation-only corrections and leave immutable topology-only
+`runtime-derivation@1` unchanged. Only after task 4.7c is complete MUST task 4.8
 become the sole source owner of independent `runtime-derivation@2`.
 
 Task 4.7a MUST remain an authority-only correction across exactly eight
@@ -389,6 +389,19 @@ async-step occurrence lowering, and service-owned `resourceDep` normalization
 under the existing canonical mechanics and the scenarios below. It changes no
 implementation, source, test, project, blueprint, SDK edge, export map, public
 export, stage, or commit, and it does not widen either exact task-4.8 corpus.
+
+Task 4.7c MUST remain a third authority-only correction across that same exact
+eight-document surface. It narrows task-4.8 execution-ref and descriptor-table
+population plus its acceptance proof to operational descriptors derived from
+authored async-step occurrences. The exact five-boundary-variant
+`ExecutionDescriptorRef` and `ExecutionDescriptorTable` contracts remain
+future-compatible, but every non-async variant is conditional on a later,
+separately admitted lane-owned authoring carrier and operational lowering.
+`plugin.web-surface` remains schema vocabulary only in task 4.8: it creates no
+execution ref or table entry and authorizes no early web Effect face. Task 4.7c
+changes no implementation, source, test, project, blueprint, SDK edge, export
+map, public export, stage, or commit, and it does not widen or otherwise change
+either exact task-4.8 corpus.
 
 Only after that correction is sealed, task 4.8 MUST select independent
 no-inheritance/no-fallback
@@ -437,7 +450,7 @@ The separate exact task-4.8 publication/assembly corpus is `.gitattributes`;
 blueprint files named in this requirement. Task 4.8 MUST create no new
 `runtime-definition` file, project, blueprint, or blueprint version and no
 other blueprint kind, version, or project.
-Task 4.7b adds no source or test file, and
+Tasks 4.7b and 4.7c add no source or test file, and
 `packages/core/runtime/definition/src/execution.ts` MUST remain outside task
 4.8 and unchanged; the exact source/test, seven-file behavior-companion, and
 separate publication/assembly corpora above remain otherwise exact.
@@ -462,6 +475,11 @@ topology identity, schema-shaped public data MUST be fresh copied and frozen.
 Derivation MUST invoke no Effect body or web loader and MUST perform no source
 availability check, lookup, I/O, schema decode, provider acquisition, live
 service binding, cache construction, mounting, or lifecycle action.
+Acceptance MUST prove the public entrypoint by importing and invoking the actual
+`deriveRuntimeArtifacts` export through the admitted SDK face against authored
+declarations. Arbitrary object properties, Nx or project facts, TypeScript
+casts, synthesized refs, and a directly constructed descriptor-table fixture
+MUST NOT stand in for public-entrypoint reachability or task-4.8 population.
 
 The structurally reachable `NormalizedAuthoringGraph` MUST contain exactly
 `kind`, `topology`, `app`, `plugins`, `roleSurfaceIndex`, `serviceUses`,
@@ -472,6 +490,9 @@ singular `profile`, `serviceBindingPlans`, `surfaceRuntimePlans`,
 `providerSelections` field. The exact normalized carrier fields and closed
 schemas remain canonical §15 mechanics; no schema object, decoded value,
 callback, executable body, loader, or live handle may enter the graph.
+Task 4.8 MUST populate `executionDescriptorRefs` only from authored async-step
+occurrences. The field's wider closed schema remains future-compatible and does
+not synthesize a carrier for another lane.
 
 The sole public `@habitat-ai/sdk/runtime/derivation` face MUST expose exactly
 three runtime values: `deriveRuntimeArtifacts`,
@@ -561,8 +582,21 @@ deduplicate before emission; divergent diamonds MUST throw `TypeError`.
 canonical RFC 8785/SHA-256 ids and proves binding-id/equal-diamond deduplication
 only; task 8.2 alone constructs and proves a live cache.
 
-The Effect and web reference/table channels MUST remain distinct.
-Every `ExecutionDescriptorRef.executionId` and matching operational
+The Effect and web reference/table channels MUST remain distinct. The exact
+five boundary variants of `ExecutionDescriptorRef` and
+`ExecutionDescriptorTable` MUST remain in the public contract for future
+compatible lane admission. Task 4.8 MUST populate that contract only with
+operational descriptors derived from authored async-step occurrences. A CLI
+command, web surface, agent tool, or desktop background ref/table entry MAY be
+populated only after a later task separately admits that lane's authoring
+carrier and operational lowering; task 4.8 MUST NOT infer, cast, or synthesize
+one from arbitrary plugin properties, project facts, or surface declarations.
+In particular, `plugin.web-surface` is schema vocabulary only during task 4.8.
+It MUST NOT produce an execution ref or descriptor-table entry and MUST NOT
+authorize an Effect-backed web authoring face. The lazy web route-module loader
+continues to use only the distinct web ref/table channel.
+
+Every emitted `ExecutionDescriptorRef.executionId` and matching operational
 descriptor id MUST match
 `^execution-descriptor:sha256:[0-9a-f]{64}$`; every execution ref `ownerId` MUST
 match `^plugin-owner:sha256:[0-9a-f]{64}$`. The execution id MUST be SHA-256
@@ -606,6 +640,11 @@ recursively frozen canonically ordered snapshot, returns that same snapshot by
 reference on every `entries()` call, preserves the exact stored
 descriptor/loader identity from `get`, and throws built-in `TypeError` on
 absence or structural mismatch.
+Task 4.8's execution-table snapshot contains only the derived async operational
+descriptors above. Its `get` signature retains the exact five-boundary-variant
+ref contract, but a non-async lookup is absent until its later lane-owned
+carrier and lowering have been admitted and populated through complete
+derivation.
 
 `PortableRuntimePlanArtifactSchema` and its `Static` type MUST describe
 exactly `kind: "portable.runtime-plan-artifact"`, `artifactId`, `identity`,
@@ -618,6 +657,10 @@ frozen artifact. It MUST reject surplus fields, duplicate or noncanonical
 collections, malformed/mismatched digest, web refs/loaders, either table,
 callbacks, executable/live values, and lifecycle state with built-in
 `TypeError`.
+Task 4.8 emits only async-step refs in the portable artifact. The artifact
+schema and decoder retain all five boundary variants for future-compatible
+decoding, but that compatibility does not authorize task 4.8 to manufacture a
+non-async ref.
 
 Every fatal derivation issue other than the sole finding MUST throw built-in
 `TypeError` before any result; message, selected path, and throw order are not
@@ -751,19 +794,30 @@ artifact. The compiler MUST consume the complete graph, process runtime MUST
 consume the Effect table, the web adapter/module-loading boundary MUST consume
 the web table, and pre-runtime/deployment tooling MUST consume only the reduced
 portable artifact.
+Task 4.8 MUST populate the Effect refs/table and portable refs only with
+per-occurrence operational descriptors derived from authored async steps. The
+five-boundary-variant contracts remain exact and future-compatible, but every
+other variant requires a later separately admitted lane-owned carrier and
+lowering. Public-entrypoint acceptance MUST invoke the actual SDK export and
+MUST NOT substitute arbitrary properties, project facts, casts, synthesized
+refs, or a direct table fixture.
 
 #### Scenario: Exact result and eager tables execute nothing
 
 - **WHEN** a consumer calls
-  `deriveRuntimeArtifacts({ entrypoint, profileId })` with one non-async Effect
-  descriptor, one async-step occurrence, and one lazy web route-module loader
+  the actual exported `deriveRuntimeArtifacts({ entrypoint, profileId })` with
+  one authored async-step occurrence and one lazy web route-module loader
 - **THEN** it receives exactly `topology`, `graph`,
   `executionDescriptorTable`, `webRouteModuleTable`, and `portableArtifact`,
   from one private topology call with referential graph identity
 - **AND** both eager tables return frozen canonical entry snapshots, exact
-  structural lookup returns the preserved non-async descriptor, derived async
-  operational descriptor, and preserved loader; absent or mismatched lookup
-  throws `TypeError`, and no executable or authored async function is invoked
+  structural lookup returns the derived async operational descriptor and the
+  preserved loader; the execution refs/table and portable refs contain no
+  non-async entry, absent or mismatched lookup throws `TypeError`, and no
+  executable or authored async function is invoked
+- **AND** the proof uses neither arbitrary properties or project facts, a cast,
+  a synthesized ref, nor a directly constructed descriptor-table fixture in
+  place of the public entrypoint and its derived result
 
 #### Scenario: Optional provider finding and fatal refusal are distinguished
 

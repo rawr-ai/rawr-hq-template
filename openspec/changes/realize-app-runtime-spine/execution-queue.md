@@ -38,12 +38,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@3e6341df406d0476b1e486f6e4b1102d7debc37c`, Rawr
   `main@a1a4fe7ed051ff405605c82c09ccd73332595383`, and Marketplace
   `main@851a5b87e86278757eb99b952281b90a35e74869`. Tasks 3.1 through 3.4 and tasks
-  4.1 through 4.7b are sealed. The authority-only complete-derivation-contract,
-  binding-source, execution-identity, async-lowering, and service-resource
-  corrections changed no source and retained the exact
+  4.1 through 4.7c are sealed. The authority-only complete-derivation-contract,
+  binding-source, execution-identity, async-lowering, service-resource,
+  execution-population, and public-entrypoint corrections changed no source and
+  retained the exact
   eight-document scope: `HABITAT_ARCHITECTURE.md` routes,
   `HABITAT_RUNTIME_REALIZATION.md` is the sole exact canonical document, and six
-  active OpenSpec artifacts preserve acceptance. Only after completed task 4.7b,
+  active OpenSpec artifacts preserve acceptance. Only after completed task 4.7c,
   task 4.8 is the sole active node and MUST follow canonical §§11.8, 13.5, 15,
   23.1, and 27 plus the active
   `app-runtime-realization` requirement/scenarios under independent
@@ -282,7 +283,7 @@ The active queue has one bounded source node:
 
 1. execute task 4.8 under independent no-inheritance/no-fallback
    `runtime-derivation@2` through the canonical sections and active acceptance
-   owner. Tasks 4.7a and 4.7b are complete; no contract choice remains open in
+   owner. Tasks 4.7a through 4.7c are complete; no contract choice remains open in
    source.
 
 ## Task 4.7a Authority Routing
@@ -303,6 +304,18 @@ active acceptance owner mirrors mismatch refusal, lazy lowering and distinct
 parent reuse, and process/role lifetime normalization. It changes no source,
 including `packages/core/runtime/definition/src/execution.ts`, and preserves
 the exact task-4.8 corpora.
+
+## Task 4.7c Authority Routing
+
+Task 4.7c is sealed without an implementation node across the same exact
+eight-document authority surface. It narrows task-4.8 execution-ref/table
+population and acceptance to derived async-step operational descriptors while
+retaining the exact five-boundary-variant contracts for later separately
+admitted lane-owned carriers. `plugin.web-surface` is schema vocabulary only,
+not a task-4.8 entry or an early web Effect face. Public proof must call the
+actual SDK export with one async occurrence and one lazy web loader; arbitrary
+properties, project facts, casts, synthesized refs, and direct table fixtures
+cannot substitute. It changes no source or exact task-4.8 corpus.
 
 Only after that completed correction, task 4.8 is the sole active source node
 under independent
@@ -356,10 +369,14 @@ write authority with the active one:
    `packages/core/runtime/definition/src/execution.ts` remains outside the exact
    corpus. Task 4.8 proves zero source
    I/O/decode plus binding-id/dedupe, not physical resolution or live cache
-   construction. Keep
-   Effect and web reference/table families distinct, including
-   private `plugin.web-surface(surfaceId)` beside a lazy loader without an early
-   web Effect face. Task 4.8 alone adds the SDK edge and sole derivation face.
+   construction. Keep Effect and web reference/table families distinct.
+   Populate Effect refs, the execution table, and portable refs only from
+   authored async-step occurrences. The five-boundary-variant contracts remain
+   future-compatible, but non-async variants require later separately admitted
+   lane-owned carriers and lowering. `plugin.web-surface(surfaceId)` remains
+   schema vocabulary only beside the distinct lazy-loader channel, not an
+   emitted task-4.8 entry or an early web Effect face. Task 4.8 alone adds the
+   SDK edge and sole derivation face.
    The seven-field portable artifact sorts refs by full boundary identity and
    uses exactly `sha256:` plus 64 lowercase hexadecimal SHA-256 characters over
    RFC 8785 canonical JSON of the other six fields; it has no `derivedAt` or

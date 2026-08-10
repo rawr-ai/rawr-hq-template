@@ -1637,9 +1637,13 @@ inventory.
 `ExecutionDescriptorRef` is a discriminated union keyed by `boundary`, not an
 optional-field bag. Native oRPC service, server API, and server-internal
 operations are intentionally absent because the official bridge executes their
-Effect bodies. Complete runtime derivation derives refs for the remaining
-lane-native authoring facts through `@habitat-ai/sdk/runtime/derivation`;
-authors do not construct refs manually.
+Effect bodies. The closed five-variant ref vocabulary can represent the
+remaining lane-native authoring facts, but task 4.8 complete derivation emits
+refs only for reachable async-step occurrences. No admitted definition-owned
+carrier or membership relation yet makes CLI, web-local, agent, or desktop
+non-async descriptors reachable. A later owner must land that relation before
+complete derivation can emit those variants; authors do not construct refs
+manually.
 For `plugin.async-step` refs, exactly one of `workflowId`, `scheduleId`, or
 `consumerId` identifies the enclosing async definition, and `stepId` identifies
 the step-local executable body. `executionId` remains the canonical derived id,
@@ -1731,17 +1735,25 @@ export interface BoundaryErrors {
 ### 9.3 Execution descriptor table
 
 `ExecutionDescriptorTable` is conceptually the non-portable runtime-derived
-association between portable descriptor refs and exact preserved descriptor
-values. Portable plan artifacts carry refs only and never serialize executable
-closures. The process runtime receives the table in-process and uses it to
-assemble `ExecutionRegistry`.
+association between portable descriptor refs and operational descriptor values.
+Portable plan artifacts carry refs only and never serialize executable closures.
+The process runtime receives the table in-process and uses it to assemble
+`ExecutionRegistry`.
 
-Executable descriptor values are cold, statically declarable values. Complete
-runtime derivation imports definition-owned declarations directly and eagerly
-indexes their operational descriptors without executing them. Non-async
-descriptor values are preserved exactly. An async entry preserves the derived
-operational `EffectExecutionDescriptor` fixed by §15.3, not its authoring
-`AsyncStepEffectDescriptor`. Every descriptor remains cold.
+Task 4.8's reachable execution population is exactly the async-step operational
+descriptors derived from definition-owned workflow, schedule, and consumer
+`steps` membership. Complete derivation imports those declarations directly and
+eagerly indexes the derived operational `EffectExecutionDescriptor` values fixed
+by §15.3 without executing them; it does not preserve the authoring
+`AsyncStepEffectDescriptor` as the table value.
+
+The closed five-variant ref and table API remains generic and conditional for
+later lane carriers. Task 4.8 admits no definition-owned carrier or membership
+relation for CLI, web-local, agent, or desktop non-async descriptors, so it emits
+no refs or table entries for those lanes. If a later owning task admits such a
+relation, complete derivation preserves the reachable non-async operational
+descriptor exactly by reference. That preservation is a future conditional
+contract, not task-4.8 emitted behavior. Every descriptor remains cold.
 Derivation also emits descriptor refs; the complete-derivation public contracts
 are exposed through `@habitat-ai/sdk/runtime/derivation`, which is never a
 private-owner dependency. Runtime derivation must not acquire
@@ -1751,6 +1763,13 @@ code to discover executable bodies. Descriptor bodies may close over
 import-time constants, schemas, and SDK helper values. They must not close over
 runtime-bound clients, request objects, dispatcher handles, resource
 instances, `RuntimeAccess`, or `EffectRuntimeAccess`.
+
+Task-4.8 proof must enter through `deriveRuntimeArtifacts(...)` with admitted
+definition-owned declarations and membership. Arbitrary property or project-facts
+scanning, casts that pretend an unadmitted descriptor is reachable, synthesized
+owner or ref values, and direct test-only table injection do not prove
+derivation. They prove only an isolated helper or table path and are rejected as
+acceptance evidence for `deriveRuntimeArtifacts(...)`.
 
 Section 15.3 is the sole exact authority for the table's public methods,
 structural full-ref matching, snapshot shape and identity, canonical ordering,
@@ -4879,6 +4898,13 @@ It is passed through the in-process runtime realization path. A process that
 mounts Effect-backed executable surfaces must receive the matching table before
 `ExecutionRegistry` assembly.
 
+For task 4.8, the table's reachable population is exactly the operational
+descriptors derived from async-step membership. No admitted definition-owned
+carrier or membership relation exposes CLI, web-local, agent, or desktop
+non-async descriptors to `deriveRuntimeArtifacts(...)`. The closed five-variant
+ref and table API remains generic for a later owner that admits such a relation;
+only then does exact non-async descriptor preservation become emitted behavior.
+
 For every cold `AsyncStepEffectDescriptor` occurrence under an authored
 workflow, schedule, or consumer, complete derivation constructs exactly one new
 frozen operational `EffectExecutionDescriptor` for that occurrence's full ref.
@@ -4906,18 +4932,25 @@ operational descriptor for an async ref, never the authoring
 `AsyncStepEffectDescriptor`. Derivation invokes neither `run(...)` nor the
 authored `effect` function.
 
+Task-4.8 acceptance must exercise `deriveRuntimeArtifacts(...)` from admitted
+definition-owned declarations and membership. Arbitrary property or
+project-facts scanning, casts, synthesized owner or ref values, and direct
+test-only table injection prove neither reachability nor complete derivation and
+are not valid acceptance evidence.
+
 The table eagerly indexes all cold operational descriptors without executing
 them. `get(ref)` validates and compares the complete closed ref
 structure rather than object identity, `executionId` alone, or a partial key;
-it returns the exact preserved descriptor or throws built-in `TypeError` for
-an invalid or absent ref. Descriptor/ref identity or boundary disagreement and
+it returns the exact matching operational descriptor stored in the table or
+throws built-in `TypeError` for an invalid or absent ref. Descriptor/ref
+identity or boundary disagreement and
 duplicate full refs are fatal `TypeError` during derivation.
 
 The table constructs one recursively frozen array snapshot of frozen readonly
 `[ref, descriptor]` tuples in the exact §15.9 ref order. `entries()` returns
 that same snapshot by reference on every call. Every ref is fresh recursively
 frozen public data, while each descriptor is its exact preserved or derived
-operational cold value as specified above.
+operational cold value under the current-or-future population rule above.
 The snapshot cannot mutate the table. No named entry type, derived aggregate,
 schema value, iterator, mutator, size property, partial-key lookup, or
 asynchronous lookup is public.
@@ -7008,7 +7041,7 @@ sequenceDiagram
   EffectKernel->>ProcessRuntime: ProvisionedProcess
   ProcessRuntime->>ProcessRuntime: scope RuntimeAccess, bind services, cache bindings, materialize WorkflowDispatcher
   Derivation-->>ProcessRuntime: matching non-portable descriptor and web-loader tables
-  ProcessRuntime->>ExecutionRegistry: full-ref pair compiled execution plans with preserved descriptors
+  ProcessRuntime->>ExecutionRegistry: full-ref pair compiled execution plans with table descriptors
   ProcessRuntime->>ExecutionRuntime: create process execution bridge and EffectRuntimeAccess
   ProcessRuntime->>Adapter: project plugins and lower compiled surface plans
   Adapter->>ProcessRuntime: mount-ready records and payload closures, including private FunctionBundle factory
@@ -7540,7 +7573,7 @@ Gate families are:
 | Static/import gates | no managed runtime construction outside runtime substrate; no manual `Effect.run*`; no community/custom Effect-oRPC runner; one same-realm official extension bootstrap and `.effect(...)` authoring for Effect-backed oRPC; no operation-leaf `handlerGen` import; contracts/providers cold; no sibling service internals |
 | Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, `ServiceContractOf` inference from private-carried `ServiceUse`, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, contract errors |
 | Runtime behavior gates | one lazy `ManagedRuntime` forced through `context()` before mount; one `Layer.effectContext(...)` provider adapter; no second root `Scope`; non-oRPC descriptor execution through `ProcessExecutionRuntime`; native oRPC Effect execution through official `.effect(...)` and its internal bridge; `effect/context` and `effect/wrap`; abort/finalizer/resource-release order; single physical bridge/oRPC realm; `EffectRuntimeAccess` internal-only; service binding cache invocation exclusion; provider acquire/release finalization |
-| Registry gates | Effect descriptor table is present; full structural ref lookup returns the exact preserved descriptor or throws `TypeError`; frozen readonly tuple snapshots use canonical ref order; every Effect ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation; full structural web ref lookup returns the exact preserved loader or throws `TypeError`; frozen web-entry snapshots use `(ownerId, routeId, path)`; web refs never enter `ExecutionRegistry` |
+| Registry gates | Effect descriptor table is present; full structural ref lookup returns the exact matching operational descriptor or throws `TypeError`; frozen readonly tuple snapshots use canonical ref order; every Effect ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation; full structural web ref lookup returns the exact preserved loader or throws `TypeError`; frozen web-entry snapshots use `(ownerId, routeId, path)`; web refs never enter `ExecutionRegistry` |
 | Fixture/plan gates | private `NormalizedRuntimeTopology` exact-copy and unchanged §15.1 law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; no body/loader/acquisition/live-value access; compiled plan, catalog, startup rollback, and finalization records |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
 | Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
@@ -7617,6 +7650,13 @@ mechanics owner, while active OpenSpec material mirrors its acceptance routing.
 It adds no source, test, blueprint, or SDK surface and does not widen either
 fixed task-4.8 corpus. In particular,
 `packages/core/runtime/definition/src/execution.ts` remains outside task 4.8.
+
+Task 4.7c is also documentation-only and changes no source, test, blueprint,
+SDK surface, or task-4.8 behavior/publication corpus. Task-4.8 execution-table
+acceptance is limited to async-step descriptors reachable through admitted
+definition membership and must enter through `deriveRuntimeArtifacts(...)`;
+arbitrary property or project-facts scanning, casts, synthesized owner or ref
+values, and direct test-only table injection are not derivation proof.
 
 Task 4.8 implements this document's combined §§11.8, 13.5, 15, 23.1, and 27
 contract. It creates exactly the independent complete definition closure below:
@@ -7768,8 +7808,8 @@ and proves `ServiceBindingCache`, cache-key construction, and live binding in
 | `ProviderEffectPlan` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/providers/provider-effect-plan.ts` | Definition-backed `providerFx` facade re-exported by SDK | Runtime compiler and `runtime-substrate-effect`; never bootgraph | Definition/provisioning | Owner-local `provider.effect-plan.missing` finding | Provider effect plan gate |
 | `HabitatEffect` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/effect/habitat-effect.ts` | Definition-owned curated `Effect` facade | Execution descriptors, resource values, substrate raw Effect lowering through process-runtime execution | Definition through invocation | Raw import, yieldability, and owner-local execution findings | `habitat-effect.execution` gate |
 | `EffectExecutionDescriptor` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/execution/descriptor.ts` | Cold `.effect(...)` terminal bodies through the SDK facade; complete derivation lowers each `AsyncStepEffectDescriptor` occurrence into a frozen operational value | Runtime compiler/process execution runtime | Derivation through invocation | Owner-local Effect descriptor findings | Effect descriptor gate |
-| `ExecutionDescriptorRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler / execution registry | Derivation/compilation/mounting | Invalid, duplicate, absent, or descriptor-mismatched ref is `TypeError` | Exact closed boundary-discriminated ref gate |
-| `ExecutionDescriptorTable` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Process runtime / execution registry | Derivation/mounting | Full-ref `get` returns preserved descriptor or throws `TypeError`; frozen tuple snapshots only | Exact non-portable Effect table gate |
+| `ExecutionDescriptorRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation; task 4.8 reaches async-step membership only | Runtime compiler / execution registry | Derivation/compilation/mounting | Invalid, duplicate, absent, or descriptor-mismatched ref is `TypeError` | Closed five-variant API; current async-step population and future lane carriers remain distinct |
+| `ExecutionDescriptorTable` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation; task 4.8 derives async-step operational descriptors only | Process runtime / execution registry | Derivation/mounting | Full-ref `get` returns the matching operational descriptor or throws `TypeError`; frozen tuple snapshots only | Exact non-portable table gate through the public derivation operation, never direct test injection |
 | `WebRouteModuleRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler / web surface adapter | Derivation/compilation/mounting | Invalid, duplicate, absent, or loader-mismatched ref is `TypeError` | Exact closed `(kind, ownerId, routeId, path)` gate |
 | `WebRouteModuleTable` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Web surface adapter / selected web host module-loading boundary; never `ExecutionRegistry` | Derivation/mounting | Full-ref `get` returns preserved loader or throws `TypeError`; frozen entry snapshots only | Exact non-portable loader-table separation gate |
 | `CompiledExecutionPlan` | Runtime compiler | `packages/core/runtime/compiler` | `compile-execution-plans.ts` | Execution registry / process execution runtime / adapters | Compilation/mounting/invocation | Owner-local missing plan/policy/bridge findings | Execution plan gate |
@@ -7875,7 +7915,8 @@ runtime derivation
   applies nearest-parent serviceDep inheritance, path-local override, and equal-diamond convergence
   hashes every derived id through its exact RFC 8785 identity record
   derives exact surface runtime plans and async/workflow dispatcher descriptors
-  derives Effect descriptor refs and an eager full-ref table preserving descriptors
+  derives task-4.8 async-step refs and an eager table of operational descriptors
+  keeps the closed five-variant ref/table API conditional for later admitted lane carriers
   derives distinct WebRouteModuleRef values and an eager full-ref table preserving loaders
   emits only provider-selection.optional-missing as a finding; every fatal issue is TypeError
   emits the exact seven-field PortableRuntimePlanArtifact without web refs or placement

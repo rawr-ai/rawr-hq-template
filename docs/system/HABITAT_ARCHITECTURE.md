@@ -2163,13 +2163,18 @@ contracts, §23.1 config-source normalization and the no-I/O boundary, and §27
 the closed project, blueprint, SDK, and publication realization. Section 15
 alone does not own all task-4.8 mechanics.
 
+Task 4.7c is a documentation-only authority correction. Its exact current
+execution-population and derivation-proof boundary is routed to runtime
+realization §§9.3, 15.3, and 27 rather than duplicated here.
+
 The sole public derivation operation is exactly `deriveRuntimeArtifacts`. It
 accepts the closed `{ entrypoint, profileId }` input and returns exactly
 `{ topology, graph, executionDescriptorTable, webRouteModuleTable,
 portableArtifact }`. It calls private topology derivation exactly once,
 recursively freezes its result, preserves
 `result.graph.topology === result.topology`, and invokes neither an Effect body
-nor a web loader. The operation, its contracts, the portable schema, and decoder
+nor a web loader. The
+operation, its contracts, the portable schema, and decoder
 live only at `@habitat-ai/sdk/runtime/derivation`; the SDK remains a facade, not
 a second derivation owner. The exact closed TypeBox schemas and table method
 signatures are owned only by the runtime realization specification, §15.

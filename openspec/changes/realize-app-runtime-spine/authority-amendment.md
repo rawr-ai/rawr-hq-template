@@ -174,7 +174,8 @@ accepted delivery boundary is deliberately split across immutable topology task
 4.7, the completed authority-only complete-derivation-contract and
 binding-source gate 4.7a, the completed matching execution-identity,
 async-lowering, and service-resource-normalization correction 4.7b, and the
-sole active complete-derivation source task 4.8.
+completed population/public-entrypoint correction 4.7c, and the sole active
+complete-derivation source task 4.8.
 
 Task 4.7 creates only the private package-less `runtime-derivation` Nx project
 at `packages/core/runtime/derivation`, selects the closed
@@ -305,12 +306,25 @@ binding role if and only if that lifetime is `role`, no instance, `optional:
 false`, and `reason` equal to `localName`; plugin/provider reasons remain
 authored.
 
+Task 4.7c is complete across that same exact eight-document authority surface
+and is also documentation-only. It changes no implementation, source, test,
+project, blueprint, SDK edge, export map, public export, stage, commit, or exact
+task-4.8 corpus. It narrows task-4.8 population to operational descriptors
+derived from authored async-step occurrences while preserving the exact
+five-boundary-variant ref/table contracts for future-compatible later lanes.
+Each non-async variant remains conditional on a separately admitted lane-owned
+authoring carrier and lowering. `plugin.web-surface` remains schema vocabulary
+only, not a task-4.8 entry or an early web Effect face. Public acceptance calls
+the actual SDK export with one async occurrence and one lazy web loader and
+cannot substitute arbitrary properties, project facts, casts, synthesized
+refs, or a direct table fixture.
+
 Canonical `HABITAT_RUNTIME_REALIZATION` §§11.8, 13.5, 15, 23.1, and 27 own task
 4.8's exact mechanics. The active `app-runtime-realization` requirement and
 scenarios are the sole archive-safe OpenSpec acceptance owner. This amendment
 records routing only.
 
-Only after task 4.7b is sealed, task 4.8 is the sole active source node. It
+Only after task 4.7c is sealed, task 4.8 is the sole active source node. It
 creates exactly the independent
 `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
 closure and selects `runtime-derivation@2` in the existing derivation
