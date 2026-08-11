@@ -2412,10 +2412,12 @@ Task 6.0's provider-plan authority correction, task 6.1's complete cold
 provider-plan implementation, and task 6.2's complete
 `runtime-bootgraph@1` owner remain sealed. Task 6.1a is the earlier
 documentation-only bootgraph authority correction. Task 6.2a is the bounded
-documentation-only proxy-admission clarification, task 6.2b is its bounded
-owner-local implementation, and task 6.3 remains the unchanged proof-only
-expansion. Runtime-realization §17 alone owns their exact mechanics, corpora,
-proof allocation, and exclusions; this architecture document only routes that
+documentation-only proxy-admission clarification and remains sealed. Task
+6.2a.1 is the documentation-only build-admission correction between that
+sealed authority receipt and task 6.2b, whose bounded owner-local source work
+resumes only afterward; task 6.3 remains the unchanged proof-only expansion.
+Runtime-realization §17 alone owns their exact mechanics, corpora, proof
+allocation, and exclusions; this architecture document only routes that
 authority.
 
 Post-provider conformance follows the same ownership split. Tasks 6.4 and 6.5
