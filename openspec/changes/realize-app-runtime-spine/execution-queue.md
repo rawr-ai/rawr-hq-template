@@ -69,7 +69,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `397eb5b0d44eccee146bb1d8cca4c27c1bdc0d02`. Task 5.3 then sealed the selected
   process-closure and cold-reference proof at exact Habitat
   `main@72233d03fb6e62643bcbb95e588fff77785e1c93` / tree
-  `3fd22da575888000268cd425e33c87365279b3bd`; task 5.4 is now the sole active
+  `3fd22da575888000268cd425e33c87365279b3bd`. Task 5.4 then sealed compiler
+  determinism at exact Habitat `main@8cf5bb4b72421341963cf6a1f5196a60914b9b6d`
+  / tree `3d175be09bfc070a6fe8651d32e8a9483b05e16c`; task 5.5 is now the sole active
   proof-only node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
@@ -309,7 +311,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   binding inputs, mutable shapes, public types, Oracle, alternate
   `deriveRuntimeSpine`, and route derivation without an admitted carrier remain
   rejected. Provider graph matching, closure, cycles, and built-in refusal proof
-  remain compiler tasks 5.2 and 5.4 without a compiler diagnostic API. No source,
+  were sealed by compiler tasks 5.2 and 5.4 without a compiler diagnostic API. No source,
   test, project, blueprint, SDK face,
   public contract, Oracle, optional interior, version 3, or alternate path
   changes in task 4.9; `runtime-derivation@2` remains exact.
@@ -327,9 +329,10 @@ The selection/derivation queue is sealed. Task 4.11 changed only
 real handoff plus all four defensive disagreement refusals with zero Effect or
 web-loader calls, and left `runtime-derivation@2`, derivation source, and the
 public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
-is sealed as the exact eight-document compiler-authority correction with no
-implementation, blueprint, or current-realization mutation. Task 5.1 is the
-sole active source node.
+  is sealed as the exact eight-document compiler-authority correction with no
+  implementation, blueprint, or current-realization mutation. Tasks 5.1 through
+  5.4 are sealed by their exact receipts in [[tasks]], and task 5.5 is the sole
+  active proof-only node.
 
 ## Task 4.7a Authority Routing
 
@@ -421,7 +424,7 @@ no distinct derivation algorithm remains to port. Lab `stableJson`/`exec:*`
 identity, explicit binding inputs, mutable shapes, public types, Oracle,
 alternate `deriveRuntimeSpine`, and route derivation without an admitted carrier
 remain rejected. Provider graph matching, closure, cycles, and built-in refusal
-proof remain compiler tasks 5.2 and 5.4 without a compiler diagnostic API. No
+proof were sealed by compiler tasks 5.2 and 5.4 without a compiler diagnostic API. No
 source, test, project, blueprint, SDK
 face, public contract, Oracle, optional interior, blueprint version, or
 alternate path changes.
@@ -439,9 +442,9 @@ output, external mutation, or authored executable work; no error API, text, or
 validation order is prescribed. Profile agreement stays in task 4.11 because
 launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
-5.0 is sealed as the documentation-only compiler authority correction. Task
-Tasks 5.1 through 5.3 are sealed by the exact implementation and proof receipts
-in [[tasks]], so task 5.4 is the sole next proof-only node.
+5.0 is sealed as the documentation-only compiler authority correction. Tasks
+5.1 through 5.4 are sealed by the exact implementation and proof receipts
+in [[tasks]], so task 5.5 is the sole next proof-only node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -494,7 +497,7 @@ product-separation acceptance, root manifests/lock/Nx configuration, and
 `.habitat/index.json` are explicitly outside it; compiler source/tests/tsconfigs are
 the distinct implementation closure.
 
-Tasks 5.2 through 5.4 expand only `compile-runtime-plan.test.ts`; task 5.5
+Tasks 5.2 through 5.4 expanded only `compile-runtime-plan.test.ts`; task 5.5
 expands only `derivation-handoff.test.ts`, and `nx-cache.test.ts` remains task
 5.1's owner-cache proof. They prove built-in-`TypeError`-before-result refusal,
 cold exact provider/service definition references with one precomputed,
@@ -518,9 +521,15 @@ provider-branch and closure proof and changed no compiler source, owner,
 topology, or public surface. Task 5.3 is sealed at exact Habitat
 `main@72233d03fb6e62643bcbb95e588fff77785e1c93` / tree
 `3fd22da575888000268cd425e33c87365279b3bd` by the exact receipt in [[tasks]].
-Task 5.4 is the sole active proof-only node and may expand only that same test
-file with its allocated type, closed-admission, order, recursive-freeze,
-determinism, absent-diagnostic, and zero-downstream-work proof.
+Task 5.4 is sealed at exact Habitat
+`main@8cf5bb4b72421341963cf6a1f5196a60914b9b6d` / tree
+`3d175be09bfc070a6fe8651d32e8a9483b05e16c` by the exact receipt in [[tasks]].
+It expanded only `compile-runtime-plan.test.ts` with its allocated exact-type,
+closed-admission, ordering, recursive-freeze, determinism, absent-diagnostic,
+input-nonmutation, built-in-refusal, and zero-downstream-work proof. Task 5.5 is
+the sole active proof-only node and may expand only
+`derivation-handoff.test.ts` with the real derivation handoff and corrupted
+artifact proof.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
@@ -594,8 +603,9 @@ write authority with the active one:
    version 3, validator, schema, file, project, edge, blueprint, export, or
    error; task 4.11 changes no derivation source or public surface. The exact
    task-4.11 landing receipt is recorded in [[tasks]]. Task 5.0 has sealed the
-   documentation-only compiler authority correction. Task 5.1 is the sole next
-   source node; it neither waits for nor consumes `ProviderEffectPlan`.
+   documentation-only compiler authority correction, tasks 5.1 through 5.4 are
+   sealed by their exact receipts, and task 5.5 is the sole next proof-only node;
+   none waits for or consumes `ProviderEffectPlan`.
 2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
    process plan, normalized-handoff referential consistency, provider dependency
    closure/cycle defense, the exact selected lane tuple and harness ids,
