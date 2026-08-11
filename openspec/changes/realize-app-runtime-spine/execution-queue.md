@@ -76,9 +76,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` / tree
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
   6.0 through 6.2 are sealed by their exact receipts or authority records in
-  [[tasks]]. Task 6.2a is the sole next documentation-only authority container;
-  exact three-file repair task 6.2b follows, then unchanged one-file task 6.3
-  resumes.
+  [[tasks]]. Task 6.2a is sealed by its exact receipt; three-file repair task
+  6.2b is the sole active source node, then unchanged one-file task 6.3 resumes.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -342,7 +341,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   capability spec. It seals complete-source task 6.2, proof-only task 6.3, the
   exact 26-file corpus, and the delayed real task-10.6 SDK edge without changing
   implementation or `.habitat` state.
-- [ ] **Runtime-bootgraph Proxy-admission correction**: task 6.2a freezes
+- [x] **Runtime-bootgraph Proxy-admission correction**: task 6.2a freezes
   trap-free active/revoked Proxy and proxied-prototype refusal across the exact
   two system and six OpenSpec authority documents without implementation. Task
   6.2b then repairs exactly bootgraph source, behavior proof, and build config;
@@ -357,9 +356,9 @@ public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
   implementation, blueprint, or current-realization mutation. Tasks 5.1 through
   5.5 are sealed by their exact receipts in [[tasks]]. Tasks 6.0 through 6.2
   are sealed as the exact provider-effect-plan authority/implementation and
-  bootgraph authority/implementation containers. Task 6.2a is now the sole
-  active documentation-only authority container, followed by exact three-file
-  repair task 6.2b and then the original one-file task 6.3 proof.
+  bootgraph authority/implementation containers. Task 6.2a is sealed; exact
+  three-file repair task 6.2b is now the sole active source container, followed
+  by the original one-file task 6.3 proof.
 
 ## Task 4.7a Authority Routing
 
@@ -471,10 +470,9 @@ launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Tasks
 5.1 through 5.5 are sealed by the exact implementation and proof receipts in
-[[tasks]]. Tasks 6.0 through 6.2 are sealed as the provider-effect-plan
-authority/implementation and bootgraph authority/implementation containers,
-task 6.2a is the sole next documentation-only node, task 6.2b is its exact
-three-file repair, and task 6.3 resumes afterward.
+[[tasks]]. Tasks 6.0 through 6.2a are sealed as the provider-effect-plan and
+bootgraph authority/implementation containers, task 6.2b is the sole next
+three-file source repair, and task 6.3 resumes afterward.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -563,8 +561,8 @@ sealed at exact Habitat `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` /
 tree `8371a139957c583fbb160407d783619c1ee514fb` by the exact receipt in [[tasks]].
 It expanded only `derivation-handoff.test.ts` with the real producer handoff and
 eight bounded corrupted-artifact refusals. The compiler sequence and tasks 6.0
-through 6.2 are sealed; task 6.2a is the sole active documentation-only
-container, followed by task 6.2b and then task 6.3.
+through 6.2a are sealed; task 6.2b is the sole active three-file source repair,
+followed by task 6.3.
 
 ## Task 6.0 Provider-Effect-Plan Authority Routing
 
@@ -667,7 +665,8 @@ requirement/scenarios alone preserve archive-safe acceptance. No OpenSpec
 artifact copies the canonical TypeScript block. No source, test, project,
 blueprint, `.habitat` record, package/public output, SDK edge, runtime behavior,
 or other OpenSpec file changed. Task 6.2 subsequently sealed the complete
-source node. Task 6.2a now owns the bounded Proxy-admission correction.
+source node, task 6.2a sealed the bounded Proxy-admission authority, and task
+6.2b is the sole active repair.
 
 The authority landed through PR #985 at exact final head
 `97ea53487d4fdbb5c5b0add744c4ff9f599dd360` and exact merged Habitat
@@ -680,9 +679,9 @@ diff checks passed; independent constitutional and TypeBox/testing reviews were
 CLEAN. Repository Ratchet run `31482158724` / job `93749365181` passed the exact
 PR head, Graphite was clean, and no Publish Habitat workflow was scheduled.
 Push-to-main Repository Ratchet run `31482357946` / job `93749987961` passed the
-exact merged SHA. Task 6.2 subsequently sealed the complete source node; task
-6.2a is the sole active documentation-only node, followed by task 6.2b and then
-task 6.3.
+exact merged SHA. Task 6.2 subsequently sealed the complete source node, task
+6.2a sealed Proxy-admission authority, and task 6.2b is the sole active repair
+before task 6.3.
 
 Task 6.2 created the complete private package-less `runtime-bootgraph@1` owner
 and full synchronous `orderBootgraph(...)` source from compiler-owned
@@ -736,7 +735,7 @@ authority and TypeBox/testing reviews were CLEAN. Repository Ratchet run
 job `93760057750` and Windows job `93760057734`, Graphite mergeability, and
 push-to-main Repository Ratchet run `31486649785` / job `93763479027` all
 passed on their exact SHAs. Its sealed receipt remains unchanged; task 6.2a is
-the sole active documentation-only authority node.
+sealed and task 6.2b is the sole active source repair.
 
 ## Task 6.2a Runtime-Bootgraph Proxy-Admission Routing
 
@@ -760,6 +759,17 @@ any other caller-trapping operation on that candidate. An ordinary container
 with a proxied prototype also refuses before inherited lookup or a prototype
 trap. No Proxy is unwrapped. Every refusal is synchronous built-in `TypeError`
 before result with zero traps, getters, callbacks, or external work.
+
+Task 6.2a landed through PR #989 at exact final head
+`5defc518dca65dc495e0c82d3aa76447ccc84ad6` and exact Habitat
+`main@2d0dd4b23b87bc06a59bd3146b1a4bf6232a4ff1` / tree
+`9ca96bb550ec9bc931b7374b232089780c69e2ce`. Its exact eight-document corpus
+changed no implementation. Strict OpenSpec validation and diff checks passed,
+and independent constitutional plus implementability/testing reviews were
+CLEAN. Repository Ratchet run `31491548480` / job `93778997287`, Graphite
+mergeability, and push-to-main Repository Ratchet run `31491882562` / job
+`93780078213` all passed on their exact SHAs; no Publish Habitat run was
+scheduled. Task 6.2b is the sole active source repair.
 
 Task 6.2b is the sole next source-bearing repair and changes exactly existing
 bootgraph `src/bootgraph.ts`, `test/bootgraph.test.ts`, and `tsdown.config.ts`.
