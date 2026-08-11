@@ -947,6 +947,11 @@ Canonical public imports are SDK-shaped:
 | `@habitat-ai/sdk/runtime/harnesses` | Import-safe companion harness contracts; no live handle, registry, or lifecycle owner |
 | `@habitat-ai/sdk/runtime/observation` | Read-only runtime diagnostic, telemetry, topology-record, and catalog facades |
 
+This specification fixes the two provider subpath names and their authoring
+roles only. The exact value/type inventories, private exclusions, and cold-plan
+mechanics for those faces are owned by runtime-realization §§13.4 and 27; they
+are not repeated here.
+
 There is no `@habitat-ai/sdk/runtime/compiler` surface and tasks 5.0-5.5 add
 no public compiler export or `@habitat-ai/sdk -> runtime-compiler` source/build
 edge. The compiler remains a private package-less runtime owner. Task 10.6's
@@ -1520,7 +1525,8 @@ A provider:
 - owns health checks where earned and refresh behavior where declared;
 - owns provider-local config requirements and provider dependency requirements;
 - uses `RuntimeSchema` for provider config where needed;
-- may use Effect directly inside provider/runtime implementation;
+- returns its cold operational plan through the curated SDK provider Effect
+  authoring face; raw Effect lifecycle primitives remain substrate-only;
 - uses scoped acquisition for resources with release semantics;
 - emits runtime diagnostics and telemetry where needed;
 - supplies redaction metadata to runtime diagnostics and catalog emission;
@@ -1530,6 +1536,12 @@ A provider:
 Effect use inside provider/runtime implementation is public to resource authors, provider authors, substrate authors, process-runtime authors, and harness-integration authors. It is private to ordinary service, plugin, app, and entrypoint authoring.
 
 Providers may construct native clients. They remain cold until provisioning. They do not select themselves. They do not become service truth.
+
+`ProviderEffectPlan` is an operational interior of `runtime-definition`, not a
+new architectural kind, Nx project, package, provider species, or lifecycle
+phase. This specification fixes that ownership classification; the runtime
+realization specification §13.4 solely owns its exact public metadata, private
+body carrier, failure channels, and SDK inventory.
 
 ### 7.5 Provider selection
 
@@ -2129,11 +2141,11 @@ definition -> selection -> derivation -> compilation -> provisioning -> mounting
 
 | Phase | Required output | Producer | Consumer |
 | --- | --- | --- | --- |
-| Definition | Import-safe service, plugin, resource, provider, app, profile, and process declarations, including cold Effect bodies and web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint` |
+| Definition | Import-safe service, plugin, resource, provider, app, profile, and process declarations, including cold Effect bodies, provider-plan authoring contracts, and web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint` |
 | Selection | One frozen `Entrypoint` carrying the selected `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, entrypoint id, and exact five-field launch identity | Synchronous `defineEntrypoint(...)` | Runtime derivation; future `startApp(...)` consumes the same artifact without reconstructing selection |
 | Derivation | Private foundational `NormalizedRuntimeTopology`; complete `NormalizedAuthoringGraph`, provider/service-binding/surface/workflow artifacts, Effect refs/table, distinct web route-module refs/table, and exact-field `PortableRuntimePlanArtifact` — shapes defined in runtime-spec §15 | Private `runtime-derivation` owner; complete-derivation contracts exposed at `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; the runtime compiler consumes only the complete graph alongside the original entrypoint; process runtime consumes the Effect table; the web adapter consumes the web table; pre-runtime tooling consumes the portable artifact |
 | Compilation | One private exact `{ plan, references, observationSeed }` result for the selected entrypoint and normalized graph | Private package-less runtime compiler | Bootgraph, process runtime, adapters, and later terminal composition through private owner edges; no public compiler face |
-| Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; then `ProvisionedProcess` with managed runtime, resource values, finalizers, and owner-local findings | Pre-acquisition runtime config for decoded values; bootgraph for metadata; Effect provisioning kernel for `ProvisionedProcess` | Provisioning kernel; then process runtime |
+| Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; cold provider plans built only after preflight and dependency readiness; then `ProvisionedProcess` with managed runtime, resource values, finalizers, and owner-local findings | Pre-acquisition runtime config for decoded values; bootgraph for metadata; selected providers for cold plans; Effect provisioning kernel for `ProvisionedProcess` | Provisioning kernel; then process runtime |
 | Mounting | Bound services, cache records, mount-ready surface records, adapter-lowered payloads, process-runtime stop handle, returned `NativeHarnessHandle` values, and private `StartedHarness` wrappers | Process runtime/adapters; runtime mounting invokes harnesses and creates wrappers after successful mounts | Runtime mounting and native hosts |
 | Observation | Runtime catalog, diagnostics, telemetry, topology records, and finalization records projected from definition-owned observation records, including records adapted from upstream owner-local findings | Runtime observation | Diagnostic readers and control-plane touchpoints |
 
@@ -2372,6 +2384,20 @@ observation later projects admitted records into diagnostics, telemetry,
 topology, and catalog views; downstream consumers adapt returned findings into
 those records when projection is required.
 
+Task 6.0 is a documentation-only ownership correction before provider-plan
+implementation. It classifies `ProviderEffectPlan` as the
+`runtime-definition` operational handoff named above and routes every exact
+mechanic, TypeScript shape, private carrier, failure rule, successor-blueprint
+closure, corpus, and definition-versus-substrate proof allocation to
+runtime-realization §§13.3-13.4, 17, 25, and 27. It changes no implementation,
+source, test, project, blueprint, package/public output, or runtime behavior;
+task 6.1 is the next source node.
+
+Post-provider conformance follows the same ownership split. Tasks 6.4 and 6.5
+author their provider packages against the cold contract only; they do not own
+live conformance. Task 7.4, after task 7.3, is the sole live-conformance node
+for those packages. Runtime-realization §27 owns the exact routing record.
+
 Process-local coordination is not durable workflow ownership. The named Habitat-owned process-local coordination resources and the Effect-internal substrate primitives they wrap are defined in the runtime realization specification, §14 and §17.3.
 
 ### 10.7 Runtime-owned lifetimes
@@ -2537,6 +2563,12 @@ admitted downstream owner may adapt that seed. Runtime observation alone
 projects admitted records into `RuntimeDiagnostic`, `RuntimeTelemetry`,
 `RuntimeTopologyRecord`, and `RuntimeCatalog`.
 
+Provider-plan public metadata may contribute only through the same admitted,
+redacted observation path. A plan's private acquisition/release bodies and
+private carrier never enter `RuntimeCatalog`, diagnostics, telemetry payloads,
+or topology records; exact carrier and lowering mechanics remain owned by
+runtime-realization §§13.4 and 17.
+
 Runtime diagnostics are the topology projection of structured findings, violations, statuses, and lifecycle events. They name the violated boundary or failed lifecycle phase. They explain; they do not compose.
 
 Runtime telemetry correlates process and provisioning context across entrypoint,
@@ -2558,6 +2590,7 @@ Each boundary names the architecture-spec section that establishes it, the runti
 |---|---|---|---|---|---|---|
 | Lifecycle vocabulary | §10.2 | §24.2, §22.1 | Arch-spec: canonical phase names | Runtime-spec: phase implementation, diagnostics, telemetry correlation | Seven phase names: `definition`, `selection`, `derivation`, `compilation`, `provisioning`, `mounting`, `observation` | Runtime realization spec; TBD: deployment spec |
 | Definition-to-selection handoff | §9.5, §10.2–§10.3 | §10.3, §15.1, §24.2, §27 | Arch-spec: `Entrypoint` as the sole cold selection artifact and `defineEntrypoint(...)` as its producer | Runtime-spec: exact inputs, agreement refusal, freezing, and non-execution mechanics | `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, `RuntimeLaunchIdentity`, `Entrypoint` | Runtime realization spec |
+| Provider definition-to-provisioning handoff | §7.4, §10.2, §10.6 | §13.3–§13.4, §17, §25, §27 | Arch-spec: `ProviderEffectPlan` name, `runtime-definition` operational-interior classification, and provider-versus-bootgraph-versus-substrate ownership split | Runtime-spec: exact resource-helper/provider contracts and SDK inventory, public metadata/private carrier, public map-type/private runtime-assembly split, failure channels, construction, freezing, lowering boundary, and task-specific proof allocation | `ResourceRequirement`, `RuntimeProvider`, `ProviderBuildContext`, `RuntimeResourceMap`, `ProviderEffectPlan`, `ProviderFx` | Runtime realization spec |
 | Runtime derivation handoff | §10.4 | §15 | Arch-spec: sole public face, finite export inventory, artifact category names, exact top-level result, and private-foundation/public-completion split | Runtime-spec: exact schemas and method signatures, portability classification, ordering/refusal law, and producer/consumer contracts | Private `NormalizedRuntimeTopology`; structurally reachable nonexported `NormalizedAuthoringGraph`; complete `PortableRuntimePlanArtifact`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef` / `ExecutionDescriptorTable` (non-portable), and distinct `WebRouteModuleRef` / `WebRouteModuleTable` (non-portable) | Runtime realization spec |
 | Runtime compiler | §10.5 | §16 | Arch-spec: private compiler role, owner edges, and absence of a current public face/SDK edge | Runtime-spec: exact `compileRuntimePlan(...)` signature, closed DTO schemas, cold reference table, result/refusal/order law, exclusions, closure, and proof allocation | Private `RuntimeCompilationResult`, `CompiledProcessPlan`, `RuntimeCompilationReferenceTable`, `CompilationObservationSeed`, and §16 DTO inventory | Runtime realization spec |
 | Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: Habitat-vs-Effect control split naming | Runtime-spec: bootgraph ordering, Effect kernel construction, ProvisionedProcess, rollback mechanics | `Bootgraph`, `ProvisionedProcess` | Runtime realization spec |
@@ -2592,6 +2625,11 @@ The runtime realization specification (`HABITAT_RUNTIME_REALIZATION`) is the cur
   closed schemas and table signatures, producer/consumer assignments, eager
   ref/table matching, and finding/failure/ordering mechanics without creating a
   second face or public error API.
+- **Provider definition-to-provisioning handoff:** arch-spec §§7.4 and 10.6
+  classify the cold provider plan and name the provider/bootgraph/substrate
+  ownership split; runtime-spec §§13.3-13.4, 17, 25, and 27 own every exact
+  contract, private-body, resource-map type/runtime split, failure, lowering,
+  publication, and proof mechanic.
 - **Web route-module handoff:** runtime-spec §9.3a and §15.4 keep native module-loader refs/tables distinct from Effect descriptors and their registry; the arch-spec fixes only that separation and handoff position.
 - **Runtime compiler:** runtime-spec §16 owns the validation list and emission contract; the arch-spec names the compiler's role in the chain.
 - **Bootgraph and provisioning kernel:** arch-spec §10.6 names the Habitat-vs-Effect control split; the arch-spec must NOT enumerate the Effect-internal primitives (queues, pubsub, refs, fibers, semaphores) — those belong in runtime-spec §17.

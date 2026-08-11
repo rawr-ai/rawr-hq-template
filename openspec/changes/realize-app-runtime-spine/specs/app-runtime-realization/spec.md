@@ -1290,40 +1290,301 @@ access live values; or publish observation.
 - **AND** it receives no derivation result, non-portable table, or portable
   artifact and invokes no authored executable
 
+### Requirement: Provider-effect-plan authority is closed before source activation
+
+Task 6.0 MUST remain a completed documentation-only authority correction across
+exactly nine documents: `HABITAT_ARCHITECTURE.md` as router;
+`HABITAT_RUNTIME_REALIZATION.md` §13.4 and its directly affected §§17, 25,
+and 27 as the sole exact mechanics owner;
+`packages/core/runtime/definition/AGENTS.md` as owner router; and the six active
+OpenSpec artifacts. This requirement and its scenarios MUST remain the sole
+archive-safe acceptance owner. The other OpenSpec artifacts MUST route or
+record the decision without copying the canonical TypeScript blocks. Task 6.0
+MUST change no `.habitat` file, SDK documentation, implementation, source,
+test, project, blueprint, package/public output, runtime behavior, or other
+OpenSpec file. Task 6.1 MUST be the sole next source node.
+
+Task 6.1 MUST preserve `runtime-definition@1` byte-for-byte, create only
+`.habitat/blueprints/runtime-definition/versions/2/blueprint.toml` and
+`structure.toml`, and select independently resolvable version 2 in the existing
+definition `habitat.toml`. Version 2 MUST admit the exact flat successor
+closure: the existing eight shell entries; exactly eleven source files, the
+existing ten plus `provider-effect-plan.ts`; and exactly three proof files,
+`definition.test.ts`, `provider-effect-plan.test.ts`, and `nx-cache.test.ts`.
+It MUST add no version-specific skill, Grit rule, inheritance, fallback,
+optional interior, version 3, kind, project, package, or nested `src/providers`
+directory.
+
+The exact task-6.1 implementation/behavior corpus MUST be eight files:
+definition `src/provider.ts`, `src/provider-effect-plan.ts`, `src/resource.ts`,
+`src/index.ts`, `test/definition.test.ts`, and
+`test/provider-effect-plan.test.ts`; derivation
+`test/complete-derivation.test.ts`; and compiler
+`test/compile-runtime-plan.test.ts`. The exact separate 17-file
+publication/assembly corpus MUST be `.gitattributes`;
+`.habitat/AUTHORITY.md`; `.habitat/AUTHORITY-ONTOLOGY.md`;
+`.habitat/README.md`; the two exact version-2 blueprint files;
+`packages/core/runtime/definition/AGENTS.md`;
+`packages/core/runtime/definition/habitat.toml`; SDK
+`src/runtime/providers/index.ts`; SDK `src/runtime/providers/effect/index.ts`;
+SDK `AGENTS.md`; SDK `README.md`; SDK `habitat-pack.json`; SDK `package.json`;
+SDK `tsdown.config.ts`; SDK `test/runtime-authoring-public-faces.test.ts`; and
+`apps/habitat/test/installed-package.test.ts`. Their union MUST impose a
+25-file task diff ceiling.
+
+Publication MUST grow the sorted SDK policy pack from 14 to 15 members by
+adding `runtime-definition@2`, keep copied/input blueprint directories exactly
+10, grow JavaScript build specifiers from 17 to 18, and grow runtime authoring
+subpaths from 8 to 9. `@habitat-ai/sdk/runtime/providers` MUST expose only value
+`defineRuntimeProvider` and types `ProviderBuildContext`, `RuntimeProvider`,
+`RuntimeProviderHealthDescriptor`, and `RuntimeResourceMap`.
+`@habitat-ai/sdk/runtime/providers/effect` MUST expose only value `providerFx`
+and types `ProviderAcquire`, `ProviderEffectPlan`, `ProviderFx`,
+`ProviderFxFacade`, and `ProviderRelease`. Neither face may expose raw Effect,
+Exit, Scope, Layer, ManagedRuntime, `ProviderScope`, a terminal runner, private
+plan witness/accessor, or alternate plan constructor.
+
+Task 6.1 MUST evolve the existing provider root and add only the provider Effect
+subpath; it MUST NOT classify both paths as new faces. It MUST exclude
+definition `project.json` and `tsdown.config.ts`,
+`.habitat/index.json`, root manifests, the lockfile, root Nx configuration,
+product-separation acceptance, and every other SDK face. TypeScript MUST own
+the full const-input/readonly `requireResource(...)` result, map-overload
+optionality, ProviderFx/error inference, required never-release, no-Promise
+contracts, and nominal anti-forgery through both a positive real-plan assignment
+and negative structural-lookalike assignment. Owner behavior tests MUST own
+cold no-callback construction, exact enumerability and descriptor flags,
+metadata/witness freezing, opaque body identity, private-accessor
+forged-witness rejection, and zero-build behavior. Habitat and Nx MUST own
+successor structure/application and unchanged edge/cache behavior. SDK and
+installed-package proof MUST own exact value/type inventories, counts, pack
+parity/provenance, and cold imports. Runtime source-string or AST inspection
+MUST NOT count as proof.
+
+#### Scenario: The authority-only gate closes without implementation
+
+- **WHEN** task 6.0 is reviewed as a complete change
+- **THEN** exactly the two canonical documents, runtime-definition router, and
+  six active OpenSpec artifacts contain the authority correction
+- **AND** no implementation, `.habitat`, SDK documentation, package/public
+  output, or runtime behavior changes
+- **AND** task 6.1 becomes the sole next source node
+
+#### Scenario: Version 2 resolves, applies, and packs independently
+
+- **WHEN** the root selector, local Habitat evaluator, SDK policy pack, and
+  installed consumer resolve `runtime-definition@2`
+- **THEN** the exact two-file successor resolves and applies as the complete
+  eight-shell, eleven-source, three-proof closure with packed byte parity and
+  provenance
+- **AND** `runtime-definition@1` remains byte-identical and independently
+  resolvable with no inheritance, fallback, version 3, skill, or Grit source law
+- **AND** the pack and build/subpath/directory counts are exactly 15, 18, 9,
+  and 10 respectively
+
+#### Scenario: The existing provider root and new Effect subpath are exact
+
+- **WHEN** source and installed-package consumers import the provider root and
+  provider Effect subpath
+- **THEN** each runtime value and type-only inventory is exactly the declared
+  finite set and preserves identity with its definition-owned implementation
+- **AND** the private witness/accessor and every raw runtime primitive, runner,
+  alternate constructor, and other SDK face remain absent
+
+#### Scenario: The implementation and proof corpora stay closed
+
+- **WHEN** task 6.1 implementation, publication, and proof are reviewed
+- **THEN** its diff contains no file outside the exact eight-file behavior and
+  17-file publication corpora
+- **AND** each TypeScript, behavior, Habitat/Nx, SDK, and installed-package claim
+  is proven by its allocated owner without source-string or AST inspection
+
+### Requirement: Provider plans are cold definition-owned Effect values
+
+`ProviderEffectPlan` MUST remain operational interior of the existing private,
+package-less `runtime-definition` owner rather than a Habitat kind, project,
+package, bootgraph artifact, or new phase. A `ProviderFx<TValue, TError>` MUST
+be the exact curated `HabitatEffect<TValue, TError, never>` value, not a thunk,
+Promise, acquired value, raw Effect, or terminal result. Acquire MUST preserve
+typed `TError`. Release MUST be required, receive only the acquired value, and
+return `ProviderFx<void, never>`. The `providerFx` facade MUST contain exactly
+the enumerable keys `succeed`, `tryPromise`, and `acquireRelease` and MUST be
+frozen.
+
+The `RuntimeProvider` interface MUST add its acquire-error generic and required synchronous
+`build(...)` while retaining erasure-friendly default config and acquire-error
+generics of `unknown` and `unknown`. Only `defineRuntimeProvider(...)` helper
+inference MUST default schema-free config to `undefined` and acquire error to
+`never`. `ProviderBuildContext` MUST contain exactly already-decoded
+`config`, declared-dependency `resources`, and the definition-owned
+`observation` port, with no lifecycle scope or telemetry client.
+Task 6.1 MUST define only the `RuntimeResourceMap` TypeScript contract with
+`has(requirement)` and three exact `get(requirement)` overload outcomes. It MUST
+create no concrete instance or factory. `requireResource(...)` MUST preserve
+its entire const input type and readonly shape so exact `optional: true`, exact
+false, absence, and widened `boolean | undefined` remain visible to the map
+overloads. Exact true returns `TValue | undefined`; exact false or absence
+returns `TValue`; widened optionality remains safely `TValue | undefined`.
+
+A plan MUST expose exactly enumerable `kind`, `acquire`, and `release` keys.
+Its acquire and release records MUST each expose exactly enumerable `boundary`,
+`policy`, and `telemetry` keys with the corresponding canonical boundary.
+Absent optional metadata MUST retain the `policy` and `telemetry` keys with
+`undefined` values; the optional metadata inputs MUST themselves admit only
+acquire and release members.
+Construction MUST fresh-copy and recursively freeze the plan, boundary records,
+policy metadata, telemetry metadata, and private witness container. It MUST
+preserve the opaque acquire Effect and release callback by exact identity and
+MUST NOT traverse, copy, freeze, or invoke either body. A private
+symbol witness MUST retain those exact bodies through a non-enumerable,
+non-writable, non-configurable property; its symbol/accessor MUST remain limited
+to definition assembly and the future Effect substrate and MUST NOT be exported
+by the SDK. Provider plan, build-context, resource-map, and facade contracts
+MUST remain TypeScript operational contracts with no fake structural schema,
+decoder, or serialized form.
+
+Task 6.1 MUST prove only cold construction and boundary admission. Constructing
+`ProviderFx`, `ProviderEffectPlan`, or a provider declaration, and passing the
+provider through derivation or compilation, MUST invoke no `tryPromise` callback,
+release callback, provider build, or other authored body. The private accessor
+MUST accept a genuine nominal plan and reject a forged structural lookalike.
+ManagedRuntime construction MUST remain task 7.1. Executing `tryPromise`, live
+failure classification, real beta.101
+`Effect.acquireRelease(acquire, release)` construction/use, and registration
+immediately after successful acquire MUST remain task 7.2.
+Cleanup observation, rollback, reverse continuation, inert repeated
+disposal/release, and runtime close MUST remain task 7.3. Qualified-provider
+live lifecycle conformance MUST remain task 7.4. Compiler and bootgraph MUST
+carry no provider plan or acquire/release body.
+
+#### Scenario: Plan construction is exact, frozen, and cold
+
+- **WHEN** an author combines one acquire `ProviderFx` and required release
+  callback through `providerFx.acquireRelease(...)`
+- **THEN** construction invokes neither body and returns a plan whose enumerable
+  keys are exactly `kind`, `acquire`, and `release`
+- **AND** each public phase record has exactly `boundary`, `policy`, and
+  `telemetry` enumerable keys, including explicit undefined metadata, with
+  recursively frozen fresh metadata containers
+- **AND** the frozen three-operation facade is exact, while the private
+  non-enumerable, non-writable, non-configurable witness retains the exact
+  opaque Effect and callback references without copying, traversing, or
+  freezing them
+- **AND** the private accessor accepts the genuine plan and rejects a forged
+  structural lookalike without invoking either body
+
+#### Scenario: Acquire and required release inference stays curated
+
+- **WHEN** a typed acquire Effect and its release callback are authored through
+  the three-operation provider facade
+- **THEN** the plan preserves inferred acquired value and acquire error types,
+  while provider Effect requirements remain exactly `never`
+- **AND** erasure-friendly `RuntimeProvider` remains defaulted to unknown config
+  and acquire error, while only `defineRuntimeProvider(...)` helper inference
+  defaults schema-free config to `undefined` and acquire error to `never`
+- **AND** release receives only that value and must return
+  `ProviderFx<void, never>`
+- **AND** a thunk, Promise, raw value, optional release, fallible release Effect,
+  or provider Effect with requirements fails TypeScript admission
+- **AND** a genuine plan satisfies nominal `ProviderEffectPlan` while a
+  structural lookalike fails TypeScript assignment
+
+#### Scenario: Requirement and map typing preserve optionality
+
+- **WHEN** `requireResource(...)` receives exact true, exact false, absent, and
+  widened optionality inputs
+- **THEN** each result preserves its entire const input type and readonly shape
+- **AND** the `RuntimeResourceMap.get(...)` contract returns optional, required,
+  required, and safely optional value types respectively
+- **AND** task 6.1 constructs no map instance or public/private map factory
+
+#### Scenario: Earlier cold phases never build a provider
+
+- **WHEN** real derivation and compilation process an entrypoint containing a
+  provider whose `build(...)` is instrumented
+- **THEN** both phases complete with zero build calls
+- **AND** neither the compiler result nor bootgraph ordering records carry a
+  provider plan or acquire/release body
+
 ### Requirement: Runtime providers remain cold until Effect provisioning
 
 A `RuntimeProvider` MUST implement one `RuntimeResource` contract and own its
 resource requirements, config schema/decoder, observation redaction metadata,
 health/refresh metadata, and `build(...)`. `runtime-definition` MUST own the
-TypeBox `RuntimeObservationRecord` and narrow non-authorizing `RuntimeObservationPort`;
-`ProviderBuildContext` MUST receive that port without importing the downstream
-observation implementation. `build(...)` MUST return a cold
-`ProviderEffectPlan` containing acquire/release execution plus admitted
-execution policy and telemetry labels; it MUST NOT own dependency ordering or a
-live finalizer registry. Compiled bootgraph inputs MUST own dependency and
-static finalization order/policy metadata plus the provider reference; they MUST
-NOT copy acquire/release execution. Before the first provider acquisition, the
-runtime config component MUST materialize every declared source and successfully
-resolve and decode every provider config plus service scope/config ref. A
-missing optional dotenv/file source alone MAY be skipped; missing required
+TypeBox `RuntimeObservationRecord` and narrow non-authorizing
+`RuntimeObservationPort`; build MUST receive that port through the exact
+task-6.1 context without importing the downstream observation implementation.
+The compiler reference handoff MUST retain the exact provider references plus
+provider-owned config decoder and observation-redaction metadata. The task-6.3
+ordered boot artifact MUST carry only resource/provider identity,
+dependency order, deduplication, rollback order, and release-order metadata.
+The future Effect substrate MUST join those two inputs; neither handoff may
+carry a provider plan or acquire/release body. Before the first provider
+acquisition, the runtime config component MUST materialize every declared
+source and successfully resolve and decode every provider config plus service
+scope/config ref. A missing optional dotenv/file source alone MAY be skipped;
+missing required
 sources, absent declared memory/test sources, malformed or unreadable sources,
 exhausted keys, and winning decode failures MUST refuse with zero acquisition.
+Task 7.2 MUST assemble the substrate-private concrete frozen
+`RuntimeResourceMap` from already-provisioned dependency values without a
+public factory. Its `has(...)` and `get(...)` operations MUST key only by exact
+declared `ResourceRequirement` reference; an identity-equivalent copy MUST miss,
+and runtime required/optional lookup MUST agree with the task-6.1 overload
+contract.
+
 The Effect provisioning kernel MUST own one
 `effect@4.0.0-beta.101` `ManagedRuntime` created from exactly one substrate
 `Layer.effectContext` lifecycle adapter for each started process. The adapter
-MUST consume bootgraph dependency order as ordinary data, receive the already
-decoded provider-owned config, build a provider only after its dependencies exist,
-acquire it, register that plan's release after successful acquisition, and
-return the assembled process Context. The substrate MUST force that managed
-context before any mount. `ManagedRuntime` MUST own all process scopes, fibers,
-and reverse release; Habitat MUST NOT create a second root `Scope`, a second or
-per-execution ManagedRuntime, or reinterpret bootgraph order as Layer
-composition. Domain services MUST remain Habitat services bound by process
-runtime, not Effect services, Context tags, or Layer nodes. The full validated
-provider-local config MUST reach build, acquire, and release; provider-owned
-redaction applies only to diagnostic, telemetry, and catalog observation
-projections.
+MUST consume bootgraph order as ordinary data and, only after dependency
+readiness, call synchronous `build(...)` with the already-decoded full config,
+exact dependency-resource map, and observation port. It MUST privately recover
+the returned plan bodies. Task 7.2 MUST construct and use the real beta.101
+`Effect.acquireRelease(acquire, release)` adapter, execute acquire, register
+required release immediately after successful acquisition, and return the
+assembled process Context. It MUST prove that executing `tryPromise` maps both
+synchronous throw and Promise rejection through the authored mapper into typed
+acquire error and that typed acquire failure registers no release. Provider
+build throw, private accessor rejection of a forged plan, and Effect defect MUST
+remain defects rather than typed acquire failures. Task 7.3 MUST execute cleanup
+through that already-constructed adapter and prove expected-cleanup recovery and
+observation inside the provider's infallible release Effect, unexpected release
+defect observation without preventing later releases, startup rollback, reverse
+release order, inert repeated disposal/release, and runtime close. It MUST NOT
+construct, lower, or register another adapter. The substrate MUST
+force the managed context before any mount. `ManagedRuntime` MUST own all
+process scopes, fibers, and reverse release; Habitat MUST NOT create a second
+root `Scope`, a second or per-execution ManagedRuntime, or reinterpret bootgraph
+order as Layer composition. Domain services MUST remain Habitat services bound
+by process runtime, not Effect services, Context tags, or Layer nodes.
+Provider-owned redaction applies only to diagnostic, telemetry, and catalog
+observation projections.
 A provider MUST NOT select itself or construct a managed runtime.
+
+Tasks 6.4 and 6.5 MUST prove only the qualified semantic-ledger and
+temporal-inquiry Fluree HTTP providers' config schema/decode contracts, cold
+plan construction, and provider conformance. Those nodes MUST perform no live
+acquisition, release, or failure cleanup. Task 7.4 MUST run both provider
+packages through the real Effect substrate and prove single acquisition/release
+plus failure cleanup for each.
+
+#### Scenario: Compiler references and boot order remain separate
+
+- **WHEN** task 6.3 emits the ordered boot artifact beside the compiler
+  reference handoff
+- **THEN** the boot artifact contains only resource/provider identity,
+  dependency order, deduplication, rollback order, and release-order metadata
+- **AND** exact provider references plus provider-owned config decoder and
+  observation-redaction metadata remain only in the compiler reference handoff
+- **AND** the future substrate joins both inputs without either carrying a
+  provider plan or acquire/release body
+
+#### Scenario: Qualified provider integration remains cold before substrate proof
+
+- **WHEN** tasks 6.4 and 6.5 complete their provider conformance suites
+- **THEN** each proves its config schema/decode contract, cold plan construction,
+  and provider conformance
+- **AND** neither task performs live acquisition, release, or failure cleanup
 
 #### Scenario: Config preflight completes before first acquisition
 
@@ -1335,30 +1596,81 @@ A provider MUST NOT select itself or construct a managed runtime.
   malformed or unreadable source, exhausted key, or winning decode failure
   refuses with zero acquisition and no lower-precedence fallthrough
 
+#### Scenario: The substrate assembles exact-reference dependency lookup
+
+- **WHEN** task 7.2 builds a provider context from already-provisioned declared
+  dependencies
+- **THEN** its concrete `RuntimeResourceMap` is private and frozen and exposes
+  only `has(...)` and `get(...)`
+- **AND** each exact declared requirement resolves with its required/optional
+  runtime outcome while an identity-equivalent copied requirement misses
+- **AND** no public map constructor, factory, iterator, or snapshot exists
+
 #### Scenario: Process provisioning succeeds
 
-- **WHEN** the Effect substrate receives valid bootgraph ordering metadata and
-  the matching cold provider plans
+- **WHEN** the Effect substrate receives valid bootgraph ordering metadata,
+  matching exact cold provider references, and fully preflighted config
 - **THEN** each selected process resource is acquired exactly once in
   dependency order
+- **AND** task 7.2 builds each provider synchronously only after its dependencies
+  are available, constructs and uses the real beta.101
+  `Effect.acquireRelease(acquire, release)` adapter, and registers required
+  release immediately after successful acquire
 - **AND** provisioning emits `ProvisionedProcess` plus one runtime-owned
   `ManagedRuntimeHandle`
 - **AND** the one managed context is forced before mounting begins
 
-#### Scenario: Acquisition fails midway
+#### Scenario: Acquisition failure is classified without release registration
 
-- **WHEN** a provider plan fails after earlier resources were acquired
-- **THEN** the kernel releases the acquired prefix once in reverse dependency
-  order
+- **WHEN** task 7.2 executes `tryPromise` whose callback throws synchronously or
+  rejects, after earlier resources were acquired
+- **THEN** the authored mapper produces typed acquire failure and the failing
+  provider registers no release
+- **AND** no process runtime or harness is mounted
+
+#### Scenario: Acquisition defects remain defects
+
+- **WHEN** provider build throws, the private accessor rejects a forged plan, or
+  an acquire Effect defects during task 7.2 execution
+- **THEN** the outcome remains a defect rather than being mapped into typed
+  acquire failure
+- **AND** no release is registered for that provider and no harness mounts
+
+#### Scenario: Reverse release observes and continues
+
+- **WHEN** task 7.3 executes cleanup through the task-7.2 adapter and one
+  provider encounters expected cleanup failure or an unexpected release defect
+- **THEN** expected cleanup failure is recovered and observed inside that
+  provider's infallible release Effect
+- **AND** an unexpected release defect is observed without preventing later
+  reverse-ordered releases
+- **AND** repeated release remains inert after the managed-runtime-owned scope
+  settles
+
+#### Scenario: Startup rolls back an acquired prefix
+
+- **WHEN** task 7.3 observes a provider acquisition failure after earlier
+  resources were acquired
+- **THEN** it releases the acquired prefix once in reverse dependency order
 - **AND** no process runtime or harness is mounted
 
 #### Scenario: Effect substrate ownership is inspected
 
-- **WHEN** one process is provisioned and later stopped
-- **THEN** one beta.101 ManagedRuntime owns its scopes, fibers, Context, and
-  reverse provider release through the one `Layer.effectContext` adapter
+- **WHEN** task 7.3 disposes one provisioned process after native stop
+- **THEN** one beta.101 ManagedRuntime closes exactly once and owns its scopes,
+  fibers, Context, and reverse provider release through the one
+  `Layer.effectContext` adapter
+- **AND** repeated disposal/release is inert
 - **AND** no second root Scope, Layer-shaped bootgraph, service Layer node, or
   per-execution ManagedRuntime exists
+
+#### Scenario: Qualified providers prove lifecycle through the real substrate
+
+- **WHEN** task 7.4 runs the task-6.4 semantic-ledger provider and task-6.5
+  temporal-inquiry provider through the real Effect substrate
+- **THEN** each provider proves single acquisition/release and failure cleanup
+- **AND** no direct provider construction or substitute lifecycle harness counts
+  as this proof
 
 ### Requirement: Process runtime owns live binding and execution
 

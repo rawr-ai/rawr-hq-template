@@ -50,6 +50,28 @@ The exact sectional source ledger is [[authority-amendment]].
   final SDK-to-compiler edge from its real terminal composition call. Canonical
   `HABITAT_RUNTIME_REALIZATION` §16 alone owns exact mechanics and closed DTO
   fields; the active capability spec retains archive-safe acceptance.
+- Close provider-effect-plan authority before implementation. Task 6.0 is a
+  documentation-only nine-document gate: canonical runtime §13.4 and its
+  directly affected provisioning, enforcement, and contract-summary sections
+  alone own exact mechanics, while the active capability spec retains
+  archive-safe acceptance. Task 6.1 then adds only the flat independent
+  `runtime-definition@2` successor, evolves the existing SDK provider root, and
+  adds only the provider Effect subpath. A cold provider build returns a curated
+  `HabitatEffect`-backed plan with typed acquire, required infallible release,
+  a requirement-preserving typed resource-map contract, frozen public boundary
+  metadata, and private body witness; it does not construct a map, acquire,
+  lower raw Effect, own boot order, expose a Promise result, or create another
+  kind, project, package, or runtime phase. Later substrate tasks alone own the
+  concrete exact-reference map and live outcomes: task 7.2 constructs and uses
+  the real beta.101 `Effect.acquireRelease(acquire, release)` adapter, registers
+  release immediately after successful acquire, and classifies acquisition;
+  task 7.3 executes cleanup, rollback, reverse continuation, repeated disposal,
+  and close through that adapter. Bootgraph carries only identity, dependency,
+  deduplication, rollback, and release-order metadata; exact provider references
+  plus provider-owned decoder/redaction metadata remain in the compiler
+  reference handoff for the substrate to join. The two qualified Fluree
+  provider tasks stay cold, while task 7.4 alone proves their single
+  acquisition/release and failure cleanup through the real substrate.
 - Keep Effect lifetime authority with the app/process and native execution
   authority with the selected bridge. Public `effect/context` and `effect/wrap`
   carry the process-owned Context, resource lifetime, policy, and telemetry;

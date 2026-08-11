@@ -944,12 +944,8 @@ packages/core/sdk/src/
       resource-requirement.ts
     providers/
       index.ts
-      define-runtime-provider.ts
-      provider-effect-plan.ts
       effect/
         index.ts
-        internal/
-          runtime-delegation.ts
     profiles/
       index.ts
       define-runtime-profile.ts
@@ -999,6 +995,21 @@ Canonical public import surfaces include:
 | `@habitat-ai/sdk/runtime/derivation` | Closed complete-derivation face: one derivation operation, exactly three runtime value exports, and the exact finite type-only contract inventory |
 | `@habitat-ai/sdk/runtime/harnesses` | Import-safe companion harness contracts; no live handle, registry, or lifecycle owner |
 | `@habitat-ai/sdk/runtime/observation` | Read-only runtime diagnostic, telemetry, topology-record, and catalog facades |
+
+The provider authoring faces have these exact closed inventories:
+
+- `@habitat-ai/sdk/runtime/providers` exposes the sole value
+  `defineRuntimeProvider` and only the types `ProviderBuildContext`,
+  `RuntimeProvider`, `RuntimeProviderHealthDescriptor`, and
+  `RuntimeResourceMap`;
+- `@habitat-ai/sdk/runtime/providers/effect` exposes the sole value `providerFx`
+  and only the types `ProviderAcquire`, `ProviderEffectPlan`, `ProviderFx`,
+  `ProviderFxFacade`, and `ProviderRelease`.
+
+Neither face exports raw Effect, `Exit`, `Scope`, `Layer`, `ManagedRuntime`,
+`ProviderScope`, a plan accessor or witness, a Promise-valued acquisition
+result, a terminal runner, or an alternate plan constructor. Section 13.4 owns
+the exact contracts and private-carrier mechanics behind these inventories.
 
 `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face, and
 `deriveRuntimeArtifacts(...)` is its sole derivation operation. The SDK root
@@ -3676,9 +3687,9 @@ plugin, a service-owned resource dependency key, or a provider needs a
 resource. Other runtime owners may reuse private definition grammar, but they
 do not enter or widen the exact normalized owner union in §15.2.
 
-File: `packages/core/runtime/definition/src/resources/resource-requirement.ts`  
+File: `packages/core/runtime/definition/src/resource.ts`  
 Layer: private `runtime-definition` resource-requirement contract exposed through the SDK facade  
-Exactness: normative for requirement fields.
+Exactness: normative for requirement fields and literal-preserving helper inference.
 
 ```ts
 export interface ResourceRequirement<
@@ -3691,6 +3702,10 @@ export interface ResourceRequirement<
   readonly instance?: string;
   readonly reason: string;
 }
+
+export function requireResource<
+  const TRequirement extends ResourceRequirement,
+>(input: TRequirement): Readonly<TRequirement>;
 ```
 
 This generic definition-owned authoring interface remains authoritative at its
@@ -3702,6 +3717,12 @@ fixed in §15.2. The normalized public type deliberately has a different shape
 while retaining the same export name on the separate
 `@habitat-ai/sdk/runtime/derivation` face.
 
+`requireResource(...)` preserves the whole inferred input type rather than
+reconstructing only its resource generic. In particular, exact authored
+`optional: true`, exact `optional: false`, and absence of `optional` survive
+through the public helper into the `RuntimeResourceMap.get(...)` overloads in
+§13.4.
+
 Multiple resource instances require instance keys. An optional requirement with
 no selected provider produces the sole nonfatal derivation finding fixed in
 §15.2. A required consumer of that unselected identity is instead invalid and
@@ -3709,23 +3730,54 @@ throws `TypeError`; no second optional-resource finding code is admitted.
 
 ### 13.4 `RuntimeProvider` and `ProviderEffectPlan`
 
-A `RuntimeProvider` implements acquisition, health, refresh, and release for a
-`RuntimeResource`. The provider owns its `TConfig` generic, optional
-`configSchema`, and redaction metadata. Provider authors derive that declaration
-from TypeBox through the `runtime-schema` adapter exposed by the SDK. The runtime substrate
-receives provider config only after the pre-acquisition runtime config component
-has resolved and decoded it, then invokes `build(...)` with typed config. The
-private config path retains the schema's redaction metadata so diagnostic,
-telemetry, and catalog projections receive the redacted view.
+A `RuntimeProvider` is a cold provider declaration whose required synchronous
+`build(...)` operation returns one `ProviderEffectPlan`. The plan is an
+operational interior of `runtime-definition`; it is not a kind, Nx project,
+package, provider species, public Promise result, or acquired value. The
+provider owns its optional `RuntimeSchema<TConfig>`, default config key,
+redaction metadata, dependency requirements, and acquisition error type.
 
-File: `packages/core/runtime/definition/src/providers/define-runtime-provider.ts`  
+The pre-acquisition runtime config owner resolves and decodes provider config
+before provisioning invokes `build(...)`. The context also contains a frozen
+operational lookup over already-provisioned declared dependencies and the
+definition-owned observation port. It contains no provider scope or telemetry
+client.
+
+File: `packages/core/runtime/definition/src/provider.ts`  
 Layer: private `runtime-definition` provider contract exposed through the SDK facade  
-Exactness: normative for provider responsibilities, build return, telemetry input, and fields.
+Exactness: normative for every generic, field, build-context member, resource-map operation, and return type.
 
 ```ts
+export interface RuntimeResourceMap {
+  has(requirement: ResourceRequirement): boolean;
+
+  get<TResource extends RuntimeResource>(
+    requirement: ResourceRequirement<TResource> & {
+      readonly optional: true;
+    },
+  ): RuntimeResourceValue<TResource> | undefined;
+
+  get<TResource extends RuntimeResource>(
+    requirement: ResourceRequirement<TResource> & {
+      readonly optional?: false | undefined;
+    },
+  ): RuntimeResourceValue<TResource>;
+
+  get<TResource extends RuntimeResource>(
+    requirement: ResourceRequirement<TResource>,
+  ): RuntimeResourceValue<TResource> | undefined;
+}
+
+export interface ProviderBuildContext<TConfig> {
+  readonly config: TConfig;
+  readonly resources: RuntimeResourceMap;
+  readonly observation: RuntimeObservationPort;
+}
+
 export interface RuntimeProvider<
   TResource extends RuntimeResource = RuntimeResource,
   TConfig = unknown,
+  TAcquireError = unknown,
 > {
   readonly kind: "runtime.provider";
   readonly id: string;
@@ -3736,57 +3788,185 @@ export interface RuntimeProvider<
   readonly defaultConfigKey?: string;
   readonly health?: RuntimeProviderHealthDescriptor;
 
-  build(input: ProviderBuildContext<TConfig>): ProviderEffectPlan<
-    RuntimeResourceValue<TResource>
-  >;
+  build(
+    context: ProviderBuildContext<TConfig>,
+  ): ProviderEffectPlan<RuntimeResourceValue<TResource>, TAcquireError>;
 }
 
-export interface ProviderBuildContext<TConfig> {
-  readonly config: TConfig;
-  readonly resources: RuntimeResourceMap;
-  readonly scope: ProviderScope;
-  readonly observation: RuntimeObservationPort;
-}
+type RuntimeProviderInput<
+  TResource extends RuntimeResource,
+  TConfig,
+  TAcquireError,
+> = Omit<RuntimeProvider<TResource, TConfig, TAcquireError>, "kind">;
 
 export function defineRuntimeProvider<
   const TResource extends RuntimeResource,
-  TConfig = never,
+  TConfig = undefined,
+  TAcquireError = never,
 >(
-  input: RuntimeProvider<TResource, TConfig>,
-): RuntimeProvider<TResource, TConfig>;
+  input: RuntimeProviderInput<TResource, TConfig, TAcquireError>,
+): RuntimeProvider<TResource, TConfig, TAcquireError>;
 ```
 
-Provider descriptors remain cold until provisioning. Secret access is provider-acquisition-local and redacted before diagnostics and catalog emission. Runtime telemetry in provider acquisition is runtime telemetry, not service semantic observability.
+The `RuntimeProvider` interface intentionally keeps its erasure defaults at
+`TConfig = unknown` and `TAcquireError = unknown`. Only
+`defineRuntimeProvider(...)` helper inference defaults a schema-free omitted
+config type to `undefined` and an omitted acquire-error type to `never`.
 
-File: `packages/core/sdk/src/runtime/providers/effect/index.ts`  
-Layer: SDK provider Effect plan facade  
-Exactness: normative for provider acquisition/release authoring and `providerFx` name; illustrative for exact generic spelling.
+Task 6.1 implements only the `RuntimeResourceMap` TypeScript contract above; it
+does not construct a map instance or add a public or private map factory. No
+public constructor is admitted. At the end-state boundary, the concrete map is
+frozen and exposes only `has` and generic `get`. Both operations are keyed by
+the exact declared `ResourceRequirement` object reference, never a
+reconstructed structural key or raw resource id. An exact `optional: true`
+requirement returns `TValue | undefined`; exact false or absent optionality
+returns `TValue`. The final overload keeps a requirement whose optionality has
+widened to `boolean | undefined` sound by returning `TValue | undefined`
+rather than pretending it is required.
+
+Task 7.2 privately assembles and proves the concrete frozen map. For an exact
+declared requirement reference, `has(...)` reports whether an entry exists and
+`get(...)` returns that exact stored value. A structurally equal copied
+requirement is a miss: `has(...)` returns `false`; `get(...)` returns
+`undefined` only when that requirement is optional and otherwise throws
+built-in `TypeError`. No iterator, snapshot, mutation operation, alternate
+requirement record, or definition-owned concrete-map API is admitted.
+
+File: `packages/core/runtime/definition/src/provider-effect-plan.ts`  
+Layer: private `runtime-definition` provider-plan contract and construction, selectively exposed through the two SDK provider facades  
+Exactness: normative for the complete public types, facade, enumerable shapes, metadata, private witness, and body identity.
 
 ```ts
-export const providerFx: ProviderFx = createProviderFxFacade();
+export type ProviderFx<TValue, TError = never> =
+  HabitatEffect<TValue, TError, never>;
 
-export interface ProviderFx {
-  acquireRelease<TValue>(input: {
-    acquire: ProviderAcquire<TValue>;
-    release?: ProviderRelease<TValue>;
-  }): ProviderEffectPlan<TValue>;
+export type ProviderAcquire<TValue, TError = never> =
+  ProviderFx<TValue, TError>;
 
-  tryAcquire<TValue, TError>(input: {
-    acquire: () => Promise<TValue> | TValue;
-    catch: (cause: unknown) => TError;
-  }): ProviderEffectPlan<TValue, TError>;
+export type ProviderRelease<TValue> =
+  (value: TValue) => ProviderFx<void, never>;
 
-  withSpan<TValue, TError>(
-    name: string,
-    plan: ProviderEffectPlan<TValue, TError>,
-    attributes?: Record<string, string | number | boolean>,
-  ): ProviderEffectPlan<TValue, TError>;
+const providerEffectPlanWitness = Symbol("provider.effect-plan.witness");
+
+interface ProviderEffectPlanWitness<TValue, TAcquireError> {
+  readonly acquire: ProviderAcquire<TValue, TAcquireError>;
+  readonly release: ProviderRelease<TValue>;
 }
+
+export interface ProviderEffectPlan<
+  TValue,
+  TAcquireError = never,
+> {
+  readonly kind: "provider.effect-plan";
+  readonly acquire: {
+    readonly boundary: "provider.acquire";
+    readonly policy: EffectExecutionPolicy | undefined;
+    readonly telemetry: HabitatTelemetryAttributes | undefined;
+  };
+  readonly release: {
+    readonly boundary: "provider.release";
+    readonly policy: EffectExecutionPolicy | undefined;
+    readonly telemetry: HabitatTelemetryAttributes | undefined;
+  };
+  readonly [providerEffectPlanWitness]: ProviderEffectPlanWitness<
+    TValue,
+    TAcquireError
+  >;
+}
+
+export interface ProviderFxFacade {
+  succeed<TValue>(value: TValue): ProviderFx<TValue>;
+
+  tryPromise<TValue, TError>(input: {
+    readonly try: () => Promise<TValue> | TValue;
+    readonly catch: (cause: unknown) => TError;
+  }): ProviderFx<TValue, TError>;
+
+  acquireRelease<TValue, TAcquireError = never>(input: {
+    readonly acquire: ProviderAcquire<TValue, TAcquireError>;
+    readonly release: ProviderRelease<TValue>;
+    readonly policy?: {
+      readonly acquire?: EffectExecutionPolicy;
+      readonly release?: EffectExecutionPolicy;
+    };
+    readonly telemetry?: {
+      readonly acquire?: HabitatTelemetryAttributes;
+      readonly release?: HabitatTelemetryAttributes;
+    };
+  }): ProviderEffectPlan<TValue, TAcquireError>;
+}
+
+export const providerFx: ProviderFxFacade;
+
+export function readProviderEffectPlan<TValue, TAcquireError>(
+  plan: ProviderEffectPlan<TValue, TAcquireError>,
+): ProviderEffectPlanWitness<TValue, TAcquireError>;
 ```
 
-`providerFx` is provider-plan-specific. It does not make the global `fx` authoring spelling canonical.
+`providerFx` is a frozen runtime value with exactly the enumerable keys
+`succeed`, `tryPromise`, and `acquireRelease`. `succeed(...)` and
+`tryPromise(...)` return cold `ProviderFx` values, never thunks or Promises.
+`acquireRelease(...)` requires both the already-constructed acquire Effect and
+the release callback. Its optional `policy` and `telemetry` inputs are exact
+records with only optional `acquire` and `release` members using
+`EffectExecutionPolicy` and `HabitatTelemetryAttributes`, respectively.
 
-Provider acquire/release plans carry definition-owned `ProviderEffectBoundaryKind` labels and owner-local policy/correlation metadata. The compiler emits only compiled resource identity/dependency data and preserves exact cold provider references; it neither calls `build(...)` nor constructs or consumes a `ProviderEffectPlan`. After config preflight, `runtime-substrate-effect` calls the selected provider's `build(...)` and lowers and executes the returned plan under bootgraph order/rollback metadata. Provider plans are not `EffectExecutionDescriptor` procedure descriptors.
+The constructed plan has exactly the enumerable keys `kind`, `acquire`, and
+`release`. Each public boundary record always has exactly the enumerable keys
+`boundary`, `policy`, and `telemetry`; an absent optional input is represented
+by an `undefined` metadata value rather than by omitting one of those three
+keys. Plan construction creates and recursively freezes fresh plan,
+acquire/release boundary-record, present policy (including its nested policy
+records), present telemetry, and private-witness containers. It does not
+traverse, copy, freeze, or invoke the opaque acquire `HabitatEffect` or release
+callback; the private witness retains both exact references.
+
+The witness property is non-enumerable, non-writable, and non-configurable, and
+its symbol is not exported. `readProviderEffectPlan(...)` is an internal
+runtime-owner accessor used only by definition assembly and the future Effect
+substrate. It is never re-exported by either SDK provider face. A missing or
+forged witness is a runtime defect, not a typed acquire failure.
+
+The private symbol property is also the nominal TypeScript anti-forgery
+boundary. A real `ProviderEffectPlan` returned by `providerFx.acquireRelease`
+is assignable to the public plan type; an object containing only the public
+`kind`, `acquire`, and `release` shape is not assignable without an explicit
+assertion.
+
+Acquisition is the cold `ProviderFx` value itself. `providerFx.tryPromise(...)`
+defers its `try` callback and maps both a synchronous throw and a Promise
+rejection through the supplied `catch` mapper into `TAcquireError`. A typed
+acquire failure registers no release; the substrate rolls back only earlier
+successful acquisitions. A thrown provider `build(...)`, forged plan, or
+Effect defect stays a defect and is not mapped into the typed acquire channel.
+
+Release is required, receives only the acquired value, and returns
+`ProviderFx<void, never>`. A provider with no cleanup authors an explicit no-op
+release such as `() => providerFx.succeed(undefined)`. Expected cleanup failure
+must be recovered and observed inside that infallible release Effect; the
+substrate still continues reverse release after a release defect. Vendor
+`Effect`, `Exit`, `Scope`, `Layer`, `ManagedRuntime`, finalizer registration,
+rollback, and reverse-release mechanics stay substrate-only. Tasks 7.1-7.3
+own its substrate realization. Task 7.2 constructs and uses the real
+`effect@4.0.0-beta.101` `Effect.acquireRelease(acquire, release)` adapter;
+acquisition and immediate post-success finalizer registration of that same
+release are one indivisible operation. It also owns typed-failure and defect
+classification. Task 7.3 does not construct or re-lower that adapter. It
+executes and proves expected-cleanup recovery and observation, continuation
+after an unexpected release defect, rollback, reverse order, inert repeated
+disposal/release, and runtime close. Task 7.1 owns the substrate project and
+single managed runtime construction.
+Bootgraph receives identity/dependency/order facts only and never sees either
+plan body.
+
+TypeBox remains limited here to provider config through `RuntimeSchema` and the
+existing definition-owned observation-record contract. `ProviderEffectPlan`,
+`ProviderFx`, `ProviderBuildContext`, and `RuntimeResourceMap` are TypeScript
+operational contracts; no fake schema, decoder, or serialized form is admitted.
+Provider descriptors and plans remain cold until provisioning. Secret-bearing
+provider config is redacted before diagnostic, telemetry, or catalog
+projection. Runtime telemetry around provider lifecycle is runtime telemetry,
+not service semantic observability.
 
 ### 13.5 `ProviderSelection`
 
@@ -4012,58 +4192,72 @@ export const resendEmailProvider = defineRuntimeProvider({
   configSchema: ResendEmailConfigSchema,
   defaultConfigKey: "email.primary",
 
-  build({ config, telemetry }) {
+  build({ config }) {
     return providerFx.acquireRelease({
-      acquire: async () => {
-        telemetry.event("provider.acquire.start", {
+      acquire: providerFx.tryPromise({
+        try: () => {
+          const client = createResendClient({
+            apiKey: config.apiKey,
+          });
+
+          return {
+            send(input) {
+              return Effect.tryPromise({
+                try: async () => {
+                  const result = await client.emails.send({
+                    from: config.from,
+                    to: input.to,
+                    subject: input.subject,
+                    html: input.html,
+                    text: input.text,
+                  });
+
+                  return {
+                    providerMessageId: result.id,
+                  };
+                },
+                catch: (cause) =>
+                  new EmailSendError({
+                    provider: "resend",
+                    cause,
+                  }),
+              });
+            },
+          };
+        },
+        catch: (cause) => ({
+          _tag: "ResendProviderAcquireError" as const,
+          cause,
+        }),
+      }),
+      release: (_sender) => providerFx.succeed(undefined),
+      telemetry: {
+        acquire: {
           providerId: "habitat.provider.email.resend",
           resourceId: EmailSenderResource.id,
-        });
-
-        const client = createResendClient({
-          apiKey: config.apiKey.value,
-        });
-
-        return {
-          send(input) {
-            return Effect.tryPromise({
-              try: async () => {
-                const result = await client.emails.send({
-                  from: config.from,
-                  to: input.to,
-                  subject: input.subject,
-                  html: input.html,
-                  text: input.text,
-                });
-
-                return {
-                  providerMessageId: result.id,
-                };
-              },
-              catch: (cause) =>
-                new EmailSendError({
-                  provider: "resend",
-                  cause,
-                }),
-            });
-          },
-        };
-      },
-
-      release: async () => {
-        telemetry.event("provider.release", {
+        },
+        release: {
           providerId: "habitat.provider.email.resend",
           resourceId: EmailSenderResource.id,
-        });
+        },
       },
     });
   },
 });
 ```
 
-Provider acquisition receives validated provider-local config, already-provisioned dependency resources, provider scope, and runtime telemetry. The runtime retains the provider's redaction metadata. Secret-bearing fields are usable only inside provider acquisition and release hooks. Diagnostic, telemetry, and catalog projections receive redacted snapshots. Providers may construct native clients. They do not become service domain authority and do not select themselves.
+Provider build receives validated provider-local config, already-provisioned
+declared dependency resources, and the definition-owned observation port. The
+runtime retains the provider's redaction metadata. Diagnostic, telemetry, and
+catalog projections receive redacted snapshots. Providers may construct native
+clients lazily inside the acquire Effect. They do not become service domain
+authority and do not select themselves.
 
-Provider acquisition and release callbacks shown inside `providerFx.acquireRelease(...)` are provider-plan authoring, not Promise business execution terminals. The public provider authoring result is `ProviderEffectPlan`.
+The acquire Effect and required release callback supplied to
+`providerFx.acquireRelease(...)` are provider-plan authoring, not Promise
+business execution terminals. Release receives only the acquired value. The
+public provider authoring result is `ProviderEffectPlan`; the actual bodies
+remain behind its private witness.
 
 ## 14. Process-local coordination resources
 
@@ -6118,7 +6312,13 @@ export interface BootResourceModule {
 }
 ```
 
-Bootgraph modules are ordering records emitted from compiler input. Provider authors do not author `BootResourceModule` directly, and these records carry no provider plan or executable callback. The substrate executes startup in bootgraph order, executes failed-startup rollback for already-acquired providers using rollback-order metadata, and releases in reverse order.
+Bootgraph modules are ordering records emitted from compiler input. Provider
+authors do not author `BootResourceModule` directly, and these records carry no
+provider plan, acquire Effect, release callback, private witness, or executable
+metadata. Bootgraph never calls provider `build(...)` and never reads a
+`ProviderEffectPlan`. The substrate executes startup in bootgraph order,
+executes failed-startup rollback for already-acquired providers using
+rollback-order metadata, and releases in reverse order.
 
 ### 17.3 Effect provisioning/execution kernel
 
@@ -6127,10 +6327,16 @@ The Effect kernel runs local execution.
 The Effect provisioning/execution kernel consumes compiled resource data,
 exact cold provider references, already decoded provider-local config, and
 bootgraph order/rollback metadata and creates exactly one `ManagedRuntime` per
-started process. It calls each selected provider's `build(...)` only after
-config preflight. Its one substrate-owned `Layer.effectContext(...)` lifecycle
-adapter executes the returned provider effect plans in bootgraph order and
-produces the resource Context. Because `ManagedRuntime.make(...)` is lazy, the substrate forces
+started process. It calls each selected provider's synchronous `build(...)`
+only after config preflight and that provider's declared dependency resources
+exist. It treats a thrown build or a plan without the private witness as a
+defect. Its one substrate-owned `Layer.effectContext(...)` lifecycle adapter
+reads the exact acquire Effect and release callback behind the plan witness and
+adapts them through the real `effect@4.0.0-beta.101`
+`Effect.acquireRelease(acquire, release)` operation; it does not reconstruct,
+copy, or expose either body. The adapter executes provider plans in
+bootgraph order and produces the resource Context. Because
+`ManagedRuntime.make(...)` is lazy, the substrate forces
 `managedRuntime.context()` before producing `ProvisionedProcess` or permitting
 mounting. That managed runtime owns its internal root and layer scopes and is
 used for process-local `HabitatEffect` execution through process-runtime-owned
@@ -6169,6 +6375,37 @@ interruption, retry, timeout, and finalization mechanics inside runtime
 boundaries. Bootgraph never becomes a `Layer` DAG. Domain services remain live
 Habitat bindings outside the resource Context; they are not Effect Context
 services or `Layer` nodes.
+
+The acquire field is already a cold Effect value, not a thunk, Promise, or live
+resource. A typed acquire failure registers no release for that provider and
+causes rollback of only the previously acquired prefix. Successful acquisition
+registers that same plan's required release callback immediately with the
+managed-runtime-owned scope. Release receives only the acquired value and has
+no typed error channel. Expected cleanup failure is handled and observed inside
+the provider's infallible release Effect; an unexpected release defect is
+observed while reverse release continues.
+
+Task 6.1 defines the cold port and proves only construction-time behavior: a
+cold `tryPromise` acquire operation and plan are constructed without invoking
+the `try`, mapper, acquire, or release callback; generic acquire-error typing,
+required release with a `never` typed channel, exact body identity, and private
+accessor rejection of an asserted forged witness all hold. It constructs no
+resource-map instance, registers no release, and performs no live failure,
+cleanup, rollback, or runtime-defect proof.
+
+Task 7.2 owns private concrete frozen `RuntimeResourceMap` assembly and proves
+exact declared-reference lookup, structurally copied-requirement misses, and
+the specified `has(...)`/`get(...)` outcomes. It also proves synchronous throws
+and Promise rejections from `tryPromise` map through the author mapper to typed
+acquire error, and constructs and uses the real beta.101
+`Effect.acquireRelease(acquire, release)` adapter so acquisition and immediate
+post-success finalizer registration of that same release remain indivisible. A
+typed acquire failure registers no release, and thrown `build(...)`,
+forged-plan, and Effect-defect paths remain defects. Task 7.3 does not construct
+or re-lower the adapter; it executes and proves expected-cleanup recovery and
+observation, continuation after an unexpected release defect, rollback,
+reverse order, inert repeated disposal/release, and runtime close. Task 7.1
+owns the single managed runtime and lifecycle adapter project boundary.
 
 Effect local fibers, queues, schedules, pubsub, refs, streams, and caches are process-local runtime mechanics. They do not become durable workflow ownership.
 
@@ -7354,7 +7591,6 @@ Runtime diagnostics cover at least:
 | Process queue used across process boundary | `coordination.process-queue.cross-process-forbidden` |
 | Process PubSub used as durable event bus | `coordination.process-pubsub.durable-event-bus-forbidden` |
 | Process cache used as durable business truth | `coordination.process-cache.durable-truth-forbidden` |
-| Missing provider effect plan | `provider.effect-plan.missing` |
 | Forbidden raw Effect import in provider authoring | `provider.raw-effect-import.forbidden` |
 
 Execution diagnostics are emitted during derivation, execution registry
@@ -7549,8 +7785,8 @@ sequenceDiagram
   Compiler->>EffectKernel: compiled resource data + exact cold provider references
   RuntimeConfig->>EffectKernel: all provider/service config validated before first acquisition
   Bootgraph->>EffectKernel: order + rollback/reverse-release metadata
-  EffectKernel->>EffectKernel: build then execute provider effect plans in bootgraph order
-  EffectKernel->>EffectKernel: force ManagedRuntime.context; scoped acquisition, rollback, release, finalizers
+  EffectKernel->>EffectKernel: synchronously build plans after dependency readiness; privately read exact cold acquire/release bodies
+  EffectKernel->>EffectKernel: adapt through Effect.acquireRelease; force ManagedRuntime.context; scoped acquisition, rollback, reverse release
   EffectKernel->>ProcessRuntime: ProvisionedProcess
   ProcessRuntime->>ProcessRuntime: scope RuntimeAccess, bind services, cache bindings, materialize WorkflowDispatcher
   Derivation-->>ProcessRuntime: matching non-portable descriptor and web-loader tables
@@ -7577,11 +7813,11 @@ sequenceDiagram
 
 | Phase | Required output | Producer | Consumer | Gate |
 | --- | --- | --- | --- | --- |
-| Definition | Import-safe declarations for services, plugins, resources, providers, apps, profiles, processes, native oRPC operations, cold non-oRPC Effect executable bodies, and cold web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint`; native oRPC implementers consume declaration types during authoring | Declaration import safety, topology/builder check, native handler/official Effect bridge gate, and web-loader/Effect separation |
+| Definition | Import-safe declarations for services, plugins, resources, providers, apps, profiles, processes, native oRPC operations, cold non-oRPC Effect executable bodies, cold provider acquire/release plans, and cold web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint`; native oRPC implementers consume declaration types during authoring | Declaration import safety, exact provider-plan public/private separation, topology/builder check, native handler/official Effect bridge gate, and web-loader/Effect separation |
 | Selection | One frozen `Entrypoint` carrying the selected app, profile, process, entrypoint id, and exact five-field launch identity | Synchronous `defineEntrypoint(...)` | Runtime derivation; future `startApp(...)` consumes the exact same artifact without reconstruction | Three identity-agreement checks before output or authored executable work; mismatch is built-in `TypeError` with noncontractual text/order |
 | Derivation | Exact once-derived private `NormalizedRuntimeTopology`; exact closed `NormalizedAuthoringGraph` with one normalized profile; normalized refs and service-binding/surface/workflow plans; `ExecutionDescriptorRef` plus non-portable `ExecutionDescriptorTable`; distinct `WebRouteModuleRef` plus non-portable `WebRouteModuleTable`; and exact seven-field `PortableRuntimePlanArtifact` | Private runtime derivation; complete-derivation public contracts through `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; compiler consumes the graph; process runtime consumes the Effect table; web adapter/host consumes the web table; pre-runtime tooling consumes the portable artifact | Exact closed schemas and refs; canonical ordering and ids; full-ref table lookup; one optional-provider finding; built-in `TypeError` for every fatal issue; no body/loader execution or live values |
 | Compilation | Exact private `{ plan, references, observationSeed }`: closed `CompiledProcessPlan`, exact cold provider/service `RuntimeCompilationReferenceTable`, and separate inert `CompilationObservationSeed` | Private package-less runtime compiler | Bootgraph/process runtime/adapters; later terminal composition through a real private edge | Exact entrypoint/graph agreement, closed schemas, canonical order/freeze, ref and dependency closure, built-in `TypeError` before result for every invalid input, no finding/diagnostic result, no second missing-selection outcome, and no live work |
-| Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; eagerly built `ProvisionedProcess`, `ManagedRuntimeHandle`, resources, layer-owned finalizers, owner-local provisioning findings | Runtime config before acquisition; bootgraph for metadata; runtime substrate alone for `ProvisionedProcess` | Runtime substrate; then process runtime | Exact-key precedence and winning decode complete before acquisition; ordering validation; one `Layer.effectContext(...)` lifecycle adapter; forced managed-runtime context; scoped acquisition/rollback |
+| Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; synchronously built cold provider plans; eagerly built `ProvisionedProcess`, `ManagedRuntimeHandle`, resources, layer-owned finalizers, owner-local provisioning findings | Runtime config before acquisition; bootgraph for metadata; selected providers for plans; runtime substrate alone for `ProvisionedProcess` | Runtime substrate; then process runtime | Exact-key precedence and winning decode before acquisition; dependency-ready build; private-witness validation; beta.101 `Effect.acquireRelease` lowering in one `Layer.effectContext(...)` adapter; typed acquire failure registers no release and rolls back the prior prefix; forced managed-runtime context |
 | Mounting | Runtime access, bound services, execution bridge, mount-ready records, adapter-lowered payloads, process-runtime stop handle, returned `NativeHarnessHandle` values, and private `StartedHarness` wrappers | Process runtime/adapters; runtime mounting invokes harnesses and creates wrappers after success | Runtime mounting and native hosts | Binding cache, registry matching, adapter lowering, harness mount |
 | Observation | `RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeTopologyRecord`, execution/finalization records | Runtime observation projecting admitted definition-owned observation records | Diagnostic readers/control-plane touchpoints | Catalog/diagnostic/telemetry/finalization projection |
 
@@ -7861,6 +8097,17 @@ Providers do not select themselves. Resources do not acquire themselves. Runtime
 
 Provider implementations do not become service domain authority.
 
+Every provider has a required synchronous `build(...)` returning
+`ProviderEffectPlan`; build receives exactly decoded config, the frozen
+requirement-reference resource map, and the definition-owned observation port.
+No provider scope, telemetry client, raw Effect runtime, Promise acquisition
+result, or optional release is admitted. The `RuntimeProvider` interface's
+erasure defaults remain `unknown` for config and acquire error; only
+schema-free `defineRuntimeProvider(...)` helper inference defaults config to
+`undefined` and acquire error to `never`. Task 6.1 implements the
+`RuntimeResourceMap` type contract but no instance or factory; task 7.2 alone
+assembles and proves the private concrete frozen lookup.
+
 A normalized provider selection has `configRef` iff its provider has
 `configSchema`: explicit selection key, then provider default key. Config refs
 are forbidden for schema-free providers. Runtime profile sources use exactly
@@ -8015,7 +8262,21 @@ operation leaf: native .handler(...) or official .effect(...); no handlerGen imp
 
 Raw Effect `runPromise`, `runSync`, `runFork`, or equivalent runtime execution calls are forbidden in ordinary authoring.
 
-Provider `build(...)` must return `ProviderEffectPlan`. Ad hoc Promise acquisition as the public provider authoring result is invalid.
+Provider `build(...)` must synchronously return `ProviderEffectPlan`. The
+acquire member supplied to `providerFx.acquireRelease(...)` must be a cold
+`ProviderFx<TValue, TAcquireError>` value; a thunk, Promise, already-acquired
+value, optional release, release error type, or alternate plan constructor is
+invalid. Release receives only the acquired value and must return
+`ProviderFx<void, never>`.
+
+Only the exact public `kind`/`acquire`/`release` metadata is enumerable on a
+plan. Acquire/release bodies remain behind the non-enumerable private witness;
+they must not be copied into derivation, compilation, bootgraph, diagnostics,
+telemetry, catalog, or any SDK accessor. `providerFx.tryPromise(...)` alone maps
+its lazy synchronous throw or Promise rejection through the author mapper into
+typed acquire failure. Build throws, forged plans, and Effect defects stay
+defects. Typed acquire failure registers no release, while expected cleanup
+failure must be recovered and observed inside the infallible release Effect.
 
 Native oRPC `.handler(...)` is valid for synchronous and Promise-returning
 operations. Effect-backed oRPC operations use official `.effect(...)`. Its
@@ -8085,13 +8346,13 @@ Gate families are:
 | Gate family | Required coverage |
 | --- | --- |
 | Static/import gates | no managed runtime construction outside runtime substrate; no manual `Effect.run*`; no community/custom Effect-oRPC runner; one same-realm official extension bootstrap and `.effect(...)` authoring for Effect-backed oRPC; no operation-leaf `handlerGen` import; contracts/providers cold; no sibling service internals |
-| Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, `ServiceContractOf` inference from private-carried `ServiceUse`, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, contract errors |
+| Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, `ServiceContractOf` inference from private-carried `ServiceUse`, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, literal-preserving `requireResource(...)`, `RuntimeProvider` unknown erasure defaults versus helper-only undefined/never inference, nominal provider-plan anti-forgery, contract errors |
 | Runtime behavior gates | one lazy `ManagedRuntime` forced through `context()` before mount; one `Layer.effectContext(...)` provider adapter; no second root `Scope`; non-oRPC descriptor execution through `ProcessExecutionRuntime`; native oRPC Effect execution through official `.effect(...)` and its internal bridge; `effect/context` and `effect/wrap`; abort/finalizer/resource-release order; single physical bridge/oRPC realm; `EffectRuntimeAccess` internal-only; service binding cache invocation exclusion; provider acquire/release finalization |
 | Registry gates | Effect descriptor table is present; full structural ref lookup returns the exact matching operational descriptor or throws `TypeError`; frozen readonly tuple snapshots use canonical ref order; every Effect ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation; full structural web ref lookup returns the exact preserved loader or throws `TypeError`; frozen web-entry snapshots use `(ownerId, routeId, path)`; web refs never enter `ExecutionRegistry` |
 | Fixture/plan gates | primary `defineEntrypoint(...)` identity-agreement refusal before output or authored executable work; private `NormalizedRuntimeTopology` exact-copy and defensive §15.1 agreement law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; exact three-field synchronous compiler result, closed/frozen DTOs, stable exact-ref table snapshots, compiler `TypeError` before result, and no compiler finding/diagnostic/observation work; no body/loader/acquisition/live-value access; catalog, startup rollback, and finalization records |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
 | Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
-| Provider separation gates | provider acquire/release represented as `ProviderEffectPlan`; bootgraph modules carry identity/dependency ordering facts only; neither is an ordinary `EffectExecutionDescriptor` procedure plan |
+| Provider separation gates | exact provider face inventories; `ProviderFx<TValue, TError> = HabitatEffect<TValue, TError, never>`; required synchronous build and release; exact build context and resource-map type optionality; task-6.1 cold construction with no callback invocation, exact public plan/boundary enumerability, recursive fresh-container freeze, opaque body identity, and private accessor witness rejection; task-7.2 concrete requirement-reference map behavior, real beta.101 `Effect.acquireRelease(acquire, release)` construction/use with indivisible acquisition and immediate post-success finalizer registration, sync-throw/rejection typed mapping, typed failure without registration, and build/forgery/Effect defect classification; task-7.3 cleanup recovery/observation, unexpected release-defect continuation, rollback, reverse order, inert repeated disposal/release, and runtime close; derivation/compiler zero-build proof; bootgraph carries no plan or body; no Promise result, raw Effect/runtime primitive, public plan accessor, or runner |
 | Private dependency-boundary gates | exact §4 graph only; no private owner imports SDK; no upstream owner imports observation-owned projection types; runtime mounting alone starts, invokes and stops harnesses, and coordinates cross-owner finalization; runtime observation alone projects observation read models |
 
 ## 26. Load-bearing foundation and flexible extension matrix
@@ -8367,6 +8628,164 @@ exclusions, but it does not construct a live cache. Task 8.2 alone implements
 and proves `ServiceBindingCache`, cache-key construction, and live binding in
 `runtime-process-runtime`.
 
+Task 6.0 is a documentation-only authority correction across exactly this
+mechanics owner, the architecture router, the runtime-definition owner router,
+and the six active OpenSpec artifacts. It classifies `ProviderEffectPlan` as
+`runtime-definition` operational interior and makes §§13.4, 17, 25, and 27 the
+sole exact home for its contract, failure boundary, future lowering handoff,
+successor blueprint, corpora, and proof allocation. It changes no `.habitat`
+file, SDK document, implementation, source, test, project, blueprint,
+package/public output, or runtime behavior. Only after that correction is
+task 6.1 the next source node.
+
+Task 6.1 preserves immutable root `runtime-definition@1` byte-for-byte. Its
+authoring-root closure remains exactly root `blueprint.toml`, `structure.toml`,
+and `skill.md`, with `versions/**` excluded from version-1 closure accounting.
+Task 6.1 creates only this independently complete successor:
+
+```text
+.habitat/blueprints/runtime-definition/versions/2/
+  blueprint.toml
+  structure.toml
+```
+
+Version 2 declares its own `structure.toml` runner asset and neither inherits
+from nor falls back to version 1. It adds no version-local skill, Grit rule or
+pattern, optional interior, `runtime-definition@3`, new kind, new Nx project,
+or package. The existing definition `habitat.toml` selects version 2 without
+editing any root version-1 blueprint file.
+
+The selected version-2 project law is the complete flat closure below:
+
+```text
+packages/core/runtime/definition/
+  AGENTS.md
+  habitat.toml
+  project.json
+  src/
+    app.ts
+    effect.ts
+    execution.ts
+    index.ts
+    observation.ts
+    plugin.ts
+    profile.ts
+    provider-effect-plan.ts
+    provider.ts
+    resource.ts
+    service.ts
+  test/
+    definition.test.ts
+    provider-effect-plan.test.ts
+    nx-cache.test.ts
+  tsconfig.json
+  tsconfig.test.json
+  tsdown.config.ts
+```
+
+The shell contains exactly the eight shown top-level entries, `src/` exactly
+the existing ten flat files plus `provider-effect-plan.ts`, and `test/` exactly
+the three shown files. There is no nested `src/providers/` directory,
+`package.json`, or optional interior. The existing `project.json`, definition
+`tsdown.config.ts`, private dependency edge, test target, and cache contract do
+not change.
+
+Task 6.1's exact eight-file implementation/behavior corpus is:
+
+```text
+packages/core/runtime/definition/src/resource.ts
+packages/core/runtime/definition/src/provider.ts
+packages/core/runtime/definition/src/provider-effect-plan.ts
+packages/core/runtime/definition/src/index.ts
+packages/core/runtime/definition/test/definition.test.ts
+packages/core/runtime/definition/test/provider-effect-plan.test.ts
+packages/core/runtime/derivation/test/complete-derivation.test.ts
+packages/core/runtime/compiler/test/compile-runtime-plan.test.ts
+```
+
+TypeScript proof owns whole-input `requireResource(...)` inference that
+preserves exact optional true/false/absence, the three `RuntimeResourceMap`
+get-result cases including widened optionality, `RuntimeProvider` interface
+erasure defaults of unknown/unknown versus helper-only undefined/never
+inference, generic acquire-error typing, required release with a `never` typed
+channel, nominal plan anti-forgery, and zero Promise result. Definition behavior
+proof owns cold `tryPromise` acquire-operation and acquire/release-plan
+construction with no callback invocation, exact public enumerability, exact
+opaque-body identity, fresh-container freezing, and private accessor rejection
+of an asserted witness-forged lookalike. It does not construct or behavior-test
+a resource-map instance and does not execute acquisition, register release, or
+prove live failure, cleanup, rollback, or runtime-defect outcomes. Derivation
+and compiler proof each establish zero provider-build calls, and compiler proof
+also excludes plan bodies from its handoff. No runtime source-string or AST
+assertion is admitted.
+
+The distinct exact seventeen-file publication/assembly/installed corpus is:
+
+```text
+.gitattributes
+.habitat/AUTHORITY.md
+.habitat/AUTHORITY-ONTOLOGY.md
+.habitat/README.md
+.habitat/blueprints/runtime-definition/versions/2/blueprint.toml
+.habitat/blueprints/runtime-definition/versions/2/structure.toml
+packages/core/runtime/definition/AGENTS.md
+packages/core/runtime/definition/habitat.toml
+packages/core/sdk/src/runtime/providers/index.ts
+packages/core/sdk/src/runtime/providers/effect/index.ts
+packages/core/sdk/AGENTS.md
+packages/core/sdk/README.md
+packages/core/sdk/habitat-pack.json
+packages/core/sdk/package.json
+packages/core/sdk/tsdown.config.ts
+packages/core/sdk/test/runtime-authoring-public-faces.test.ts
+apps/habitat/test/installed-package.test.ts
+```
+
+`.gitattributes` adds exactly:
+
+```gitattributes
+.habitat/blueprints/runtime-definition/** text eol=lf
+```
+
+The protocol-1 SDK pack advances from exactly fourteen to fifteen sorted members
+by adding `runtime-definition@2`. The copied/input blueprint-directory set stays
+at exactly ten because `runtime-definition` is already present. JavaScript
+public build specifiers advance from seventeen to eighteen, and runtime
+authoring subpaths advance from eight to nine, solely for
+`@habitat-ai/sdk/runtime/providers/effect`. Task 6.1 evolves the existing
+`@habitat-ai/sdk/runtime/providers` face and adds only
+`@habitat-ai/sdk/runtime/providers/effect`; it does not add two faces. Both
+faces' exact inventories and exclusions are fixed in §4 and §13.4; no other SDK
+face changes.
+Installed-package proof pins version-1 bytes, proves version-2 canonical/packed
+byte parity and package-owned provenance, resolves exactly
+`runtime-definition@2`, applies its structure law without inheritance or
+fallback, and exercises the evolved provider face plus the newly added provider
+Effect face.
+
+The complete task-6.1 diff is bounded to the eight behavior files plus the
+seventeen publication files, for a ceiling of twenty-five. It excludes every
+`project.json`, definition `tsdown.config.ts`, `.habitat/index.json`, root
+manifest, lockfile, root Nx configuration, product-separation acceptance, and
+other SDK face. `RuntimeSchema` remains the only provider-config schema facade;
+no operational plan/map/context schema is created. Task 6.1 implements only the
+`RuntimeResourceMap` type contract and creates no map instance or factory.
+Task 7.1 owns raw Effect substrate activation and managed-runtime construction.
+Task 7.2 owns config preflight, private concrete frozen map assembly and runtime
+lookup proof, construction and use of the real beta.101
+`Effect.acquireRelease(acquire, release)` adapter, indivisible acquisition and
+immediate post-success finalizer registration, sync-throw/rejection mapping, no
+registration on typed acquire failure, and build/forged-plan/Effect-defect
+classification. Task 7.3 does not construct or re-lower that adapter; it owns
+execution and proof of expected-cleanup recovery and observation, continuation
+after an unexpected release defect, rollback, reverse order, inert repeated
+disposal/release, and runtime close.
+
+Tasks 6.4 and 6.5 author their provider packages against the cold provider
+contract only and carry no live-conformance claim. Live conformance for those
+packages occurs only in task 7.4, after task 7.3 has sealed finalization
+behavior.
+
 | Component/artifact | Owner | Reference placement | Produced by | Consumed by | Phase | Finding / observation channel | Enforcement / acceptance gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `RuntimeSchema` | `runtime-schema`, exposed by SDK | `packages/core/runtime/schema` | Runtime schema adaptation | Runtime definition/derivation, config, diagnostics, harness payload validators; compiler has no direct `runtime-schema` edge | Definition through observation | Schema decode/validation/redaction findings | Schema-backed boundary gate |
@@ -8375,9 +8794,11 @@ and proves `ServiceBindingCache`, cache-key construction, and live binding in
 | `Entrypoint` | `runtime-definition`; app-owned selected data | `apps/<app>/<entrypoint>.ts` | Synchronous `defineEntrypoint(...)` from real `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, entrypoint id, and exact five-field identity | Runtime derivation; future `startApp(...)` consumes the exact artifact without reconstruction | Selection | Identity mismatch is built-in `TypeError` before output, external mutation, or authored executable call; text/order noncontractual | Frozen sole-selection-artifact and three-way identity-agreement gate |
 | `RuntimeProfile` | App runtime profile | `apps/<app>/runtime/profiles/*` | `defineRuntimeProfile(...)` | `defineEntrypoint(...)`, then runtime derivation/compiler through the selected artifact | Definition through compilation | Sole optional-provider derivation finding; all fatal derivation issues are `TypeError` | Exact five-source authored profile snapshot |
 | `RuntimeResource` | Resource contract family | Provider-neutral root face of `resources/<capability>` | Resource package `defineRuntimeResource(...)` call | Runtime derivation/compiler/providers | Definition through provisioning | Resource coverage, lifetime, observation contributor findings | Resource contract gate |
-| `RuntimeProvider` | Nested provider | Direct public face under `resources/<capability>/providers/<provider>` | Nested provider `defineRuntimeProvider(...)` call | Runtime derivation/compiler/substrate | Definition through provisioning | Derivation-owned selection coverage plus owner-local provider dependency, config, acquisition, and release findings | Provider selection/dependency gate |
+| `ResourceRequirement` | `runtime-definition`, exposed by the resource SDK face | Flat `packages/core/runtime/definition/src/resource.ts` | `requireResource(...)` preserving the whole inferred input type | Runtime derivation/compiler/providers; later exact-reference lookup | Definition through provisioning | Optional-selection finding remains derivation-owned | Literal-preserving optional true/false/absence and exact-reference handoff gate |
+| `RuntimeProvider` | Nested provider; cold contract owned by `runtime-definition` | Direct public face under `resources/<capability>/providers/<provider>`; contract in flat `packages/core/runtime/definition/src/provider.ts` | Nested provider `defineRuntimeProvider(...)` call with required synchronous build | Runtime derivation/compiler preserve the cold reference without build; substrate alone supplies the exact context and calls build | Definition through provisioning | Derivation-owned selection coverage plus owner-local provider dependency/config findings; build throw is a provisioning defect | Unknown/unknown interface erasure defaults, helper-only undefined/never inference, required build, exact context, and zero-early-build gate |
+| `RuntimeResourceMap` | Type contract: `runtime-definition`; private concrete assembly: `runtime-substrate-effect` | Type in flat `packages/core/runtime/definition/src/provider.ts`; no public constructor or definition-owned factory | Task 6.1 type contract; task 7.2 private frozen instance | `ProviderBuildContext` during provisioning | Definition contract; live use only in provisioning | Optional miss returns `undefined`; required miss throws built-in `TypeError`; no finding API | Task-6.1 overload/optionality proof and task-7.2 exact-reference/copy-miss/has/get behavior gate |
 | `ProviderSelection` | App/runtime profile, normalized by runtime derivation | `providers` field in `apps/<app>/runtime/profiles/*`; normalized contract in `packages/core/runtime/derivation` | Generic SDK `providerSelection({ resource, provider, config, lifetime?, role?, instance? })`, then complete derivation | Runtime compiler | Selection/compilation | Unselected optional requirement is the sole finding; required missing/ambiguous or config-iff violation is `TypeError` | Exact normalized selection and config-ref iff-schema gate |
-| `ProviderEffectPlan` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/providers/provider-effect-plan.ts` | Selected provider `build(...)` during provisioning, after config preflight and boot ordering | `runtime-substrate-effect`; never compiler or bootgraph | Provisioning | Owner-local `provider.effect-plan.missing` finding | Provider effect plan gate |
+| `ProviderEffectPlan` | `runtime-definition` operational interior, selectively re-exported by SDK; not a kind/project/package | `packages/core/runtime/definition/src/provider-effect-plan.ts` | Selected provider's synchronous `build(...)` during provisioning after config preflight and dependency readiness | Future `runtime-substrate-effect` through the private witness; never derivation, compiler, bootgraph, catalog, or SDK accessor | Definition contract; live use only in provisioning | Typed acquire error only from the acquire Effect; build/forgery/Effect defects remain defects; release is typed infallible and observes expected cleanup failure internally | Task-6.1 nominal type/cold construction/enumerability/body-identity/witness-accessor gate; task-7.2 real acquireRelease/indivisible-acquisition-registration/failure-classification gate; task-7.3 cleanup/defect-continuation/rollback/reverse-order/inert-repeated-disposal-release/runtime-close gate |
 | `HabitatEffect` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/effect/habitat-effect.ts` | Definition-owned curated `Effect` facade | Execution descriptors, resource values, substrate raw Effect lowering through process-runtime execution | Definition through invocation | Raw import, yieldability, and owner-local execution findings | `habitat-effect.execution` gate |
 | `EffectExecutionDescriptor` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/execution/descriptor.ts` | Cold `.effect(...)` terminal bodies through the SDK facade; complete derivation lowers each `AsyncStepEffectDescriptor` occurrence into a frozen operational value | Runtime compiler/process execution runtime | Derivation through invocation | Owner-local Effect descriptor findings | Effect descriptor gate |
 | `ExecutionDescriptorRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation; task 4.8 reaches async-step membership only | Runtime compiler / execution registry | Derivation/compilation/mounting | Invalid, duplicate, absent, or descriptor-mismatched ref is `TypeError` | Closed five-variant API; current async-step population and future lane carriers remain distinct |
