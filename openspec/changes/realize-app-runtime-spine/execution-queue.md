@@ -75,8 +75,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   derivation handoff at exact Habitat
   `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` / tree
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
-  6.0 through 6.1 are sealed by their exact receipts in [[tasks]]. Task 6.2 is
-  the sole next source container.
+  6.0 through 6.1a are sealed by their exact receipts or authority records in
+  [[tasks]]. Task 6.2 is the sole next source container.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -334,6 +334,12 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   boundaries, and changes no implementation or `.habitat` record. Canonical
   runtime §13.4 and directly affected §§17, 25, and 27 alone own exact
   mechanics; the active capability spec alone owns archive-safe acceptance.
+- [x] **Runtime-bootgraph authority correction**: task 6.1a routes ownership in
+  `HABITAT_ARCHITECTURE`, leaves exact TypeScript and all bootgraph mechanics to
+  canonical runtime §17, and leaves archive-safe acceptance to the active
+  capability spec. It seals complete-source task 6.2, proof-only task 6.3, the
+  exact 26-file corpus, and the delayed real task-10.6 SDK edge without changing
+  implementation or `.habitat` state.
 
 The selection/derivation queue is sealed. Task 4.11 changed only
 `packages/core/runtime/derivation/test/complete-derivation.test.ts`, proved the
@@ -342,9 +348,10 @@ web-loader calls, and left `runtime-derivation@2`, derivation source, and the
 public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
   is sealed as the exact eight-document compiler-authority correction with no
   implementation, blueprint, or current-realization mutation. Tasks 5.1 through
-  5.5 are sealed by their exact receipts in [[tasks]]. Tasks 6.0 and 6.1 are
-  sealed as the exact provider-effect-plan authority and implementation
-  containers. Task 6.2 is now the sole active source container.
+  5.5 are sealed by their exact receipts in [[tasks]]. Tasks 6.0 through 6.1a
+  are sealed as the exact provider-effect-plan authority/implementation and
+  bootgraph-authority containers. Task 6.2 is now the sole active source
+  container.
 
 ## Task 4.7a Authority Routing
 
@@ -456,8 +463,9 @@ launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Tasks
 5.1 through 5.5 are sealed by the exact implementation and proof receipts in
-[[tasks]]. Tasks 6.0 and 6.1 are sealed as the provider-effect-plan authority
-and implementation containers, and task 6.2 is the sole next source node.
+[[tasks]]. Tasks 6.0 through 6.1a are sealed as the provider-effect-plan
+authority/implementation and bootgraph-authority containers, and task 6.2 is
+the sole next source node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -484,8 +492,10 @@ optional interior, `versions/` directory, successor blueprint, fake SDK export,
 implicit edge, or early terminal-composition edge is admitted. Task 10.6's later
 terminal SDK composition source must establish the final direct
 `@habitat-ai/sdk -> runtime-compiler` edge with a real import and call to
-`compileRuntimePlan(...)`; runtime mounting receives no compiler edge, and
-transitive process-runtime reachability cannot substitute.
+`compileRuntimePlan(...)`; the same terminal composition node separately adds
+`@habitat-ai/sdk -> runtime-bootgraph` through its real
+`orderBootgraph(...)` import and call. Runtime mounting receives neither edge,
+and transitive process-runtime reachability cannot substitute.
 
 The baseline operation must duplicate-check and canonicalize
 `entrypoint.process.roles`, root one process in the agreeing selected surfaces,
@@ -544,7 +554,7 @@ sealed at exact Habitat `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` /
 tree `8371a139957c583fbb160407d783619c1ee514fb` by the exact receipt in [[tasks]].
 It expanded only `derivation-handoff.test.ts` with the real producer handoff and
 eight bounded corrupted-artifact refusals. The compiler sequence and tasks 6.0
-through 6.1 are sealed; task 6.2 is the sole active source container.
+through 6.1a are sealed; task 6.2 is the sole active source container.
 
 ## Task 6.0 Provider-Effect-Plan Authority Routing
 
@@ -635,17 +645,71 @@ green; and both independent implementation reviews were clean. Repository
 Ratchet run `31475855872` / job `93729290160`, Publish Habitat run
 `31475855945` with Ubuntu job `93729290086` and Windows job `93729290010`, and
 push-to-main Repository Ratchet run `31477239888` / job `93733666035` all
-passed on their exact SHAs. Task 6.2 is the sole active source node.
+passed on their exact SHAs.
 
-Task 6.3 keeps the ordered boot artifact limited to resource/provider identity,
-dependency order, deduplication, rollback order, and release-order metadata.
-Exact provider references plus provider-owned config decoder and observation
-redaction metadata stay in the compiler reference handoff; the future Effect
-substrate joins the two inputs, and neither carries a provider plan or
-acquire/release body. Tasks 6.4 and 6.5 prove only config schema/decode, cold
-plan construction, and conformance for their qualified Fluree HTTP providers.
-Task 7.4 alone runs both provider packages through the real substrate to prove
-single acquisition/release and failure cleanup.
+## Task 6.1a Runtime-Bootgraph Authority Routing
+
+Task 6.1a is sealed without implementation across exactly eight documents.
+`HABITAT_ARCHITECTURE` routes ownership, canonical
+`HABITAT_RUNTIME_REALIZATION` §17 solely owns exact TypeScript and mechanics,
+and these six OpenSpec artifacts route execution while the active capability
+requirement/scenarios alone preserve archive-safe acceptance. No OpenSpec
+artifact copies the canonical TypeScript block. No source, test, project,
+blueprint, `.habitat` record, package/public output, SDK edge, runtime behavior,
+or other OpenSpec file changed. Task 6.2 is the sole active source node.
+
+Task 6.2 creates the complete private package-less `runtime-bootgraph@1` owner
+and full synchronous `orderBootgraph(...)` source from compiler-owned
+`BootgraphInput`. Its exact implementation closure is four source files, the
+two `bootgraph.test.ts` / `nx-cache.test.ts` proofs, and two tsconfigs; its exact
+publication closure is the 18 LF, Habitat authority/blueprint, core/owner,
+SDK pack/build, and installed-package files listed in [[tasks]] and the active
+requirement. The 26-file union is a hard ceiling. The exact structure is eight
+root entries, four source files, two test files, and three blueprint files.
+The task-6.2 baseline `bootgraph.test.ts` proves one nontrivial dependency
+graph's exact ordering, output shape, schema admission, and key-reference reuse,
+plus one representative malformed-input generic `TypeError`; a stub cannot
+satisfy the complete source node.
+
+The sole owner edge is `runtime-bootgraph -> runtime-compiler`, established by
+the real compiler import and tsconfig reference. Nx projects grow 26 to 27,
+protocol-1 pack members 15 to 16, blueprint directories 10 to 11, and SDK build
+inputs 13 to 14; SDK JavaScript entries stay 18 and exports stay 21. Asset
+carriage creates no SDK source/build edge, public face, package export, or
+release member. Explicit targets are only `typecheck`, `test`, `build`, and
+`check`; Habitat infers policy and application. Installed acceptance owns pack
+parity, fixture instance, provenance/application, structure, and restoration.
+
+Ordering interprets `from -> to` as dependent to dependency and uses Kahn's
+algorithm with ascending `selectionId` ready-node ties. Modules and order are
+acquisition order; rollback and release are exact reverse order. Dependency
+targets deduplicate and sort by `selectionId`, but duplicate exact edge triples
+refuse. One selection-id key per node is reused by exact reference at every
+output occurrence. Malformed
+or surplus input, duplicate `selectionId`, duplicate exact lifecycle resource
+identity tuple `(resourceId, lifetime, role-or-empty, instance-or-empty)`,
+duplicate exact edge, dangling endpoint, self-cycle, or multi-node cycle are
+separate caller-reachable refusals that throw built-in `TypeError` before
+result. Pre-return closed-schema and exact output-relation validation is also
+required, but internal disagreement is a defensive invariant rather than a
+caller-reachable proof case. Accepted output is fresh and recursively frozen.
+Input is neither mutated nor newly frozen, and its preexisting frozen state,
+property descriptors, and reference identities remain unchanged. No finding,
+provider/config/Effect/observation work, plan body, or live value exists.
+
+Task 6.3 is proof-only and edits only the existing `bootgraph.test.ts`; it adds
+the complete permutation, tie, dedupe, identity, freeze/input-state,
+empty/disconnected, absent-finding, and zero-work matrix; validates every
+successful output against the schema and exact output relations; and
+exhaustively proves caller-reachable input refusals while retaining the
+cumulative deleted `packages/bootgraph` / `@rawr/bootgraph` absence proof. It
+does not fabricate an internal output-disagreement fixture and changes no
+source, project, blueprint, pack, SDK/public surface, cache test, or frozen
+product-separation test. Task 10.6 alone adds the SDK bootgraph edge by a real
+terminal composition import and call. Exact provider references plus
+provider-owned decoder/redaction metadata remain in the compiler reference
+handoff for the future substrate to join. Tasks 6.4 and 6.5 remain cold, and
+task 7.4 alone proves their live lifecycle.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
@@ -723,7 +787,7 @@ write authority with the active one:
    are sealed by their exact receipts. Tasks 6.0 and 6.1 have sealed the
    provider-effect-plan authority and exact cold plan, and no compiler task
    waits for or consumes `ProviderEffectPlan`.
-2. **Compilation, provider plan, and boot order (`5.1-5.5` and `6.0-6.1`
+2. **Compilation, provider plan, and boot order (`5.1-5.5` and `6.0-6.1a`
    sealed; `6.2-6.5` active sequence)**: retain the sealed complete process
    plan, normalized-handoff/provider-closure proof, and exact cold
    runtime-definition provider plan while implementing deterministic boot

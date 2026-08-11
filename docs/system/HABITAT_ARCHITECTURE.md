@@ -472,7 +472,20 @@ It owns:
 - reverse release-order metadata;
 - the ordering handoff consumed by the Effect-backed provisioning kernel.
 
-It does not consume provider acquisition plans, acquire or release providers, register live finalizers, produce `ProvisionedProcess`, own app identity, app composition membership, service truth, plugin meaning, public API meaning, durable workflow semantics, native harness behavior, or deployment placement.
+Its sole private operation is `orderBootgraph(...)`: compiler-owned
+`BootgraphInput` enters, and one closed frozen `Bootgraph` ordering artifact
+leaves. `runtime-bootgraph` has only the real private edge to
+`runtime-compiler`. It has no public SDK face, package identity, finding API, or
+SDK source/build edge before the terminal composition consumer lands.
+Runtime-realization §17 alone owns the exact operation signature, DTO fields,
+ordering/refusal law, project and blueprint closure, task allocation, and later
+terminal SDK edge.
+
+It does not consume provider acquisition plans, provider references, config,
+observation input, acquire or release providers, register live finalizers,
+produce `ProvisionedProcess`, own app identity, app composition membership,
+service truth, plugin meaning, public API meaning, durable workflow semantics,
+native harness behavior, or deployment placement.
 
 #### `process runtime`
 
@@ -680,7 +693,9 @@ The assembly law is:
   service truth;
 - runtime derivation first emits the private foundational `NormalizedRuntimeTopology`, then completes normalized authoring graphs and plan artifacts whose public contracts live at `@habitat-ai/sdk/runtime/derivation`; neither handoff acquires live values;
 - the private runtime compiler emits the compilation handoff but does not expose a public SDK compiler face, acquire resources, or mount harnesses;
-- bootgraph receives compiler-owned ordering input and emits order/rollback metadata without executing provider plans;
+- bootgraph synchronously orders compiler-owned `BootgraphInput` through
+  `orderBootgraph(...)` and emits one closed `Bootgraph` with acquisition,
+  rollback, and release-order metadata without executing provider plans;
 - the Effect provisioning kernel consumes compiled resource data, exact cold
   provider references, decoded config, and bootgraph metadata and is the sole
   producer of the provisioned process;
@@ -2353,7 +2368,16 @@ ordering, project/blueprint closure, and task-5 proof allocation.
 Bootgraph is the Habitat lifecycle ordering data graph above the Effect
 provisioning adapter. It consumes only compiler-owned ordering input and owns
 stable lifecycle identity, deterministic ordering, dedupe, rollback order, and
-reverse release order as metadata. It is never an Effect `Layer` DAG.
+reverse release order as metadata. Its sole private operation is
+`orderBootgraph(...)`; it produces the exact closed `Bootgraph` artifact owned
+by runtime-realization §17. It is never an Effect `Layer` DAG.
+
+The private package-less `runtime-bootgraph` owner has the sole direct edge
+`runtime-bootgraph -> runtime-compiler`. Blueprint asset carriage through the
+SDK policy pack is not an implementation edge or public face. The terminal SDK
+adds `@habitat-ai/sdk -> runtime-bootgraph` only when task 10.6's real
+`startApp(...)` composition imports and calls the operation; an inert import,
+publication metadata, or `implicitDependencies` cannot establish that edge.
 
 The Effect provisioning kernel is the runtime-owned substrate beneath bootgraph.
 
@@ -2384,14 +2408,12 @@ observation later projects admitted records into diagnostics, telemetry,
 topology, and catalog views; downstream consumers adapt returned findings into
 those records when projection is required.
 
-Task 6.0 is a documentation-only ownership correction before provider-plan
-implementation. It classifies `ProviderEffectPlan` as the
-`runtime-definition` operational handoff named above and routes every exact
-mechanic, TypeScript shape, private carrier, failure rule, successor-blueprint
-closure, corpus, and definition-versus-substrate proof allocation to
-runtime-realization §§13.3-13.4, 17, 25, and 27. It changes no implementation,
-source, test, project, blueprint, package/public output, or runtime behavior;
-task 6.1 is the next source node.
+Task 6.0's provider-plan authority correction and task 6.1's complete cold
+provider-plan implementation remain sealed. Task 6.1a is a separate
+documentation-only bootgraph correction: it routes exact mechanics to
+runtime-realization §17 and changes no implementation, source, test, project,
+blueprint, package/public output, SDK edge, or runtime behavior. Task 6.2 then
+creates the one complete `runtime-bootgraph@1` owner; task 6.3 is proof-only.
 
 Post-provider conformance follows the same ownership split. Tasks 6.4 and 6.5
 author their provider packages against the cold contract only; they do not own
@@ -2593,7 +2615,7 @@ Each boundary names the architecture-spec section that establishes it, the runti
 | Provider definition-to-provisioning handoff | §7.4, §10.2, §10.6 | §13.3–§13.4, §17, §25, §27 | Arch-spec: `ProviderEffectPlan` name, `runtime-definition` operational-interior classification, and provider-versus-bootgraph-versus-substrate ownership split | Runtime-spec: exact resource-helper/provider contracts and SDK inventory, public metadata/private carrier, public map-type/private runtime-assembly split, failure channels, construction, freezing, lowering boundary, and task-specific proof allocation | `ResourceRequirement`, `RuntimeProvider`, `ProviderBuildContext`, `RuntimeResourceMap`, `ProviderEffectPlan`, `ProviderFx` | Runtime realization spec |
 | Runtime derivation handoff | §10.4 | §15 | Arch-spec: sole public face, finite export inventory, artifact category names, exact top-level result, and private-foundation/public-completion split | Runtime-spec: exact schemas and method signatures, portability classification, ordering/refusal law, and producer/consumer contracts | Private `NormalizedRuntimeTopology`; structurally reachable nonexported `NormalizedAuthoringGraph`; complete `PortableRuntimePlanArtifact`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef` / `ExecutionDescriptorTable` (non-portable), and distinct `WebRouteModuleRef` / `WebRouteModuleTable` (non-portable) | Runtime realization spec |
 | Runtime compiler | §10.5 | §16 | Arch-spec: private compiler role, owner edges, and absence of a current public face/SDK edge | Runtime-spec: exact `compileRuntimePlan(...)` signature, closed DTO schemas, cold reference table, result/refusal/order law, exclusions, closure, and proof allocation | Private `RuntimeCompilationResult`, `CompiledProcessPlan`, `RuntimeCompilationReferenceTable`, `CompilationObservationSeed`, and §16 DTO inventory | Runtime realization spec |
-| Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: Habitat-vs-Effect control split naming | Runtime-spec: bootgraph ordering, Effect kernel construction, ProvisionedProcess, rollback mechanics | `Bootgraph`, `ProvisionedProcess` | Runtime realization spec |
+| Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: Habitat-vs-Effect control split, private owner edge, and absence of an early SDK/public face | Runtime-spec: exact `orderBootgraph(...)` operation, closed `BootResourceKey` / `BootResourceModule` / `Bootgraph` DTOs, ordering/refusal/freezing law, project/blueprint closure, task allocation, Effect kernel construction, `ProvisionedProcess`, and rollback mechanics | Private `BootResourceKey`, `BootResourceModule`, `Bootgraph`; `ProvisionedProcess` | Runtime realization spec |
 | Runtime access | §10.8 | §18.1–§18.2 | Arch-spec: runtime access noun taxonomy | Runtime-spec: RuntimeAccess scoping, ProcessRuntimeAccess, RoleRuntimeAccess shapes | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` | Runtime realization spec; TBD: observability companion spec |
 | Service use and binding | §6.4–§6.6, §7.6, §8.4, §10.4–§10.5, §10.9 | §11.8, §12.4, §15.6, §16, §18.5 | Arch-spec: service-schema/profile-source/private-carrier ownership, transitive binding law, phase handoffs, and cache-key exclusion rule | Runtime-spec: exact source/ref and carrier schemas, normalized and compiled plan shapes, config resolution/decoding mechanics, `ServiceBindingCache` mechanics, and `bindService` contract | `ServiceUse`, `ServiceBindingPlan`, `CompiledServiceBindingPlan`, `ServiceBindingCache`, `ServiceBindingCacheKey`; five context lanes: `deps`, `scope`, `config`, `invocation`, `provided` | Runtime realization spec |
 | Workflow dispatcher | §10.10 | §19 | Arch-spec: dispatcher role as server-internal→async bridge | Runtime-spec: WorkflowDispatcher materialization, FunctionBundle lowering, async step-local Effect | `WorkflowDispatcher`, `FunctionBundle` | Runtime realization spec |
@@ -2632,7 +2654,7 @@ The runtime realization specification (`HABITAT_RUNTIME_REALIZATION`) is the cur
   publication, and proof mechanic.
 - **Web route-module handoff:** runtime-spec §9.3a and §15.4 keep native module-loader refs/tables distinct from Effect descriptors and their registry; the arch-spec fixes only that separation and handoff position.
 - **Runtime compiler:** runtime-spec §16 owns the validation list and emission contract; the arch-spec names the compiler's role in the chain.
-- **Bootgraph and provisioning kernel:** arch-spec §10.6 names the Habitat-vs-Effect control split; the arch-spec must NOT enumerate the Effect-internal primitives (queues, pubsub, refs, fibers, semaphores) — those belong in runtime-spec §17.
+- **Bootgraph and provisioning kernel:** arch-spec §10.6 names the Habitat-vs-Effect control split and private edge/public-face boundary; runtime-spec §17 owns the exact bootgraph operation, DTOs, ordering/refusal/freezing law, project closure, and Effect-internal primitives.
 - **Runtime access:** runtime-spec §18.1 carries the RuntimeAccess scoping invariant ("services do not receive broad RuntimeAccess; only their declared deps"); the arch-spec names the access noun taxonomy.
 - **Service use and binding:** arch-spec §§6.4-6.6, 7.6, and 8.4 fix service
   ownership of scope/config schemas, profile ownership of ordered sources, the
@@ -4015,7 +4037,6 @@ These details may vary without reopening the architecture:
 - exact channel vendor implementations;
 - exact OpenShell policy adapters;
 - exact code generation around route or registry collection;
-- exact bootgraph internal file decomposition;
 - exact runtime-owned schema module decomposition and export helpers;
 - whether a service is stored flat at `services/<service>` or nested at `services/<family>/<service>`;
 - exact names for optional support packages;
