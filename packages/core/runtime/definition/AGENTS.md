@@ -15,9 +15,9 @@
 
 - The sole Nx dependency edge is `runtime-definition -> runtime-schema`; this
   owner never imports the terminal SDK.
-- `runtime-definition@1` remains byte-immutable. Provider-plan authority is
-  admitted only when task 6.1 selects the complete immutable successor
-  `runtime-definition@2`; version 2 does not modify or fall back to version 1.
+- `runtime-definition@1` remains byte-immutable. The selected complete
+  successor `runtime-definition@2` adds the provider-plan authoring contract
+  without modifying, inheriting from, or falling back to version 1.
 - Definitions may describe apps, services, plugins, resources, providers,
   Effects, and observations, but never start, acquire, mount, supervise, or
   project live read models.
@@ -68,9 +68,9 @@
 - Cold provider descriptor owner: flat `src/provider.ts`.
 - Cold provider-plan owner: flat `src/provider-effect-plan.ts`; no nested
   `src/providers/` directory is admitted.
-- Task 6.1 evolves the existing `@habitat-ai/sdk/runtime/providers` face and
-  adds `@habitat-ai/sdk/runtime/providers/effect`; provider projections are
-  exactly those two surfaces, and the plan accessor stays private.
+- The existing `@habitat-ai/sdk/runtime/providers` face and the
+  `@habitat-ai/sdk/runtime/providers/effect` face are the only provider
+  projections, and the plan accessor stays private.
 - Nx scheduler identity: `runtime-definition`.
 
 ## Validation

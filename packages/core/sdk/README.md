@@ -57,8 +57,13 @@ finite process catalogs, immutable launch identity, profiles, lazy Effects,
 executable descriptors, resources, providers, observation records, and
 runtime-carried schemas without starting a process or acquiring a resource.
 `@habitat-ai/sdk/runtime/profiles` alone exposes cold provider selection.
-Provider Effect plans and live runtime mechanics remain absent until their
-owning runtime tasks land.
+`@habitat-ai/sdk/runtime/providers` exposes only `defineRuntimeProvider` plus
+`ProviderBuildContext`, `RuntimeProvider`, `RuntimeProviderHealthDescriptor`,
+and `RuntimeResourceMap`. `@habitat-ai/sdk/runtime/providers/effect` exposes
+only `providerFx` plus `ProviderAcquire`, `ProviderEffectPlan`, `ProviderFx`,
+`ProviderFxFacade`, and `ProviderRelease`. Both faces are cold and expose no
+private witness/accessor, raw Effect/runtime primitive, runner, or alternate
+plan constructor.
 
 The isolated `@habitat-ai/sdk/runtime/derivation` entry is the sole public
 derivation face. Its runtime surface is exactly `deriveRuntimeArtifacts`,
@@ -108,10 +113,10 @@ their exact runtime and harness owners; none is repeated by an individual
 service or plugin.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
-exactly fourteen sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
+exactly fifteen sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
 `provider@1`, `resource@1`, `resource@2`, `runtime-compiler@1`,
-`runtime-definition@1`, `runtime-derivation@1`, `runtime-derivation@2`,
-`service@1`, `service@2`, and `service@3`.
+`runtime-definition@1`, `runtime-definition@2`, `runtime-derivation@1`,
+`runtime-derivation@2`, `service@1`, `service@2`, and `service@3`.
 Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; later versions
 resolve from `dist/blueprints/<id>/versions/<version>/blueprint.toml`. Presence in
 `dist/blueprints` alone grants no authority.
@@ -127,6 +132,10 @@ closure. A version neither inherits nor traverses assets from another version.
 `runtime-compiler@1` carries only the exact private compiler structure closure;
 its membership creates no implementation bundle, public compiler face, or SDK
 source/build edge.
+`runtime-definition@1` preserves the immutable original cold definition
+closure. `runtime-definition@2` independently closes the provider-plan
+authoring owner and its behavior proofs, without inheritance, fallback, or
+cross-version assets.
 `runtime-derivation@1` preserves the topology-only predecessor closure.
 `runtime-derivation@2` independently closes the complete derivation owner and
 its behavior proofs, without inheritance, fallback, or cross-version assets.

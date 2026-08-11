@@ -20,6 +20,7 @@ import {
   defineWebAppPlugin,
   defineWorkflow,
   Effect,
+  providerFx,
   providerSelection,
   readHabitatEffectOperation,
   requireResource,
@@ -99,6 +100,7 @@ interface FixtureOptions {
 function makeFixture(options: FixtureOptions = {}) {
   let effectCalls = 0;
   let loaderCalls = 0;
+  let providerBuildCalls = 0;
   const processResource = defineRuntimeResource<string, unknown>({
     id: "database.pool",
     title: "Database pool",
@@ -224,6 +226,14 @@ function makeFixture(options: FixtureOptions = {}) {
     routes: [{ id: "fixture.index", path: "/fixture", module: loader }] as const,
   })();
 
+  const buildProvider = () => {
+    providerBuildCalls += 1;
+    return providerFx.acquireRelease({
+      acquire: providerFx.succeed<unknown>({}),
+      release: () => providerFx.succeed(undefined),
+    });
+  };
+
   const processProvider = defineRuntimeProvider({
     id: "fixture.database-provider",
     title: "Database provider",
@@ -231,6 +241,7 @@ function makeFixture(options: FixtureOptions = {}) {
     requires: [],
     configSchema: LaneSchema,
     defaultConfigKey: "DATABASE_CONFIG",
+    build: buildProvider,
   });
   const alternateProcessProvider = defineRuntimeProvider({
     id: "fixture.alternate-database-provider",
@@ -239,12 +250,14 @@ function makeFixture(options: FixtureOptions = {}) {
     requires: [],
     configSchema: LaneSchema,
     defaultConfigKey: "ALTERNATE_DATABASE_CONFIG",
+    build: buildProvider,
   });
   const roleProvider = defineRuntimeProvider({
     id: "fixture.role-provider",
     title: "Role provider",
     provides: roleResource,
     requires: [],
+    build: buildProvider,
   });
   const selections = [
     ...(options.omitProcessProvider
@@ -309,12 +322,18 @@ function makeFixture(options: FixtureOptions = {}) {
   });
 
   return {
-    counters: () => ({ effectCalls, loaderCalls }),
+    counters: () => ({ effectCalls, loaderCalls, providerBuildCalls }),
     entrypoint,
     loader,
     profileId: profile.id,
   };
 }
+
+const ZERO_FIXTURE_CALLS = {
+  effectCalls: 0,
+  loaderCalls: 0,
+  providerBuildCalls: 0,
+} as const;
 
 function expectRecursivelyFrozen(value: unknown): void {
   if (value === null || typeof value !== "object") return;
@@ -473,7 +492,7 @@ describe("complete runtime derivation", () => {
     );
     expect(asyncSurface?.workflowDispatcherDescriptorIds).toHaveLength(1);
     expect(serverSurface?.workflowDispatcherDescriptorIds).toEqual([]);
-    expect(fixture.counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+    expect(fixture.counters()).toEqual(ZERO_FIXTURE_CALLS);
     expectRecursivelyFrozen(result.topology);
     expectRecursivelyFrozen(result.graph);
     expectRecursivelyFrozen(result.portableArtifact);
@@ -487,7 +506,7 @@ describe("complete runtime derivation", () => {
 
     expect(result.topology.identity).toEqual(entrypoint.identity);
     expect(result.topology.profileId).toBe(profileId);
-    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+    expect(counters()).toEqual(ZERO_FIXTURE_CALLS);
 
     const appMismatch = Object.freeze({
       ...entrypoint,
@@ -501,7 +520,7 @@ describe("complete runtime derivation", () => {
       });
     }).toThrow(TypeError);
     expect(appMismatchResult).toBeUndefined();
-    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+    expect(counters()).toEqual(ZERO_FIXTURE_CALLS);
 
     const processMismatch = Object.freeze({
       ...entrypoint,
@@ -515,7 +534,7 @@ describe("complete runtime derivation", () => {
       });
     }).toThrow(TypeError);
     expect(processMismatchResult).toBeUndefined();
-    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+    expect(counters()).toEqual(ZERO_FIXTURE_CALLS);
 
     const entrypointMismatch = Object.freeze({
       ...entrypoint,
@@ -529,7 +548,7 @@ describe("complete runtime derivation", () => {
       });
     }).toThrow(TypeError);
     expect(entrypointMismatchResult).toBeUndefined();
-    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+    expect(counters()).toEqual(ZERO_FIXTURE_CALLS);
 
     let profileMismatchResult: RuntimeDerivationResult | undefined;
     expect(() => {
@@ -539,7 +558,7 @@ describe("complete runtime derivation", () => {
       });
     }).toThrow(TypeError);
     expect(profileMismatchResult).toBeUndefined();
-    expect(counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+    expect(counters()).toEqual(ZERO_FIXTURE_CALLS);
   });
 
   test("returns fresh deterministic schema data while preserving table executable references", () => {
@@ -560,8 +579,8 @@ describe("complete runtime derivation", () => {
     expect(second.graph.profile).not.toBe(first.graph.profile);
     expect(second.portableArtifact).not.toBe(first.portableArtifact);
     expect(first.webRouteModuleTable.entries()[0]?.load).toBe(firstFixture.loader);
-    expect(firstFixture.counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
-    expect(secondFixture.counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+    expect(firstFixture.counters()).toEqual(ZERO_FIXTURE_CALLS);
+    expect(secondFixture.counters()).toEqual(ZERO_FIXTURE_CALLS);
   });
 
   test("lowers every async parent occurrence to a distinct lazy operational descriptor", () => {
@@ -1175,7 +1194,7 @@ describe("complete runtime derivation", () => {
           profileId: fixture.profileId,
         })
       ).toThrow(TypeError);
-      expect(fixture.counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+      expect(fixture.counters()).toEqual(ZERO_FIXTURE_CALLS);
     }
     expect(accessorReads).toBe(0);
   });
@@ -1196,7 +1215,7 @@ describe("complete runtime derivation", () => {
           profileId: fixture.profileId,
         })
       ).toThrow(TypeError);
-      expect(fixture.counters()).toEqual({ effectCalls: 0, loaderCalls: 0 });
+      expect(fixture.counters()).toEqual(ZERO_FIXTURE_CALLS);
     }
   });
 });

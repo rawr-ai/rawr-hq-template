@@ -56,8 +56,8 @@ export interface ResourceRequirement<TResource extends RuntimeResource = Runtime
   readonly reason: string;
 }
 
-export function requireResource<const TResource extends RuntimeResource>(
-  input: ResourceRequirement<TResource>
-): ResourceRequirement<TResource> {
+export function requireResource<const TRequirement extends ResourceRequirement>(
+  input: TRequirement
+): Readonly<TRequirement> {
   return Object.freeze({ ...input });
 }

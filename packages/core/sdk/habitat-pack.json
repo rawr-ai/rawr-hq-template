@@ -47,6 +47,11 @@
       "path": "dist/blueprints/runtime-definition/blueprint.toml"
     },
     {
+      "id": "runtime-definition",
+      "version": 2,
+      "path": "dist/blueprints/runtime-definition/versions/2/blueprint.toml"
+    },
+    {
       "id": "runtime-derivation",
       "version": 1,
       "path": "dist/blueprints/runtime-derivation/blueprint.toml"

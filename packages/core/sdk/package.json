@@ -86,6 +86,11 @@
       "import": "./dist/runtime/providers/index.js",
       "default": "./dist/runtime/providers/index.js"
     },
+    "./runtime/providers/effect": {
+      "types": "./dist/runtime/providers/effect/index.d.ts",
+      "import": "./dist/runtime/providers/effect/index.js",
+      "default": "./dist/runtime/providers/effect/index.js"
+    },
     "./runtime/profiles": {
       "types": "./dist/runtime/profiles/index.d.ts",
       "import": "./dist/runtime/profiles/index.js",

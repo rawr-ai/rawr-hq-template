@@ -58,11 +58,11 @@ The current selected generic kinds are:
 - `app`: one closed product-composition shell. Narrower app kinds own their
   host-specific runtime and entrypoint faces.
 
-The accepted SDK protocol-1 policy pack admits exactly fourteen sorted members:
+The accepted SDK protocol-1 policy pack admits exactly fifteen sorted members:
 `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`, `resource@1`,
 `resource@2`, `runtime-compiler@1`, `runtime-definition@1`,
-`runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`, and
-`service@3`.
+`runtime-definition@2`, `runtime-derivation@1`, `runtime-derivation@2`,
+`service@1`, `service@2`, and `service@3`.
 Each member resolves its definition and runner assets from the selected
 package with policy-pack provenance. A repository activates one only through
 its own `habitat.toml` instance; an exact producer-source copy is inert, and a
@@ -71,8 +71,11 @@ repository compatibility rules continue to execute beside resolved package
 rule applications. The selected `service` definitions co-land their focused
 positive law, native Nx generator, complete package closure, and
 packed-consumer construction proof.
-The `runtime-definition@1` member closes the cold private definition owner; it
-does not realize `app@2`, live runtime execution, or a native host.
+The `runtime-definition@1` member preserves the original cold private
+definition closure. `runtime-definition@2` independently closes the
+provider-plan authoring owner and its behavior proofs; neither version
+inherits, falls back to, or traverses the other version's assets, and neither
+realizes `app@2`, live runtime execution, or a native host.
 The `runtime-compiler@1` member closes the exact private package-less compiler
 structure. The SDK carries only its definition and runner assets, with no
 compiler implementation bundle, public compiler face, or SDK-to-compiler

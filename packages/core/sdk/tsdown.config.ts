@@ -36,6 +36,7 @@ export default defineConfig({
     "plugins/web/index": "src/plugins/web/index.ts",
     "runtime/resources/index": "src/runtime/resources/index.ts",
     "runtime/providers/index": "src/runtime/providers/index.ts",
+    "runtime/providers/effect/index": "src/runtime/providers/effect/index.ts",
     "runtime/profiles/index": "src/runtime/profiles/index.ts",
     "runtime/derivation/index": "src/runtime/derivation/index.ts",
     "runtime/schema": "src/runtime/schema.ts",

@@ -3,6 +3,19 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 
 import type {
+  ProviderBuildContext as PrivateProviderBuildContext,
+  RuntimeProvider as PrivateRuntimeProvider,
+  RuntimeProviderHealthDescriptor as PrivateRuntimeProviderHealthDescriptor,
+  RuntimeResourceMap as PrivateRuntimeResourceMap,
+} from "../../runtime/definition/src/provider";
+import type {
+  ProviderAcquire as PrivateProviderAcquire,
+  ProviderEffectPlan as PrivateProviderEffectPlan,
+  ProviderFx as PrivateProviderFx,
+  ProviderFxFacade as PrivateProviderFxFacade,
+  ProviderRelease as PrivateProviderRelease,
+} from "../../runtime/definition/src/provider-effect-plan";
+import type {
   ServiceContractOf as AsyncServiceContractOf,
   ServiceUses as AsyncServiceUses,
 } from "../src/plugins/async";
@@ -16,6 +29,20 @@ import type {
   WebAppPluginInput,
   WebRouteProjection,
 } from "../src/plugins/web";
+import type {
+  ProviderBuildContext,
+  RuntimeProvider,
+  RuntimeProviderHealthDescriptor,
+  RuntimeResourceMap,
+} from "../src/runtime/providers";
+import type {
+  ProviderAcquire,
+  ProviderEffectPlan,
+  ProviderFx,
+  ProviderFxFacade,
+  ProviderRelease,
+} from "../src/runtime/providers/effect";
+import type { RuntimeResource, RuntimeResourceValue } from "../src/runtime/resources";
 import type { ServiceContractOf, ServiceUses } from "../src/service";
 
 type TypesEqual<TLeft, TRight> =
@@ -32,9 +59,39 @@ const expectedRuntimeExports = [
   "./runtime/derivation",
   "./runtime/profiles",
   "./runtime/providers",
+  "./runtime/providers/effect",
   "./runtime/resources",
   "./runtime/schema",
 ];
+
+type ProviderTestResource = RuntimeResource<"sdk.provider-test", { readonly ready: true }>;
+
+const providerTypeIdentityOracle: readonly [
+  TypesEqual<ProviderBuildContext<undefined>, PrivateProviderBuildContext<undefined>>,
+  TypesEqual<
+    RuntimeProvider<ProviderTestResource, undefined, never>,
+    PrivateRuntimeProvider<ProviderTestResource, undefined, never>
+  >,
+  TypesEqual<RuntimeProviderHealthDescriptor, PrivateRuntimeProviderHealthDescriptor>,
+  TypesEqual<RuntimeResourceMap, PrivateRuntimeResourceMap>,
+  TypesEqual<
+    ProviderAcquire<{ readonly ready: true }, { readonly _tag: "AcquireFailure" }>,
+    PrivateProviderAcquire<{ readonly ready: true }, { readonly _tag: "AcquireFailure" }>
+  >,
+  TypesEqual<
+    ProviderEffectPlan<{ readonly ready: true }, { readonly _tag: "AcquireFailure" }>,
+    PrivateProviderEffectPlan<{ readonly ready: true }, { readonly _tag: "AcquireFailure" }>
+  >,
+  TypesEqual<
+    ProviderFx<{ readonly ready: true }, { readonly _tag: "AcquireFailure" }>,
+    PrivateProviderFx<{ readonly ready: true }, { readonly _tag: "AcquireFailure" }>
+  >,
+  TypesEqual<ProviderFxFacade, PrivateProviderFxFacade>,
+  TypesEqual<
+    ProviderRelease<{ readonly ready: true }>,
+    PrivateProviderRelease<{ readonly ready: true }>
+  >,
+] = [true, true, true, true, true, true, true, true, true];
 
 const expectedDerivationRuntimeExports = [
   "PortableRuntimePlanArtifactSchema",
@@ -52,17 +109,27 @@ const expectedPluginExports = [
 
 describe("runtime authoring public faces", () => {
   test("cold-imports only the admitted runtime authoring operations", async () => {
-    const [app, effect, execution, profiles, providers, resources, runtimeSchema, service] =
-      await Promise.all([
-        import("../src/app"),
-        import("../src/effect"),
-        import("../src/execution"),
-        import("../src/runtime/profiles"),
-        import("../src/runtime/providers"),
-        import("../src/runtime/resources"),
-        import("../src/runtime/schema"),
-        import("../src/service"),
-      ]);
+    const [
+      app,
+      effect,
+      execution,
+      profiles,
+      providerEffect,
+      providers,
+      resources,
+      runtimeSchema,
+      service,
+    ] = await Promise.all([
+      import("../src/app"),
+      import("../src/effect"),
+      import("../src/execution"),
+      import("../src/runtime/profiles"),
+      import("../src/runtime/providers/effect"),
+      import("../src/runtime/providers"),
+      import("../src/runtime/resources"),
+      import("../src/runtime/schema"),
+      import("../src/service"),
+    ]);
 
     expect(Object.keys(app).sort()).toEqual([
       "defineApp",
@@ -73,6 +140,7 @@ describe("runtime authoring public faces", () => {
     expect(Object.keys(effect).sort()).toEqual(["Effect", "TaggedError"]);
     expect(Object.keys(execution)).toEqual([]);
     expect(Object.keys(profiles).sort()).toEqual(["defineRuntimeProfile", "providerSelection"]);
+    expect(Object.keys(providerEffect)).toEqual(["providerFx"]);
     expect(Object.keys(providers)).toEqual(["defineRuntimeProvider"]);
     expect(Object.keys(resources).sort()).toEqual(["defineRuntimeResource", "requireResource"]);
     expect(Object.keys(runtimeSchema).sort()).toEqual([
@@ -100,6 +168,22 @@ describe("runtime authoring public faces", () => {
       expect(face).not.toHaveProperty("ManagedRuntime");
       expect(face).not.toHaveProperty("runPromise");
     }
+    for (const excludedProviderSurface of [
+      "Effect",
+      "Exit",
+      "Layer",
+      "ManagedRuntime",
+      "ProviderScope",
+      "Scope",
+      "acquireRelease",
+      "readProviderEffectPlan",
+      "runPromiseExit",
+    ]) {
+      expect(providers).not.toHaveProperty(excludedProviderSurface);
+      expect(providerEffect).not.toHaveProperty(excludedProviderSurface);
+    }
+    expect(providerEffect).not.toHaveProperty("defineRuntimeProvider");
+    expect(providers).not.toHaveProperty("providerFx");
     for (const face of [app, effect, execution, providers, resources, runtimeSchema]) {
       expect(face).not.toHaveProperty("providerSelection");
     }
@@ -117,8 +201,78 @@ describe("runtime authoring public faces", () => {
       .sort();
 
     expect(runtimeExports).toEqual(expectedRuntimeExports);
-    expect(packageJson.exports).not.toHaveProperty("./runtime/providers/effect");
+    expect(packageJson.exports["./runtime/providers/effect"]).toEqual({
+      types: "./dist/runtime/providers/effect/index.d.ts",
+      import: "./dist/runtime/providers/effect/index.js",
+      default: "./dist/runtime/providers/effect/index.js",
+    });
     expect(packageJson.exports).not.toHaveProperty("./runtime/harnesses");
+  });
+
+  test("projects the exact cold provider authoring faces by implementation identity", async () => {
+    const [providerFace, providerEffectFace, privateProvider, privateProviderEffect, resources] =
+      await Promise.all([
+        import("../src/runtime/providers"),
+        import("../src/runtime/providers/effect"),
+        import("../../runtime/definition/src/provider"),
+        import("../../runtime/definition/src/provider-effect-plan"),
+        import("../src/runtime/resources"),
+      ]);
+    let acquireCalls = 0;
+    let buildCalls = 0;
+    let releaseCalls = 0;
+    const resource = resources.defineRuntimeResource<"sdk.provider-test", { readonly ready: true }>(
+      {
+        id: "sdk.provider-test",
+        title: "SDK provider test",
+        purpose: "Prove cold provider authoring through both public faces.",
+      }
+    );
+    const provider = providerFace.defineRuntimeProvider({
+      id: "sdk.provider-test",
+      title: "SDK provider test",
+      provides: resource,
+      requires: [],
+      build: () => {
+        buildCalls += 1;
+        return providerEffectFace.providerFx.acquireRelease({
+          acquire: providerEffectFace.providerFx.tryPromise({
+            try: () => {
+              acquireCalls += 1;
+              return { ready: true as const };
+            },
+            catch: () => ({ _tag: "AcquireFailure" as const }),
+          }),
+          release: () => {
+            releaseCalls += 1;
+            return providerEffectFace.providerFx.succeed(undefined);
+          },
+        });
+      },
+    });
+    const providedValue: RuntimeResourceValue<typeof resource> = { ready: true };
+
+    expect(providerFace.defineRuntimeProvider).toBe(privateProvider.defineRuntimeProvider);
+    expect(providerEffectFace.providerFx).toBe(privateProviderEffect.providerFx);
+    expect(provider.kind).toBe("runtime.provider");
+    expect(provider.build).toBeTypeOf("function");
+    expect(providedValue).toEqual({ ready: true });
+    expect(providerTypeIdentityOracle).toEqual([
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]);
+    expect({ acquireCalls, buildCalls, releaseCalls }).toEqual({
+      acquireCalls: 0,
+      buildCalls: 0,
+      releaseCalls: 0,
+    });
   });
 
   test("projects the exact complete derivation public face", async () => {
