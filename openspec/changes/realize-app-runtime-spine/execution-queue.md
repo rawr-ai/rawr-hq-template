@@ -75,8 +75,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   derivation handoff at exact Habitat
   `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` / tree
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
-  6.0 through 6.1a are sealed by their exact receipts or authority records in
-  [[tasks]]. Task 6.2 is the sole next source container.
+  6.0 through 6.2 are sealed by their exact receipts or authority records in
+  [[tasks]]. Task 6.3 is the sole next proof-only container.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -348,10 +348,10 @@ web-loader calls, and left `runtime-derivation@2`, derivation source, and the
 public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
   is sealed as the exact eight-document compiler-authority correction with no
   implementation, blueprint, or current-realization mutation. Tasks 5.1 through
-  5.5 are sealed by their exact receipts in [[tasks]]. Tasks 6.0 through 6.1a
+  5.5 are sealed by their exact receipts in [[tasks]]. Tasks 6.0 through 6.2
   are sealed as the exact provider-effect-plan authority/implementation and
-  bootgraph-authority containers. Task 6.2 is now the sole active source
-  container.
+  bootgraph authority/implementation containers. Task 6.3 is now the sole
+  active proof-only container.
 
 ## Task 4.7a Authority Routing
 
@@ -463,9 +463,9 @@ launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Tasks
 5.1 through 5.5 are sealed by the exact implementation and proof receipts in
-[[tasks]]. Tasks 6.0 through 6.1a are sealed as the provider-effect-plan
-authority/implementation and bootgraph-authority containers, and task 6.2 is
-the sole next source node.
+[[tasks]]. Tasks 6.0 through 6.2 are sealed as the provider-effect-plan
+authority/implementation and bootgraph authority/implementation containers,
+and task 6.3 is the sole next proof-only node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -554,7 +554,7 @@ sealed at exact Habitat `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` /
 tree `8371a139957c583fbb160407d783619c1ee514fb` by the exact receipt in [[tasks]].
 It expanded only `derivation-handoff.test.ts` with the real producer handoff and
 eight bounded corrupted-artifact refusals. The compiler sequence and tasks 6.0
-through 6.1a are sealed; task 6.2 is the sole active source container.
+through 6.2 are sealed; task 6.3 is the sole active proof-only container.
 
 ## Task 6.0 Provider-Effect-Plan Authority Routing
 
@@ -656,7 +656,8 @@ and these six OpenSpec artifacts route execution while the active capability
 requirement/scenarios alone preserve archive-safe acceptance. No OpenSpec
 artifact copies the canonical TypeScript block. No source, test, project,
 blueprint, `.habitat` record, package/public output, SDK edge, runtime behavior,
-or other OpenSpec file changed. Task 6.2 is the sole active source node.
+or other OpenSpec file changed. Task 6.2 subsequently sealed the complete
+source node, and task 6.3 is the sole active proof-only node.
 
 The authority landed through PR #985 at exact final head
 `97ea53487d4fdbb5c5b0add744c4ff9f599dd360` and exact merged Habitat
@@ -669,7 +670,8 @@ diff checks passed; independent constitutional and TypeBox/testing reviews were
 CLEAN. Repository Ratchet run `31482158724` / job `93749365181` passed the exact
 PR head, Graphite was clean, and no Publish Habitat workflow was scheduled.
 Push-to-main Repository Ratchet run `31482357946` / job `93749987961` passed the
-exact merged SHA. Task 6.2 remains the sole active source node.
+exact merged SHA. Task 6.2 subsequently sealed the complete source node, and
+task 6.3 is the sole active proof-only node.
 
 Task 6.2 creates the complete private package-less `runtime-bootgraph@1` owner
 and full synchronous `orderBootgraph(...)` source from compiler-owned
@@ -709,6 +711,20 @@ caller-reachable proof case. Accepted output is fresh and recursively frozen.
 Input is neither mutated nor newly frozen, and its preexisting frozen state,
 property descriptors, and reference identities remain unchanged. No finding,
 provider/config/Effect/observation work, plan body, or live value exists.
+
+Task 6.2 landed through PR #987 at exact final head
+`fad12967df3b86cd8c99a96daf5fbf9b10495f4d` and exact Habitat
+`main@629d08d8b73dc04d2dc999cc020175c671ce14c6` / tree
+`08e164a31a51b575657b9e39aca1cefb29c181f2`. It changed exactly the authorized
+26-file corpus. The focused owner test passed 6 tests / 68 assertions,
+including the isolated cache proof; owner typecheck, build, selected
+policy/application, SDK typecheck/build, installed-package acceptance, strict
+OpenSpec validation, and the full 92-task repository check passed. Independent
+authority and TypeBox/testing reviews were CLEAN. Repository Ratchet run
+`31485572529` / job `93760059062`, Publish Habitat run `31485572405` with Ubuntu
+job `93760057750` and Windows job `93760057734`, Graphite mergeability, and
+push-to-main Repository Ratchet run `31486649785` / job `93763479027` all
+passed on their exact SHAs. Task 6.3 is the sole active proof-only node.
 
 Task 6.3 is proof-only and edits only the existing `bootgraph.test.ts`; it adds
 the complete permutation, tie, dedupe, identity, freeze/input-state,
