@@ -833,6 +833,8 @@ work; only after it lands do tasks 6.4 and 6.5 prove each qualified Fluree HTTP
 provider's config schema/decode contract, cold plan construction, and provider
 conformance. Task 7.4 alone runs both provider packages through the real
 substrate to prove single acquisition/release and failure cleanup.
+The later task-6.3b routing entry supersedes only that activation state: task
+6.3b is active and tasks 6.4 and 6.5 remain pending until it lands.
 
 Task 6.1 evolves the existing provider root and adds only the provider Effect
 subpath. The provider root exports only runtime value `defineRuntimeProvider`
@@ -1200,6 +1202,45 @@ named input, cycle or implicit edge, Fluree version or metadata beyond the fixed
 compatibility record, extra config field, TypeBox default annotation, wrong
 release callback, task-6.4 accessor import, witness inspection, body recovery or
 invocation, live task-7 work, Rawr policy, or canonical/system-document edit.
+
+## Task 6.3b Semantic-Ledger Descriptor Realization Routing
+
+Every preexisting task-6.3a sentence and receipt above remains verbatim. Task
+6.3b supersedes only that historical activation state and is now the sole
+active documentation-only node. It uses the same exact six active OpenSpec
+artifacts: `design.md`, this amendment, `tasks.md`, `execution-queue.md`,
+`classification-ledger.md`, and `specs/app-runtime-realization/spec.md`. The
+requirement remains the sole archive-safe acceptance and exact-mechanics owner;
+the other five files route or summarize it. No seventh file changes:
+`proposal.md`, `stack-cut-sheet.md`, canonical/system documents, owner routers,
+source, tests, projects, blueprints, `.habitat`, manifests, lockfiles, SDK files,
+runtime behavior, stages, commits, and pushes remain outside this node. Task 6.4
+is pending until task 6.3b lands, and no task-6.4 source opens.
+
+Task 6.3b freezes descriptor realization without restating its exact literals,
+JSON, TypeScript, or schema mechanics here. The requirement alone defines the
+resource's exact public descriptor type, fixed title and purpose, process-only
+placement, single ordered lifetime, and absent observation contributor. It
+also defines the provider's exact public type and reference identity, fixed
+title, frozen empty `requires`, exact config-schema reference identity, and
+absent health. The cold plan authors neither policy nor telemetry, leaving all
+four public metadata fields `undefined` exactly as specified by that
+requirement.
+
+The requirement likewise owns the TypeBox base, normalizing wrapper, and one
+fixed refinement issue string: the base and wrapper carry no description,
+default, or serializable annotations. It freezes the source-exported private
+package/project/tsconfig realization, including absent package `main` and
+top-level `types`, resource build coverage of contract plus provider through
+TypeScript project references, and the SDK's only two `alwaysBundle` additions:
+the resource root and provider subpath. The requirement also owns the exact SDK
+source wiring: the neutral entry uses the package root, while `/fluree` uses a
+direct relative provider-source re-export to create the real SDK-to-provider Nx
+edge without restating the literal path here. Task 6.3b changes none of the
+existing 17+10 corpus, counts, edges, or task-7.4 lifecycle split. Task 6.3b
+MUST stop on a seventh or executable file, a second exact API block, task-6.4
+source, or descriptor/schema/package/project/tsconfig drift from the active
+requirement.
 
 ## Magic Migration Admission
 

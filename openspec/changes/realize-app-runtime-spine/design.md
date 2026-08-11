@@ -1423,6 +1423,41 @@ annotation, wrong release callback, task-6.4 accessor import, witness inspection
 body recovery or invocation, live task-7 behavior, Rawr policy, or
 canonical/system-document mutation.
 
+### Freeze semantic-ledger descriptor realization before source work
+
+Every preexisting task-6.3a sentence and receipt above remains verbatim. Task
+6.3b supersedes only that historical activation state and is now the sole
+active documentation-only node. It uses the same exact six active OpenSpec
+artifacts: `design.md`, `authority-amendment.md`, `tasks.md`,
+`execution-queue.md`, `classification-ledger.md`, and
+`specs/app-runtime-realization/spec.md`. The requirement remains the sole exact
+authority for every literal, JSON member, TypeScript declaration, public type,
+and schema mechanic; the other five artifacts only route or summarize it. No
+seventh file, proposal, stack cut sheet, canonical/system document, owner
+router, executable file, or task-6.4 source changes. Task 6.4 remains pending
+until task 6.3b lands.
+
+The routed law freezes the resource descriptor as process-only with the
+requirement's exact public type, fixed title and purpose, one ordered lifetime,
+and no observation contributor. It freezes the provider's exact public type and
+reference identity, fixed title, frozen empty `requires`, exact config-schema
+reference identity, and no health. Its cold plan omits policy and telemetry, so
+all four public metadata fields are `undefined`.
+
+The requirement also freezes the TypeBox base, normalizing wrapper, and one
+fixed refinement issue string, with no description, default, or serializable
+annotations. Its source-exported private package/project/tsconfig realization
+keeps package `main` and top-level `types` absent, builds resource contract plus
+provider through TypeScript project references, and adds only the resource root
+and provider subpath to SDK `alwaysBundle`. The requirement also owns the exact
+SDK source wiring: the neutral entry uses the package root, while `/fluree`
+uses a direct relative provider-source re-export to create the real
+SDK-to-provider Nx edge without reproducing the literal path. Task 6.3b
+preserves the existing 17+10 corpus, all counts and edges, and the task-7.4
+lifecycle split. It stops on any seventh or executable file, second exact API
+block, task-6.4 source, or descriptor/schema/package/project/tsconfig drift from
+the active requirement.
+
 ### Give one Effect kernel the process lifecycle
 
 Before the first acquisition, provisioning materializes every declared source
@@ -1490,6 +1525,8 @@ never executes its plan. Task 7.4 runs both the semantic-ledger and
 temporal-inquiry provider packages through the real Effect substrate to prove
 single acquisition/release and failure cleanup before adding the admitted lab
 and Magic process-lifetime assertions.
+The later task-6.3b routing entry supersedes only that activation clause: tasks
+6.4 and 6.5 remain pending until task 6.3b lands.
 
 ### Centralize process context without stealing native execution
 
