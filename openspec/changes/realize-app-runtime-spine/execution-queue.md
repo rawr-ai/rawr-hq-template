@@ -63,9 +63,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   OpenSpec artifacts. Tasks 4.10 and 4.11 are sealed by the exact landing
   receipts in [[tasks]]. Task 5.0 then sealed the eight-document,
   authority-only compiler correction with no implementation or `.habitat`
-  mutation. Task 5.1 then landed the complete private compiler owner at exact
-  Habitat `main@c8ce735691aa14360c5ea766d05e3fb219250bb0` / tree
-  `96e83ca7881acefd101b394f24e21d2f9abad0c3`; task 5.2 is now the sole active
+  mutation. Task 5.1 then landed the complete private compiler owner. Task 5.2
+  sealed its provider-handoff and dependency-closure proof at exact Habitat
+  `main@659e51d618e1739c9d3b992407ee4a546b89e5d5` / tree
+  `397eb5b0d44eccee146bb1d8cca4c27c1bdc0d02`; task 5.3 is now the sole active
   proof-only node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
@@ -436,8 +437,8 @@ validation order is prescribed. Profile agreement stays in task 4.11 because
 launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Task
-5.1 is sealed by the exact implementation receipt in [[tasks]], so task 5.2 is
-the sole next proof-only node.
+5.1 and 5.2 are sealed by the exact implementation and proof receipts in
+[[tasks]], so task 5.3 is the sole next proof-only node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -506,9 +507,14 @@ performs no observation call or publication. Import/implementation absence is
 a reviewed boundary invariant, not a source-inspection behavior assertion. Behavior,
 TypeScript/TypeBox, Habitat, Nx, and SDK pack/provenance tests retain their exact
 owners; runtime source/AST string tests and a fabricated SDK export are invalid.
-Task 5.2 is the sole active proof-only node and may expand only
-`compile-runtime-plan.test.ts` with its allocated provider-branch and closure
-proof; it may not change compiler source or reopen the sealed owner.
+Task 5.2 is sealed at exact Habitat
+`main@659e51d618e1739c9d3b992407ee4a546b89e5d5` / tree
+`397eb5b0d44eccee146bb1d8cca4c27c1bdc0d02` by the exact receipt in [[tasks]].
+It expanded only `compile-runtime-plan.test.ts` with behavior-first
+provider-branch and closure proof and changed no compiler source, owner,
+topology, or public surface. Task 5.3 is the sole active proof-only node and may
+expand only that same test file with its allocated selected-process closure,
+exclusion, cold-reference, harness, and observation-seed boundary proof.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
