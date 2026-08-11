@@ -72,24 +72,25 @@ The exact sectional source ledger is [[authority-amendment]].
   reference handoff for the substrate to join. The two qualified Fluree
   provider tasks stay cold, while task 7.4 alone proves their single
   acquisition/release and failure cleanup through the real substrate.
-- Close bootgraph authority before its owner lands. Completed documentation-only
-  task 6.1a routes every exact TypeScript shape and ordering, refusal, freeze,
-  owner-closure, publication-corpus, and proof mechanic solely to canonical
-  `HABITAT_RUNTIME_REALIZATION` §17; the active `app-runtime-realization`
-  capability spec alone retains
-  archive-safe acceptance without copying the canonical TypeScript block. Task
-  6.2 then creates the complete private package-less `runtime-bootgraph@1` owner
-  and full synchronous `orderBootgraph(...)` implementation from compiler-owned
-  `BootgraphInput`; its baseline behavior test proves a nontrivial ordered,
-  schema-valid, referential result plus one representative malformed-input
-  `TypeError`, so the complete source node cannot pass as a stub. Task 6.3 only
-  expands that existing test with exhaustive reachable-input proof and
-  successful-output validation; defensive internal output disagreement remains
-  a pre-return invariant rather than a caller-reachable fixture. The owner
-  has only `runtime-bootgraph -> runtime-compiler`, publishes no SDK face or
-  package export, and gains the real `@habitat-ai/sdk -> runtime-bootgraph` edge
-  only in task 10.6 when terminal `startApp(...)` composition imports and calls
-  the operation.
+- Close bootgraph authority before its owner lands and repair its input boundary
+  without reopening the sealed owner receipt. Completed documentation-only task
+  6.1a routes exact bootgraph mechanics solely to canonical
+  `HABITAT_RUNTIME_REALIZATION` §17, and completed task 6.2 created the complete
+  private package-less `runtime-bootgraph@1` owner and full synchronous
+  `orderBootgraph(...)` implementation from compiler-owned `BootgraphInput`.
+  Documentation-only task 6.2a now freezes Proxy admission across the exact two
+  canonical system documents and these six active OpenSpec artifacts; the active
+  `app-runtime-realization` capability spec alone retains archive-safe acceptance
+  without copying the canonical TypeScript block. Task 6.2b is a three-file
+  repair: exact `isProxy` from `node:util/types` refuses active and revoked
+  Proxies at the shell or any nested record/array, and refuses a proxied
+  prototype, before any caller-trapping operation, result, trap, getter,
+  callback, or external work. It preserves the neutral build, exact owner
+  closure and sole compiler edge, and absent public/SDK/task-7 surfaces. Only
+  after that repair does unchanged one-file task 6.3 resume its exhaustive
+  reachable-input and successful-output proof. The owner gains the real
+  `@habitat-ai/sdk -> runtime-bootgraph` edge only in task 10.6 when terminal
+  `startApp(...)` composition imports and calls the operation.
 - Keep Effect lifetime authority with the app/process and native execution
   authority with the selected bridge. Public `effect/context` and `effect/wrap`
   carry the process-owned Context, resource lifetime, policy, and telemetry;

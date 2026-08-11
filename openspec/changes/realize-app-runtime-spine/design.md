@@ -1124,10 +1124,11 @@ refusal, freezing, owner-closure, corpus, and task mechanics, and the active
 capability requirement alone preserves archive-safe acceptance. No OpenSpec
 artifact copies the canonical TypeScript block. The correction changes no
 implementation, source, test, project, blueprint, package/public output,
-`.habitat` record, SDK edge, or runtime behavior; task 6.2 is the sole next
-source node.
+`.habitat` record, SDK edge, or runtime behavior. Completed task 6.2 then sealed
+the complete source node. Its receipt remains historical and is not reopened by
+the task-6.2a authority correction or task-6.2b repair below.
 
-Task 6.2 creates the complete private package-less `runtime-bootgraph@1` owner
+Task 6.2 created the complete private package-less `runtime-bootgraph@1` owner
 and the full synchronous `orderBootgraph(...)` operation. The operation accepts
 only compiler-owned `BootgraphInput`. One selected compiler node becomes one
 selection-id-backed resource key carrying resource, lifetime, and optional role
@@ -1188,7 +1189,49 @@ public face, package export, or release member. Explicit owner targets are only
 inferred. Installed proof owns pack parity, exact fixture instance, resolution
 and application provenance, structure, and restoration.
 
-Task 6.3 is proof-only and expands only the already-created
+Task 6.2a is a documentation-only Proxy-admission correction across exactly the
+same eight-document authority shape: the architecture router, canonical runtime
+realization §17, and these six active OpenSpec artifacts. Runtime realization
+§17 is the sole exact mechanics owner. This active capability requirement and
+its scenarios alone preserve archive-safe acceptance; the other OpenSpec files
+route or record the decision and copy no canonical TypeScript block. Task 6.2a
+changes no implementation, source, test, project, blueprint, `.habitat` record,
+config, package/public output, SDK edge, runtime behavior, or other OpenSpec
+file.
+
+The correction closes the entire accepted input graph against Proxies. The
+input shell and every nested record or array must be checked with exact
+`isProxy` from `node:util/types`; both active and revoked Proxies refuse before
+`Array.isArray`, property access or lookup, reflection, schema validation, or
+any other caller-trapping operation on that candidate. An ordinary container
+whose prototype is a Proxy also refuses before any prototype trap or inherited
+lookup. Nested candidates come only from already admitted own data-descriptor
+values, never property access. No code unwraps a Proxy. Every refusal is a
+synchronous built-in `TypeError` before result with zero trap, getter, callback,
+or external-work invocation.
+
+Task 6.2b repairs exactly `src/bootgraph.ts`, `test/bootgraph.test.ts`, and
+`tsdown.config.ts` in the existing bootgraph owner. The config adds
+`node:util/types` exactly once to the existing `deps.onlyImport` list while
+retaining neutral platform, every prior entry, and every other option. The
+behavior test owns real active-Proxy, revoked-Proxy, accessor, and
+proxied-prototype canaries plus a synchronous non-Promise,
+closed-schema-valid successful output unchanged in shape.
+Project topology and TypeScript own the non-injectable
+provider/config/Effect/observation boundary; a tautological counter initialized
+to zero for work the operation cannot receive is not evidence.
+
+The repair retains the exact 8/4/2/3 owner closure, sole real
+`runtime-bootgraph -> runtime-compiler` edge, task-6.2 publication and pack
+counts, neutral build, and absence of a public or SDK face and task-7 behavior.
+It adds no file, edge, dependency other than the audited built-in import,
+project, blueprint, version, target, SDK surface, finding, diagnostic, unwrap,
+provider/config/Effect/observation path, or external-work hook. Stop rather than
+widen if the repair needs a fourth file, a platform or unrelated config change,
+a public/SDK change, or weaker task-6.2 invariant.
+
+Only after task 6.2b lands, task 6.3 resumes its original proof-only scope and
+expands only the already-created
 `bootgraph.test.ts`. It adds permutation, tie-break, identity-reuse, dedupe,
 freeze/state-preservation, empty/disconnected, coldness, and cumulative deleted
 `packages/bootgraph` / `@rawr/bootgraph` absence proof; validates every

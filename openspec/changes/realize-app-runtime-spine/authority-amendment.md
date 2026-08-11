@@ -819,8 +819,9 @@ those mechanics only for the allocated provider-package proof. Derivation and
 compilation call no provider `build(...)`; compiler and bootgraph carry no plan
 or provider-plan body.
 
-Task 6.2 creates the ordered boot artifact; task 6.3 only expands its existing
-behavior proof. The artifact stays limited to selection-backed
+Task 6.2 created the ordered boot artifact. Task 6.2a/6.2b close its Proxy
+admission boundary before task 6.3 expands the original existing behavior
+proof. The artifact stays limited to selection-backed
 resource/provider identity, dependency order, deduplication, rollback order,
 and release-order metadata.
 Exact provider references plus provider-owned config decoder and observation
@@ -890,10 +891,11 @@ mechanics owner; and these six active OpenSpec artifacts. The active
 acceptance owner. The other five OpenSpec artifacts route or record that
 authority without copying the canonical TypeScript block. Task 6.1a changes no
 implementation, source, test, project, blueprint, `.habitat` record,
-package/public output, SDK edge, runtime behavior, or other OpenSpec file. Task
-6.2 is the sole next source node.
+package/public output, SDK edge, runtime behavior, or other OpenSpec file.
+Completed task 6.2 subsequently sealed the complete owner and source. Its exact
+receipt remains closed and is not rewritten by tasks 6.2a or 6.2b.
 
-Task 6.2 creates the complete private package-less `runtime-bootgraph@1` owner
+Task 6.2 created the complete private package-less `runtime-bootgraph@1` owner
 at `packages/core/runtime/bootgraph` and the complete synchronous
 `orderBootgraph(...)` source. It consumes only compiler-owned `BootgraphInput`.
 Each compiler node produces one selection-id-backed resource key with the
@@ -961,7 +963,48 @@ Habitat infers its selected policy and application targets. Installed-package
 acceptance owns pack parity, fixture instance, resolution/application
 provenance, structure, and restoration.
 
-Task 6.3 is proof-only and expands only the existing
+Task 6.2a is the documentation-only Proxy-admission correction. Its exact
+authority corpus is `HABITAT_ARCHITECTURE.md`,
+`HABITAT_RUNTIME_REALIZATION.md`, and this change's `proposal.md`, `design.md`,
+`authority-amendment.md`, `tasks.md`, `execution-queue.md`, and
+`specs/app-runtime-realization/spec.md`. The architecture document routes;
+runtime realization §17 alone owns exact mechanics; and the active capability
+requirement and scenarios alone retain archive-safe acceptance. The other five
+OpenSpec artifacts route or record the correction without copying canonical
+TypeScript. No implementation, source, test, project, blueprint, `.habitat`
+record, build config, package/public output, SDK edge, runtime behavior, or other
+OpenSpec file changes in task 6.2a.
+
+The admitted input shell and every nested input record or array must be
+non-Proxy. Exact `isProxy` from `node:util/types` detects both active and revoked
+Proxies before `Array.isArray`, property access or lookup, reflection, schema
+validation, or any other caller-trapping operation on that candidate. An
+ordinary container with a proxied prototype also refuses before a prototype
+trap or inherited lookup. Nested candidates are obtained only from already
+admitted own data-descriptor values, never property access. Proxy unwrapping is
+forbidden. Every such input throws built-in `TypeError` synchronously before
+result, with zero proxy traps, getters, callbacks, or external work.
+
+Task 6.2b changes exactly existing bootgraph `src/bootgraph.ts`,
+`test/bootgraph.test.ts`, and `tsdown.config.ts`. It imports exact `isProxy` and
+adds `node:util/types` exactly once to existing `deps.onlyImport`, retaining
+`platform: "neutral"`, all prior entries, and every other option. Behavior proof
+uses real active and revoked Proxy, accessor, and proxied-prototype canaries and
+also proves one synchronous non-Promise, closed-schema-valid successful output
+unchanged in shape. Project topology and TypeScript, rather than a tautological
+default-zero runtime counter, own the non-injectable
+provider/config/Effect/observation absence.
+
+The repair retains the exact 8/4/2/3 closure, sole real compiler edge, existing
+publication and pack counts, and absence of public/SDK and task-7 behavior. It
+adds no file, project, blueprint, version, target, package/public identity, SDK
+surface, unwrap, finding, diagnostic, execution path, provider/config work,
+Effect, observation, or external-work hook. Stop if exact refusal requires a
+fourth file, another dependency or edge, platform or unrelated config change,
+public/SDK work, or weakened task-6.2 law.
+
+After task 6.2b lands, task 6.3 resumes its original proof-only scope and
+expands only the existing
 `packages/core/runtime/bootgraph/test/bootgraph.test.ts`. It validates every
 successful artifact against the closed output schema and exact
 module/order/reverse/reference relations, adds the complete ordering,
