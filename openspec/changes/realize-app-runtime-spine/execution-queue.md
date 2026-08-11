@@ -66,7 +66,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   mutation. Task 5.1 then landed the complete private compiler owner. Task 5.2
   sealed its provider-handoff and dependency-closure proof at exact Habitat
   `main@659e51d618e1739c9d3b992407ee4a546b89e5d5` / tree
-  `397eb5b0d44eccee146bb1d8cca4c27c1bdc0d02`; task 5.3 is now the sole active
+  `397eb5b0d44eccee146bb1d8cca4c27c1bdc0d02`. Task 5.3 then sealed the selected
+  process-closure and cold-reference proof at exact Habitat
+  `main@72233d03fb6e62643bcbb95e588fff77785e1c93` / tree
+  `3fd22da575888000268cd425e33c87365279b3bd`; task 5.4 is now the sole active
   proof-only node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
@@ -437,8 +440,8 @@ validation order is prescribed. Profile agreement stays in task 4.11 because
 launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Task
-5.1 and 5.2 are sealed by the exact implementation and proof receipts in
-[[tasks]], so task 5.3 is the sole next proof-only node.
+Tasks 5.1 through 5.3 are sealed by the exact implementation and proof receipts
+in [[tasks]], so task 5.4 is the sole next proof-only node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -512,9 +515,12 @@ Task 5.2 is sealed at exact Habitat
 `397eb5b0d44eccee146bb1d8cca4c27c1bdc0d02` by the exact receipt in [[tasks]].
 It expanded only `compile-runtime-plan.test.ts` with behavior-first
 provider-branch and closure proof and changed no compiler source, owner,
-topology, or public surface. Task 5.3 is the sole active proof-only node and may
-expand only that same test file with its allocated selected-process closure,
-exclusion, cold-reference, harness, and observation-seed boundary proof.
+topology, or public surface. Task 5.3 is sealed at exact Habitat
+`main@72233d03fb6e62643bcbb95e588fff77785e1c93` / tree
+`3fd22da575888000268cd425e33c87365279b3bd` by the exact receipt in [[tasks]].
+Task 5.4 is the sole active proof-only node and may expand only that same test
+file with its allocated type, closed-admission, order, recursive-freeze,
+determinism, absent-diagnostic, and zero-downstream-work proof.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
