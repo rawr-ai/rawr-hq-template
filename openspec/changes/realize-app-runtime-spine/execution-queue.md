@@ -60,8 +60,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   closed as an authority-only no-op. Task 4.9a then sealed the
   definition-to-selection contract across exactly nine documents: the two
   canonical system documents, the runtime-definition router, and six active
-  OpenSpec artifacts. Task 4.10's exact landing receipt is recorded in
-  [[tasks]]; task 4.11 is the sole next proof node.
+  OpenSpec artifacts. Tasks 4.10 and 4.11 are sealed by the exact landing
+  receipts in [[tasks]]. Task 5.0 is the sole active node: an eight-document,
+  authority-only compiler correction. Task 5.1 does not begin until that law
+  is deterministic.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -312,16 +314,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   derivation defense because the exact five-field launch identity has no
   profile field.
 
-The active queue has one bounded proof node:
-
-1. execute task 4.11 by changing only
-   `packages/core/runtime/derivation/test/complete-derivation.test.ts`. Use a
-   real `Entrypoint` plus `profileId`, complete after selection-producer
-   bindings are unavailable, and refuse each corrupted app, process, and
-   entrypoint identity plus profile mismatch before result with zero Effect or
-   web-loader calls. Task 4.10 is sealed by the exact receipt in [[tasks]];
-   `runtime-derivation@2` remains exact and no derivation source or public
-   surface changes.
+The selection/derivation queue is sealed. Task 4.11 changed only
+`packages/core/runtime/derivation/test/complete-derivation.test.ts`, proved the
+real handoff plus all four defensive disagreement refusals with zero Effect or
+web-loader calls, and left `runtime-derivation@2`, derivation source, and the
+public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
+is the sole active node and corrects compiler authority without implementation;
+task 5.1 remains blocked until that correction lands.
 
 ## Task 4.7a Authority Routing
 
@@ -429,14 +428,15 @@ App/process/entrypoint identity disagreement throws built-in `TypeError` before
 output, external mutation, or authored executable work; no error API, text, or
 validation order is prescribed. Profile agreement stays in task 4.11 because
 launch identity has no profile field, and derivation retains every defensive
-check. Task 4.10 is sealed by the exact receipt in [[tasks]]; task 4.11 is the
-sole next proof node.
+check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. The
+next container is task 5.0's documentation-only compiler authority correction,
+not task 5.1 source implementation.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
 
-1. **Definition/derivation handoffs (`4.11` remaining; `4.8-4.10` sealed)**: retain the independent
+1. **Definition/derivation handoffs (`4.8-4.11` sealed)**: retain the independent
    `.habitat/blueprints/runtime-derivation/versions/2/{blueprint.toml,structure.toml}`
    closure, select version 2 in the existing derivation `habitat.toml`, retain
    the exact root shell, and use only the twelve named source files and three
@@ -502,7 +502,10 @@ write authority with the active one:
    refuses three corrupted identities plus profile mismatch before result with
    zero Effect/loader work. Neither node adds an optional interior, fallback,
    version 3, validator, schema, file, project, edge, blueprint, export, or
-   error; task 4.11 changes no derivation source or public surface. Land the definition-owned
+   error; task 4.11 changes no derivation source or public surface. The exact
+   task-4.11 landing receipt is recorded in [[tasks]]. Before compiler source,
+   seal task 5.0's documentation-only authority correction that makes the
+   compiler contract deterministic. Land the definition-owned
    provider-effect plan from `6.1` after provider selection and before compiler
    consumption.
 2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
