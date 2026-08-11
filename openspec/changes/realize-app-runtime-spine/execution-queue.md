@@ -87,6 +87,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   The later task-6.3d queue entry supersedes only the destination of that
   future seal: task 6.3c remains current until sealed, its receipt activates
   pending task 6.3d, and tasks 6.4 and 6.5 remain pending behind task 6.3d.
+  The landed task-6.3c receipt now supersedes that future state: task 6.3d is
+  the sole active documentation/evidence-only qualification node, and tasks
+  6.4 and 6.5 remain pending and closed behind it.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -1138,9 +1141,31 @@ behavior. The existing 27-file task-6.4 work in progress is inadmissible. Task
 6.3c remains current until sealed, and its receipt activates task 6.3d rather
 than task 6.4.
 
+Task 6.3c sealed through authority
+[PR #1001](https://github.com/rawr-ai/rawr-hq-template/pull/1001) at exact final
+head `60765f34883f8f2064b21e05f02b44fe40d8863a` and exact Habitat
+`main@7cedb01e971c0b017c0c88fdedd2cbc87efbb0c3` / tree
+`d9a5f487a5de26a3d5d646f2734f270692cb34ae`. The authority diff changed
+exactly the six authorized documents and was intentionally `+1,252/-0`;
+strict OpenSpec, scope, diff, zero-deletion, and task-6.3a/task-6.3b
+preservation checks passed; and three independent final reviews found no P0/P1
+across constitutional coherence, additive preservation, and runtime/testing
+semantics. PR Repository Ratchet
+[run `31542424808`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31542424808) /
+[job `93947631138`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31542424808/job/93947631138)
+passed,
+[Graphite mergeability](https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/1001)
+was clean, and push-to-main Repository Ratchet
+[run `31542633458`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31542633458) /
+[job `93948279584`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31542633458/job/93948279584)
+passed the exact merged SHA; no Publish Habitat run was scheduled. Task 6.3d
+is the sole active documentation/evidence-only qualification node; tasks 6.4
+and 6.5 remain pending and closed behind it.
+
 ## Task 6.3d Fluree Artifact Qualification Routing
 
-Task 6.3d is the pending documentation/evidence-only gate after task 6.3c. It
+Task 6.3d is the sole active documentation/evidence-only gate after sealed task
+6.3c. It
 uses the same exact six OpenSpec artifacts and no source, test, publication,
 project, proposal, stack cut sheet, canonical/system document, owner router,
 manifest, lockfile, SDK file, runtime behavior, stage, commit, or push. It MUST
@@ -1283,6 +1308,9 @@ write authority with the active one:
    The later task-6.3d queue entry supersedes only the destination of that
    future seal: task 6.3c remains current until sealed, task 6.3d follows as a
    docs/evidence-only gate, and tasks 6.4 and 6.5 remain pending behind it.
+   The landed task-6.3c receipt now supersedes that future state: task 6.3d is
+   the sole active documentation/evidence-only qualification node, and tasks
+   6.4 and 6.5 remain pending and closed behind it.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before
