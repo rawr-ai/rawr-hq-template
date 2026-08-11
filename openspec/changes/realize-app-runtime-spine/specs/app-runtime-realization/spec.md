@@ -1518,7 +1518,21 @@ owner. The other five OpenSpec artifacts MUST route or record the decision
 without copying the canonical TypeScript block. Task 6.1a MUST change no
 implementation, source, test, project, blueprint, `.habitat` record,
 package/public output, SDK edge, runtime behavior, or other OpenSpec file. Task
-6.2 MUST remain the sole next source node.
+6.2 is sealed by its exact historical receipt and MUST NOT be reopened or
+rewritten. Task 6.2a MUST be the sole next documentation-only authority node.
+
+Task 6.2a MUST correct Proxy admission across exactly eight documents:
+`HABITAT_ARCHITECTURE.md` as the ownership router;
+`HABITAT_RUNTIME_REALIZATION.md` §17 as the sole exact mechanics owner; and this
+change's `proposal.md`, `design.md`, `authority-amendment.md`, `tasks.md`,
+`execution-queue.md`, and `specs/app-runtime-realization/spec.md`. This
+requirement and its scenarios MUST remain the sole archive-safe acceptance
+owner. The other five OpenSpec artifacts MUST route or record the correction
+without copying the canonical TypeScript block. Task 6.2a MUST change no
+implementation, source, test, project, blueprint, `.habitat` record, config,
+package/public output, SDK edge, runtime behavior, or other OpenSpec file. Task
+6.2b MUST be the sole next source-bearing repair node, and only after it lands
+MUST unchanged one-file task 6.3 resume.
 
 Task 6.2 MUST create the complete private package-less
 `runtime-bootgraph@1` owner at `packages/core/runtime/bootgraph` and MUST
@@ -1565,6 +1579,40 @@ reuse, plus one representative malformed-input generic `TypeError`. This paired
 positive/negative baseline MUST prevent an empty or constant stub from
 satisfying the complete source node.
 
+Task 6.2b MUST repair Proxy admission in exactly
+`packages/core/runtime/bootgraph/src/bootgraph.ts`,
+`packages/core/runtime/bootgraph/test/bootgraph.test.ts`, and
+`packages/core/runtime/bootgraph/tsdown.config.ts`. The source MUST use exact
+`isProxy` from `node:util/types`; the config MUST add `node:util/types` exactly
+once to the existing `deps.onlyImport` list while retaining
+`platform: "neutral"`, every prior entry, and every other option. No fourth
+file, other new dependency or project edge, public/SDK surface, package
+identity, project, blueprint, version, target, finding, diagnostic, unwrap, or
+task-7 behavior is admitted.
+
+Neither the input shell nor any nested input record or array MAY be a Proxy.
+For every candidate container, active and revoked Proxy detection and refusal
+MUST occur before `Array.isArray`, property access or lookup, reflection, schema
+validation, or any other operation that the caller can make trap. An ordinary
+container whose prototype is a Proxy MUST also refuse before any prototype trap
+or inherited lookup. Nested candidates MUST be obtained only from already
+admitted own data-descriptor values, never through property access. The
+implementation MUST NOT unwrap a Proxy. Every such case MUST synchronously
+throw built-in `TypeError` before result with zero proxy traps, getters,
+callbacks, or external work.
+
+Task 6.2b behavior proof MUST use real active-Proxy, revoked-Proxy, accessor, and
+proxied-prototype canaries and MUST prove a valid input still returns one
+synchronous exact closed output. Topology and TypeScript MUST own the
+non-injectable provider/config/Effect/observation boundary. A default counter
+that cannot be reached or incremented by the operation is tautological and MUST
+NOT be used as zero-work evidence. The task MUST retain the exact 8/4/2/3 owner
+closure, sole real `runtime-bootgraph -> runtime-compiler` edge, task-6.2
+publication and pack counts, neutral build and all unrelated tsdown options,
+and absence of a public/SDK face and task-7 behavior. It MUST stop rather than
+widen if these guarantees require another file, dependency, edge, platform,
+public surface, or weaker task-6.2 invariant.
+
 For each accepted compiler node, `orderBootgraph(...)` MUST produce one
 selection-id-backed resource key with the canonical kind plus `selectionId`,
 `resourceId`, `lifetime`, and only the applicable optional `role` and
@@ -1583,7 +1631,8 @@ per node and that same frozen object MUST be reused by exact reference as its
 module key, every dependency occurrence, and every forward and reverse order
 entry.
 
-Malformed or surplus input, duplicate `selectionId`, duplicate exact lifecycle
+Proxy-bearing or proxied-prototype input, malformed or surplus input, duplicate
+`selectionId`, duplicate exact lifecycle
 resource identity tuple `(resourceId, lifetime, role-or-empty,
 instance-or-empty)`, duplicate exact edge, dangling source or target,
 self-cycle, and multi-node cycle MUST be separate caller-reachable refusals that
@@ -1664,6 +1713,69 @@ call.
   owner while this requirement remains the sole archive-safe acceptance owner
 - **AND** no canonical TypeScript block or implementation change appears in the
   OpenSpec routing artifacts
+
+#### Scenario: Proxy admission authority remains documentation-only
+
+- **WHEN** task 6.2a is reviewed before implementation
+- **THEN** only the two canonical system documents and these six active OpenSpec
+  artifacts comprise its exact eight-document authority corpus
+- **AND** runtime realization §17 remains the sole exact mechanics owner while
+  this requirement and its scenarios remain the sole archive-safe acceptance
+  owner
+- **AND** the sealed task-6.2 receipt is unchanged and no implementation,
+  source, test, project, blueprint, `.habitat` record, config, public/SDK output,
+  runtime behavior, or other OpenSpec file changes
+
+#### Scenario: Active Proxy input refuses without observation
+
+- **WHEN** the input shell or any nested input record or array is a real active
+  Proxy whose traps are instrumented
+- **THEN** exact `isProxy` detects and refuses it with built-in `TypeError`
+  before `Array.isArray`, property access or lookup, reflection, schema
+  validation, result, or any other caller-trapping operation on that candidate
+- **AND** no proxy trap, getter, callback, provider/config/Effect/observation
+  path, or external work runs and no Proxy is unwrapped
+
+#### Scenario: Revoked Proxy input refuses without observation
+
+- **WHEN** the input shell or any nested input record or array is a real revoked
+  Proxy
+- **THEN** exact `isProxy` detects and refuses it with built-in `TypeError`
+  before any operation that could consult the revoked target or handler
+- **AND** refusal is synchronous and occurs before result, getter, callback, or
+  external work without unwrapping the Proxy
+
+#### Scenario: A proxied prototype cannot become an inherited input channel
+
+- **WHEN** an otherwise ordinary input shell, nested record, or array has a real
+  instrumented Proxy as its prototype
+- **THEN** `orderBootgraph(...)` throws built-in `TypeError` before inherited
+  lookup, any prototype trap, schema validation, or result
+- **AND** all trap, getter, callback, and external-work canaries remain at zero
+
+#### Scenario: The bounded repair preserves exact successful behavior
+
+- **WHEN** task 6.2b applies the Proxy-admission repair
+- **THEN** only existing `src/bootgraph.ts`, `test/bootgraph.test.ts`, and
+  `tsdown.config.ts` change, and `node:util/types` appears exactly once in the
+  retained neutral-platform `deps.onlyImport` configuration
+- **AND** a valid input returns synchronously as a non-Promise with the exact
+  closed-schema-valid output unchanged in shape, while real Proxy,
+  revoked-Proxy, accessor, and proxied-prototype canaries prove the refusal
+  boundary
+- **AND** topology and TypeScript, not a tautological default-zero counter, prove
+  provider/config/Effect/observation work is non-injectable
+- **AND** the 8/4/2/3 closure, sole compiler edge, publication counts, absent
+  public/SDK face, task-7 exclusions, and all other task-6.2 invariants remain
+  unchanged
+
+#### Scenario: Repair widening stops the task
+
+- **WHEN** Proxy refusal would require a fourth file, another dependency or
+  edge, a platform or unrelated tsdown-option change, a public/SDK surface, an
+  unwrap path, task-7 behavior, or a weaker task-6.2 invariant
+- **THEN** task 6.2b stops without widening or partially landing
+- **AND** task 6.3 does not begin until the exact three-file repair is complete
 
 #### Scenario: The complete owner lands with policy assets but no public face
 

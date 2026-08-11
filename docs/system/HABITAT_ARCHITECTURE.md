@@ -2408,12 +2408,15 @@ observation later projects admitted records into diagnostics, telemetry,
 topology, and catalog views; downstream consumers adapt returned findings into
 those records when projection is required.
 
-Task 6.0's provider-plan authority correction and task 6.1's complete cold
-provider-plan implementation remain sealed. Task 6.1a is a separate
-documentation-only bootgraph correction: it routes exact mechanics to
-runtime-realization §17 and changes no implementation, source, test, project,
-blueprint, package/public output, SDK edge, or runtime behavior. Task 6.2 then
-creates the one complete `runtime-bootgraph@1` owner; task 6.3 is proof-only.
+Task 6.0's provider-plan authority correction, task 6.1's complete cold
+provider-plan implementation, and task 6.2's complete
+`runtime-bootgraph@1` owner remain sealed. Task 6.1a is the earlier
+documentation-only bootgraph authority correction. Task 6.2a is the bounded
+documentation-only proxy-admission clarification, task 6.2b is its bounded
+owner-local implementation, and task 6.3 remains the unchanged proof-only
+expansion. Runtime-realization §17 alone owns their exact mechanics, corpora,
+proof allocation, and exclusions; this architecture document only routes that
+authority.
 
 Post-provider conformance follows the same ownership split. Tasks 6.4 and 6.5
 author their provider packages against the cold contract only; they do not own
