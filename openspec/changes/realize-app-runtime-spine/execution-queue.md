@@ -77,7 +77,7 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
   6.0 through 6.2 are sealed by their exact receipts or authority records in
   [[tasks]]. Tasks 6.2a through 6.2b are sealed by their exact receipts;
-  unchanged one-file task 6.3 is the sole active proof-only node.
+  task 6.3 is sealed, and task 6.4 is the sole active source node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -843,19 +843,24 @@ Repository Ratchet run `31498228214` / job `93801227156` passed; Graphite was
 clean; no Publish Habitat run was scheduled; and push-to-main Repository
 Ratchet run `31498731114` / job `93802899338` passed.
 
-Task 6.3 is the sole active proof-only node and edits only the existing
-`bootgraph.test.ts`; it adds
-the complete permutation, tie, dedupe, identity, freeze/input-state,
-empty/disconnected, absent-finding, and zero-work matrix; validates every
-successful output against the schema and exact output relations; and
-exhaustively proves caller-reachable input refusals while retaining the
-cumulative deleted `packages/bootgraph` / `@rawr/bootgraph` absence proof. It
-does not fabricate an internal output-disagreement fixture and changes no
-source, project, blueprint, pack, SDK/public surface, cache test, or frozen
-product-separation test. Task 10.6 alone adds the SDK bootgraph edge by a real
-terminal composition import and call. Exact provider references plus
-provider-owned decoder/redaction metadata remain in the compiler reference
-handoff for the future substrate to join. Tasks 6.4 and 6.5 remain cold, and
+Task 6.3 sealed the one-file bootgraph ordering proof through implementation
+PR #995 at exact final head
+`7b1f4736a6448f05d83b8c1f67197eb79b824c09` and exact Habitat
+`main@4753f6d281388f29d754c2c2542c2164e3e6e73e` / tree
+`df96c9183fc8488b4566fad5189f4d97527ea8d3`. The focused file passed 18 tests /
+17,100 assertions; the full owner suite passed 19 tests / 17,108 assertions,
+including the isolated cache proof; the test TypeScript configuration, scoped
+Biome and diff checks, and the full root 92-task check passed. Independent
+authority, TypeBox/TypeScript, and proof-plan reviews were CLEAN. PR Repository
+Ratchet run `31504788749` / job `93823494309` passed; Graphite was clean; no
+Publish Habitat run was scheduled; and push-to-main Repository Ratchet run
+`31505042862` / job `93824344923` passed. The receipt preserves the exact
+one-file scope and every task-6.2b Proxy canary without changing source,
+project, blueprint, pack, SDK/public surface, cache proof, or product-separation
+proof. Task 10.6 alone adds the SDK bootgraph edge by a real terminal
+composition import and call. Exact provider references plus provider-owned
+decoder/redaction metadata remain in the compiler reference handoff for the
+future substrate to join. Task 6.4 is now active; task 6.5 remains cold, and
 task 7.4 alone proves their live lifecycle.
 
 The remaining containers execute in this dependency order. A later container
@@ -934,8 +939,8 @@ write authority with the active one:
    are sealed by their exact receipts. Tasks 6.0 and 6.1 have sealed the
    provider-effect-plan authority and exact cold plan, and no compiler task
    waits for or consumes `ProviderEffectPlan`.
-2. **Compilation, provider plan, and boot order (`5.1-6.2b` sealed;
-   `6.3-6.5` active sequence)**: retain the sealed complete process plan,
+2. **Compilation, provider plan, and boot order (`5.1-6.3` sealed;
+   `6.4-6.5` active sequence)**: retain the sealed complete process plan,
    normalized-handoff/provider-closure proof, exact cold runtime-definition
    provider plan, and complete deterministic boot ordering while closing Proxy
    admission before the original proof expansion and two path-qualified Fluree
