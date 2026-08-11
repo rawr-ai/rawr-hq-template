@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { type Static, type TSchema } from "typebox";
+import { Check } from "typebox/value";
 
 import {
   type ProviderSelection as AuthoredProviderSelection,
@@ -25,6 +27,7 @@ import {
   serviceDep,
   useService,
 } from "../../definition/src/index";
+import type { ExecutionDescriptorRef } from "../../derivation/src/execution-descriptor-ref";
 import {
   executionDescriptorId,
   pluginOwnerId,
@@ -39,13 +42,198 @@ import {
 } from "../../derivation/src/identity-policy";
 import { deriveRuntimeArtifacts } from "../../derivation/src/index";
 import type { NormalizedAuthoringGraph } from "../../derivation/src/normalized-authoring-graph";
-import { compileRuntimePlan, type RuntimeCompilationInput } from "../src/index";
+import * as runtimeCompiler from "../src/index";
+import {
+  type BootgraphInput,
+  BootgraphInputSchema,
+  type CompilationObservationSeed,
+  CompilationObservationSeedSchema,
+  type CompiledExecutableBoundaryInput,
+  CompiledExecutableBoundaryInputSchema,
+  type CompiledExecutionPlan,
+  CompiledExecutionPlanSchema,
+  type CompiledExecutionRegistryInput,
+  CompiledExecutionRegistryInputSchema,
+  type CompiledHarnessPlan,
+  CompiledHarnessPlanSchema,
+  type CompiledProcessPlan,
+  CompiledProcessPlanSchema,
+  type CompiledResourceBinding,
+  CompiledResourceBindingSchema,
+  type CompiledResourcePlan,
+  CompiledResourcePlanSchema,
+  type CompiledServiceBindingPlan,
+  CompiledServiceBindingPlanSchema,
+  type CompiledSurfacePlan,
+  CompiledSurfacePlanSchema,
+  type CompiledWorkflowDispatcherPlan,
+  CompiledWorkflowDispatcherPlanSchema,
+  compileRuntimePlan,
+  type ProviderDependencyClosure,
+  ProviderDependencyClosureSchema,
+  type ProviderDependencyEdge,
+  ProviderDependencyEdgeSchema,
+  type ProviderDependencyGraph,
+  ProviderDependencyGraphSchema,
+  type ProviderDependencyNode,
+  ProviderDependencyNodeSchema,
+  type RuntimeCompilationInput,
+  type RuntimeCompilationResult,
+} from "../src/index";
 
 type ProviderCycle = "self" | "transitive";
 type AssertNever<T extends never> = T;
+type IsAny<T> = 0 extends 1 & T ? true : false;
+type IsNever<T> = [T] extends [never] ? true : false;
+type IsExact<Left, Right> =
+  (<Value>() => Value extends Left ? 1 : 2) extends <Value>() => Value extends Right ? 1 : 2
+    ? (<Value>() => Value extends Right ? 1 : 2) extends <Value>() => Value extends Left ? 1 : 2
+      ? true
+      : false
+    : false;
+type IsExactNonNever<Left, Right> =
+  IsNever<Left> extends true ? false : IsNever<Right> extends true ? false : IsExact<Left, Right>;
+type DeepReadonly<Value> = Value extends readonly unknown[]
+  ? { readonly [Key in keyof Value]: DeepReadonly<Value[Key]> }
+  : Value extends object
+    ? { readonly [Key in keyof Value]: DeepReadonly<Value[Key]> }
+    : Value;
+type IsDeepReadonlyNonAnyNonNever<Value> =
+  IsAny<Value> extends true
+    ? false
+    : IsNever<Value> extends true
+      ? false
+      : IsExact<Value, DeepReadonly<Value>>;
+
+const EXACT_COMPILER_DTO_TYPE_ORACLES = {
+  bootgraphInput: true,
+  compilationObservationSeed: true,
+  compiledExecutableBoundaryInput: true,
+  compiledExecutionPlan: true,
+  compiledExecutionRegistryInput: true,
+  compiledHarnessPlan: true,
+  compiledProcessPlan: true,
+  compiledResourceBinding: true,
+  compiledResourcePlan: true,
+  compiledServiceBindingPlan: true,
+  compiledSurfacePlan: true,
+  compiledWorkflowDispatcherPlan: true,
+  providerDependencyClosure: true,
+  providerDependencyEdge: true,
+  providerDependencyGraph: true,
+  providerDependencyNode: true,
+} satisfies {
+  readonly bootgraphInput: IsExactNonNever<BootgraphInput, Static<typeof BootgraphInputSchema>>;
+  readonly compilationObservationSeed: IsExactNonNever<
+    CompilationObservationSeed,
+    Static<typeof CompilationObservationSeedSchema>
+  >;
+  readonly compiledExecutableBoundaryInput: IsExactNonNever<
+    CompiledExecutableBoundaryInput,
+    Static<typeof CompiledExecutableBoundaryInputSchema>
+  >;
+  readonly compiledExecutionPlan: IsExactNonNever<
+    CompiledExecutionPlan,
+    Static<typeof CompiledExecutionPlanSchema>
+  >;
+  readonly compiledExecutionRegistryInput: IsExactNonNever<
+    CompiledExecutionRegistryInput,
+    Static<typeof CompiledExecutionRegistryInputSchema>
+  >;
+  readonly compiledHarnessPlan: IsExactNonNever<
+    CompiledHarnessPlan,
+    Static<typeof CompiledHarnessPlanSchema>
+  >;
+  readonly compiledProcessPlan: IsExactNonNever<
+    CompiledProcessPlan,
+    Static<typeof CompiledProcessPlanSchema>
+  >;
+  readonly compiledResourceBinding: IsExactNonNever<
+    CompiledResourceBinding,
+    Static<typeof CompiledResourceBindingSchema>
+  >;
+  readonly compiledResourcePlan: IsExactNonNever<
+    CompiledResourcePlan,
+    Static<typeof CompiledResourcePlanSchema>
+  >;
+  readonly compiledServiceBindingPlan: IsExactNonNever<
+    CompiledServiceBindingPlan,
+    Static<typeof CompiledServiceBindingPlanSchema>
+  >;
+  readonly compiledSurfacePlan: IsExactNonNever<
+    CompiledSurfacePlan,
+    Static<typeof CompiledSurfacePlanSchema>
+  >;
+  readonly compiledWorkflowDispatcherPlan: IsExactNonNever<
+    CompiledWorkflowDispatcherPlan,
+    Static<typeof CompiledWorkflowDispatcherPlanSchema>
+  >;
+  readonly providerDependencyClosure: IsExactNonNever<
+    ProviderDependencyClosure,
+    Static<typeof ProviderDependencyClosureSchema>
+  >;
+  readonly providerDependencyEdge: IsExactNonNever<
+    ProviderDependencyEdge,
+    Static<typeof ProviderDependencyEdgeSchema>
+  >;
+  readonly providerDependencyGraph: IsExactNonNever<
+    ProviderDependencyGraph,
+    Static<typeof ProviderDependencyGraphSchema>
+  >;
+  readonly providerDependencyNode: IsExactNonNever<
+    ProviderDependencyNode,
+    Static<typeof ProviderDependencyNodeSchema>
+  >;
+};
+
+const DEEP_READONLY_COMPILER_DTO_TYPE_ORACLES = {
+  bootgraphInput: true,
+  compilationObservationSeed: true,
+  compiledExecutableBoundaryInput: true,
+  compiledExecutionPlan: true,
+  compiledExecutionRegistryInput: true,
+  compiledHarnessPlan: true,
+  compiledProcessPlan: true,
+  compiledResourceBinding: true,
+  compiledResourcePlan: true,
+  compiledServiceBindingPlan: true,
+  compiledSurfacePlan: true,
+  compiledWorkflowDispatcherPlan: true,
+  providerDependencyClosure: true,
+  providerDependencyEdge: true,
+  providerDependencyGraph: true,
+  providerDependencyNode: true,
+} satisfies {
+  readonly bootgraphInput: IsDeepReadonlyNonAnyNonNever<BootgraphInput>;
+  readonly compilationObservationSeed: IsDeepReadonlyNonAnyNonNever<CompilationObservationSeed>;
+  readonly compiledExecutableBoundaryInput: IsDeepReadonlyNonAnyNonNever<CompiledExecutableBoundaryInput>;
+  readonly compiledExecutionPlan: IsDeepReadonlyNonAnyNonNever<CompiledExecutionPlan>;
+  readonly compiledExecutionRegistryInput: IsDeepReadonlyNonAnyNonNever<CompiledExecutionRegistryInput>;
+  readonly compiledHarnessPlan: IsDeepReadonlyNonAnyNonNever<CompiledHarnessPlan>;
+  readonly compiledProcessPlan: IsDeepReadonlyNonAnyNonNever<CompiledProcessPlan>;
+  readonly compiledResourceBinding: IsDeepReadonlyNonAnyNonNever<CompiledResourceBinding>;
+  readonly compiledResourcePlan: IsDeepReadonlyNonAnyNonNever<CompiledResourcePlan>;
+  readonly compiledServiceBindingPlan: IsDeepReadonlyNonAnyNonNever<CompiledServiceBindingPlan>;
+  readonly compiledSurfacePlan: IsDeepReadonlyNonAnyNonNever<CompiledSurfacePlan>;
+  readonly compiledWorkflowDispatcherPlan: IsDeepReadonlyNonAnyNonNever<CompiledWorkflowDispatcherPlan>;
+  readonly providerDependencyClosure: IsDeepReadonlyNonAnyNonNever<ProviderDependencyClosure>;
+  readonly providerDependencyEdge: IsDeepReadonlyNonAnyNonNever<ProviderDependencyEdge>;
+  readonly providerDependencyGraph: IsDeepReadonlyNonAnyNonNever<ProviderDependencyGraph>;
+  readonly providerDependencyNode: IsDeepReadonlyNonAnyNonNever<ProviderDependencyNode>;
+};
+
 type ObservationPortInputKey = AssertNever<
   Extract<"observationPort", keyof RuntimeCompilationInput>
 >;
+type ForbiddenCompilationResultKey = AssertNever<
+  Extract<"findings" | "diagnostics", keyof RuntimeCompilationResult>
+>;
+type ForbiddenCompiledPlanKey = AssertNever<
+  Extract<"findings" | "diagnostics" | "observationSeed", keyof CompiledProcessPlan>
+>;
+
+// @ts-expect-error The compiler intentionally exposes no finding type.
+type CompilationFindingMustRemainAbsent = import("../src/index").CompilationFinding;
 
 const ZERO_PROCESS_CLOSURE_CALLS = {
   definitionCalls: 0,
@@ -67,11 +255,321 @@ const compareStringTuples = (left: readonly string[], right: readonly string[]):
   return 0;
 };
 
+function executionRefOrderTuple(ref: ExecutionDescriptorRef): readonly string[] {
+  switch (ref.boundary) {
+    case "plugin.async-step":
+      return [
+        ref.boundary,
+        ref.ownerId,
+        "workflowId" in ref ? ref.workflowId : "",
+        "scheduleId" in ref ? ref.scheduleId : "",
+        "consumerId" in ref ? ref.consumerId : "",
+        ref.stepId,
+      ];
+    case "plugin.cli-command":
+      return [ref.boundary, ref.ownerId, ref.commandId];
+    case "plugin.web-surface":
+      return [ref.boundary, ref.ownerId, ref.surfaceId];
+    case "plugin.agent-tool":
+      return [ref.boundary, ref.ownerId, ref.toolId];
+    case "plugin.desktop-background":
+      return [ref.boundary, ref.ownerId, ref.backgroundId];
+  }
+}
+
 function sortByTuple<T>(
   values: readonly T[],
   tuple: (value: T) => readonly string[]
 ): readonly T[] {
   return [...values].sort((left, right) => compareStringTuples(tuple(left), tuple(right)));
+}
+
+function expectCanonicalTupleOrder<T>(
+  values: readonly T[],
+  tuple: (value: T) => readonly string[]
+): void {
+  const expected = sortByTuple(values, tuple);
+  expect(values).toEqual(expected);
+  for (let index = 1; index < values.length; index += 1) {
+    expect(compareStringTuples(tuple(values[index - 1]!), tuple(values[index]!))).toBeLessThan(0);
+  }
+}
+
+function expectAuthoredOrder<T>(
+  actual: readonly T[],
+  expected: readonly T[],
+  identity: (value: T) => readonly string[]
+): void {
+  expect(actual.map(identity)).toEqual(expected.map(identity));
+}
+
+function collectObjectReferences(value: unknown, references = new Set<object>()): Set<object> {
+  if ((typeof value !== "object" && typeof value !== "function") || value === null) {
+    return references;
+  }
+  if (references.has(value)) return references;
+  references.add(value);
+  for (const key of Reflect.ownKeys(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (descriptor !== undefined && "value" in descriptor) {
+      collectObjectReferences(descriptor.value, references);
+    }
+  }
+  return references;
+}
+
+interface CompleteInputPrimitiveSnapshot {
+  readonly kind: "primitive";
+  readonly value: unknown;
+}
+
+interface CompleteInputDataDescriptorSnapshot {
+  readonly kind: "data";
+  readonly key: string | symbol;
+  readonly configurable: boolean | undefined;
+  readonly enumerable: boolean | undefined;
+  readonly writable: boolean | undefined;
+  readonly value: CompleteInputValueSnapshot;
+}
+
+interface CompleteInputAccessorDescriptorSnapshot {
+  readonly kind: "accessor";
+  readonly key: string | symbol;
+  readonly configurable: boolean | undefined;
+  readonly enumerable: boolean | undefined;
+  readonly get: CompleteInputValueSnapshot;
+  readonly set: CompleteInputValueSnapshot;
+}
+
+type CompleteInputDescriptorSnapshot =
+  | CompleteInputDataDescriptorSnapshot
+  | CompleteInputAccessorDescriptorSnapshot;
+
+interface CompleteInputReferenceSnapshot {
+  readonly kind: "reference";
+  readonly original: object;
+  readonly prototype: object | null;
+  readonly extensible: boolean;
+  readonly keys: (string | symbol)[];
+  readonly descriptors: CompleteInputDescriptorSnapshot[];
+}
+
+type CompleteInputValueSnapshot = CompleteInputPrimitiveSnapshot | CompleteInputReferenceSnapshot;
+
+function isObjectReference(value: unknown): value is object {
+  return (typeof value === "object" && value !== null) || typeof value === "function";
+}
+
+function snapshotCompleteInput(
+  value: unknown,
+  snapshots = new Map<object, CompleteInputReferenceSnapshot>()
+): CompleteInputValueSnapshot {
+  if (!isObjectReference(value)) return { kind: "primitive", value };
+
+  const prior = snapshots.get(value);
+  if (prior !== undefined) return prior;
+
+  const snapshot: CompleteInputReferenceSnapshot = {
+    kind: "reference",
+    original: value,
+    prototype: Object.getPrototypeOf(value),
+    extensible: Object.isExtensible(value),
+    keys: [],
+    descriptors: [],
+  };
+  snapshots.set(value, snapshot);
+
+  for (const key of Reflect.ownKeys(value)) {
+    snapshot.keys.push(key);
+    const descriptor = Object.getOwnPropertyDescriptor(value, key)!;
+    if ("value" in descriptor) {
+      snapshot.descriptors.push({
+        kind: "data",
+        key,
+        configurable: descriptor.configurable,
+        enumerable: descriptor.enumerable,
+        writable: descriptor.writable,
+        value: snapshotCompleteInput(descriptor.value, snapshots),
+      });
+    } else {
+      snapshot.descriptors.push({
+        kind: "accessor",
+        key,
+        configurable: descriptor.configurable,
+        enumerable: descriptor.enumerable,
+        get: snapshotCompleteInput(descriptor.get, snapshots),
+        set: snapshotCompleteInput(descriptor.set, snapshots),
+      });
+    }
+  }
+
+  return snapshot;
+}
+
+function expectCompleteInputUnchanged(
+  actual: unknown,
+  snapshot: CompleteInputValueSnapshot,
+  compared = new Set<CompleteInputReferenceSnapshot>()
+): void {
+  if (snapshot.kind === "primitive") {
+    expect(actual).toBe(snapshot.value);
+    return;
+  }
+
+  expect(actual).toBe(snapshot.original);
+  if (!isObjectReference(actual) || compared.has(snapshot)) return;
+  compared.add(snapshot);
+
+  expect(Object.getPrototypeOf(actual)).toBe(snapshot.prototype);
+  expect(Object.isExtensible(actual)).toBe(snapshot.extensible);
+  const actualKeys = Reflect.ownKeys(actual);
+  expect(actualKeys).toHaveLength(snapshot.keys.length);
+  for (let index = 0; index < snapshot.keys.length; index += 1) {
+    const key = snapshot.keys[index]!;
+    expect(actualKeys[index]).toBe(key);
+    const actualDescriptor = Object.getOwnPropertyDescriptor(actual, key);
+    const descriptorSnapshot = snapshot.descriptors[index]!;
+    expect(descriptorSnapshot.key).toBe(key);
+    expect(actualDescriptor).toBeDefined();
+    if (actualDescriptor === undefined) continue;
+
+    expect({
+      configurable: actualDescriptor.configurable,
+      enumerable: actualDescriptor.enumerable,
+    }).toEqual({
+      configurable: descriptorSnapshot.configurable,
+      enumerable: descriptorSnapshot.enumerable,
+    });
+    if (descriptorSnapshot.kind === "data") {
+      expect("value" in actualDescriptor).toBe(true);
+      if (!("value" in actualDescriptor)) continue;
+      expect(actualDescriptor.writable).toBe(descriptorSnapshot.writable);
+      expectCompleteInputUnchanged(actualDescriptor.value, descriptorSnapshot.value, compared);
+    } else {
+      expect("value" in actualDescriptor).toBe(false);
+      if ("value" in actualDescriptor) continue;
+      expectCompleteInputUnchanged(actualDescriptor.get, descriptorSnapshot.get, compared);
+      expectCompleteInputUnchanged(actualDescriptor.set, descriptorSnapshot.set, compared);
+    }
+  }
+}
+
+function expectRecursivelyFrozenWithoutAliases(value: unknown, seen = new Set<object>()): void {
+  if ((typeof value !== "object" && typeof value !== "function") || value === null) return;
+  expect(seen.has(value)).toBe(false);
+  seen.add(value);
+  expect(Object.isFrozen(value)).toBe(true);
+  for (const child of Object.values(value)) expectRecursivelyFrozenWithoutAliases(child, seen);
+}
+
+function expectStructurallyEqualButFresh(left: unknown, right: unknown): void {
+  expect(right).toEqual(left);
+  if (
+    (typeof left !== "object" && typeof left !== "function") ||
+    left === null ||
+    (typeof right !== "object" && typeof right !== "function") ||
+    right === null
+  ) {
+    return;
+  }
+  expect(right).not.toBe(left);
+  const leftEntries = Object.entries(left);
+  const rightRecord = right as Record<string, unknown>;
+  expect(Object.keys(rightRecord)).toEqual(leftEntries.map(([key]) => key));
+  for (const [key, leftValue] of leftEntries) {
+    expectStructurallyEqualButFresh(leftValue, rightRecord[key]);
+  }
+}
+
+interface ClosedSchemaCase {
+  readonly name: string;
+  readonly schema: TSchema;
+  readonly value: object;
+  readonly requiredKey: string;
+}
+
+function closedSchemaCase<Schema extends TSchema>(
+  name: string,
+  schema: Schema,
+  value: Static<Schema>,
+  requiredKey: Extract<keyof Static<Schema>, string>
+): ClosedSchemaCase {
+  return { name, schema, value: value as object, requiredKey };
+}
+
+function withoutOwnKey(value: object, key: string): object {
+  const copy = { ...value } as Record<string, unknown>;
+  expect(Reflect.deleteProperty(copy, key)).toBe(true);
+  return copy;
+}
+
+function expectCompiledPlanOrder(plan: CompiledProcessPlan): void {
+  expectCanonicalTupleOrder(plan.roles, (role) => [role]);
+  expectCanonicalTupleOrder(plan.resourceRequirements, (requirement) => [
+    requirement.requirementId,
+  ]);
+  expectCanonicalTupleOrder(plan.providerSelections, (selection) => [selection.selectionId]);
+  expectCanonicalTupleOrder(plan.providerDependencyGraph.nodes, (node) => [node.selectionId]);
+  expectCanonicalTupleOrder(plan.providerDependencyGraph.edges, (edge) => [
+    edge.fromSelectionId,
+    edge.requirementId,
+    edge.toSelectionId,
+  ]);
+  expectCanonicalTupleOrder(plan.providerDependencyGraph.closure, (closure) => [
+    closure.selectionId,
+  ]);
+  for (const closure of plan.providerDependencyGraph.closure) {
+    expectCanonicalTupleOrder(closure.reachableSelectionIds, (selectionId) => [selectionId]);
+  }
+  expectCanonicalTupleOrder(plan.compiledResources, (resource) => [resource.selectionId]);
+  for (const resource of plan.compiledResources) {
+    expectCanonicalTupleOrder(resource.requirementIds, (requirementId) => [requirementId]);
+    expectCanonicalTupleOrder(resource.dependencyRequirementIds, (requirementId) => [
+      requirementId,
+    ]);
+  }
+  expectCanonicalTupleOrder(plan.serviceBindings, (binding) => [binding.bindingId]);
+  for (const binding of plan.serviceBindings) {
+    expectCanonicalTupleOrder(binding.resources, (resource) => [
+      resource.requirementId,
+      resource.selectionId,
+    ]);
+    expectCanonicalTupleOrder(binding.serviceBindingIds, (bindingId) => [bindingId]);
+    expectCanonicalTupleOrder(binding.semanticDependencyIds, (dependencyId) => [dependencyId]);
+  }
+  expectCanonicalTupleOrder(plan.surfaces, (surface) => [surface.surfacePlanId]);
+  for (const surface of plan.surfaces) {
+    expectCanonicalTupleOrder(surface.serviceBindingIds, (bindingId) => [bindingId]);
+    expectCanonicalTupleOrder(surface.resources, (resource) => [
+      resource.requirementId,
+      resource.selectionId,
+    ]);
+    expectCanonicalTupleOrder(surface.workflowDispatcherIds, (descriptorId) => [descriptorId]);
+    expectCanonicalTupleOrder(surface.executionDescriptorRefs, executionRefOrderTuple);
+    expectCanonicalTupleOrder(surface.webRouteModuleRefs, (ref) => [
+      ref.ownerId,
+      ref.routeId,
+      ref.path,
+    ]);
+  }
+  expectCanonicalTupleOrder(plan.workflowDispatchers, (dispatcher) => [dispatcher.descriptorId]);
+  for (const dispatcher of plan.workflowDispatchers) {
+    expectCanonicalTupleOrder(dispatcher.workflowIds, (workflowId) => [workflowId]);
+  }
+  expectCanonicalTupleOrder(plan.executionPlans, ({ ref }) => executionRefOrderTuple(ref));
+  expectCanonicalTupleOrder(plan.executionRegistryInput.boundaries, ({ ref }) =>
+    executionRefOrderTuple(ref)
+  );
+  for (const boundary of plan.executionRegistryInput.boundaries) {
+    expect(boundary.executionId).toBe(boundary.ref.executionId);
+  }
+  expectCanonicalTupleOrder(plan.harnesses, (harness) => [harness.harnessId]);
+  expectCanonicalTupleOrder(plan.bootgraphInput.nodes, (node) => [node.selectionId]);
+  expectCanonicalTupleOrder(plan.bootgraphInput.edges, (edge) => [
+    edge.fromSelectionId,
+    edge.requirementId,
+    edge.toSelectionId,
+  ]);
 }
 
 function sortFindings(
@@ -153,7 +651,13 @@ function makeFixture(): RuntimeCompilationInput {
   return { entrypoint, graph };
 }
 
-function makeProcessClosureFixture(options: { readonly processHarness?: string } = {}) {
+function makeProcessClosureFixture(
+  options: {
+    readonly authoredOrder?: "mixed" | "reverse";
+    readonly configured?: boolean;
+    readonly processHarness?: string;
+  } = {}
+) {
   let definitionCalls = 0;
   let effectCalls = 0;
   let loaderCalls = 0;
@@ -186,6 +690,35 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
       schemaCalls += 1;
       throw new Error("The compiler projected a cold workflow schema.");
     },
+  };
+  const authoredConfigSources = [
+    { kind: "test" as const },
+    { kind: "env" as const, prefix: "FIXTURE_" },
+    { kind: "file" as const, path: "runtime/compiler.json", optional: true },
+  ] as const;
+  const normalizedConfigSources = [
+    { kind: "test" as const },
+    { kind: "env" as const, prefix: "FIXTURE_" },
+    { kind: "file" as const, path: "runtime/compiler.json", optional: true },
+  ] as const;
+  const providerConfigKey = "fixture.selected.plugin-provider";
+  const providerConfigRef = {
+    kind: "runtime.config-ref" as const,
+    key: providerConfigKey,
+    sources: [
+      { kind: "runtime.config.test" as const, key: providerConfigKey },
+      {
+        kind: "runtime.config.env" as const,
+        key: providerConfigKey,
+        name: `FIXTURE_${providerConfigKey}`,
+      },
+      {
+        kind: "runtime.config.file" as const,
+        key: providerConfigKey,
+        path: "runtime/compiler.json",
+        optional: true,
+      },
+    ],
   };
 
   const selectedPluginResource = defineRuntimeResource<string, unknown>({
@@ -249,10 +782,18 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
       return Effect.succeed("delivered");
     },
   });
+  const selectedArchiveStep = defineAsyncStepEffect({
+    id: "archive",
+    policy: { interruptible: false },
+    effect: () => {
+      effectCalls += 1;
+      return Effect.succeed("archived");
+    },
+  });
   const selectedWorkflow = defineWorkflow({
     id: "fixture.selected.workflow",
     inputSchema: processClosureInputSchema,
-    steps: [selectedStep] as const,
+    steps: [selectedStep, selectedArchiveStep] as const,
   });
   const asyncPlugin = defineAsyncWorkflowPlugin.factory()({
     capability: "selected-jobs",
@@ -313,6 +854,7 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
     title: "Selected plugin provider",
     provides: selectedPluginResource,
     requires: [],
+    ...(options.configured ? { configSchema: processClosureInputSchema } : {}),
   };
   const selectedServiceProvider: RuntimeProvider = {
     kind: "runtime.provider",
@@ -328,32 +870,55 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
     provides: unrelatedServerResource,
     requires: [],
   };
+  const selectedPluginProviderSelection = providerSelection({
+    resource: selectedPluginResource,
+    provider: selectedPluginProvider,
+    ...(options.configured
+      ? { config: { kind: "runtime.config" as const, key: providerConfigKey } }
+      : {}),
+  });
+  const selectedServiceProviderSelection = providerSelection({
+    resource: selectedServiceResource,
+    provider: selectedServiceProvider,
+  });
+  const unrelatedServerProviderSelection = providerSelection({
+    resource: unrelatedServerResource,
+    provider: unrelatedServerProvider,
+  });
+  const authoredProviders =
+    options.authoredOrder === "reverse"
+      ? ([
+          selectedPluginProviderSelection,
+          selectedServiceProviderSelection,
+          unrelatedServerProviderSelection,
+        ] as const)
+      : ([
+          unrelatedServerProviderSelection,
+          selectedServiceProviderSelection,
+          selectedPluginProviderSelection,
+        ] as const);
   const profile = defineRuntimeProfile({
     id: "fixture.process-closure-profile",
-    providers: [
-      providerSelection({
-        resource: unrelatedServerResource,
-        provider: unrelatedServerProvider,
-      }),
-      providerSelection({
-        resource: selectedServiceResource,
-        provider: selectedServiceProvider,
-      }),
-      providerSelection({
-        resource: selectedPluginResource,
-        provider: selectedPluginProvider,
-      }),
-    ] as const,
+    providers: authoredProviders,
+    configSources: options.configured ? authoredConfigSources : [],
     harnesses: ["harness.profile", "harness.shared"],
   });
+  const authoredPlugins =
+    options.authoredOrder === "reverse"
+      ? ([asyncPlugin, cliPlugin, webPlugin, unrelatedServerPlugin] as const)
+      : ([unrelatedServerPlugin, webPlugin, cliPlugin, asyncPlugin] as const);
   const app = defineApp({
     id: "fixture.process-closure-app",
-    plugins: [unrelatedServerPlugin, webPlugin, cliPlugin, asyncPlugin] as const,
+    plugins: authoredPlugins,
   });
+  const authoredRoles =
+    options.authoredOrder === "reverse"
+      ? (["async", "cli", "web"] as const)
+      : (["web", "cli", "async"] as const);
   const process = defineProcessCatalog({
     selected: {
       id: "fixture.process-closure",
-      roles: ["web", "cli", "async"] as const,
+      roles: authoredRoles,
       harness: options.processHarness ?? "harness.process",
     },
   }).selected;
@@ -568,6 +1133,21 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
     executionId: executionDescriptorId(asyncExecutionIdentity),
     ...asyncExecutionIdentity,
   };
+  const asyncArchiveExecutionIdentity = {
+    boundary: "plugin.async-step" as const,
+    ownerId: asyncOwnerId,
+    workflowId: selectedWorkflow.id,
+    stepId: selectedArchiveStep.id,
+  };
+  const asyncArchiveExecutionRef = {
+    kind: "execution.descriptor-ref" as const,
+    executionId: executionDescriptorId(asyncArchiveExecutionIdentity),
+    ...asyncArchiveExecutionIdentity,
+  };
+  const selectedExecutionRefs = sortByTuple(
+    [asyncExecutionRef, asyncArchiveExecutionRef],
+    executionRefOrderTuple
+  );
   const webRouteRef = {
     kind: "web.route-module-ref" as const,
     ownerId: webOwnerId,
@@ -633,7 +1213,7 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
     serviceBindingIds: [selectedRootBinding.bindingId],
     resourceRequirementIds: [selectedPluginRequirementId],
     workflowDispatcherDescriptorIds: [workflowDescriptor.descriptorId],
-    executionDescriptorRefs: [asyncExecutionRef],
+    executionDescriptorRefs: selectedExecutionRefs,
     webRouteModuleRefs: [],
   };
   const cliSurfaceIdentity = {
@@ -761,9 +1341,11 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
     selectionId: providerSelectionId({
       providerId: selectedPluginProvider.id,
       resource: selectedPluginResourceIdentity,
+      ...(options.configured ? { configRef: providerConfigRef } : {}),
     }),
     providerId: selectedPluginProvider.id,
     resource: selectedPluginResourceIdentity,
+    ...(options.configured ? { configRef: providerConfigRef } : {}),
   };
   const selectedServiceSelection = {
     kind: "normalized.provider-selection" as const,
@@ -934,7 +1516,7 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
       kind: "normalized.runtime-profile",
       profileId: profile.id,
       providerSelections: normalizedProviderSelections,
-      configSources: [],
+      configSources: options.configured ? normalizedConfigSources : [],
       harnesses: ["harness.profile", "harness.shared"],
     },
     serviceBindingPlans: sortByTuple(
@@ -946,12 +1528,10 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
       [workflowDescriptor, unrelatedWorkflowDescriptor],
       (descriptor) => [descriptor.descriptorId]
     ),
-    executionDescriptorRefs: sortByTuple([asyncExecutionRef, unrelatedExecutionRef], (ref) => [
-      ref.boundary,
-      ref.ownerId,
-      ref.workflowId,
-      ref.stepId,
-    ]),
+    executionDescriptorRefs: sortByTuple(
+      [asyncExecutionRef, asyncArchiveExecutionRef, unrelatedExecutionRef],
+      executionRefOrderTuple
+    ),
     webRouteModuleRefs: sortByTuple([webRouteRef, unrelatedWebRouteRef], (ref) => [
       ref.ownerId,
       ref.routeId,
@@ -970,6 +1550,11 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
       projectCalls,
       schemaCalls,
     }),
+    config: {
+      authoredSources: options.configured ? authoredConfigSources : [],
+      normalizedSources: options.configured ? normalizedConfigSources : [],
+      providerRef: options.configured ? providerConfigRef : undefined,
+    },
     providers: {
       selectedPlugin: selectedPluginProvider,
       selectedService: selectedServiceProvider,
@@ -987,6 +1572,7 @@ function makeProcessClosureFixture(options: { readonly processHarness?: string }
       unrelatedRoot,
     },
     facts: {
+      asyncArchiveExecutionRef,
       asyncExecutionRef,
       asyncSurface,
       cliSurface,
@@ -1408,7 +1994,7 @@ describe("compileRuntimePlan", () => {
         },
       ],
       workflowDispatcherIds: [facts.workflowDescriptor.descriptorId],
-      executionDescriptorRefs: [facts.asyncExecutionRef],
+      executionDescriptorRefs: facts.asyncSurface.executionDescriptorRefs,
       webRouteModuleRefs: [],
     });
     expect(surfaces.get(facts.cliSurface.surfacePlanId)).toEqual({
@@ -1573,6 +2159,11 @@ describe("compileRuntimePlan", () => {
     expect(result.plan.executionPlans).toEqual([
       {
         kind: "compiled.execution-plan",
+        ref: facts.asyncArchiveExecutionRef,
+        policy: { interruptible: false },
+      },
+      {
+        kind: "compiled.execution-plan",
         ref: facts.asyncExecutionRef,
         policy: { interruptible: true },
       },
@@ -1580,6 +2171,10 @@ describe("compileRuntimePlan", () => {
     expect(result.plan.executionRegistryInput).toEqual({
       kind: "compiled.execution-registry-input",
       boundaries: [
+        {
+          executionId: facts.asyncArchiveExecutionRef.executionId,
+          ref: facts.asyncArchiveExecutionRef,
+        },
         {
           executionId: facts.asyncExecutionRef.executionId,
           ref: facts.asyncExecutionRef,
@@ -1738,6 +2333,364 @@ describe("compileRuntimePlan", () => {
       { kind: "compiled.harness-plan", harnessId: "harness.shared" },
     ]);
     expect(fixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+  });
+
+  test("keeps all sixteen exported DTO types exact and their schemas closed", () => {
+    const processFixture = makeProcessClosureFixture();
+    const providerFixture = makeProviderBranchFixture();
+    const processResult = compileRuntimePlan(processFixture.input);
+    const providerResult = compileRuntimePlan(providerFixture.input);
+    const processSurface = processResult.plan.surfaces.find(
+      (surface) => surface.resources.length > 0
+    );
+    const providerSurface = providerResult.plan.surfaces.find(
+      (surface) => surface.resources.length > 0
+    );
+
+    const representatives = {
+      bootgraphInput: providerResult.plan.bootgraphInput,
+      compilationObservationSeed: processResult.observationSeed,
+      compiledExecutableBoundaryInput: processResult.plan.executionRegistryInput.boundaries[0],
+      compiledExecutionPlan: processResult.plan.executionPlans[0],
+      compiledExecutionRegistryInput: processResult.plan.executionRegistryInput,
+      compiledHarnessPlan: processResult.plan.harnesses[0],
+      compiledProcessPlan: processResult.plan,
+      compiledResourceBinding: providerSurface?.resources[0],
+      compiledResourcePlan: providerResult.plan.compiledResources[0],
+      compiledServiceBindingPlan: processResult.plan.serviceBindings[0],
+      compiledSurfacePlan: processSurface,
+      compiledWorkflowDispatcherPlan: processResult.plan.workflowDispatchers[0],
+      providerDependencyClosure: providerResult.plan.providerDependencyGraph.closure[0],
+      providerDependencyEdge: providerResult.plan.providerDependencyGraph.edges[0],
+      providerDependencyGraph: providerResult.plan.providerDependencyGraph,
+      providerDependencyNode: providerResult.plan.providerDependencyGraph.nodes[0],
+    } as const;
+    for (const [name, value] of Object.entries(representatives)) {
+      expect({ name, exists: value !== undefined }).toEqual({ name, exists: true });
+    }
+
+    const schemaCases = [
+      closedSchemaCase(
+        "CompiledResourceBinding",
+        CompiledResourceBindingSchema,
+        representatives.compiledResourceBinding!,
+        "requirementId"
+      ),
+      closedSchemaCase(
+        "ProviderDependencyNode",
+        ProviderDependencyNodeSchema,
+        representatives.providerDependencyNode!,
+        "selectionId"
+      ),
+      closedSchemaCase(
+        "ProviderDependencyEdge",
+        ProviderDependencyEdgeSchema,
+        representatives.providerDependencyEdge!,
+        "fromSelectionId"
+      ),
+      closedSchemaCase(
+        "ProviderDependencyClosure",
+        ProviderDependencyClosureSchema,
+        representatives.providerDependencyClosure!,
+        "selectionId"
+      ),
+      closedSchemaCase(
+        "ProviderDependencyGraph",
+        ProviderDependencyGraphSchema,
+        representatives.providerDependencyGraph,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledResourcePlan",
+        CompiledResourcePlanSchema,
+        representatives.compiledResourcePlan!,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledServiceBindingPlan",
+        CompiledServiceBindingPlanSchema,
+        representatives.compiledServiceBindingPlan!,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledSurfacePlan",
+        CompiledSurfacePlanSchema,
+        representatives.compiledSurfacePlan!,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledWorkflowDispatcherPlan",
+        CompiledWorkflowDispatcherPlanSchema,
+        representatives.compiledWorkflowDispatcherPlan!,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledExecutionPlan",
+        CompiledExecutionPlanSchema,
+        representatives.compiledExecutionPlan!,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledExecutableBoundaryInput",
+        CompiledExecutableBoundaryInputSchema,
+        representatives.compiledExecutableBoundaryInput!,
+        "executionId"
+      ),
+      closedSchemaCase(
+        "CompiledExecutionRegistryInput",
+        CompiledExecutionRegistryInputSchema,
+        representatives.compiledExecutionRegistryInput,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledHarnessPlan",
+        CompiledHarnessPlanSchema,
+        representatives.compiledHarnessPlan!,
+        "kind"
+      ),
+      closedSchemaCase(
+        "BootgraphInput",
+        BootgraphInputSchema,
+        representatives.bootgraphInput,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompilationObservationSeed",
+        CompilationObservationSeedSchema,
+        representatives.compilationObservationSeed,
+        "kind"
+      ),
+      closedSchemaCase(
+        "CompiledProcessPlan",
+        CompiledProcessPlanSchema,
+        representatives.compiledProcessPlan,
+        "kind"
+      ),
+    ] as const;
+
+    expect(Object.keys(EXACT_COMPILER_DTO_TYPE_ORACLES)).toHaveLength(16);
+    expect(Object.values(EXACT_COMPILER_DTO_TYPE_ORACLES).every(Boolean)).toBe(true);
+    expect(Object.keys(DEEP_READONLY_COMPILER_DTO_TYPE_ORACLES)).toHaveLength(16);
+    expect(Object.values(DEEP_READONLY_COMPILER_DTO_TYPE_ORACLES).every(Boolean)).toBe(true);
+    expect(schemaCases).toHaveLength(16);
+    for (const schemaCase of schemaCases) {
+      const surplus = { ...schemaCase.value, forbiddenCompilerField: true };
+      const missing = withoutOwnKey(schemaCase.value, schemaCase.requiredKey);
+      const malformed = { ...schemaCase.value, [schemaCase.requiredKey]: null };
+
+      expect({
+        name: schemaCase.name,
+        accepted: Check(schemaCase.schema, schemaCase.value),
+      }).toEqual({ name: schemaCase.name, accepted: true });
+      expect({ name: schemaCase.name, rejected: !Check(schemaCase.schema, surplus) }).toEqual({
+        name: schemaCase.name,
+        rejected: true,
+      });
+      expect({ name: schemaCase.name, rejected: !Check(schemaCase.schema, missing) }).toEqual({
+        name: schemaCase.name,
+        rejected: true,
+      });
+      expect({ name: schemaCase.name, rejected: !Check(schemaCase.schema, malformed) }).toEqual({
+        name: schemaCase.name,
+        rejected: true,
+      });
+    }
+    expect(processFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+    expect(providerFixture.counters()).toEqual({ projectCalls: 0 });
+  });
+
+  test("is deterministic across equivalent authored app, provider, plugin, and role orders", () => {
+    const mixed = makeProcessClosureFixture({ authoredOrder: "mixed", configured: true });
+    const reverse = makeProcessClosureFixture({ authoredOrder: "reverse", configured: true });
+
+    expect(mixed.input.entrypoint.app.plugins.map(({ id }) => id)).not.toEqual(
+      reverse.input.entrypoint.app.plugins.map(({ id }) => id)
+    );
+    expect(mixed.input.entrypoint.profile.providers.map(({ provider }) => provider.id)).not.toEqual(
+      reverse.input.entrypoint.profile.providers.map(({ provider }) => provider.id)
+    );
+    expect(mixed.input.entrypoint.process.roles).not.toEqual(
+      reverse.input.entrypoint.process.roles
+    );
+    expect(reverse.input.graph).toEqual(mixed.input.graph);
+
+    const mixedResult = compileRuntimePlan(mixed.input);
+    const reverseResult = compileRuntimePlan(reverse.input);
+
+    expect(reverseResult.plan).toEqual(mixedResult.plan);
+    expect(reverseResult.observationSeed).toEqual(mixedResult.observationSeed);
+    expect(reverseResult.references).not.toBe(mixedResult.references);
+    expect(reverseResult.references.providerEntries()[0]?.[1]).not.toBe(
+      mixedResult.references.providerEntries()[0]?.[1]
+    );
+    expect(reverseResult.references.serviceEntries()[0]?.[1]).not.toBe(
+      mixedResult.references.serviceEntries()[0]?.[1]
+    );
+    expect(mixed.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+    expect(reverse.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+  });
+
+  test("returns fresh recursively frozen DTO trees without freezing cold references", () => {
+    const firstFixture = makeProcessClosureFixture({ authoredOrder: "mixed", configured: true });
+    const secondFixture = makeProcessClosureFixture({ authoredOrder: "reverse", configured: true });
+    const providerFixture = makeProviderBranchFixture();
+    const first = compileRuntimePlan(firstFixture.input);
+    const second = compileRuntimePlan(secondFixture.input);
+    const providerResult = compileRuntimePlan(providerFixture.input);
+
+    expectStructurallyEqualButFresh(first.plan, second.plan);
+    expectStructurallyEqualButFresh(first.observationSeed, second.observationSeed);
+    expectRecursivelyFrozenWithoutAliases(first.plan);
+    expectRecursivelyFrozenWithoutAliases(first.observationSeed);
+    expectRecursivelyFrozenWithoutAliases(second.plan);
+    expectRecursivelyFrozenWithoutAliases(second.observationSeed);
+    expectRecursivelyFrozenWithoutAliases(providerResult.plan);
+    expect(Object.isFrozen(first)).toBe(true);
+    expect(Object.isFrozen(second)).toBe(true);
+
+    const firstInputReferences = collectObjectReferences(firstFixture.input);
+    const firstDtoReferences = collectObjectReferences({
+      plan: first.plan,
+      observationSeed: first.observationSeed,
+    });
+    expect(firstDtoReferences.size).toBeGreaterThan(20);
+    for (const reference of firstDtoReferences) {
+      expect(firstInputReferences.has(reference)).toBe(false);
+    }
+    const planReferences = collectObjectReferences(first.plan);
+    const seedReferences = collectObjectReferences(first.observationSeed);
+    for (const reference of seedReferences) expect(planReferences.has(reference)).toBe(false);
+    const providerInputReferences = collectObjectReferences(providerFixture.input);
+    const providerPlanReferences = collectObjectReferences(providerResult.plan);
+    expect(providerPlanReferences.size).toBeGreaterThan(20);
+    for (const reference of providerPlanReferences) {
+      expect(providerInputReferences.has(reference)).toBe(false);
+    }
+
+    const forbiddenResultKey: ForbiddenCompilationResultKey | undefined = undefined;
+    const forbiddenPlanKey: ForbiddenCompiledPlanKey | undefined = undefined;
+    expect(forbiddenResultKey).toBeUndefined();
+    expect(forbiddenPlanKey).toBeUndefined();
+    expect(Object.keys(first)).toEqual(["plan", "references", "observationSeed"]);
+    expect(first).not.toHaveProperty("findings");
+    expect(first).not.toHaveProperty("diagnostics");
+    expect(first.plan).not.toHaveProperty("findings");
+    expect(first.plan).not.toHaveProperty("diagnostics");
+    expect(first.plan).not.toHaveProperty("observationSeed");
+    expect(runtimeCompiler).not.toHaveProperty("CompilationFinding");
+    expect(Check(CompiledProcessPlanSchema, { ...first.plan, findings: [] })).toBe(false);
+    expect(
+      Check(CompiledProcessPlanSchema, { ...first.plan, observationSeed: first.observationSeed })
+    ).toBe(false);
+
+    expect(first.references.getProvider(firstFixture.selections.selectedPlugin.selectionId)).toBe(
+      firstFixture.providers.selectedPlugin
+    );
+    expect(first.references.getService(firstFixture.facts.selectedRootBinding.bindingId)).toBe(
+      firstFixture.services.selectedRoot
+    );
+    expect(Object.isFrozen(firstFixture.providers.selectedPlugin)).toBe(false);
+    expect(Object.isFrozen(firstFixture.providers.selectedService)).toBe(false);
+    expect(Object.isFrozen(firstFixture.services.selectedLeaf)).toBe(false);
+    expect(Object.isFrozen(firstFixture.services.selectedRoot)).toBe(false);
+    expect(firstFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+    expect(secondFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+    expect(providerFixture.counters()).toEqual({ projectCalls: 0 });
+  });
+
+  test("orders every plan and seed DTO collection by its exact behavior tuple", () => {
+    const processFixture = makeProcessClosureFixture({ configured: true });
+    const providerFixture = makeProviderBranchFixture();
+    const processResult = compileRuntimePlan(processFixture.input);
+    const providerResult = compileRuntimePlan(providerFixture.input);
+
+    expectCompiledPlanOrder(processResult.plan);
+    expectCompiledPlanOrder(providerResult.plan);
+    expectCanonicalTupleOrder(processResult.observationSeed.roles, (role) => [role]);
+    expectCanonicalTupleOrder(providerResult.observationSeed.roles, (role) => [role]);
+
+    const configuredSelection = processResult.plan.providerSelections.find(
+      (selection) => selection.configRef !== undefined
+    );
+    const configuredResource = processResult.plan.compiledResources.find(
+      (resource) => resource.configRef !== undefined
+    );
+    expect(configuredSelection?.configRef).toBeDefined();
+    expect(configuredResource?.configRef).toBeDefined();
+    expect(processFixture.config.providerRef).toBeDefined();
+    expectAuthoredOrder(
+      configuredSelection!.configRef!.sources,
+      processFixture.config.providerRef!.sources,
+      (source) => [source.kind, source.key]
+    );
+    expectAuthoredOrder(
+      configuredResource!.configRef!.sources,
+      processFixture.config.providerRef!.sources,
+      (source) => [source.kind, source.key]
+    );
+    expect(configuredSelection!.configRef!.sources.map(({ kind }) => kind)).not.toEqual(
+      [...configuredSelection!.configRef!.sources]
+        .sort((left, right) => compareStrings(left.kind, right.kind))
+        .map(({ kind }) => kind)
+    );
+
+    expect(processResult.plan.roles.length).toBeGreaterThan(1);
+    expect(processResult.plan.serviceBindings.length).toBeGreaterThan(1);
+    expect(processResult.plan.surfaces.length).toBeGreaterThan(1);
+    expect(processResult.plan.harnesses.length).toBeGreaterThan(1);
+    expect(
+      processResult.plan.surfaces.some(
+        ({ executionDescriptorRefs }) => executionDescriptorRefs.length > 1
+      )
+    ).toBe(true);
+    expect(processResult.plan.executionPlans.length).toBeGreaterThan(1);
+    expect(processResult.plan.executionRegistryInput.boundaries.length).toBeGreaterThan(1);
+    expect(providerResult.plan.resourceRequirements.length).toBeGreaterThan(1);
+    expect(providerResult.plan.providerSelections.length).toBeGreaterThan(1);
+    expect(providerResult.plan.providerDependencyGraph.nodes.length).toBeGreaterThan(1);
+    expect(providerResult.plan.providerDependencyGraph.edges.length).toBeGreaterThan(1);
+    expect(providerResult.plan.providerDependencyGraph.closure.length).toBeGreaterThan(1);
+    expect(
+      providerResult.plan.providerDependencyGraph.closure.some(
+        ({ reachableSelectionIds }) => reachableSelectionIds.length > 1
+      )
+    ).toBe(true);
+    expect(providerResult.plan.compiledResources.length).toBeGreaterThan(1);
+    expect(providerResult.plan.surfaces[0]?.resources.length).toBeGreaterThan(1);
+    expect(processFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+    expect(providerFixture.counters()).toEqual({ projectCalls: 0 });
+  });
+
+  test("refuses malformed closed admission before result or downstream work", () => {
+    const fixture = makeProcessClosureFixture({ configured: true });
+    const closedAdmissionGraph = {
+      ...fixture.input.graph,
+      forbiddenCompilerInput: true,
+    } as NormalizedAuthoringGraph;
+    const refusalCases = [{ label: "closed admission", graph: closedAdmissionGraph }] as const;
+
+    for (const refusalCase of refusalCases) {
+      const input = {
+        entrypoint: fixture.input.entrypoint,
+        graph: refusalCase.graph,
+      } satisfies RuntimeCompilationInput;
+      const inputBefore = snapshotCompleteInput(input);
+      let result: RuntimeCompilationResult | undefined;
+      let thrown: unknown;
+      try {
+        result = compileRuntimePlan(input);
+      } catch (error) {
+        thrown = error;
+      }
+
+      expect({ label: refusalCase.label, typeError: thrown instanceof TypeError }).toEqual({
+        label: refusalCase.label,
+        typeError: true,
+      });
+      expect(result).toBeUndefined();
+      expectCompleteInputUnchanged(input, inputBefore);
+      expect(fixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
+    }
   });
 
   test("refuses nonduplicate entrypoint and graph role disagreement", () => {
