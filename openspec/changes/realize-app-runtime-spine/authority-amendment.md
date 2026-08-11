@@ -835,6 +835,12 @@ conformance. Task 7.4 alone runs both provider packages through the real
 substrate to prove single acquisition/release and failure cleanup.
 The later task-6.3b routing entry supersedes only that activation state: task
 6.3b is active and tasks 6.4 and 6.5 remain pending until it lands.
+The later task-6.3c routing entry supersedes only that activation state: task
+6.3c is the sole active documentation-only node, and tasks 6.4 and 6.5 remain
+pending until it lands.
+The later task-6.3d routing entry supersedes only the destination of that future
+seal: task 6.3c remains current until sealed, its receipt activates pending task
+6.3d, and tasks 6.4 and 6.5 remain pending behind that qualification.
 
 Task 6.1 evolves the existing provider root and adds only the provider Effect
 subpath. The provider root exports only runtime value `defineRuntimeProvider`
@@ -1241,6 +1247,141 @@ existing 17+10 corpus, counts, edges, or task-7.4 lifecycle split. Task 6.3b
 MUST stop on a seventh or executable file, a second exact API block, task-6.4
 source, or descriptor/schema/package/project/tsconfig drift from the active
 requirement.
+
+## Task 6.3c Semantic-Ledger Fluree Mechanics Routing
+
+Every preexisting task-6.3a and task-6.3b sentence and receipt above remains
+verbatim. Within activation routing, task 6.3c supersedes only the historical
+activation state and is the sole active documentation-only node. It uses the
+same exact six active OpenSpec
+artifacts: `design.md`, this amendment, `tasks.md`, `execution-queue.md`,
+`classification-ledger.md`, and `specs/app-runtime-realization/spec.md`. That
+`app-runtime-realization` requirement and its scenarios are the sole exact
+mechanics and archive-safe acceptance owner; the other five artifacts only
+route or summarize the correction. No seventh file or task-6.4 source opens,
+and task 6.4 remains pending until task 6.3c lands.
+
+Task 6.3c changes no public API, descriptor, schema, package, project, tsconfig,
+SDK face, dependency relation, count, publication rule, or task-7 boundary. The
+task-6.4 execution corpus remains exactly 17 source files plus ten disjoint
+publication files, hence 27 files and never a 28th. Its two-owner topology,
+27-to-29 project count, 49-to-56 typed-edge count, six direct source relations,
+root workspace relation, finite exports, and task-7.4-only live lifecycle proof
+remain unchanged.
+
+The requirement alone fixes the corrected default-graph merge law. Collision
+exists whenever both sides changed one logical `(subject, predicate)` slot
+after their merge base, even when the resulting object sets are equal; a
+one-sided same-slot change or changes to disjoint predicates on the same subject
+merge. A general merge retains source-local positions, produces the native
+two-parent target head, and unions both histories for reads even when their
+`t` values overlap; it never renumbers incoming positions or reduces the head
+to one parent. Preview `ahead` counts source-only commits, `behind` counts
+target-only commits, and `conflicts` reports the native logical-slot conflict
+count; receipt `copied`, `conflicts`, `fastForward`, and `t` retain the exact
+native meanings routed by the requirement.
+
+Line admission uses exactly one colon between family and branch. Family matches
+`[A-Za-z][A-Za-z0-9.-]{0,127}` and branch matches
+`[A-Za-z0-9][A-Za-z0-9._-]{0,127}`. Every logical IRI uses the requirement's one
+private fixed reversible storage namespace and no second namespace. Validated
+line references alone may enter routes or `FROM`; `lines(...)` returns a frozen
+sorted unique line inventory. Unsafe or noncanonical line input is refused
+before transport.
+
+Proposal content is a canonical RDF triple set. Duplicate or reordered public
+nodes and properties produce the same exact canonical request body; a proposal
+with zero canonical triples is refused. Within one acquired `SemanticLedger`
+lifetime, the provider keys a private pre-send entry by line and identity and
+stores the exact canonical body, write count, and running/indeterminate/settled
+state rather than a digest. The table-owned producer is independent of every
+interruptible caller waiter. Matching bodies share it and a different body is
+refused without a write. The initial deadline permits one initial send and one
+strict-`unknown` replacement before writes close permanently. Determinate
+receipt, typed failure, and defect categories remain memoized; indeterminate
+failure permits only fresh-deadline shared read-only submission recovery, never
+another send. This is not a blind resend and promises nothing across provider
+reacquisition or Fluree restart.
+
+SPARQL generation uses provider-generated aliases and safe IRI and literal
+rendering; it never interpolates a raw caller variable or IRI into syntax.
+Ordinary `SELECT` retains bag projection with no `DISTINCT`, and result rows are
+recursively frozen. Route, method, status, response shape, safe-integer
+positions/counters, and the flake-less sentinel are decoded strictly. A zero
+write aggregate is refusal rather than an applied receipt, and no absent or
+malformed numeric field defaults to zero.
+
+Task-6.4 proof MUST use a throwing, counting `globalThis.fetch` getter to show
+that both static import and provider `build(...)` perform zero fetch reads,
+beside the existing coldness and private driver/conformance allocation. Task
+6.3c and task 6.4 MUST stop on subject-wide conflict, position renumbering, a
+one-parent general merge, `DISTINCT`, an extra storage namespace, raw caller
+IRI or variable interpolation, an unsafe line, blind resend, a durable restart
+claim, body-digest memoization, lenient route/status/shape/integer/sentinel
+decoding, accepted zero triples or a zero write aggregate, any import/build
+fetch read, a seventh authority document, or a 28th implementation file.
+
+Task 6.3c also records a vendor-runtime blocker that supersedes every preceding
+implication that official `fluree/server:4.1.4` can realize this unrestricted
+neutral merge law. Exact refs
+`v4.1.4@07316fa440548247e8985215b8151965d2c72726`,
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, and upstream
+`main@a85e0368285575204d75227742ac9d8ee5d1f0a7` observed on 2026-08-11
+retain byte-identical relevant merge/preview/commit/delta files and numeric
+`ancestor.t` cutoffs in native preview/merge delta, source-replay, and
+copy-chain walks. Because general merge preserves source-local `t`, nested,
+cousin, reverse, and repeated histories can omit reachable commits, miss
+conflicts, and lose facts. The exact HEAD source is the matching
+branch-list `BranchInfo.t`, never `/log` or an ambiguous `/info` projection.
+No process- or acquisition-local epoch, preflight, single-actor condition,
+sequence assumption, or degraded no-merge behavior may narrow the public law.
+The existing 27-file task-6.4 work in progress is therefore inadmissible. Task
+6.3c remains the current documentation-only node until sealed, and its receipt
+MUST activate task 6.3d rather than task 6.4.
+
+## Task 6.3d Fluree Artifact Qualification Routing
+
+Task 6.3d is pending after task 6.3c and before task 6.4. It is a
+documentation/evidence-only qualification across the same exact six OpenSpec
+artifacts and no seventh file. It changes no source, test, publication,
+project, proposal, stack cut sheet, canonical/system document, owner router,
+manifest, lockfile, SDK file, runtime behavior, stage, commit, or push. It MUST
+select and pin exactly one immutable, reproducible, wire-compatible Fluree
+artifact by upstream tag and commit plus OCI digest and provenance. That
+artifact's native preview `ahead`/`behind`, conflict delta, source replay, and
+copy-chain traversal MUST terminate by ancestor CID or reachable-set membership
+rather than numeric `t`. Source inspection and provenance alone do not qualify
+it: before selection, task 6.3d runs disposable live-image F1 and F2 against the
+exact OCI digest and records the immutable command, image, and outcome evidence
+in the same six-document corpus without repository source/test changes. If no
+such artifact exists or either vector fails, the task stops and requires a later
+owner decision between explicit fail-closed no-merge capability and redesign.
+It promises no local patch or deployment workaround. Before the task seals, no
+Fluree artifact is compatible with task 6.4. Successful qualification routes
+the selected tag, commit, OCI digest, and provenance as task 6.4's sole
+compatibility record and supersedes only every preserved 4.1.4-only/version
+stop; all other pins and package-metadata exclusions remain unchanged. Tasks
+6.4 and 6.5 remain pending behind this gate.
+
+Task 6.3d first executes these vectors through a disposable live probe. When
+task 6.4 eventually opens, its existing provider test file MUST repeat them as
+mandatory live-image proof without adding a file, API, edge, corpus member, or
+count. F1 drives source to high `t` and target to low `t`, performs a
+clean general merge whose target head is below imported source `t`, proves HEAD
+from the exact branch-list `BranchInfo.t`, and proves exact source replay and
+counters. F2 forks a descendant from that high-`t` source, creates a bilateral
+same-slot conflict whose target conflict commit is below `ancestor.t`, repeats
+after advancing target above `ancestor.t`, and asserts exact preview
+`ahead`/`behind`/`conflicts`, native abort with no write, and exact
+target-side refusal. An independent F2 source-cutoff arm starts from fresh F1
+history, adds a disjoint fact to the low-`t` merged branch below the high common
+ancestor, advances the original high-`t` line, then requires every reachable
+source-only commit in `ahead`, exact `behind`, zero conflicts,
+`copied === ahead`, source replay, target preservation, target pre-merge
+`t + 1`, and exact two-parent identity. The memory fixture and shared
+conformance remain the neutral oracle; fake HTTP tests prove only codec,
+route/status, and decoder behavior. Task 6.4 retains Promise-level
+waiter/producer proof, while task 7.4 alone owns real Effect interruption.
 
 ## Magic Migration Admission
 

@@ -1906,6 +1906,30 @@ task 6.3b lands. This specification remains the sole exact public API and
 mechanics authority; `tasks.md` is only the routed execution summary, and no
 other artifact may restate these exact mechanics as a second authority.
 
+After task 6.3b is sealed, task 6.3c MUST be the sole active
+documentation-only node. It MUST change exactly the same six OpenSpec artifacts
+named above and no seventh file. It MUST preserve every task-6.3a and task-6.3b
+sentence and receipt verbatim and MUST change no proposal, stack cut sheet,
+canonical/system document, owner router, executable, implementation, source,
+test, project, blueprint, `.habitat` record, manifest, lockfile, SDK file,
+runtime behavior, stage, commit, or push. Task 6.4 MUST remain pending until
+task 6.3c lands. This later clause supersedes only the preserved activation
+state and the earlier claims of subject-wide merge collision, globally exact
+positions after a general merge, durable lost-answer replay, and preserved
+`fluree/server:4.1.4`-only execution compatibility. This
+specification remains the sole exact mechanics and archive-safe acceptance
+authority; the other five artifacts route or summarize it and MUST NOT define a
+second contract.
+
+Task 6.3c MUST remain the current documentation-only correction until sealed.
+Task 6.3d is currently pending. After task 6.3c seals, its receipt MUST activate
+task 6.3d rather than task 6.4, and task 6.3d MUST become the sole active
+documentation/evidence-only qualification across exactly the same six OpenSpec
+artifacts and no seventh file. It MUST change no source, test, publication,
+project, proposal, stack cut sheet, canonical/system document, owner router,
+manifest, lockfile, SDK file, runtime behavior, stage, commit, or push. Tasks 6.4
+and 6.5 MUST remain pending behind task 6.3d.
+
 The sole evidence admitted to task 6.4 MUST be commit
 `77b6c38e8701b8ac9292ef5676385a5e6e096f2`, path
 `resources/semantic-ledger/**`, exact subtree
@@ -2158,6 +2182,178 @@ fail with `MergeConflict` without writes when both sides changed a colliding
 subject. `lines` MUST report the family line heads. No delete, workstream
 policy, or vendor strategy MUST enter the resource contract.
 
+Within the immediately preceding merge paragraph, task 6.3c supersedes only the
+subject-wide collision and globally exact post-merge-position claims.
+Semantic-ledger facts have RDF triple-set semantics in the default graph. A
+merge collision exists when both sides changed
+the same logical `(subject, predicate)` slot after their merge base, regardless
+of whether their resulting object sets are equal or different. A one-sided
+same-slot change and changes to different predicates on the same subject are
+noncolliding. The provider MUST
+use Fluree's native `strategy: "abort"`; a conflicting slot MUST return
+`MergeConflict` atomically with no write. The neutral memory fixture and the
+private HTTP conformance seam MUST independently falsify subject-wide
+collision by merging disjoint predicates on one subject and MUST prove
+source-only and target-only same-slot changes plus bilateral equal-object and
+differing-object refusal.
+
+Merge accounting MUST follow commit ancestry rather than fact count, distinct
+position count, or one stored fork point. `ahead` and `behind` are the counts of
+source-only and target-only commits reachable after the common ancestor. A
+fast-forward copies exactly the missing source commits, creates no synthetic
+commit, sets the target head to the source head, and reports `copied === ahead`
+and `fastForward: true`; an already-current target reports zero copied and also
+creates no commit. A clean non-fast-forward merge imports every source-only
+commit with its source-local `t`, creates exactly one target commit with both
+pre-merge heads as parents at the target's pre-merge `t + 1`, reports that new
+position even when a source-local position is greater, reports
+`copied === ahead` without counting the merge commit, and reports
+`fastForward: false`. Preview and receipt `conflicts` count
+conflicting logical slots. Public `mergeable` MUST be exactly
+`conflicts === 0`, never Fluree's weaker raw `mergeable` field. Repeated,
+reverse, cousin, and nested merges MUST use the same ancestry law, including
+factless merge commits.
+
+Source-local positions therefore can overlap after a non-fast-forward merge.
+Before such a merge, and outside its overlapped positions, `select({ at })`
+addresses the exact reachable history at that position. At an overlapped
+position after the merge, it intentionally evaluates the union of both
+reachable chains through that position; the API makes no exact-commit-address
+or single-chain promise there. Every public `t`, `at`, `ahead`, `behind`,
+`copied`, `conflicts`, and decoded flake count MUST be a finite nonnegative safe
+integer. Numeric strings, fractions, negative values, `NaN`, infinity, and
+missing required numeric members MUST refuse through the typed failure channel.
+
+Task 6.3c additionally supersedes every implication above that pinned official
+`fluree/server:4.1.4` can realize this unrestricted neutral merge law. Exact
+official refs `v4.1.4@07316fa440548247e8985215b8151965d2c72726`,
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, and upstream
+`main@a85e0368285575204d75227742ac9d8ee5d1f0a7` as observed on
+2026-08-11 retain byte-identical relevant files: `fluree-db-api/src/merge.rs`
+blob `ebd0341732d923726f8188efff76be7d992435d5`,
+`fluree-db-api/src/merge_preview.rs` blob
+`5092f20c09d778bc999f0d8499b3e7afdb1a0d14`,
+`fluree-db-core/src/commit.rs` blob
+`842b05315d5d1a6e8dbbe41ca7895f8411d9d279`, and
+`fluree-db-novelty/src/delta.rs` blob
+`1488a94d930d030b3e31e458d196ae5f69b890bc`. Their native preview/merge
+delta, source-replay, and copy-chain walks use numeric `ancestor.t` cutoffs.
+Once a general merge preserves source-local `t`, nested, cousin, reverse, and
+repeated histories can omit reachable commits, miss conflicts, and lose facts.
+No process- or acquisition-local epoch, preflight,
+single-actor condition, sequence assumption, or degraded no-merge behavior MAY
+narrow the public law. The existing 27-file task-6.4 work in progress is
+inadmissible and task 6.4 source MUST remain closed.
+
+Task 6.3d MUST select and pin exactly one immutable, reproducible,
+wire-compatible Fluree artifact by upstream tag and commit plus OCI digest and
+provenance. Its native preview `ahead`/`behind`, conflict delta, source replay,
+and copy-chain traversal MUST terminate by ancestor CID or reachable-set
+membership rather than numeric `t`. Source inspection and provenance alone MUST
+NOT select the artifact. Before selection, task 6.3d MUST run disposable
+live-image F1 and F2 against the exact OCI digest, record the immutable command,
+image, and outcome evidence in the same six-document corpus, and observe every
+required HEAD, ancestry, counter, abort, copy, and parent relation below. If no
+such artifact exists or either live vector fails, task 6.3d MUST stop and
+require a later owner decision between an explicit fail-closed no-merge
+capability and redesign. It MUST NOT invent a local patch or deployment
+promise. Before task 6.3d seals, no Fluree artifact is compatible with task
+6.4. After it seals, its exact tag, commit, OCI digest, and provenance MUST be
+task 6.4's sole Fluree compatibility target and supersede every preserved
+historical `fluree/server:4.1.4`-only execution statement; the existing Node,
+Effect, and TypeBox pins and zero-Fluree-npm-metadata law remain unchanged.
+
+Every operation input MUST be runtime-admitted before state access or
+transport. Each input shell, nested record, term variant, guard, node,
+property, pattern, and response-independent collection MUST have its exact own
+enumerable data fields, ordinary or null prototype as appropriate, and dense
+ordinary arrays; accessors, Proxies, symbols, inherited substitutions, holes,
+surplus members, and wrong variants MUST return `InvalidInput` without invoking
+them. Identity MUST contain 1 through 128 UTF-8 bytes and MUST be an ASCII HTTP
+field value: every code unit is from U+0020 through U+007E and the first and last
+code units are from U+0021 through U+007E. The driver MUST use that exact value
+unchanged in `Idempotency-Key` and MUST apply `encodeURIComponent(identity)`
+exactly once when placing it in the submission-status path. A control,
+non-ASCII value, or leading/trailing space MUST return `InvalidInput` before
+header or URL construction. An empty node is semantically inert, but the
+flattened proposal MUST contain at least one ground triple in aggregate.
+Total-zero proposals MUST return `InvalidInput` before identity reservation,
+state mutation, or fetch.
+
+Term admission MUST respect RDF/SPARQL position rather than only the public
+union shape. Every `GraphNode.id`, graph-property predicate, and `GuardAbsence`
+subject/predicate MUST be a valid logical IRI. A `TriplePattern` subject MUST be
+an IRI or variable, its predicate MUST be an IRI or variable, and only its
+object may also be a literal. A literal in subject or predicate position, an
+invalid variable name, or an invalid IRI MUST return `InvalidInput` before
+state access or fetch.
+
+Proposal sameness MUST be computed from the exact canonical update body, not
+from raw `GraphNode` grouping or an abbreviated digest. The driver and memory
+fixture MUST flatten nodes to ground triples, validate all nodes, sort and
+deduplicate exact triples, canonicalize conditional required and absent clauses
+as conjunction sets, and assign deterministic aliases to their sorted distinct
+logical variable names. Reordering nodes/properties/guard clauses, splitting or
+combining one subject across nodes, or repeating an exact triple/guard clause
+therefore remains the same offer. A different canonical guard or ground-triple
+set under the same line-scoped identity is a different offer and MUST refuse as
+`AlreadyProposed` without a write.
+
+Storage encoding MUST prevent Fluree namespace allocation from becoming a
+second, vendor-only merge-conflict axis. Every logical subject, predicate, and
+IRI object MUST be well-formed Unicode for which `new URL(value)` succeeds with
+a nonempty protocol. Validation MUST NOT normalize the logical string. The
+exact original string MUST be privately mapped to exactly one provider-owned
+namespace with prefix
+`urn:habitat:semantic-ledger:iri:`. Its local token MUST be the complete logical
+IRI's UTF-8 bytes encoded as canonical unpadded base64url. Caller IRIs MUST
+never be interpolated into SPARQL. Query IRI constants MUST use the same
+injective codec. Only a returned SPARQL cell typed `uri` whose value has that
+exact prefix and a canonical valid token may be decoded to a logical IRI;
+malformed, foreign-namespace, or invalid-UTF-8 URI cells MUST return
+`BackendFailed`. Literal cells MUST retain their exact logical value and MUST
+be well-formed Unicode rendered with complete SPARQL string escaping rather
+than interpolation; short escapes cover tab, backspace, line feed, carriage
+return, form feed, quote, and backslash, and every remaining C0/C1 control is
+rendered through its Unicode escape rather than raw syntax.
+The codec MUST add no graph metadata, public symbol, file, commit, or second
+storage namespace.
+
+Logical variable names MUST never be interpolated into SPARQL. The driver MUST
+admit only well-formed names containing 1 through 128 UTF-8 bytes, then
+map the sorted distinct names deterministically to `?v0`, `?v1`, and so on,
+reuse those aliases through patterns and projection, and map returned binding
+keys back to the exact logical names with own-data construction that cannot
+trigger `__proto__` semantics. `SelectQuery.select` MUST be nonempty and contain
+no duplicate name, and every selected name MUST occur as a variable in at least
+one `where` pattern. Projection and every reconstructed binding record MUST
+expose exactly those selected keys in the caller's `SelectQuery.select` order
+even though alias assignment uses sorted distinct logical names. A missing,
+surplus, or unrecognized backend binding cell MUST return
+`BackendFailed`. RDF storage and visible graph matching MUST deduplicate
+identical ground triples, while conjunctive evaluation and projection MUST use
+ordinary bag semantics. The provider MUST emit plain `SELECT`, never `SELECT
+DISTINCT`, and MUST preserve equal projected rows without local deduplication.
+Backend row order is non-authoritative and MUST NOT be sorted.
+Every newly decoded binding record, result record, failure, and array MUST be
+fresh and frozen; the acquisition-local identity table MAY replay its already
+frozen determinate receipt by exact reference as specified below.
+
+Line input MUST be closed before transport or SPARQL construction. A family
+MUST match `[A-Za-z][A-Za-z0-9.-]{0,127}`; a branch MUST match
+`[A-Za-z0-9][A-Za-z0-9._-]{0,127}`; and a line MUST be exactly
+`<family>:<branch>` with one colon. `lines` accepts exactly one bare family.
+An empty segment, extra colon, `@`, slash, whitespace, control character,
+query, fragment, or value outside those grammars MUST return `InvalidInput`
+before fetch. Only the validated line and an optional finite nonnegative safe
+integer `at` may contribute to a SPARQL `FROM` IRI. `fork` MUST require its
+`from` and `to` lines to share one family; `merge` and `previewMerge` MUST
+require their `from` and `into` lines to share one family. A cross-family pair
+MUST return `InvalidInput` before state access or fetch. `lines` MUST return unique
+fresh frozen heads in ascending ECMAScript code-unit order by full line, and a
+duplicate or malformed backend line entry MUST return `BackendFailed` rather
+than be repaired.
+
 `SemanticLedgerFailure` MUST remain a tagged non-`Error` record. Owner-local
 failure construction MUST normalize redacted `detail` to at most 4,096 UTF-16
 code units. When longer, it MUST retain the first 4,093 code units and append
@@ -2290,6 +2486,272 @@ privately recovers and executes this provider's acquire/release through the live
 substrate. `readProviderEffectPlan` remains reserved to runtime-definition
 assembly and the future Effect substrate. Accessor, witness, and bodies remain
 absent from package, SDK, and every public face.
+
+Task 6.3c clarifies that the preceding provider-test restriction governs the
+public-plan suite, not the whole admitted file. Separate private
+driver/conformance suites MUST coexist in the same frozen
+`providers/fluree-http/test/provider.test.ts` and may exercise only the private
+injected-fetch driver seam, without plan access, witness inspection, body
+recovery, or acquire/release execution.
+
+Task 6.3c narrows lost-answer identity recovery to one acquired
+`SemanticLedger` value. The private driver MUST own an acquisition-local table
+keyed by exact `(ledger, identity)`. Each entry MUST retain the exact canonical
+request body, the write-send count, and exactly one state: a running shared
+completion, an indeterminate reservation, or a settled full terminal outcome.
+Before its first write transport call, the first caller MUST atomically install
+the entry and start the table-owned producer. That caller is the creator but is
+only the first waiter. Every later same-body caller is also only a waiter and
+starts no transport. A different-body caller MUST neither await the producer nor
+send a write; it MUST settle as `AlreadyProposed` at a valid non-writing head.
+
+The table-owned producer MUST be independent of every caller lifetime. Task
+6.4's private driver/conformance suite MUST prove at the Promise seam that the
+table owns the producer: two same-body calls share one producer and one write;
+either returned waiter may be abandoned through a controlled test race; the
+other receives the exact shared receipt, typed failure, or defect; and settled
+replay retains exact reference/category. That suite MUST NOT interpret a
+`HabitatEffect` or claim Effect interruption.
+
+Task 7.4 alone MUST prove the Effect projection. After the real substrate
+acquires one `SemanticLedger`, its owner-local test MUST invoke that acquired
+value's real `propose(...)` `HabitatEffect` through the substrate's existing
+private lowering path. Using two distinct identities in the same acquisition
+and controlled pending-write gates, it MUST interrupt the creator fiber in one
+case and a same-body follower fiber in the other. Only the selected waiter MUST
+exit with an interruption Cause. Interruption MUST NOT become a
+`SemanticLedgerFailure`, be memoized, clear the entry, or propagate cancellation
+to the producer. The still-attached waiter MUST receive the exact shared frozen
+receipt without hanging, exactly one write MUST complete for that identity, and
+a later same-body call MUST replay that exact receipt. This proof MUST add no
+public runner, plan accessor, resource getter, test seam, API, file, project, or
+edge.
+
+The initial producer MUST own one absolute `timeoutMilliseconds` deadline across
+its initial POST, submission reads, polling delays, and any replacement POST. It
+MUST send exactly one initial POST and, after an unanswered send, inspect
+`/submissions` rather than blindly posting again. Exact `unknown` observed before
+that deadline while the replacement permit remains unused MUST atomically
+consume the permit before invoking exactly one replacement POST. Starting that
+replacement or exhausting the initial deadline MUST permanently close writes
+for the entry. Once writes are closed, exact `unknown` and exact `in_flight`
+MUST only poll within the same deadline. Exact `committed` MUST decode a
+determinate receipt, and exact `failed` MUST return a determinate
+`BackendFailed`. The exact `/update` in-progress response defined below MUST
+also close writes permanently and enter submission polling within the same
+deadline; it MUST NOT become `AlreadyProposed` or authorize a replacement.
+
+A determinate receipt, determinate typed failure, or defect MUST move the entry
+to settled and MUST remain the exact memoized terminal category for later
+same-body callers during the acquisition: the same receipt object, typed failure
+as typed failure, or defect as defect. Deadline or transport exhaustion after an
+unanswered write MUST instead publish `TransportFailed` to current waiters and
+move the entry to indeterminate; that `TransportFailed` is not a settled or
+memoized terminal outcome. The entry MUST retain its exact body and send count,
+and writes MUST remain permanently closed.
+
+A later same-body call on an indeterminate entry MUST atomically start or join
+one table-owned read-only recovery producer with a fresh
+`timeoutMilliseconds` deadline. That producer MUST perform only submission
+reads. Exact `unknown` and exact `in_flight` MUST only poll until the fresh
+deadline and MUST NOT authorize another POST. Exact `committed` MUST settle the
+entry with its determinate receipt, and exact `failed`, malformed, or
+contradictory state MUST settle it with a determinate `BackendFailed`. An
+unexpected implementation cause MUST settle it as the memoized defect rather
+than enter the typed failure channel. Read-only deadline or transport exhaustion
+MUST publish another
+`TransportFailed`, leave the entry indeterminate, and permit a later same-body
+call to start another shared read-only recovery deadline without ever reopening
+writes. The table is reachable only from the acquired resource, and a later
+acquisition starts with a new table. No identity recognition, replay, cache
+sharing, reconciliation, or duplicate-write prevention is promised across
+resource release/reacquisition or loss of Fluree's in-memory submission record.
+
+The private HTTP route mapping MUST be exact and MUST append these paths to the
+configured `baseUrl` after removing only its trailing slash characters. Head,
+ensure, create-race, idempotency-collision, and different-body refusal head reads
+MUST split the validated line and use
+`GET /v1/fluree/branch/${encodeURIComponent(family)}`, selecting the unique
+entry whose `branch` and `ledger_id` exactly equal the requested branch and
+line; creation uses `POST /v1/fluree/create` with exact JSON object
+`{ ledger: line }`;
+proposal writes use
+`POST /v1/fluree/update?ledger=${encodeURIComponent(line)}` with exact
+`Content-Type: application/sparql-update`, exact admitted `Idempotency-Key`, and
+the canonical update body; submission reads use
+`GET /v1/fluree/submissions/${encodeURIComponent(identity)}/${encodeURIComponent(line)}`;
+and selects use `POST /v1/fluree/query` with exact
+`Content-Type: application/sparql-query` and the canonical query body. Fork uses
+`POST /v1/fluree/branch` with exact JSON object
+`{ ledger: family, branch: toBranch, source: fromBranch }`; preview uses
+`GET /v1/fluree/merge-preview/${encodeURIComponent(family)}` with exactly
+`source` then `target` encoded through `URLSearchParams`; merge uses
+`POST /v1/fluree/merge` with exact JSON object
+`{ ledger: family, source: fromBranch, target: intoBranch, strategy: "abort" }`;
+and lines uses `GET /v1/fluree/branch/${encodeURIComponent(family)}`. No alternate
+route, method, content type, identity header, query member, request member, or
+second write body is admitted. Every JSON request above MUST carry exact
+`Content-Type: application/json`.
+
+Every submission response MUST be an exact closed ordinary JSON data record.
+`unknown` and `in_flight` have only the exact `state` key. `failed` has
+exactly `state: "failed"` and a nonempty string `error` and returns
+`BackendFailed`. A committed response MUST have required exact keys `state`,
+`idempotency_key`, `kind`, `commit_id`, and `t`. Its state MUST be `committed`,
+idempotency key MUST equal the requested identity, kind MUST be `transact`, `t`
+MUST be a finite nonnegative safe integer, and `commit_id` MUST be a nonempty
+string. The response MUST either omit both `detail` and the pinned `status`
+compatibility alias or include both; one without the other is malformed. When
+present, `detail` and `status` MUST have exactly the same values and exact keys
+`operation`, `idempotency_key`, `commit_id`, `t`, and `flake_count`; their
+operation MUST be `transaction`, identity/commit/position MUST equal the
+top-level values, and flake count MUST be a finite nonnegative safe integer.
+`flake_count === 0` MUST be equivalent to `commit_id` equalling the established
+flake-less sentinel
+`bagaybqabciqohmgeikmpyhautl57jsezn64sij5oihsgjg4tjssjlgi3pbjlqvi`;
+a positive flake count MUST carry a nonsentinel commit id. When both detail
+records are omitted, the required canonical kit remains authoritative and the
+same sentinel comparison MUST distinguish refused from applied. Missing,
+fractional, negative, mismatched, empty, or contradictory required members MUST
+return `BackendFailed` and MUST NOT become an applied or refused receipt.
+
+The private HTTP boundary MUST parse every response from `unknown` and admit
+only the established route status and complete required shape. Successful
+`/create` and branch-creation `/branch` responses MUST use `201`; successful
+`/update`, `/query`, `/merge-preview`, `/merge`,
+`/submissions`, and branch-list responses MUST use `200`. Every admitted
+exceptional response below MUST be a closed ordinary JSON data record whose own
+enumerable keys are exactly `error`, `status`, and `@type`; no body regex,
+substring, unparsed text, surplus member, or status alone may classify it.
+
+The only create-race response is HTTP `409` with `status: 409`,
+`"@type": "err:db/LedgerExists"`, and exact
+`error: "Ledger already exists: <line>"` for the requested validated line. It
+MUST be followed by one exact successful branch-list head read before
+`ensureLedger` may return that head. The only idempotency collision is
+`/update` HTTP `409` with `status: 409`,
+`"@type": "err:db/CommitConflict"`, and exact
+`error: "idempotency key collision: key already used for a different transaction"`;
+it MUST return `AlreadyProposed` only after one exact successful head read.
+The only answered in-progress update is `/update` HTTP `409` with `status: 409`,
+`"@type": "err:db/CommitConflict"`, and exact
+`error: "submission with this key is already in progress"`; it MUST close writes
+for the acquisition-local entry and resume submission polling within the current
+producer deadline without returning `AlreadyProposed`.
+The only merge-conflict response is `/merge` HTTP `409` with `status: 409`,
+`"@type": "err:db/CommitConflict"`, and exact error grammar
+`Branch conflict: Merge aborted: <positive-safe-integer> conflict(s) between <source-branch> and <target-branch> with abort strategy`,
+where both branch values equal the validated request. The only
+`TimeUnreached` response is query HTTP `408` with `status: 408`,
+`"@type": "err:db/ReadAfterWriteTimeout"`, and exact error grammar
+`Ledger has not reached t=<requested>, current t=<current>`, where both values
+are nonnegative safe integers, requested equals the input `at`, and current is
+less than requested. A validated line absent from an exact successful branch
+list is the sole `LedgerMissing` or create-needed branch. Every non-success
+branch-list response, near miss, and every other non-success status MUST return
+the operation's typed failure and MUST NOT become absence, refusal, merge
+conflict, or `TimeUnreached`.
+
+No successful decoder may default a missing position, counter, boolean, commit,
+array, result envelope, binding cell, branch, or submission member to `0`,
+`false`, `""`, or `[]`; a malformed 2xx response is `BackendFailed`. The
+update response MUST distinguish the exact flake-less sentinel from a nonempty
+applied commit, preview MUST derive public `mergeable` from the decoded
+conflict count, and merge MUST send exact `strategy: "abort"`. A successful
+merge MUST carry `conflict_count === 0`; any positive value is
+`BackendFailed`, never a written `MergeConflict`. Failure detail MUST retain
+the existing redaction and bound law and MUST never include the inspected URL,
+headers, identity, body, raw response, or exception.
+
+The required success projections are equally exact. Create MUST return
+`ledger_id` equal to the requested line, safe-integer `t: 0`, and a `commit`
+record with exact empty `hash`. A branch-list entry MUST carry one valid
+`branch`, matching `ledger_id: family + ":" + branch`, and safe-integer `t`;
+branch and ledger identities MUST be unique across the decoded list. The exact
+matching entry supplies head position, while its absence supplies the sole
+missing-line branch. Update MUST return
+the exact projection specified below.
+Task 6.3c clarifies that this matching branch-list record is the exact
+`BranchInfo` projection and its safe-integer `t` is the sole HEAD source. The
+provider MUST NOT infer HEAD from `/log` or from an ambiguous `/info` response.
+Update MUST return
+safe-integer `t` and `commit.hash`, and its successful
+response MUST carry an `idempotency-key` header exactly equal to the admitted
+identity; a missing, normalized, or mismatched echo is `BackendFailed`. Query
+MUST return `results.bindings` as an array of records with exactly the requested
+projected aliases, whose cells each have a recognized binding type and string
+`value`. Branch creation MUST return `ledger_id`, `branch`, and `source` equal
+to the requested target line, target branch, and source branch plus safe-integer
+`t`. Preview MUST return `source` and `target` equal to the requested branches,
+safe-integer count records for `ahead`, `behind`, and `conflicts`, and boolean
+`fast_forward` and `mergeable`. Merge MUST return the requested target
+`ledger_id`, `target`, and `source`; safe-integer `new_head_t`,
+`commits_copied`, and `conflict_count`; boolean `fast_forward`; and exact
+`strategy: "abort"` when it is not a fast-forward, with the `strategy` member
+absent when it is. Branch listing MUST return the bare array containing those
+records. Task 6.4 MUST capture the exact request and every positive/negative
+shape so a fake cannot
+independently manufacture the neutral answer while ignoring the production
+request.
+
+These ordinary successful vendor bodies use exact required projections, not the
+closed-key discriminator law above: unlisted vendor members MAY be present but
+MUST be ignored, MUST NOT classify an outcome, and MUST NOT enter a neutral DTO.
+Every listed container and member remains mandatory with its exact type and
+relation. Exceptional error envelopes and submission-state records remain
+closed exactly as specified.
+
+Task 6.4 import/build coldness MUST be exercised in a fresh isolated module
+evaluation after replacing `globalThis.fetch` with a configurable throwing and
+counting getter. The provider test MUST import the provider package and call its
+synchronous `build(...)`; the SDK public-face and installed-package owners MUST
+separately import their own neutral and `/fluree` entries and may call the same
+public descriptor's build. Each owner MUST observe exactly zero getter reads as
+well as zero fetch, Promise, acquire, release, or ledger-operation invocation,
+without creating a provider-to-SDK edge. Deleting fetch or assigning
+`undefined` is not sufficient proof. Task 7.4 remains the first owner allowed
+to recover the opaque acquire body and observe its fetch read.
+
+Task 6.4 MUST add these proofs only inside its already frozen corpus. Resource
+and shared conformance tests own closed neutral input behavior, RDF set and
+SPARQL bag semantics, canonical proposal equivalence, logical-slot collision,
+commit ancestry, source-local position overlap, exact merge counters, reverse
+and nested merges, frozen results, and guarded concurrency. Separate private
+driver/conformance suites in the existing provider test file own the
+one-namespace codec, captured canonical SPARQL,
+status/shape/integer/sentinel decoding, single-flight and lost-answer state
+machine, redaction, and no-request invalid-input cases without plan access. The
+public-plan suite in that file owns only unchanged public plan/type assertions
+and the fresh provider-package throwing-fetch-getter import/build proof. The SDK
+public-face and installed-package owners each own the corresponding fresh
+static-entry throwing-getter proof required above. TypeScript, Habitat, and Nx
+retain their task-6.3a/6.3b owners and exact inventories.
+No new public schema, decoder, helper, cache, digest, file, export, project,
+relation, vendor package, or plan-execution seam is admitted.
+
+After task 6.3d selects its artifact and task 6.4 eventually opens, the existing
+`providers/fluree-http/test/provider.test.ts` MUST also own mandatory
+live-image F1 and F2 proof. F1 MUST drive a source to high `t` and a target to
+low `t`, perform a clean general merge whose target head is below imported
+source `t`, prove that head from exact branch-list `BranchInfo.t`, and prove
+exact source replay plus native counters. F2 MUST fork a descendant from the
+high-`t` source, produce a bilateral same-slot conflict whose target conflict
+commit is below `ancestor.t`, repeat after advancing the target above
+`ancestor.t`, and assert exact preview `ahead`/`behind`/`conflicts`, native
+abort with no write. F2 MUST also run an independent source-cutoff arm from a
+fresh F1 history: add a disjoint fact to the low-`t` merged branch while its
+local head remains at or below the high common ancestor, independently advance
+the original high-`t` line to force non-fast-forward, and preview/merge the
+low-`t` branch into that high-`t` target. The arm MUST report every reachable
+low-`t` source-only commit in `ahead`, the exact target-only `behind`, zero
+conflicts, `copied === ahead`, replay the source fact without losing the target
+fact, create the head at target pre-merge `t + 1`, and preserve the exact two
+pre-merge parents. The memory fixture and shared conformance MUST remain the provider-neutral
+oracle. Fake HTTP tests MUST prove only codec, route/status, and decoder
+behavior and MUST NOT qualify native ancestry semantics. These live-image
+vectors add no file, API, edge, corpus member, count, or plan-execution seam.
+Task 6.4 retains only Promise-level waiter/producer abandonment proof; task 7.4
+alone retains real Effect-interruption proof.
 
 Task 6.4's exact source corpus MUST be these 17 files:
 `resources/semantic-ledger/AGENTS.md`, `contract.ts`, `habitat.toml`,
@@ -2543,6 +3005,13 @@ record may land. The neutral resource face MUST NOT reach the provider or
 global fetch. The static cold `/fluree` face MUST import successfully with
 global fetch absent.
 
+Task 6.3c preserves the preceding sentence only as sealed task-6.3a history and
+supersedes its execution authority. Before task 6.3d seals, no Fluree artifact
+is compatible with task 6.4. After task 6.3d seals, the exact selected upstream
+tag, commit, OCI digest, and provenance become task 6.4's sole compatibility
+target. The Node, Effect, TypeBox, zero-Fluree-npm-metadata, neutral-isolation,
+and cold-import constraints above remain authoritative.
+
 TypeScript MUST prove every exact public shape and anonymous signature above,
 success/failure inference, required normalized config output, tagged non-Error
 failures, non-Promise public operations, and finite inventories. Resource tests
@@ -2564,6 +3033,12 @@ privately recover and execute this provider's acquire/release and prove exact
 `providerFx.tryPromise(...)` fetch/error behavior, successful acquisition,
 execution of the no-op release callback, and failure cleanup through the real
 substrate.
+
+Task 6.3c clarifies that the preceding `provider test MUST prove only` sentence
+restricts that file's public-plan suite. Separate private driver/conformance
+suites in the same admitted `providers/fluree-http/test/provider.test.ts` own
+the preceding HTTP and shared-conformance work without plan access, witness
+inspection, body recovery, or acquire/release execution.
 
 #### Scenario: The semantic-ledger authority correction remains documentation-only
 
@@ -2590,6 +3065,191 @@ substrate.
 - **AND** no executable, implementation, source, test, project, blueprint,
   manifest, lockfile, SDK, canonical/system document, owner router, proposal,
   runtime behavior, stage, commit, or push changes
+
+#### Scenario: The task-6.3c runtime-law correction is additive and archive-safe
+
+- **WHEN** task 6.3c is reviewed before task 6.4 resumes
+- **THEN** exactly the same six OpenSpec artifacts named above contain the
+  correction, no seventh file changes, and every task-6.3a and task-6.3b
+  sentence and receipt remains byte-identical
+- **AND** this specification is the sole exact mechanics and archive-safe
+  acceptance authority, while the other five artifacts only route or summarize
+  it and task 6.4 remains pending until task 6.3c lands
+- **AND** only the later activation state, subject-wide collision claim,
+  globally exact post-general-merge position claim, durable lost-answer claim,
+  and preserved `fluree/server:4.1.4`-only execution compatibility are
+  superseded by additive task-6.3c text
+- **AND** no executable, implementation, source, test, project, blueprint,
+  manifest, lockfile, SDK, canonical/system document, owner router, proposal,
+  runtime behavior, stage, commit, or push changes
+
+#### Scenario: Task 6.3c records the official-runtime blocker before sealing
+
+- **WHEN** task 6.3c is reviewed against exact official refs
+  `v4.1.4@07316fa440548247e8985215b8151965d2c72726`,
+  `v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, and upstream
+  `main@a85e0368285575204d75227742ac9d8ee5d1f0a7` observed on 2026-08-11
+- **THEN** it records their numeric-`ancestor.t` preview/merge delta,
+  source-replay, and copy-chain cutoff and does not claim that they realize the
+  unrestricted neutral merge law
+- **AND** it records that source-local `t` after a general merge permits nested,
+  cousin, reverse, and repeated histories to omit reachable commits, miss
+  conflicts, and lose facts
+- **AND** exact branch-list `BranchInfo.t` remains the sole HEAD source, with no
+  `/log` or ambiguous `/info` substitution
+- **AND** no process/acquisition epoch, preflight, single-actor condition,
+  sequence assumption, or degraded no-merge behavior narrows the public law
+- **AND** the existing task-6.4 27-file work in progress is inadmissible, task
+  6.4 source remains closed, and the task-6.3c receipt activates task 6.3d
+
+#### Scenario: Task 6.3d qualification is documentation-only and decisive
+
+- **WHEN** task 6.3d runs after task 6.3c seals
+- **THEN** exactly the same six OpenSpec artifacts change and no source, test,
+  publication, project, proposal, canonical/system document, owner router,
+  manifest, lockfile, SDK file, runtime behavior, stage, commit, or push changes
+- **AND** it selects one immutable reproducible wire-compatible Fluree artifact
+  by upstream tag and commit plus OCI digest and provenance only when native
+  preview counters, conflict delta, source replay, and copy-chain traversal use
+  ancestor CID or reachable-set membership rather than numeric `t`
+- **AND** before selection it runs disposable live-image F1 and F2 against that
+  exact digest and records the immutable command, image, HEAD, ancestry,
+  counter, abort, copy, and parent evidence in the same six-document corpus;
+  source inspection or provenance without these live outcomes cannot qualify it
+- **AND** before this task seals no Fluree artifact is compatible with task 6.4,
+  while afterward the selected tag, commit, OCI digest, and provenance are task
+  6.4's sole compatibility target and supersede preserved 4.1.4-only execution
+  statements without changing the Node, Effect, TypeBox, or dependency law
+- **AND** if none exists it stops for a later owner decision between explicit
+  fail-closed no-merge capability and redesign, without inventing a local patch
+  or deployment promise
+- **AND** tasks 6.4 and 6.5 remain pending behind task 6.3d
+
+#### Scenario: Semantic input, storage, and query realization are canonical and safe
+
+- **WHEN** task 6.4 admits a semantic operation and renders its private Fluree
+  request
+- **THEN** every input and nested value has exact own-data closed shape,
+  identity has 1 through 128 bytes of exact non-edge-whitespace printable ASCII,
+  lines and positions satisfy their exact grammars, and malformed, trapping,
+  surplus, or total-zero input returns typed `InvalidInput` before state or fetch
+- **AND** fork, merge, and preview refuse cross-family line pairs before state or
+  fetch
+- **AND** graph ids and predicates are logical IRIs, triple-pattern subjects and
+  predicates admit only IRIs or variables, and literal terms remain object-only
+- **AND** node grouping, order, and exact duplicates collapse to one sorted
+  flattened triple-set body, conditional clauses and logical variables receive
+  deterministic canonicalization, and exact-body comparison rather than a raw
+  graph digest owns proposal sameness
+- **AND** every logical IRI round-trips through the one private
+  `urn:habitat:semantic-ledger:iri:` base64url namespace, caller IRIs and names
+  never enter SPARQL syntax, and literals receive complete SPARQL escaping
+- **AND** visible ground triples form a set while plain `SELECT` projection is a
+  bag: equal solution rows remain, `DISTINCT` and local row deduplication are
+  absent, row order is non-authoritative, and every returned row/array is fresh
+  and frozen
+
+#### Scenario: Merge behavior follows logical slots and commit ancestry
+
+- **WHEN** the memory fixture and private HTTP seam preview and merge forked
+  lines
+- **THEN** source-only and target-only same-slot changes and disjoint predicates
+  on one subject merge, but equal or differing object sets after both sides
+  changed one `(subject, predicate)` slot return `MergeConflict` with no write
+  under exact native `strategy: "abort"`
+- **AND** the one provider-owned IRI namespace prevents post-fork namespace-code
+  allocation from turning a logically clean merge into a vendor-only conflict
+- **AND** ahead, behind, copied, fast-forward, and the new head follow the exact
+  commit-ancestry rules above across fast-forward, already-current, general,
+  reverse, repeated, cousin, and nested merges, including factless merge commits
+- **AND** source commits retain source-local positions, a general merge has one
+  two-parent head and excludes it from copied count, and a query at an
+  overlapped post-merge position deliberately returns the union of both chains
+- **AND** every position and counter is a finite nonnegative safe integer,
+  public mergeability is `conflicts === 0`, and no missing or malformed value is
+  defaulted
+- **AND** memory plus shared conformance is the provider-neutral oracle; fake
+  HTTP responses prove only codec, route/status, and decoder behavior and do not
+  qualify native ancestry semantics
+
+#### Scenario: Qualification and acceptance both cross the numeric-cutoff failures
+
+- **WHEN** task 6.3d qualifies one exact OCI digest through a disposable live
+  probe and task 6.4 later repeats the same vectors through the existing provider
+  test file
+- **THEN** F1 advances source to high `t` and target to low `t`, performs a clean
+  general merge whose target head is below imported source `t`, obtains HEAD
+  from exact branch-list `BranchInfo.t`, and proves exact source replay and
+  native counters
+- **AND** F2 forks a descendant from the high-`t` source, creates a bilateral
+  same-slot conflict whose target conflict commit is below `ancestor.t`, repeats
+  after target advances above `ancestor.t`, and observes exact preview
+  `ahead`/`behind`/`conflicts` plus native abort with no write in both cases
+- **AND** an independent F2 source-cutoff arm starts from a fresh F1 history,
+  adds a disjoint fact to the low-`t` merged branch while its head remains at or
+  below the high common ancestor, advances the original high-`t` line to force
+  non-fast-forward, then previews and merges the low-`t` branch into that target
+- **AND** the source-cutoff arm reports every reachable low-`t` source-only
+  commit in `ahead`, exact target-only `behind`, zero conflicts, and
+  `copied === ahead`; it replays the source fact, preserves the target fact,
+  creates target pre-merge `t + 1`, and records the exact two pre-merge parents
+- **AND** task 6.3d records the disposable probe's immutable command, digest,
+  and outcomes without repository source/test changes, while task 6.4 installs
+  the same vectors as non-skippable acceptance in the already admitted file
+- **AND** neither proof adds a file, API, edge, corpus member, count, fake-HTTP
+  ancestry oracle, or plan execution
+
+#### Scenario: Lost-answer recovery is single-flight and lifetime-bounded
+
+- **WHEN** same-body, different-body, answered, unanswered, unknown,
+  in-flight, committed, failed, malformed, and exhausted proposal attempts run
+  against one private acquired driver
+- **THEN** one exact-body table-owned producer is installed before the first
+  POST, the creator and same-body followers are only waiters, and a different
+  body sends no write and receives `AlreadyProposed`
+- **AND** task 6.4 races either returned Promise waiter against a controlled
+  test gate, then completes the producer; the other waiter receives the shared
+  outcome, send count remains one, and replay/memoization remains exact; this is
+  waiter-abandonment proof, not Effect-interruption proof
+- **AND** the initial producer's one absolute deadline permits exactly one
+  initial POST, submission polling, and at most one replacement POST authorized
+  only by exact `unknown`; starting the replacement or exhausting that deadline
+  permanently closes writes
+- **AND** a determinate receipt, typed failure, or defect is memoized in its
+  exact terminal category for the acquisition, while waiter interruption is not
+  memoized and an indeterminate `TransportFailed` leaves a write-closed entry
+- **AND** a later same-body call on that entry starts or joins one shared fresh
+  read-only recovery deadline, performs only submission reads, and sends no POST
+  even when the backend reports exact `unknown`
+- **AND** release discards the table and no cross-reacquisition, backend-restart,
+  durable-reconciliation, or cache-TTL guarantee is claimed
+- **AND** committed submission identity, kind, position, operation, flake count,
+  and sentinel equivalence are strict, while contradictory records return
+  `BackendFailed`
+
+#### Scenario: HTTP decoding and import coldness are non-vacuous
+
+- **WHEN** provider conformance exercises every route status and success payload
+  plus import/build coldness
+- **THEN** create and branch creation admit exact `201`, ordinary used routes
+  admit exact `200`, and only the exact closed status/type/error discriminators
+  above receive absence, collision, or history handling
+- **AND** the exact answered in-progress update closes writes and resumes
+  submission polling, while the exact idempotency collision alone becomes
+  `AlreadyProposed` after its required head read
+- **AND** near-miss `409` and `408` bodies, surplus error members, and every
+  other status return a typed redacted failure rather than a semantic result
+- **AND** malformed 2xx JSON, missing members, unsafe integers, wrong booleans,
+  malformed branch/head entries, malformed bindings, duplicate line entries,
+  and inconsistent submission records return `BackendFailed` rather than
+  plausible defaults
+- **AND** raw Fluree `mergeable: true` with a positive preview conflict count
+  projects public `mergeable: false`, merge requests carry exact
+  `strategy: "abort"`, and a successful merge body with positive
+  `conflict_count` is `BackendFailed`
+- **AND** a fresh isolated import and synchronous build under a throwing and
+  counting `globalThis.fetch` getter perform zero getter reads and execute no
+  Promise, fetch, acquire, release, or ledger operation
 
 #### Scenario: Resource, provider, plan, and config descriptors are exact
 
@@ -2671,6 +3331,12 @@ substrate.
   without mutation
 - **AND** the tagged failure has only the frozen fields/reasons and its redacted
   detail is at most 4,096 UTF-16 code units using the exact truncation rule
+- **AND** within the preceding behavioral shorthand, task 6.3c supersedes only
+  its historical/collision claims:
+  exact single-chain history holds before a general merge and outside overlap,
+  overlapped positions union both commit chains, one-sided same-slot changes or
+  disjoint predicates merge, and every bilateral change at one logical slot
+  conflicts even when the resulting object sets are equal
 
 #### Scenario: The provider descriptor stays cold and redacted
 
@@ -2690,6 +3356,12 @@ substrate.
   TypeScript assignability, and import/build coldness with no accessor, witness,
   or body recovery
 - **AND** diagnostics contain none of the forbidden transport or identity data
+- **AND** task 6.3c makes that coldness proof non-vacuous through a fresh
+  throwing and counting fetch getter with zero import/build property reads;
+  deletion or assignment of `undefined` is not the acceptance oracle
+- **AND** task 6.3c clarifies that the preceding restriction applies to the
+  public-plan suite, while separate private driver/conformance suites coexist in
+  the same frozen provider test file without plan access or execution
 
 #### Scenario: Private transport conformance cannot widen the public face
 
@@ -2713,6 +3385,13 @@ substrate.
   no-op release callback through substrate-owned lifecycle execution
 - **AND** no task-6.4 resource, driver/conformance, provider, SDK, or installed
   test is cited as behavioral proof of either opaque plan body
+- **AND** task 7.4 runs one representative shared-conformance `propose(...)`
+  vector through the actually acquired value, and the controlled global-fetch
+  gate observes its exact canonical request, binding the opaque acquire output
+  to the tested driver
+- **AND** separate creator- and follower-interruption cases satisfy the exact
+  interruption, surviving-producer, one-write, attached-waiter, and replay
+  obligations above without a second execution path
 
 #### Scenario: SDK publication is exact, static, and vendor-free
 
@@ -2754,6 +3433,39 @@ substrate.
 - **AND** the sealed task-6.3a stop record above remains historical authority
   and task 7.4 remains the only owner of live provider acquisition, release,
   and failure-cleanup proof
+
+#### Scenario: Task-6.3c runtime-law drift stops separately
+
+- **WHEN** task 6.3c or later task 6.4 would delete or rewrite sealed 6.3a/6.3b
+  text; add a seventh authority or 28th implementation file; add an API, owner,
+  kind, project, edge, export, or storage namespace; restore subject-wide
+  collision; renumber source commits; create a one-parent general merge; count
+  facts instead of commits; emit `SELECT DISTINCT`; deduplicate projected rows;
+  interpolate a caller IRI or logical variable; admit an unsafe line, malformed
+  closed input, or total-zero proposal; compare an abbreviated body digest;
+  send a blind retry; propagate waiter cancellation to the table-owned producer;
+  memoize waiter interruption; reopen writes or send a POST during read-only
+  recovery; promise restart/reacquisition durability; default a missing response
+  member; accept sentinel/flake inconsistency; or read fetch during import/build
+- **THEN** the active task stops without widening or partially landing
+- **AND** the exact API, 17-source/ten-publication/27-file corpus, topology and
+  publication counts, provider-plan boundary, and task-7.4-only live lifecycle
+  ownership remain unchanged
+
+#### Scenario: Task-6.3d qualification drift stops separately
+
+- **WHEN** task 6.3d would admit numeric-`ancestor.t` traversal, infer HEAD from
+  `/log` or ambiguous `/info`, pin no tag/commit/digest/provenance, substitute a
+  process/acquisition epoch, preflight, single actor, sequence restriction, or
+  degraded no-merge behavior, use fake HTTP as native-semantic proof, promise a
+  local patch/deployment, open task-6.4 source early, or add a file, API, edge,
+  corpus member, project, publication file, or count
+- **THEN** task 6.3d stops without selecting the artifact or partially opening
+  task 6.4
+- **AND** absence of a qualifying artifact routes only to the later owner
+  decision between explicit fail-closed no-merge capability and redesign
+- **AND** task 6.4 retains Promise-level waiter/producer proof and task 7.4
+  retains real Effect-interruption proof
 
 ### Requirement: Runtime providers remain cold until Effect provisioning
 
@@ -2929,6 +3641,10 @@ cleanup.
 - **THEN** each provider proves single acquisition/release and failure cleanup
 - **AND** no direct provider construction or substitute lifecycle harness counts
   as this proof
+- **AND** semantic ledger alone additionally executes the acquired
+  `propose(...)` operation through the same substrate-owned runtime to prove
+  creator/follower interruption isolation; no direct provider construction or
+  substitute operation runner counts
 
 ### Requirement: Process runtime owns live binding and execution
 

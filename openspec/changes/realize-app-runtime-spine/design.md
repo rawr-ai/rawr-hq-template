@@ -1458,6 +1458,140 @@ lifecycle split. It stops on any seventh or executable file, second exact API
 block, task-6.4 source, or descriptor/schema/package/project/tsconfig drift from
 the active requirement.
 
+### Freeze semantic-ledger Fluree mechanics before source work
+
+Every preexisting task-6.3a and task-6.3b sentence and receipt above remains
+verbatim. Within activation routing, task 6.3c supersedes only their historical
+activation state and is the sole active documentation-only node. It changes the
+same exact six active
+OpenSpec artifacts and no seventh file. The `app-runtime-realization`
+requirement and scenarios are the sole exact mechanics and archive-safe
+acceptance owner; this design records only the behavioral allocation,
+sequencing, unchanged boundaries, and stop set. Task 6.4 remains pending and no
+executable source opens until task 6.3c lands.
+
+The public `SemanticLedger`, its eight operations, every DTO and failure shape,
+the descriptor/config/package realization, and both finite SDK faces remain
+unchanged. So do the exact 17-source plus ten-publication corpus, 27-file task
+ceiling, two-owner topology, 27-to-29 projects, 49-to-56 typed edges, six source
+relations plus the root workspace relation, package/lock/export/build/bundle
+counts, and task-7.4-only live acquisition/release/failure-cleanup boundary.
+
+The corrected provider-neutral merge model compares default-graph deltas at
+logical `(subject, predicate)` slots. Every bilateral post-ancestor change to
+one slot conflicts, even when the resulting object sets are equal; a one-sided
+same-slot change and changes to different predicates on the same subject merge.
+Fast-forward retains its existing meaning. A general merge preserves
+source-local `t` values, creates the native two-parent head, and makes a query
+at that head union both histories when their positions overlap rather than
+renumbering source commits. Native preview counters retain their exact
+directions: `ahead` counts source-only commits, `behind` counts target-only
+commits, and `conflicts` counts logical-slot conflicts. Merge receipt `copied`,
+`conflicts`, `fastForward`, and `t` remain exact native projections rather than
+invented triple counts.
+
+The Fluree provider admits line references with exactly one colon, family
+grammar `[A-Za-z][A-Za-z0-9.-]{0,127}`, and branch grammar
+`[A-Za-z0-9][A-Za-z0-9._-]{0,127}`. It maps every logical IRI through one
+private fixed reversible storage namespace, rejects unsafe lines before I/O,
+uses only validated lines in routes and `FROM`, and freezes the sorted unique
+`lines(...)` result. No second namespace or public mapping helper appears.
+
+Proposal sameness is computed from the exact canonical request body, whose
+writes are a canonical RDF triple set and whose required/absent guard clauses
+are canonical conjunction sets; node/property/guard ordering and exact
+duplicates cannot create a second offer. That body is prepared before
+transport. For one acquired `SemanticLedger` lifetime, a private
+line-and-identity entry retains the exact body, write count, and
+running/indeterminate/settled state. The table-owned producer is independent of
+its interruptible creator and follower waiters; one waiter's interruption
+cannot cancel transport, clear the entry, or become a memoized failure. A body
+mismatch is refused. The initial absolute deadline admits one initial send and
+at most one `unknown`-authorized replacement, after which writes are permanently
+closed. Determinate receipts, typed failures, and defects retain their terminal
+category. Indeterminate failure permits only a fresh-deadline shared read-only
+submission recovery, never another send. There is no blind resend,
+cross-reacquisition recovery, or durable restart claim.
+
+Transport builds SPARQL with generated internal aliases plus safe IRI and
+literal rendering, never raw caller variable or IRI interpolation. Plain
+`SELECT` projects a bag and never adds `DISTINCT`; bindings and every returned
+DTO are frozen. Canonical proposals with zero triples are refused before send,
+and a decoded zero native write aggregate is a refused proposal rather than an
+applied receipt. Routes, methods, statuses, required success projections,
+closed error and submission discriminators, safe-integer positions and counters,
+and the flake-less sentinel are exact, with no missing field, alternate status,
+or malformed value coerced to a default.
+
+Coldness proof installs a throwing, counting `globalThis.fetch` getter before
+static import and provider `build(...)` and observes zero reads in both phases.
+Private injected-fetch conformance remains plan-independent, and task 7.4 alone
+reads global fetch by executing the recovered acquire body through the live
+substrate. Task 6.3c and task 6.4 stop for subject-wide conflict, renumbering, a
+one-parent general merge, `DISTINCT`, an extra namespace, raw caller IRI or
+variable interpolation, an unsafe line, blind resend, a restart promise, body
+digest storage, lenient route/status/shape/safe-integer/sentinel decoding,
+accepted zero triples or aggregate, an import/build fetch read, a seventh
+authority document, or a 28th implementation file.
+
+The official-runtime evidence blocks source activation. Exact refs
+`v4.1.4@07316fa440548247e8985215b8151965d2c72726`,
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, and upstream
+`main@a85e0368285575204d75227742ac9d8ee5d1f0a7` observed on 2026-08-11
+retain byte-identical relevant merge/preview/commit/delta files and numeric
+`ancestor.t` cutoffs in native preview/merge delta, source-replay, and
+copy-chain walks. After a general merge preserves source-local `t`, nested,
+cousin, reverse, and repeated histories can omit reachable commits, miss
+conflicts, and lose facts, so no preceding task-6.3c text claims that an
+official image realizes unrestricted neutral merge. Branch-list `BranchInfo.t`
+is the exact HEAD source, never `/log` or an ambiguous `/info` projection. A
+process- or acquisition-local epoch, preflight, single-actor condition,
+sequence assumption, and degraded no-merge behavior are all invalid public-law
+narrowings. The existing task-6.4 27-file work in progress is inadmissible.
+Task 6.3c remains the current documentation-only correction until sealed; its
+receipt activates task 6.3d, not task 6.4.
+
+### Qualify an immutable Fluree artifact before source work
+
+Pending task 6.3d is documentation/evidence-only across the same exact six
+OpenSpec artifacts and no source, test, publication, project, proposal, stack
+cut sheet, canonical/system document, owner router, manifest, lockfile, SDK
+file, runtime behavior, stage, commit, or push. It selects and pins exactly one
+immutable, reproducible, wire-compatible Fluree artifact by upstream tag and
+commit plus OCI digest and provenance. Its native preview `ahead`/`behind`,
+conflict delta, source replay, and copy-chain traversal must terminate by
+ancestor CID or reachable-set membership rather than numeric `t`. Source
+inspection and provenance alone do not qualify it: before selection, task 6.3d
+runs disposable live-image F1 and F2 against the exact digest and records the
+immutable command, image, and outcomes in the same six-document corpus without
+repository source/test changes. If none exists or either vector fails, the task
+stops for a later owner decision between explicit fail-closed no-merge
+capability and redesign. It invents no local patch or deployment promise.
+Before it seals, no Fluree artifact is compatible with task 6.4. Successful
+qualification routes the selected tag, commit, OCI digest, and provenance as
+task 6.4's sole compatibility record and supersedes only preserved
+4.1.4-only/version stops; all other pins and package-metadata exclusions remain
+unchanged. Tasks 6.4 and 6.5 remain pending behind this qualification.
+
+Task 6.3d first executes the vectors through a disposable live probe. Once
+qualification opens task 6.4, the already admitted provider test file must
+repeat mandatory live-image F1 and F2 proof without another file, API, edge,
+corpus member, or count. F1 drives source to high `t` and target to low
+`t`, performs a clean general merge whose target head is below imported source
+`t`, proves HEAD from exact branch-list `BranchInfo.t`, and proves exact source
+replay and counters. F2 forks a descendant from the high-`t` source, creates a
+bilateral same-slot conflict whose target conflict commit is below
+`ancestor.t`, repeats after target advances above `ancestor.t`, and asserts
+exact preview `ahead`/`behind`/`conflicts` plus native abort with no write. An
+independent F2 source-cutoff arm starts from fresh F1 history, adds a disjoint
+fact to the low-`t` merged branch below the high common ancestor, advances the
+original high-`t` line, then proves every reachable source-only commit in
+`ahead`, exact `behind`, zero conflicts, `copied === ahead`, source replay,
+target preservation, target pre-merge `t + 1`, and exact two-parent identity.
+The memory fixture and shared conformance remain the neutral oracle. Fake HTTP proves only codec,
+route/status, and decoder behavior. Task 6.4 retains Promise-level waiter proof;
+task 7.4 alone retains real Effect-interruption proof.
+
 ### Give one Effect kernel the process lifecycle
 
 Before the first acquisition, provisioning materializes every declared source
@@ -1527,6 +1661,12 @@ single acquisition/release and failure cleanup before adding the admitted lab
 and Magic process-lifetime assertions.
 The later task-6.3b routing entry supersedes only that activation clause: tasks
 6.4 and 6.5 remain pending until task 6.3b lands.
+The later task-6.3c routing entry supersedes only that activation clause: task
+6.3c is the sole active documentation-only node, and tasks 6.4 and 6.5 remain
+pending until it lands.
+The later task-6.3d routing entry supersedes only the destination of that future
+seal: task 6.3c stays current until sealed, pending task 6.3d follows it, and
+tasks 6.4 and 6.5 remain pending behind task 6.3d.
 
 ### Centralize process context without stealing native execution
 
