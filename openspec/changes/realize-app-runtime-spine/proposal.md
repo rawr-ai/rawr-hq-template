@@ -35,6 +35,21 @@ The exact sectional source ledger is [[authority-amendment]].
 - Implement the minimum generic runtime spine that preserves every canonical
   phase: definition, selection, derivation, compilation, provisioning,
   mounting, and observation.
+- Keep compilation as one private, package-less, synchronous planning phase.
+  It consumes only the exact selected `Entrypoint` and complete
+  `NormalizedAuthoringGraph`, returns the compiled plan, cold reference table, and
+  observation seed defined by canonical runtime law, projects only the selected
+  process-role closure rather than sibling app-role facts, and refuses invalid
+  input with built-in `TypeError` before any result. It exposes no compiler package or
+  public face, diagnostic API, live value, provisioning behavior, native mount,
+  or observation-port dependency; a later terminal composition source may
+  establish a direct compiler edge only when it really consumes that operation.
+  Task 5.0 closes this authority across the two canonical system documents and
+  six active OpenSpec artifacts without implementation or `.habitat` mutation;
+  task 5.1 is the sole next source node, and task 10.6 alone materializes the
+  final SDK-to-compiler edge from its real terminal composition call. Canonical
+  `HABITAT_RUNTIME_REALIZATION` §16 alone owns exact mechanics and closed DTO
+  fields; the active capability spec retains archive-safe acceptance.
 - Keep Effect lifetime authority with the app/process and native execution
   authority with the selected bridge. Public `effect/context` and `effect/wrap`
   carry the process-owned Context, resource lifetime, policy, and telemetry;

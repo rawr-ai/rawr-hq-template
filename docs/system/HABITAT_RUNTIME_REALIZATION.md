@@ -187,15 +187,16 @@ Exactness: normative provider handoff sequence.
 
 ```text
 RuntimeResource
-  -> RuntimeProvider.build(...)
-  -> ProviderEffectPlan
-  -> runtime compiler provider plan
+  -> selected cold RuntimeProvider reference
+  -> runtime compiler CompiledResourcePlan + RuntimeCompilationReferenceTable
 
 compiled provider identity/dependency facts
   -> BootgraphInput
   -> bootgraph order/rollback metadata
 
-compiled provider plan + bootgraph metadata
+preflighted config + exact cold RuntimeProvider reference + bootgraph metadata
+  -> RuntimeProvider.build(...)
+  -> ProviderEffectPlan
   -> runtime-substrate-effect provider lowering
   -> Effect-backed acquisition/release/rollback
   -> ProvisionedProcess
@@ -441,7 +442,7 @@ flowchart TB
   SDK --> Derivation
   Derivation --> Compiler
   Compiler --> Bootgraph
-  Compiler -->|compiled provider plans| Kernel
+  Compiler -->|compiled resource data + cold refs| Kernel
   Bootgraph -->|order + rollback metadata| Kernel
   Kernel --> Runtime
   Runtime --> Registry
@@ -502,23 +503,21 @@ portable plan artifact. Those complete-derivation contracts are exposed through
 specific in-process consumers named in §15. The SDK uses authoring declarations
 for static inference only; it does not become a second derivation owner.
 
-The runtime compiler is the planning boundary. Its complete-derivation data
-input is the exact normalized authoring graph; definition-owned schemas and
-cold provider/execution plans remain private compiler dependencies rather than
-fields added to that graph. Neither non-portable table passes through the
-compiler. It emits one compiled process plan and validates referential
-consistency of the already normalized provider handoff, provider dependency
-closure and cycles, service closure, topology/builder agreement, execution
-boundary policy, and compiled
-service/surface/dispatcher/execution/provider plans, provider dependency graph,
-ordering-only bootgraph input, execution registry input, an owner-local
-observation seed, and compilation findings. It does not acquire resources,
-bind live services, execute `HabitatEffect`, mount harnesses, mutate app
-membership, or import observation-owned projection types.
+The runtime compiler is the planning boundary. Its exact input is the selected
+`Entrypoint` plus the exact normalized authoring graph. It reaches the selected
+cold provider, service, and executable-policy references through that
+entrypoint; neither derivation result nor non-portable derivation table passes
+through the compiler. It validates the normalized handoff, emits one compiled
+process plan plus one private cold provider/service reference table, and
+returns inert observation-seed data separately. Invalid input throws built-in
+`TypeError` before result. It emits no compiler finding or diagnostic result
+and does not acquire resources, read or decode config, build providers, bind
+services, execute `HabitatEffect`, lower adapters, mount harnesses, mutate app
+membership, or import or publish through `RuntimeObservationPort`.
 
 Bootgraph is the lifecycle ordering boundary. It consumes only compiler-owned provider/resource identity and dependency input and emits deterministic acquisition order, rollback order, and reverse release metadata. It owns ordering and dedupe, not execution: it does not consume `ProviderEffectPlan`, acquire or release providers, execute rollback, register live finalizers, assemble process/role resource contexts, or produce `ProvisionedProcess`.
 
-The Effect provisioning/execution kernel is the process-local execution substrate. It owns exactly one process `ManagedRuntime`, one `Layer.effectContext(...)` provider-lifecycle adapter, raw Effect lowering for non-oRPC descriptor lanes, scoped acquisition/release/rollback mechanics, process-local coordination primitives, interruption, timeout, retry mechanics, and `HabitatEffect` execution under runtime-owned policy. It consumes compiler-owned provider plans plus bootgraph order/rollback metadata. The adapter executes those plans in bootgraph order and returns the resource Context; provisioning forces the lazy managed runtime's `context()` before it becomes the sole producer of `ProvisionedProcess`. It does not create a second root `Scope` or managed runtime, execute Effect-backed oRPC operations, import the SDK or observation-owned projection types, or own service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics, or public authoring grammar.
+The Effect provisioning/execution kernel is the process-local execution substrate. It owns exactly one process `ManagedRuntime`, one `Layer.effectContext(...)` provider-lifecycle adapter, raw Effect lowering for non-oRPC descriptor lanes, scoped acquisition/release/rollback mechanics, process-local coordination primitives, interruption, timeout, retry mechanics, and `HabitatEffect` execution under runtime-owned policy. After config preflight, it consumes compiler-owned resource identity data and exact cold provider references plus bootgraph order/rollback metadata, calls each selected provider's `build(...)`, and executes the returned plan in bootgraph order. Provisioning forces the lazy managed runtime's `context()` before it becomes the sole producer of `ProvisionedProcess`. It does not create a second root `Scope` or managed runtime, execute Effect-backed oRPC operations, import the SDK or observation-owned projection types, or own service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics, or public authoring grammar.
 
 The process runtime is the live process assembly boundary. It turns a compiled process plan, non-portable execution descriptor table, and `ProvisionedProcess` into bound service clients, role/surface runtime access, workflow dispatchers, execution registry, process execution runtime, `EffectRuntimeAccess`, mount-ready surface records, adapter-lowered payloads, owner-local findings, and a process-runtime-owned stop handle. It owns service binding, binding cache, invocation-bound client views, execution registry and execution runtime assembly, workflow dispatcher materialization, plugin projection, and runtime adapter lowering. It does not invoke harnesses, collect `StartedHarness`, project observation-owned types, coordinate cross-owner shutdown, or own service/domain/plugin/app/provider/native-host meaning.
 
@@ -526,8 +525,9 @@ The execution registry is the executable-boundary matching boundary. It pairs ea
 
 The process execution runtime is the invocation execution boundary for non-oRPC
 descriptor lanes. It receives a matched executable boundary plus an explicit
-procedure execution context, resolves error and telemetry bridges, invokes the
-Effect descriptor, receives `HabitatEffect`, runs it through
+procedure execution context, supplies runtime-owned error and telemetry
+contexts, invokes the Effect descriptor, receives `HabitatEffect`, runs it
+through
 `EffectRuntimeAccess`, applies execution policy, and returns a host-compatible
 result or structured exit. It MUST NOT execute an Effect-backed oRPC operation;
 the official `.effect(...)` bridge owns that native boundary. It does not own the
@@ -628,7 +628,7 @@ Capabilities name projections.
 | Runtime definition | Cold `HabitatEffect`, execution-policy, app/profile/entrypoint, service, plugin, resource, provider, execution-descriptor, observation-record, and observation-port contracts | Live start coordination, derivation, acquisition, execution, mounting, service/plugin/app meaning |
 | Runtime derivation | Foundational `NormalizedRuntimeTopology`; complete `NormalizedAuthoringGraph`; normalized provider, service-binding, surface, and workflow artifacts; Effect refs/table; distinct web route-module refs/table; exact-field portable plan artifact | Resource acquisition, provider execution, managed runtime construction, harness mounting, service/plugin/app meaning, web-loader execution, deployment placement policy |
 | SDK facade | Public re-exports of definition-owned authoring contracts, type inference, delegating runtime hooks, observation read facades, and the mounting-backed start terminal | Private definition/derivation implementation, raw Effect lowering, runtime adapter lowering, observation projection, resource acquisition, provider execution, managed runtime construction, harness mounting, service/plugin/app meaning |
-| Runtime compiler | Compiled process plan, normalized provider-handoff referential validation, provider dependency graph and closure/cycle validation, service closure, topology agreement, compiled service/surface/dispatcher/execution/harness plans, registry input | A second missing/ambiguous authored-selection outcome, live resource acquisition, live service binding, harness mounting, app membership mutation |
+| Runtime compiler | Private synchronous compilation of one selected entrypoint plus normalized graph into one compiled process plan, one exact cold provider/service reference table, and separate inert observation-seed data; normalized-handoff, dependency, and relation validation | Public SDK compiler surface, compiler finding/diagnostic result, observation-port use, adapter/harness compatibility invention, config resolution, provider build/acquisition, live binding, execution, mounting, app mutation |
 | Bootgraph | Lifecycle identity, dependency ordering, dedupe, acquisition/release order, and rollback metadata | Provider-plan consumption or execution, acquisition, release, live rollback, finalizer registration, `ProvisionedProcess`, service/app/plugin/native-host authority |
 | Effect kernel | Single process managed runtime, raw Effect lowering, provider plan execution, process-local coordination, acquisition/release/rollback, interruption, timeout, retry, `HabitatEffect` execution under runtime-owned bridges, sole production of `ProvisionedProcess` | Service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics |
 | Process runtime | Runtime access scoping, service binding, binding cache, invocation-bound client views, workflow dispatcher materialization, execution registry and `EffectRuntimeAccess` assembly, plugin projection, runtime adapter lowering, mount-ready records, owner-local findings, process-runtime stop handle | Harness invocation, `StartedHarness` collection, topology projection, cross-owner shutdown, service/public API/app/provider/durable-workflow authority |
@@ -763,9 +763,13 @@ private, package-less Nx owner; `substrate/effect` is the one Effect-substrate
 owner and `harnesses` is the one harness-family owner. These roots have no
 registry identity or release membership. `schema`, `definition`, and
 `derivation` own the upstream implementations required by later phases. No
-private runtime owner imports the terminal public SDK facade. The SDK assembles
-their reachable outputs and exposes only the public families below, so the
-build graph remains acyclic while consumers install one package.
+private runtime owner imports the terminal public SDK facade. The SDK exposes
+only the public families below, so the build graph remains acyclic while
+consumers install one package. Task 5 creates no compiler facade or SDK source
+edge. Only task 10.6's later real terminal SDK `startApp(...)` composition
+source may add `@habitat-ai/sdk -> runtime-compiler` when it actually imports and calls
+`compileRuntimePlan(...)`; neither runtime mounting nor transitive
+process-runtime reachability is a substitute.
 
 The closed private implementation graph is:
 
@@ -1176,13 +1180,13 @@ Names remain layer-specific. Similar concepts in different layers use different 
 | Service authoring | `defineService(...)`, `resourceDep(...)`, `serviceDep(...)`, `semanticDep(...)`, `deps`, `scope`, `config`, `invocation`, `provided` | Runtime derivation and service binding |
 | Plugin authoring | `PluginFactory`, `PluginDefinition`, `useService(...)`, `ServiceUse`, lane-specific builders, lane-native definitions, `.effect(...)` terminal bodies | Runtime derivation and surface runtime plans |
 | Author-facing Effect facade | `Effect`, `HabitatEffect`, `TaggedError`, `HabitatRetryPolicy`, `HabitatTimeoutPolicy`, `HabitatConcurrencyPolicy` | Services, plugins, resources, providers, repositories where allowed |
-| Resource/provider/profile authoring | `RuntimeResource`, `ResourceRequirement`, `ResourceLifetime`, `RuntimeProvider`, `ProviderSelection`, `RuntimeProfile`, `ProviderEffectPlan`, `providerFx` | Runtime derivation, runtime compiler, provisioning kernel |
-| Runtime derivation | Private `NormalizedRuntimeTopology`; exact complete graph structurally reachable through `RuntimeDerivationResult`; `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef` / `ExecutionDescriptorTable`, `WebRouteModuleRef` / `WebRouteModuleTable`, and `PortableRuntimePlanArtifact` through `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; compiler consumes the graph and plan refs; process runtime consumes the Effect table; web adapter consumes the web table; pre-runtime tooling consumes the portable artifact |
-| Runtime-definition execution model, re-exported by SDK | `HabitatEffect`, `ExecutionDescriptor`, `EffectExecutionDescriptor`, `ExecutionBoundaryKind`, `ProviderEffectBoundaryKind`, `RuntimeEffectBoundaryKind`, `EffectExecutionPolicy`, `BoundaryTelemetry`, `BoundaryErrors` | Runtime derivation, runtime compiler, process execution runtime, substrate provider lowering |
-| Runtime compilation | `CompiledProcessPlan`, `CompiledResourcePlan`, `CompiledServiceBindingPlan`, `CompiledSurfacePlan`, `CompiledExecutionPlan`, `CompiledExecutableBoundary`, `ProviderDependencyGraph` | Bootgraph, process runtime, surface adapters |
+| Resource/provider/profile authoring | `RuntimeResource`, `ResourceRequirement`, `ResourceLifetime`, `RuntimeProvider`, `ProviderSelection`, `RuntimeProfile`, `ProviderEffectPlan`, `providerFx` | Runtime derivation; compiler consumes only normalized requirement/selection data and exact cold references; provisioning alone calls provider `build(...)` and consumes `ProviderEffectPlan` |
+| Runtime derivation | Private `NormalizedRuntimeTopology`; exact complete graph structurally reachable through `RuntimeDerivationResult`; `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef` / `ExecutionDescriptorTable`, `WebRouteModuleRef` / `WebRouteModuleTable`, and `PortableRuntimePlanArtifact` through `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; compiler consumes only the graph alongside the original entrypoint; process runtime consumes the Effect table; web adapter consumes the web table; pre-runtime tooling consumes the portable artifact |
+| Runtime-definition execution model, re-exported by SDK | `HabitatEffect`, `ExecutionDescriptor`, `EffectExecutionDescriptor`, `ExecutionBoundaryKind`, `ProviderEffectBoundaryKind`, `RuntimeEffectBoundaryKind`, `EffectExecutionPolicy` | Runtime derivation, runtime compiler for exact ref/policy agreement only, process execution runtime, substrate provider lowering |
+| Runtime compilation | Private `compileRuntimePlan(...)`, `CompiledProcessPlan`, `RuntimeCompilationReferenceTable`, `CompilationObservationSeed`, and the closed §16 compiler DTO inventory | Bootgraph, process runtime, surface adapters, and later terminal composition through private owner edges; no public compiler face |
 | Lifecycle ordering | `Bootgraph`, `BootResourceKey`, `BootResourceModule`, acquisition/release order, rollback order | Runtime substrate |
 | Provisioning | `ProvisionedProcess`, `ManagedRuntimeHandle` | Process runtime |
-| Runtime execution bridge | `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, `ErrorBridge`, `TelemetryBridge` | Process runtime adapter lowering and SDK delegating hooks |
+| Runtime execution context | `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, `ProcedureExecutionContext`, `BoundaryErrors`, `BoundaryTelemetry` | Process runtime adapter lowering and SDK delegating hooks |
 | Live access | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess`, `SurfaceRuntimeAccess` | Service binding, plugin projection, harness adapters |
 | Runtime binding | `ServiceBindingCache`, `ServiceBindingCacheKey`, `bindService(...)` | Process runtime and plugin projection |
 | Adapter lowering | `SurfaceAdapter`, `AdapterLoweringResult`, adapter-lowered payloads, `FunctionBundle` | Harnesses |
@@ -1838,7 +1842,13 @@ export interface CompiledExecutableBoundary<TInput, TSuccess, TError, TContext> 
 }
 ```
 
-The process runtime constructs `ExecutionRegistry` after compilation and provisioning and before adapter lowering. It validates that every `CompiledExecutionPlan.executionId` matches the `EffectExecutionDescriptor.executionId` of the descriptor it is paired with. A mismatched pair is a runtime compilation or registry assembly failure and must not be invoked.
+The process runtime constructs `ExecutionRegistry` after compilation and provisioning and before adapter lowering. It validates that
+`CompiledExecutionPlan.ref.executionId`, the
+`CompiledExecutableBoundaryInput.executionId`, its exact ref, and the paired
+`EffectExecutionDescriptor.executionId` and boundary all agree. A mismatched
+pair is a registry-assembly failure and must not be invoked. The compiler has
+already validated its own ref/policy input without consuming the descriptor
+table.
 
 ### 9.5 `EffectRuntimeAccess`
 
@@ -1869,8 +1879,6 @@ export interface EffectRuntimeAccess {
       effect: HabitatEffect<TSuccess, TError, TRequirements>;
       context: EffectBoundaryContext;
       policy: EffectExecutionPolicy;
-      telemetry: EffectTelemetryBridge;
-      errors: EffectErrorBridge;
     },
   ): Promise<TSuccess>;
 
@@ -1879,8 +1887,6 @@ export interface EffectRuntimeAccess {
       effect: HabitatEffect<TSuccess, TError, TRequirements>;
       context: EffectBoundaryContext;
       policy: EffectExecutionPolicy;
-      telemetry: EffectTelemetryBridge;
-      errors: EffectErrorBridge;
     },
   ): Promise<EffectExecutionExit<TSuccess, TError>>;
 }
@@ -1893,27 +1899,12 @@ invoke those interiors without importing or exposing the handle. The
 application/process supplies native Effect Context and wrap functions directly
 through oRPC context without exposing this handle.
 
-`CompiledExecutionPlan` bridge references are resolved by `ProcessExecutionRuntime` before `EffectRuntimeAccess` is called. The resolution path is:
-
-File: `specification://runtime-realization/effect-bridge-resolution.txt`  
-Layer: process runtime execution bridge  
-Exactness: normative bridge resolution order.
-
-```text
-CompiledExecutionPlan.errorBridge
-  -> ProcessExecutionRuntime resolves ErrorBridgeRef
-  -> resolved EffectErrorBridge
-  -> EffectRuntimeAccess.run(...) or runExit(...)
-  -> boundary error mapping
-  -> caller/native host response or structured exit
-
-CompiledExecutionPlan.telemetryLabels
-  -> ProcessExecutionRuntime resolves runtime telemetry context
-  -> resolved EffectTelemetryBridge
-  -> EffectRuntimeAccess.run(...) or runExit(...)
-  -> runtime execution spans/events
-  -> service/plugin semantic enrichment where present
-```
+`CompiledExecutionPlan` carries only the exact ref and copied
+`EffectExecutionPolicy`. It carries no error context, telemetry context, label,
+or resolver reference. `ProcessExecutionRuntime` derives the
+`ProcedureExecutionContext` error and telemetry capabilities from
+process/invocation state before it calls the descriptor, then passes only the
+resulting effect, boundary context, and policy to `EffectRuntimeAccess`.
 
 File: `packages/core/runtime/substrate/effect/managed-runtime-handle.ts`  
 Layer: runtime-owned raw Effect managed runtime  
@@ -3795,7 +3786,7 @@ export interface ProviderFx {
 
 `providerFx` is provider-plan-specific. It does not make the global `fx` authoring spelling canonical.
 
-Provider acquire/release plans carry definition-owned `ProviderEffectBoundaryKind` labels and owner-local policy/correlation metadata. The compiler emits provider plans plus separate ordering facts; bootgraph consumes only the ordering facts, and `runtime-substrate-effect` lowers and executes the provider plans under bootgraph order/rollback metadata. They are not `EffectExecutionDescriptor` procedure descriptors.
+Provider acquire/release plans carry definition-owned `ProviderEffectBoundaryKind` labels and owner-local policy/correlation metadata. The compiler emits only compiled resource identity/dependency data and preserves exact cold provider references; it neither calls `build(...)` nor constructs or consumes a `ProviderEffectPlan`. After config preflight, `runtime-substrate-effect` calls the selected provider's `build(...)` and lowers and executes the returned plan under bootgraph order/rollback metadata. Provider plans are not `EffectExecutionDescriptor` procedure descriptors.
 
 ### 13.5 `ProviderSelection`
 
@@ -5442,194 +5433,641 @@ authority defines them.
 
 ## 16. Runtime compiler and compiled process plan
 
-The compiler plans processes.
+The compiler plans processes. This section is the sole exact authority for the
+task-5 compiler operation, DTO schemas, reference table, validation, ordering,
+freezing, project closure, and proof allocation. Architecture §10.5 names and
+bounds the phase but does not duplicate these mechanics.
 
-The runtime compiler turns a normalized authoring graph plus entrypoint selection into one `CompiledProcessPlan`.
+`runtime-compiler` is a private, package-less Nx owner at
+`packages/core/runtime/compiler`. Its exact direct private dependencies are
+`runtime-definition` and `runtime-derivation`, and no other private dependency
+is admitted. Tasks 5.0-5.5 create no public SDK compiler face and no
+`@habitat-ai/sdk -> runtime-compiler` source/build edge. Task 10.6's terminal
+SDK `startApp(...)` composition source must establish the final direct edge
+only when it actually imports and calls `compileRuntimePlan(...)`; publication
+metadata, `implicitDependencies`, a speculative facade file, runtime-mounting
+ownership, or transitive process-runtime reachability is not an edge.
 
-The compiler consumes each exact `ServiceBindingPlan`, validates its service
-closure and schema-presence invariants against the preserved cold service
-definitions, resolves every requirement/dependency/binding id, and emits
-`CompiledServiceBindingPlan`. It never resolves config source content,
-evaluates a callback, invokes a body or loader, decodes a live value, acquires a
-provider, or binds a client. The runtime config component resolves and decodes
-all normalized refs before the provisioning kernel begins any provider
-acquisition.
+### 16.1 Exact compiler operation
 
-File: `packages/core/runtime/compiler/_tree.txt`  
-Layer: runtime compiler placement  
-Exactness: normative placement and component role; illustrative for file names.
+File: `packages/core/runtime/compiler/src/compile-runtime-plan.ts`  
+Layer: private runtime compilation operation  
+Exactness: normative for the sole operation name, synchronous signature,
+inputs, exact result fields, refusal, freezing, and non-execution behavior.
+
+```ts
+export interface RuntimeCompilationInput {
+  readonly entrypoint: Entrypoint;
+  readonly graph: NormalizedAuthoringGraph;
+}
+
+export interface RuntimeCompilationResult {
+  readonly plan: CompiledProcessPlan;
+  readonly references: RuntimeCompilationReferenceTable;
+  readonly observationSeed: CompilationObservationSeed;
+}
+
+export declare function compileRuntimePlan(
+  input: RuntimeCompilationInput,
+): RuntimeCompilationResult;
+```
+
+`compileRuntimePlan({ entrypoint, graph })` is synchronous and returns an
+object with exactly the three shown own enumerable fields. It consumes the
+exact `NormalizedAuthoringGraph`, not `RuntimeDerivationResult`,
+`ExecutionDescriptorTable`, `WebRouteModuleTable`,
+`PortableRuntimePlanArtifact`, a runtime environment descriptor, or an
+options bag. The caller routes the two derivation tables directly to their
+§15 consumers; neither table nor table-availability metadata passes through
+the compiler.
+
+Before emitting any result, compilation validates closed admission for the
+supplied graph, entrypoint/graph launch and profile agreement, and every
+normalized reference, provider selection identity, provider dependency target
+and cycle, service binding, surface relation, workflow relation, execution ref,
+selected role, and selected harness id in the selected process closure. Missing
+or ambiguous authored provider
+selection has already thrown in derivation and is not a second compiler
+outcome. An unselected optional requirement remains represented only by the
+derivation-owned `provider-selection.optional-missing` finding; compilation
+does not rename, copy, or promote it into a compiler finding.
+
+Compilation is a process projection, never a whole-app copy. After closed
+schema admission and entrypoint/graph identity agreement, it duplicate-checks
+and canonicalizes `entrypoint.process.roles` by §15.1 role order, then requires
+that canonical projection to equal `graph.topology.roleRequirements`. Its roots
+are exactly the `graph.surfaceRuntimePlans` whose `role` occurs in that
+canonical projection. From those roots it
+forms one transitive process closure:
+
+1. include each root surface's referenced workflow dispatcher descriptors,
+   Effect execution refs, and web route-module refs;
+2. include each root surface's direct service binding ids and recursively every
+   `serviceBindingIds` child reached from those bindings; include and validate
+   every `semanticDependencyIds` record carried by those reached bindings,
+   reconciling it with the corresponding normalized semantic dependency and
+   selected cold service definition;
+3. include each root surface's resource requirement ids plus every resource
+   requirement id carried by the reached service-binding plans;
+4. for each reached required requirement, resolve exactly one normalized
+   provider selection or throw `TypeError`; for each reached optional
+   requirement, follow its one selection when present, or require its exact
+   derivation-owned `provider-selection.optional-missing` finding when absent,
+   retain the requirement/dependency id without a binding, provider node/edge,
+   compiled resource, or cold reference, and stop that branch;
+5. for every reached selection, include each provider-owned requirement whose
+   `owner.providerId` equals that selection's `providerId`, repeating requirement
+   selection and provider-dependency traversal to a fixed point;
+6. include only the provider selections and exact cold provider definitions
+   reached by that resource closure, and only the exact cold service
+   definitions reached by the service-binding closure.
+
+The compiled plan, execution-registry input, bootgraph input, and both
+reference-table snapshots contain only that process closure. Graph records for
+app roles outside `entrypoint.process.roles` remain valid whole-app derivation
+facts but are excluded from this process; they are not provisioned, mounted, or
+turned into process-local dependency/cycle outcomes. Closed-schema admission
+still applies to the whole supplied graph. Semantic reference, dependency, and
+cycle validation applies to the selected process closure. The compiler obtains
+cold provider selections from `entrypoint.profile` and cold service definitions
+from the selected plugin service uses reachable through `entrypoint.app`; it
+reconciles those exact references with the normalized selection and binding
+identities rather than treating normalized graph data as executable ownership.
+
+Every invalid compiler input or cold-reference disagreement throws built-in
+`TypeError` before any result is returned. Error text, traversal path, and
+throw order are noncontractual. Version 1 has no `CompilationFinding`, custom
+compiler error, error schema, result union, diagnostic result, or partial-plan
+return.
+
+The result shell is frozen. Every data DTO and DTO collection is a fresh
+recursive copy and is recursively frozen. Equivalent accepted inputs produce
+deeply equal DTO output independent of authored collection order. Freezing
+never descends through the reference table into a selected cold object; that
+table has the distinct identity-preservation contract in §16.3.
+
+### 16.2 Closed compiler DTO schemas
+
+Every compiler DTO is one closed TypeBox `ReadonlyObject(...,
+{ additionalProperties: false })`; every DTO collection uses the immutable
+array transformation; and every TypeScript type is derived with `Static` from
+its schema. The compiler imports and reuses the exact §15 schema objects for
+normalized launch identity, roles, resource identity, config refs, resource
+requirements, provider selections, service-binding plans, surface plans,
+workflow descriptors, Effect refs, and web refs. It does not restate those
+identities as looser string bags or create a parallel handwritten type
+authority.
+
+File: `packages/core/runtime/compiler/src/compiled-process-plan.ts`  
+Layer: private runtime-compiler DTO authority  
+Exactness: normative for every schema, field, literal, nested schema identity,
+immutable collection, and `Static` type below.
+
+```ts
+import {
+  ReadonlyObject,
+  Type,
+  type Static,
+  type TSchema,
+  type TUnsafe,
+} from "typebox";
+
+import type {
+  HabitatDurationInput,
+  HabitatRetryPolicy,
+} from "../../definition/src/effect";
+
+import {
+  NormalizedRuntimeProfileSchema,
+  ProviderSelectionSchema,
+  ResourceRequirementSchema,
+} from "../../derivation/src/normalized-authoring-graph";
+import { ExecutionDescriptorRefSchema } from "../../derivation/src/execution-descriptor-ref";
+import {
+  NormalizedAppRoleSchema,
+  NormalizedResourceRequirementIdentitySchema,
+  NormalizedRuntimeLaunchIdentitySchema,
+} from "../../derivation/src/normalized-runtime-topology";
+import {
+  NormalizedRuntimeConfigRefSchema,
+  ServiceBindingPlanSchema,
+} from "../../derivation/src/service-binding-plan";
+import { SurfaceRuntimePlanSchema } from "../../derivation/src/surface-runtime-plan";
+import { WebRouteModuleRefSchema } from "../../derivation/src/web-route-module-table";
+import { WorkflowDispatcherDescriptorSchema } from "../../derivation/src/workflow-dispatcher-descriptor";
+
+const closedCompiler = { additionalProperties: false } as const;
+const immutable = <T extends TSchema>(schema: T) =>
+  ReadonlyObject(Type.Array(schema));
+
+const ResourceRequirementIdSchema = Type.Index(
+  ResourceRequirementSchema,
+  ["requirementId"],
+);
+const ProviderSelectionIdSchema = Type.Index(
+  ProviderSelectionSchema,
+  ["selectionId"],
+);
+const ProviderIdSchema = Type.Index(ProviderSelectionSchema, ["providerId"]);
+const ServiceBindingIdSchema = Type.Index(
+  ServiceBindingPlanSchema,
+  ["bindingId"],
+);
+const ExecutionDescriptorIdSchema = Type.Index(
+  ExecutionDescriptorRefSchema,
+  ["executionId"],
+);
+
+const habitatDurationSuffixes = [" ms", " seconds", " minutes"] as const;
+type HabitatRetryTimes = NonNullable<HabitatRetryPolicy["times"]>;
+
+const HabitatRetryTimesSchema = Type.Refine(
+  Type.Unknown(),
+  (value): value is HabitatRetryTimes => typeof value === "number",
+) as unknown as TUnsafe<HabitatRetryTimes>;
+const HabitatDurationInputSchema = Type.Refine(
+  Type.Unknown(),
+  (value): value is HabitatDurationInput => {
+    if (typeof value === "number") {
+      return true;
+    }
+    if (typeof value !== "string") {
+      return false;
+    }
+    const suffix = habitatDurationSuffixes.find((candidate) =>
+      value.endsWith(candidate),
+    );
+    if (suffix === undefined) {
+      return false;
+    }
+    const numericPrefix = value.slice(0, -suffix.length);
+    return numericPrefix.length > 0 && Number.isFinite(Number(numericPrefix));
+  },
+) as unknown as TUnsafe<HabitatDurationInput>;
+const HabitatRetryPolicySchema = ReadonlyObject(Type.Object({
+  times: Type.Optional(HabitatRetryTimesSchema),
+  backoff: Type.Optional(Type.Union([
+    Type.Literal("fixed"),
+    Type.Literal("exponential"),
+    Type.Literal("none"),
+  ])),
+  delay: Type.Optional(HabitatDurationInputSchema),
+}), closedCompiler);
+const HabitatTimeoutPolicySchema = ReadonlyObject(Type.Object({
+  duration: HabitatDurationInputSchema,
+}), closedCompiler);
+const EffectExecutionPolicySchema = ReadonlyObject(Type.Object({
+  retry: Type.Optional(HabitatRetryPolicySchema),
+  timeout: Type.Optional(HabitatTimeoutPolicySchema),
+  interruptible: Type.Optional(Type.Boolean()),
+}), closedCompiler);
+
+export const CompiledResourceBindingSchema = ReadonlyObject(Type.Object({
+  requirementId: ResourceRequirementIdSchema,
+  selectionId: ProviderSelectionIdSchema,
+}), closedCompiler);
+
+export const ProviderDependencyNodeSchema = ReadonlyObject(Type.Object({
+  selectionId: ProviderSelectionIdSchema,
+  providerId: ProviderIdSchema,
+  resource: NormalizedResourceRequirementIdentitySchema,
+}), closedCompiler);
+
+export const ProviderDependencyEdgeSchema = ReadonlyObject(Type.Object({
+  fromSelectionId: ProviderSelectionIdSchema,
+  requirementId: ResourceRequirementIdSchema,
+  toSelectionId: ProviderSelectionIdSchema,
+}), closedCompiler);
+
+export const ProviderDependencyClosureSchema = ReadonlyObject(Type.Object({
+  selectionId: ProviderSelectionIdSchema,
+  reachableSelectionIds: immutable(ProviderSelectionIdSchema),
+}), closedCompiler);
+
+export const ProviderDependencyGraphSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("provider.dependency-graph"),
+  nodes: immutable(ProviderDependencyNodeSchema),
+  edges: immutable(ProviderDependencyEdgeSchema),
+  closure: immutable(ProviderDependencyClosureSchema),
+}), closedCompiler);
+
+export const CompiledResourcePlanSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.resource-plan"),
+  selectionId: ProviderSelectionIdSchema,
+  providerId: ProviderIdSchema,
+  resource: NormalizedResourceRequirementIdentitySchema,
+  configRef: Type.Optional(NormalizedRuntimeConfigRefSchema),
+  requirementIds: immutable(ResourceRequirementIdSchema),
+  dependencyRequirementIds: immutable(ResourceRequirementIdSchema),
+}), closedCompiler);
+
+export const CompiledServiceBindingPlanSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.service-binding-plan"),
+  bindingId: ServiceBindingIdSchema,
+  role: Type.Index(ServiceBindingPlanSchema, ["role"]),
+  serviceId: Type.Index(ServiceBindingPlanSchema, ["serviceId"]),
+  serviceInstance: Type.Optional(
+    Type.Index(ServiceBindingPlanSchema, ["serviceInstance"]),
+  ),
+  scopeRef: Type.Optional(Type.Index(ServiceBindingPlanSchema, ["scopeRef"])),
+  configRef: Type.Optional(Type.Index(ServiceBindingPlanSchema, ["configRef"])),
+  resources: immutable(CompiledResourceBindingSchema),
+  serviceBindingIds: ReadonlyObject(
+    Type.Index(ServiceBindingPlanSchema, ["serviceBindingIds"]),
+  ),
+  semanticDependencyIds: ReadonlyObject(
+    Type.Index(ServiceBindingPlanSchema, ["semanticDependencyIds"]),
+  ),
+}), closedCompiler);
+
+export const CompiledSurfacePlanSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.surface-plan"),
+  surfacePlanId: Type.Index(SurfaceRuntimePlanSchema, ["surfacePlanId"]),
+  pluginOwnerId: Type.Index(SurfaceRuntimePlanSchema, ["pluginOwnerId"]),
+  role: Type.Index(SurfaceRuntimePlanSchema, ["role"]),
+  surface: Type.Index(SurfaceRuntimePlanSchema, ["surface"]),
+  capability: Type.Index(SurfaceRuntimePlanSchema, ["capability"]),
+  serviceBindingIds: ReadonlyObject(
+    Type.Index(SurfaceRuntimePlanSchema, ["serviceBindingIds"]),
+  ),
+  resources: immutable(CompiledResourceBindingSchema),
+  workflowDispatcherIds: ReadonlyObject(
+    Type.Index(SurfaceRuntimePlanSchema, ["workflowDispatcherDescriptorIds"]),
+  ),
+  executionDescriptorRefs: immutable(ExecutionDescriptorRefSchema),
+  webRouteModuleRefs: immutable(WebRouteModuleRefSchema),
+}), closedCompiler);
+
+export const CompiledWorkflowDispatcherPlanSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.workflow-dispatcher-plan"),
+  descriptorId: Type.Index(
+    WorkflowDispatcherDescriptorSchema,
+    ["descriptorId"],
+  ),
+  appId: Type.Index(WorkflowDispatcherDescriptorSchema, ["appId"]),
+  pluginOwnerId: Type.Index(
+    WorkflowDispatcherDescriptorSchema,
+    ["pluginOwnerId"],
+  ),
+  role: Type.Literal("async"),
+  surface: Type.Literal("async/workflow"),
+  capability: Type.Index(WorkflowDispatcherDescriptorSchema, ["capability"]),
+  workflowIds: ReadonlyObject(
+    Type.Index(WorkflowDispatcherDescriptorSchema, ["workflowIds"]),
+  ),
+}), closedCompiler);
+
+export const CompiledExecutionPlanSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.execution-plan"),
+  ref: ExecutionDescriptorRefSchema,
+  policy: EffectExecutionPolicySchema,
+}), closedCompiler);
+
+export const CompiledExecutableBoundaryInputSchema = ReadonlyObject(Type.Object({
+  executionId: ExecutionDescriptorIdSchema,
+  ref: ExecutionDescriptorRefSchema,
+}), closedCompiler);
+
+export const CompiledExecutionRegistryInputSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.execution-registry-input"),
+  boundaries: immutable(CompiledExecutableBoundaryInputSchema),
+}), closedCompiler);
+
+export const CompiledHarnessPlanSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.harness-plan"),
+  harnessId: Type.String(),
+}), closedCompiler);
+
+export const BootgraphInputSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("bootgraph.input"),
+  nodes: immutable(ProviderDependencyNodeSchema),
+  edges: immutable(ProviderDependencyEdgeSchema),
+}), closedCompiler);
+
+export const CompilationObservationSeedSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compilation.observation-seed"),
+  identity: NormalizedRuntimeLaunchIdentitySchema,
+  profileId: Type.Index(NormalizedRuntimeProfileSchema, ["profileId"]),
+  roles: immutable(NormalizedAppRoleSchema),
+}), closedCompiler);
+
+export const CompiledProcessPlanSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("compiled.process-plan"),
+  identity: NormalizedRuntimeLaunchIdentitySchema,
+  profileId: Type.Index(NormalizedRuntimeProfileSchema, ["profileId"]),
+  roles: immutable(NormalizedAppRoleSchema),
+  resourceRequirements: immutable(ResourceRequirementSchema),
+  providerSelections: immutable(ProviderSelectionSchema),
+  providerDependencyGraph: ProviderDependencyGraphSchema,
+  compiledResources: immutable(CompiledResourcePlanSchema),
+  serviceBindings: immutable(CompiledServiceBindingPlanSchema),
+  surfaces: immutable(CompiledSurfacePlanSchema),
+  workflowDispatchers: immutable(CompiledWorkflowDispatcherPlanSchema),
+  harnesses: immutable(CompiledHarnessPlanSchema),
+  executionPlans: immutable(CompiledExecutionPlanSchema),
+  executionRegistryInput: CompiledExecutionRegistryInputSchema,
+  bootgraphInput: BootgraphInputSchema,
+}), closedCompiler);
+
+export type CompiledResourceBinding = Static<typeof CompiledResourceBindingSchema>;
+export type ProviderDependencyNode = Static<typeof ProviderDependencyNodeSchema>;
+export type ProviderDependencyEdge = Static<typeof ProviderDependencyEdgeSchema>;
+export type ProviderDependencyClosure = Static<typeof ProviderDependencyClosureSchema>;
+export type ProviderDependencyGraph = Static<typeof ProviderDependencyGraphSchema>;
+export type CompiledResourcePlan = Static<typeof CompiledResourcePlanSchema>;
+export type CompiledServiceBindingPlan =
+  Static<typeof CompiledServiceBindingPlanSchema>;
+export type CompiledSurfacePlan = Static<typeof CompiledSurfacePlanSchema>;
+export type CompiledWorkflowDispatcherPlan =
+  Static<typeof CompiledWorkflowDispatcherPlanSchema>;
+export type CompiledExecutionPlan = Static<typeof CompiledExecutionPlanSchema>;
+export type CompiledExecutableBoundaryInput =
+  Static<typeof CompiledExecutableBoundaryInputSchema>;
+export type CompiledExecutionRegistryInput =
+  Static<typeof CompiledExecutionRegistryInputSchema>;
+export type CompiledHarnessPlan = Static<typeof CompiledHarnessPlanSchema>;
+export type BootgraphInput = Static<typeof BootgraphInputSchema>;
+export type CompilationObservationSeed =
+  Static<typeof CompilationObservationSeedSchema>;
+export type CompiledProcessPlan = Static<typeof CompiledProcessPlanSchema>;
+```
+
+The private closed `EffectExecutionPolicySchema` is the schema-equivalent copy of the
+definition-owned `EffectExecutionPolicy` fields. It admits no telemetry label,
+error bridge, execution mode, adapter target, or harness-compatibility field.
+
+The DTO meanings are exact:
+
+| DTO | Exact compiler meaning |
+| --- | --- |
+| `CompiledResourceBinding` | One normalized requirement id paired with the exact normalized selection id that satisfies it. Optional missing requirements have no binding. |
+| `ProviderDependencyNode` | One normalized provider selection, carrying its provider id and exact §15 resource identity. |
+| `ProviderDependencyEdge` | One provider-owned dependency requirement from the selecting provider node to the selected provider node that satisfies it. |
+| `ProviderDependencyClosure` | The sorted transitive reachable selection ids for one selection; the source selection is excluded. |
+| `CompiledResourcePlan` | One selected provider/resource identity, its normalized config ref if present, every satisfied requirement id, and the provider's direct dependency requirement ids. |
+| `CompiledServiceBindingPlan` | The exact derived binding identity and refs plus resolved selected resource bindings; child binding and semantic ids remain exact §15 ids. |
+| `CompiledSurfacePlan` | The exact selected `(role, surface, capability)` lane and owner identity plus validated binding, resource, workflow, Effect-ref, and web-ref relations. |
+| `CompiledWorkflowDispatcherPlan` | The exact derivation descriptor fields with only the kind changed to `compiled.workflow-dispatcher-plan`. |
+| `CompiledExecutionPlan` | The exact Effect ref plus the exact cold descriptor policy copied as closed data; it contains no descriptor or executable body. |
+| `CompiledExecutionRegistryInput` | Exact execution-id/ref pairings for later matching against `ExecutionDescriptorTable`; it contains no table or descriptor. |
+| `CompiledHarnessPlan` | One selected harness id only. Version 1 infers no adapter target, compatibility, payload kind, role assignment, surface assignment, config ref, access need, or mount policy. |
+| `BootgraphInput` | The provider dependency nodes and direct edges needed for later ordering; it contains no provider plan, build function, acquire/release callback, config decoder, or live value. |
+| `CompilationObservationSeed` | Immutable launch identity, selected profile id, and selected roles as correlation data only. It is returned beside, never inside, the compiled plan. |
+
+### 16.3 Cold reference table
+
+The compiler preserves the exact selected cold `RuntimeProvider` and
+`ServiceDefinition` objects behind a private non-portable reference table.
+Provider entries are keyed by normalized `selectionId`; service entries are
+keyed by compiled `bindingId`, so distinct selected service instances retain
+their exact binding identity even when they share one service definition.
+
+File: `packages/core/runtime/compiler/src/runtime-compilation-reference-table.ts`  
+Layer: private in-process compiler reference artifact  
+Exactness: normative for keys, methods, identity preservation, lookup refusal,
+snapshot order, stable snapshot identity, and non-execution.
+
+```ts
+export interface RuntimeCompilationReferenceTable {
+  readonly kind: "runtime.compilation-reference-table";
+
+  getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider;
+  getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceDefinition;
+
+  providerEntries(): readonly (readonly [
+    ProviderSelection["selectionId"],
+    RuntimeProvider,
+  ])[];
+  serviceEntries(): readonly (readonly [
+    ServiceBindingPlan["bindingId"],
+    ServiceDefinition,
+  ])[];
+}
+```
+
+Each lookup is eager and exact. An unknown key, duplicate key, mismatched
+normalized identity, or disagreement between the normalized record and its
+cold definition throws built-in `TypeError` before compilation returns. A
+successful lookup returns the exact reference-identical provider or service
+object selected through the supplied `Entrypoint`.
+
+The table precomputes one provider snapshot sorted by `selectionId` and one
+service snapshot sorted by `bindingId`, both in ascending ECMAScript code-unit
+order. The snapshot arrays and tuple entries are recursively frozen as
+snapshot structure without descending into their reference-valued members;
+`providerEntries()` and `serviceEntries()` return their corresponding same
+snapshot by reference on every call. Provider and service objects inside the
+tuples remain the exact cold objects by reference: the compiler neither copies,
+invokes, builds, nor otherwise evaluates them. There is no execution-descriptor
+entry, web-loader entry, iterator, mutator, size property, partial-key lookup,
+or asynchronous lookup.
+
+### 16.4 Compilation, ordering, and exclusions
+
+Resource bindings sort by `(requirementId, selectionId)`. Provider nodes sort
+by `selectionId`; edges sort by `(fromSelectionId, requirementId,
+toSelectionId)`; closure rows sort by `selectionId`; and every
+`reachableSelectionIds` array sorts by selection id. Compiled resources,
+services, surfaces, workflows, executions, registry boundaries, and harnesses
+sort respectively by `selectionId`, `bindingId`, `surfacePlanId`,
+`descriptorId`, the §15.9 full Effect-ref tuple, that same ref tuple, and
+`harnessId`. Resource and dependency requirement-id arrays sort by id. Roles
+retain §15.1 order, and every copied §15 collection retains its owning §15
+canonical order. Duplicates or noncanonical disagreement are `TypeError`.
+
+The plan's `roles` and observation seed roles are the exact canonical
+`graph.topology.roleRequirements` projection. The selected harness inventory is the
+sorted unique union of
+`graph.profile.harnesses` and the supplied entrypoint process's optional
+`harness`. Version 1 carries only those ids. A compiled surface carries only
+the exact already-selected lane tuple and normalized relations; compilation
+does not invent an adapter registry, adapter target, harness target, or
+adapter/harness compatibility rule.
+
+Provider dependency closure is over normalized selection ids. Every provider-
+owned normalized required dependency must resolve to the one normalized
+selection admitted by derivation for its exact §15 resource identity. A reached
+optional dependency either resolves normally or retains its id plus exact
+derivation-owned missing finding while emitting no binding or edge. A direct or
+transitive cycle, dangling required requirement or selection, inconsistent
+provider id or resource identity, missing optional-selection finding, or
+required dependency on an unselected identity throws `TypeError` before result.
+`BootgraphInput` copies only the accepted nodes and direct edges; bootgraph
+remains the later ordering owner.
+
+Compilation copies `EffectExecutionPolicy` data only after the supplied
+entrypoint's cold selected executable occurrence agrees with the exact §15
+`ExecutionDescriptorRef`. It does not retain or execute the descriptor.
+`CompiledExecutableBoundaryInput.executionId` must equal
+`CompiledExecutableBoundaryInput.ref.executionId`, and each registry boundary
+must resolve to exactly one compiled execution plan. `ExecutionRegistry` later
+pairs those refs with the separate derivation table.
+
+The compiler never imports, consumes, or publishes `RuntimeObservationPort`.
+`CompilationObservationSeed` is inert data returned separately so a later
+admitted downstream owner may adapt it; it is not an observation record,
+diagnostic, telemetry bridge, or publication side effect.
+
+The compiler performs no config-source read, config or schema decode,
+provider `build`, `ProviderEffectPlan` construction or consumption, resource
+acquisition, service binding, cache construction, execution, adapter lowering,
+harness mounting, catalog mutation, observation publication, or retention of a
+live value. It invokes no provider, service, Effect body, descriptor `run`, web
+loader, adapter, or harness callback.
+
+### 16.5 Task-5 closure and proof allocation
+
+Task 5.0 is documentation-only. It changes no source, project, blueprint,
+package, SDK, pack, copied blueprint directory, `.habitat` current-realization
+record, or runtime behavior. Before task 5.1, `runtime-compiler` and
+`runtime-compiler@1` remain unrealized, the
+protocol-1 SDK pack remains at thirteen members, and the SDK blueprint copy set
+remains at nine directories.
+
+Task 5.1 creates the immutable root `runtime-compiler@1` blueprint closure:
+
+```text
+.habitat/blueprints/runtime-compiler/
+  blueprint.toml
+  structure.toml
+  skill.md
+```
+
+Its selected project has exactly the following final closure:
 
 ```text
 packages/core/runtime/compiler/
+  AGENTS.md
+  habitat.toml
+  project.json
   src/
-    compile-process-plan.ts
-    collect-resource-requirements.ts
-    collect-provider-dependency-graph.ts
-    collect-service-bindings.ts
-    collect-surface-runtime-plans.ts
-    collect-workflow-dispatchers.ts
-    collect-execution-descriptors.ts
-    compile-execution-plans.ts
-    compile-execution-registry-input.ts
-    validate-provider-handoff.ts
-    validate-provider-dependency-closure.ts
-    validate-role-surface-selection.ts
-    validate-topology-builder-agreement.ts
-    validate-execution-boundary-policy.ts
-    validate-effect-import-law.ts
-    validate-effect-local-coordination.ts
-    emit-bootgraph-input.ts
+    compile-runtime-plan.ts
+    compiled-process-plan.ts
+    index.ts
+    runtime-compilation-reference-table.ts
+  test/
+    compile-runtime-plan.test.ts
+    derivation-handoff.test.ts
+    nx-cache.test.ts
+  tsconfig.json
+  tsconfig.test.json
+  tsdown.config.ts
 ```
 
-Compiler inputs:
+The project shell contains exactly the eight shown top-level entries; `src/`
+contains exactly four files and `test/` exactly three. The blueprint root
+contains exactly its three shown files. There is no optional interior,
+`package.json`, `versions/` directory, Grit rule or pattern, second blueprint
+version, public compiler package, SDK compiler facade, or SDK compiler edge.
 
-| Input | Producer |
-| --- | --- |
-| `NormalizedAuthoringGraph` containing `NormalizedRuntimeTopology` | Complete runtime derivation |
-| Definition-owned schemas and cold provider/execution plans selected by normalized graph identity | Private runtime definition |
-| Runtime environment descriptor | Entrypoint/runtime |
-| Harness definitions selected by normalized `profile.harnesses` ids | App/runtime profile definitions |
+The project exposes exactly three focused `nx:run-commands` acceptance targets:
+`acceptance:compiled-process-plan`, `acceptance:derivation-handoff`, and
+`acceptance:nx-cache`. Each is uncached, has `parallelism: false`, and declares
+an empty `outputs` list. They route respectively to
+`compile-runtime-plan.test.ts`, `derivation-handoff.test.ts`, and
+`nx-cache.test.ts`; no aggregate acceptance target or fourth compiler-specific
+target is admitted.
 
-The compiler validates graph refs but does not consume either non-portable
-table or table-availability metadata. The matching `ExecutionDescriptorTable`
-travels to process-runtime registry assembly, and `WebRouteModuleTable` travels
-to the selected web adapter/host boundary. Passing either table through the
-compiler would blur its exact consumer and is forbidden.
+Task 5.1 performs structural activation and implements the complete source
+contract plus baseline compilation success, invalid-input refusal, focused
+target routing, and owner-cache proof in the three exact test files. It adds
+the exact LF rule:
 
-Compiler outputs:
-
-File: `packages/core/runtime/compiler/src/compiled-process-plan.ts`  
-Layer: runtime-compiled artifact  
-Exactness: normative for process plan sections.
-
-```ts
-export interface CompiledProcessPlan {
-  readonly kind: "compiled.process-plan";
-  readonly appId: string;
-  readonly entrypointId: string;
-  readonly profileId: string;
-  readonly processId: string;
-
-  readonly roles: readonly AppRole[];
-
-  readonly resourceRequirements: readonly ResourceRequirement[];
-  readonly providerSelections: readonly ProviderSelection[];
-  readonly providerDependencyGraph: ProviderDependencyGraph;
-  readonly compiledResources: readonly CompiledResourcePlan[];
-
-  readonly serviceBindings: readonly CompiledServiceBindingPlan[];
-  readonly surfaces: readonly CompiledSurfacePlan[];
-  readonly workflowDispatchers: readonly CompiledWorkflowDispatcherPlan[];
-  readonly harnesses: readonly HarnessPlan[];
-  readonly executionPlans: readonly CompiledExecutionPlan[];
-  readonly executionRegistryInput: CompiledExecutionRegistryInput;
-
-  readonly bootgraphInput: BootgraphInput;
-  readonly observationSeed: CompilationObservationSeed;
-  readonly findings: readonly CompilationFinding[];
-}
+```gitattributes
+.habitat/blueprints/runtime-compiler/** text eol=lf
 ```
 
-File: `packages/core/runtime/compiler/src/compiled-execution-plan.ts`  
-Layer: runtime compiled execution plan  
-Exactness: normative for compiled execution plan fields and absence of execution mode.
+Task 5.1's publication/assembly corpus is exactly these eighteen files:
 
-```ts
-export interface CompiledExecutionPlan {
-  readonly executionId: string;
-  readonly boundary: ExecutionBoundaryKind;
-  readonly policy: EffectExecutionPolicy;
-  readonly telemetryLabels: readonly EffectTelemetryLabel[];
-  readonly errorBridge: ErrorBridgeRef;
-}
-
-export interface CompiledExecutionRegistryInput {
-  readonly executableBoundaries: readonly CompiledExecutableBoundaryInput[];
-}
-
-export interface CompiledExecutableBoundaryInput {
-  readonly ref: ExecutionDescriptorRef;
-  readonly planRef: {
-    readonly executionId: string;
-  };
-}
+```text
+.gitattributes
+.habitat/AUTHORITY.md
+.habitat/AUTHORITY-ONTOLOGY.md
+.habitat/README.md
+.habitat/blueprints/runtime-compiler/blueprint.toml
+.habitat/blueprints/runtime-compiler/skill.md
+.habitat/blueprints/runtime-compiler/structure.toml
+packages/core/AGENTS.md
+packages/core/runtime/compiler/AGENTS.md
+packages/core/runtime/compiler/habitat.toml
+packages/core/runtime/compiler/project.json
+packages/core/runtime/compiler/tsdown.config.ts
+packages/core/sdk/AGENTS.md
+packages/core/sdk/README.md
+packages/core/sdk/habitat-pack.json
+packages/core/sdk/project.json
+packages/core/sdk/tsdown.config.ts
+apps/habitat/test/installed-package.test.ts
 ```
 
-The compiler compiles Effect execution descriptor refs into execution plans. It validates boundary, policy, telemetry labels, and error bridges. It does not execute execution descriptors and does not own live descriptor values.
+That corpus excludes `packages/core/sdk/package.json`, every SDK public-face
+test, the product-separation test, root manifests, the lockfile, root Nx
+configuration, and `.habitat/index.json`. The remaining compiler source, tests, and
+tsconfigs belong to the distinct implementation closure, not the
+publication/assembly corpus.
 
-Provider acquire/release policy and correlation facts are compiled into provider plans; only provider identity/dependency facts enter bootgraph input. Runtime-substrate-effect performs provider lowering under the resulting order/rollback metadata. None of this passes through `CompiledExecutionPlan`.
+The same task advances the protocol-1 SDK pack from exactly thirteen to
+fourteen sorted members by adding `runtime-compiler@1`, and advances the SDK
+blueprint-directory copy/input set from exactly nine to ten by adding the one
+`runtime-compiler` directory. Installed-package acceptance proves canonical
+and packed byte parity, package-owned provenance, exact
+`runtime-compiler@1` resolution, and projection/execution of its structure
+application. Packing the blueprint is asset assembly only and creates neither
+a compiler source/build edge nor a public compiler face.
 
-The compiled process plan carries these load-bearing compiled artifacts:
+Tasks 5.2-5.5 add proof only to the existing final task-5.1 test closure. They
+do not edit source, add a test file, widen the project or blueprint, create
+`runtime-compiler@2`, or change a public surface:
 
-| Artifact | Contract |
+| Task | Exact proof-only addition |
 | --- | --- |
-| `CompiledServiceBindingPlan` | Compiles the exact `ServiceBindingPlan` with resolved resource, sibling-binding, semantic-dependency, and normalized scope/config refs plus the exact private cache identity inputs for process-runtime consumption; it carries no decoded value or invocation. |
-| `CompiledSurfacePlan` | Wraps `SurfaceRuntimePlan` with resolved service binding refs, executable boundary refs, adapter target, harness target, payload schema refs, and compilation findings. |
-| `CompiledWorkflowDispatcherPlan` | Wraps `WorkflowDispatcherDescriptor` with selected workflow refs, async provider refs, event-admission policy, and compilation findings. |
-| `CompiledExecutionPlan` | Wraps `ExecutionDescriptor` refs with boundary kind, Effect execution policy, telemetry labels, and error bridge refs. |
-| `CompiledExecutionRegistryInput` | Records the pairings required to assemble the live `ExecutionRegistry`. |
-| `HarnessPlan` | Records harness id, selected roles, selected surfaces, required lowered payload kinds, process access needs, and harness config refs. |
-| `BootgraphInput` | Records ordering-only resource/provider identities and dependency edges; it carries no `ProviderEffectPlan` or executable acquisition/release callback. |
+| 5.2 | `compile-runtime-plan.test.ts`: normalized provider-handoff agreement; required and selected-optional requirement matching; unselected-optional requirement/dependency id retention with exact finding and no binding/node/edge/resource/reference; missing-finding refusal; dependency closure; dangling required dependency refusal; and direct/transitive cycle refusal before result or acquisition. |
+| 5.3 | `compile-runtime-plan.test.ts`: duplicate-check and canonical role agreement; exact process-role roots and transitive process closure across service bindings, semantic dependencies, resources/providers, workflows, execution refs, and web refs; exclusion of unrelated app-role and semantic facts; ordinary identity/reference agreement; explicit empty collections; exact cold-reference identity and stable snapshots; the observation-seed data boundary with no port input, call, or publication; and no invented adapter/harness compatibility. |
+| 5.4 | `compile-runtime-plan.test.ts`: deterministic ordering, recursive freezing, exact schema closure, built-in `TypeError`, absent findings/diagnostic API, and zero config/build/execution/mount/observation work. |
+| 5.5 | `derivation-handoff.test.ts`: real normalized derivation graph, exact entrypoint/graph agreement, corrupted normalized-graph refusal before compiler result, and successful compilation after producer-local authoring bindings are unavailable. |
 
-Provider dependency graph is a visible compiled artifact and bootgraph input.
-
-File: `packages/core/runtime/compiler/src/provider-dependency-graph.ts`  
-Layer: runtime compiler provider dependency-closure artifact  
-Exactness: normative for provider dependency graph role; illustrative for exact fields.
-
-```ts
-export interface ProviderDependencyGraph {
-  readonly kind: "provider.dependency-graph";
-  readonly nodes: readonly ProviderDependencyNode[];
-  readonly edges: readonly ProviderDependencyEdge[];
-  readonly closure: readonly ProviderDependencyClosureRecord[];
-  readonly findings: readonly CompilationFinding[];
-}
-
-export interface ProviderDependencyNode {
-  readonly providerId: string;
-  readonly resourceId: string;
-  readonly lifetime: ResourceLifetime;
-  readonly role?: AppRole;
-  readonly instance?: string;
-}
-
-export interface ProviderDependencyEdge {
-  readonly fromProviderId: string;
-  readonly toResourceId: string;
-  readonly reason: string;
-}
-```
-
-Plan consumers:
-
-| Plan section | Consumer |
-| --- | --- |
-| `providerDependencyGraph` | Compiler coverage findings and bootgraph ordering |
-| `compiledResources` | Effect provisioning/execution kernel; only their identity/dependency facts enter bootgraph input |
-| `serviceBindings` | Process runtime and service binding cache |
-| `surfaces` | Process runtime and surface adapters |
-| `workflowDispatchers` | Process runtime dispatcher materialization |
-| `executionPlans` | Process execution runtime, execution registry, and surface adapters |
-| `executionRegistryInput` | Process runtime execution registry assembly |
-| `harnesses` | Process runtime handoff and runtime mounting |
-| `bootgraphInput` | Bootgraph |
-| `observationSeed` | Process runtime, then runtime mounting forwarding through the definition-owned observation boundary |
-| `findings` | Compiler admission/startup policy; runtime mounting adapts admitted findings into definition-owned observation records |
-
-Provider selection handoff and dependency validation are locked:
-
-| Rule | Exact outcome |
-| --- | --- |
-| Every required resource has exactly one selected provider at the relevant lifetime, role, and instance | Derivation throws `TypeError` when missing or ambiguous |
-| An optional resource may lack a provider | Derivation emits the sole `provider-selection.optional-missing` finding |
-| Provider dependencies close before provisioning | Compiler throws `TypeError` when unclosed |
-| Provider dependency cycle is detected before bootgraph ordering | Compiler throws `TypeError` |
-| Optional resources remain explicitly optional | A required consumer of an unselected optional identity throws `TypeError` |
-| Multiple instances require instance keys | Derivation throws `TypeError` when ambiguous |
-| Invalid lifetime or role scope request is rejected | Derivation or compiler throws `TypeError` before provisioning |
-
-The runtime compiler does not acquire resources, bind live services, construct native functions, mount harnesses, write runtime catalog final status, or import observation-owned projection types. It emits a plan plus owner-local compilation findings.
+`nx-cache.test.ts` remains the task-5.1 owner-cache proof; tasks 5.2-5.5 do not
+add another cache target or test file.
 
 ## 17. Bootgraph and Effect-backed provisioning/execution kernel
 
@@ -5686,11 +6124,13 @@ Bootgraph modules are ordering records emitted from compiler input. Provider aut
 
 The Effect kernel runs local execution.
 
-The Effect provisioning/execution kernel consumes compiled provider plans plus
+The Effect provisioning/execution kernel consumes compiled resource data,
+exact cold provider references, already decoded provider-local config, and
 bootgraph order/rollback metadata and creates exactly one `ManagedRuntime` per
-started process. Its one substrate-owned `Layer.effectContext(...)` lifecycle
-adapter executes provider plans in bootgraph order and returns the resource
-Context. Because `ManagedRuntime.make(...)` is lazy, the substrate forces
+started process. It calls each selected provider's `build(...)` only after
+config preflight. Its one substrate-owned `Layer.effectContext(...)` lifecycle
+adapter executes the returned provider effect plans in bootgraph order and
+produces the resource Context. Because `ManagedRuntime.make(...)` is lazy, the substrate forces
 `managedRuntime.context()` before producing `ProvisionedProcess` or permitting
 mounting. That managed runtime owns its internal root and layer scopes and is
 used for process-local `HabitatEffect` execution through process-runtime-owned
@@ -5927,9 +6367,10 @@ Exactness: normative.
 ```text
 descriptor table is present
 every registry input ref resolves to exactly one descriptor
-every registry input planRef resolves to exactly one compiled execution plan
-descriptor.executionId === plan.executionId
-descriptor.boundary === plan.boundary
+every registry input ref resolves to exactly one compiled execution plan
+registry input executionId === registry input ref.executionId
+descriptor.executionId === plan.ref.executionId
+descriptor.boundary === plan.ref.boundary
 duplicate execution ids are rejected
 missing executable boundaries are rejected
 ```
@@ -5972,15 +6413,14 @@ Exactness: normative.
 ```text
 execution.effect
   -> receive matched CompiledExecutableBoundary
-  -> validate boundary.plan.executionId equals boundary.descriptor.executionId
+  -> validate boundary.plan.ref, boundary.ref, and descriptor identity/boundary agree
   -> receive explicit ProcedureExecutionContext
-  -> resolve CompiledExecutionPlan.errorBridge into EffectErrorBridge
-  -> resolve CompiledExecutionPlan.telemetryLabels into EffectTelemetryBridge
+  -> construct runtime-owned error and telemetry contexts from process/invocation state
   -> call descriptor.run(invocation)
   -> receive HabitatEffect
   -> run through EffectRuntimeAccess
-  -> apply Effect execution policy
-  -> bridge errors/telemetry through compiled plan
+  -> apply boundary.plan.policy
+  -> apply process-runtime-owned error and telemetry contexts
   -> return Promise result or structured exit to adapter/native host interop
 ```
 
@@ -6803,8 +7243,7 @@ Exactness: normative telemetry order.
 ```text
 entrypoint
   -> admitted optional-provider derivation finding or outer-boundary observation of TypeError refusal
-  -> runtime compiler findings
-  -> compiled execution plan findings
+  -> compiler-returned inert CompilationObservationSeed or outer-boundary observation of TypeError refusal
   -> execution registry findings
   -> bootgraph lifecycle spans/events
   -> Effect runtime annotations
@@ -6884,7 +7323,6 @@ Runtime diagnostics cover at least:
 | Service dependency cycle | `service.dependency.cycle` |
 | Service binding cache collision | `service.binding.cache_collision` |
 | Config, secret, or redaction coverage failure | `config.redaction.coverage_failure` |
-| Runtime compiler coverage failure | `compiler.coverage.failure` |
 | Bootgraph identity, dependency, or ordering failure | `bootgraph.ordering.failure` |
 | Substrate acquisition, rollback, release, or finalizer failure | `substrate.provisioning.failure` |
 | Harness mount failure | `harness.mount.failure` |
@@ -6895,7 +7333,6 @@ Runtime diagnostics cover at least:
 | Missing compiled execution plan | `execution.plan.missing` |
 | Missing descriptor table | `execution.registry.descriptor-table.missing` |
 | Unresolved descriptor ref | `execution.registry.ref_unresolved` |
-| Unresolved plan ref | `execution.registry.plan_ref_unresolved` |
 | Missing executable boundary | `execution.registry.boundary_missing` |
 | Duplicate executable boundary | `execution.registry.boundary_duplicate` |
 | Mismatched compiled plan and descriptor | `execution.registry.identity_mismatch` |
@@ -6909,8 +7346,6 @@ Runtime diagnostics cover at least:
 | Forbidden manual, community, or custom Effect-oRPC runner import | `execution.effect-orpc-import.forbidden` |
 | Managed runtime construction in authoring | `execution.managed-runtime.authoring-forbidden` |
 | Missing process execution bridge for a non-oRPC descriptor lane | `execution.bridge.missing` |
-| Missing error bridge | `execution.error-bridge.missing` |
-| Missing telemetry labels | `execution.telemetry-labels.missing` |
 | Invalid `HabitatEffect` yieldability | `execution.habitat-effect-yieldability.invalid` |
 | Provider boundary misclassified as ordinary descriptor | `execution.provider-boundary-kind.misclassified` |
 | Detached fiber use in authoring | `execution.detached-fiber.forbidden` |
@@ -6922,7 +7357,13 @@ Runtime diagnostics cover at least:
 | Missing provider effect plan | `provider.effect-plan.missing` |
 | Forbidden raw Effect import in provider authoring | `provider.raw-effect-import.forbidden` |
 
-Execution diagnostics are emitted during derivation, compilation, execution registry assembly, adapter lowering, runtime invocation, and observation. Provider/resource diagnostics remain valid and are not replaced by execution diagnostics.
+Execution diagnostics are emitted during derivation, execution registry
+assembly, adapter lowering, runtime invocation, and observation.
+`compileRuntimePlan(...)` emits no diagnostic or finding; a later surrounding
+lifecycle owner may adapt its caught built-in `TypeError` and separately
+returned inert seed without changing the compiler result contract.
+Provider/resource diagnostics remain valid and are not replaced by execution
+diagnostics.
 
 The codes in this table are observation vocabulary, not a public complete-
 derivation finding or error API. `deriveRuntimeArtifacts(...)` returns only the
@@ -7105,10 +7546,10 @@ sequenceDiagram
   Compiler->>RuntimeConfig: compiled normalized scope/config refs + private owning schemas
   RuntimeConfig->>RuntimeConfig: authored-order exact-key lookup; decode every winning value or refuse
   Compiler->>Bootgraph: ordering-only bootgraph input
-  Compiler->>EffectKernel: compiled provider plans
+  Compiler->>EffectKernel: compiled resource data + exact cold provider references
   RuntimeConfig->>EffectKernel: all provider/service config validated before first acquisition
   Bootgraph->>EffectKernel: order + rollback/reverse-release metadata
-  EffectKernel->>EffectKernel: one Layer.effectContext adapter executes provider plans in bootgraph order
+  EffectKernel->>EffectKernel: build then execute provider effect plans in bootgraph order
   EffectKernel->>EffectKernel: force ManagedRuntime.context; scoped acquisition, rollback, release, finalizers
   EffectKernel->>ProcessRuntime: ProvisionedProcess
   ProcessRuntime->>ProcessRuntime: scope RuntimeAccess, bind services, cache bindings, materialize WorkflowDispatcher
@@ -7139,7 +7580,7 @@ sequenceDiagram
 | Definition | Import-safe declarations for services, plugins, resources, providers, apps, profiles, processes, native oRPC operations, cold non-oRPC Effect executable bodies, and cold web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint`; native oRPC implementers consume declaration types during authoring | Declaration import safety, topology/builder check, native handler/official Effect bridge gate, and web-loader/Effect separation |
 | Selection | One frozen `Entrypoint` carrying the selected app, profile, process, entrypoint id, and exact five-field launch identity | Synchronous `defineEntrypoint(...)` | Runtime derivation; future `startApp(...)` consumes the exact same artifact without reconstruction | Three identity-agreement checks before output or authored executable work; mismatch is built-in `TypeError` with noncontractual text/order |
 | Derivation | Exact once-derived private `NormalizedRuntimeTopology`; exact closed `NormalizedAuthoringGraph` with one normalized profile; normalized refs and service-binding/surface/workflow plans; `ExecutionDescriptorRef` plus non-portable `ExecutionDescriptorTable`; distinct `WebRouteModuleRef` plus non-portable `WebRouteModuleTable`; and exact seven-field `PortableRuntimePlanArtifact` | Private runtime derivation; complete-derivation public contracts through `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; compiler consumes the graph; process runtime consumes the Effect table; web adapter/host consumes the web table; pre-runtime tooling consumes the portable artifact | Exact closed schemas and refs; canonical ordering and ids; full-ref table lookup; one optional-provider finding; built-in `TypeError` for every fatal issue; no body/loader execution or live values |
-| Compilation | `CompiledProcessPlan`, provider dependency graph, compiled service/surface/harness plans, `CompiledExecutionPlan[]`, `CompiledExecutionRegistryInput` | Runtime compiler | Bootgraph/process runtime/adapters | Normalized provider-handoff referential consistency, provider dependency closure/cycles, and compiler validation; no second missing-selection outcome |
+| Compilation | Exact private `{ plan, references, observationSeed }`: closed `CompiledProcessPlan`, exact cold provider/service `RuntimeCompilationReferenceTable`, and separate inert `CompilationObservationSeed` | Private package-less runtime compiler | Bootgraph/process runtime/adapters; later terminal composition through a real private edge | Exact entrypoint/graph agreement, closed schemas, canonical order/freeze, ref and dependency closure, built-in `TypeError` before result for every invalid input, no finding/diagnostic result, no second missing-selection outcome, and no live work |
 | Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; eagerly built `ProvisionedProcess`, `ManagedRuntimeHandle`, resources, layer-owned finalizers, owner-local provisioning findings | Runtime config before acquisition; bootgraph for metadata; runtime substrate alone for `ProvisionedProcess` | Runtime substrate; then process runtime | Exact-key precedence and winning decode complete before acquisition; ordering validation; one `Layer.effectContext(...)` lifecycle adapter; forced managed-runtime context; scoped acquisition/rollback |
 | Mounting | Runtime access, bound services, execution bridge, mount-ready records, adapter-lowered payloads, process-runtime stop handle, returned `NativeHarnessHandle` values, and private `StartedHarness` wrappers | Process runtime/adapters; runtime mounting invokes harnesses and creates wrappers after success | Runtime mounting and native hosts | Binding cache, registry matching, adapter lowering, harness mount |
 | Observation | `RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeTopologyRecord`, execution/finalization records | Runtime observation projecting admitted definition-owned observation records | Diagnostic readers/control-plane touchpoints | Catalog/diagnostic/telemetry/finalization projection |
@@ -7194,7 +7635,7 @@ Bootgraph
   orders SQL pool, clock, and logger from compiler-owned ordering input
 
 Effect provisioning/execution kernel
-  consumes compiled provider plans plus bootgraph metadata
+  consumes compiled resource data, exact cold provider refs, decoded config, and bootgraph metadata
   acquires SQL pool, clock, and logger and alone produces ProvisionedProcess
 
 Process runtime
@@ -7647,7 +8088,7 @@ Gate families are:
 | Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, `ServiceContractOf` inference from private-carried `ServiceUse`, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, contract errors |
 | Runtime behavior gates | one lazy `ManagedRuntime` forced through `context()` before mount; one `Layer.effectContext(...)` provider adapter; no second root `Scope`; non-oRPC descriptor execution through `ProcessExecutionRuntime`; native oRPC Effect execution through official `.effect(...)` and its internal bridge; `effect/context` and `effect/wrap`; abort/finalizer/resource-release order; single physical bridge/oRPC realm; `EffectRuntimeAccess` internal-only; service binding cache invocation exclusion; provider acquire/release finalization |
 | Registry gates | Effect descriptor table is present; full structural ref lookup returns the exact matching operational descriptor or throws `TypeError`; frozen readonly tuple snapshots use canonical ref order; every Effect ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation; full structural web ref lookup returns the exact preserved loader or throws `TypeError`; frozen web-entry snapshots use `(ownerId, routeId, path)`; web refs never enter `ExecutionRegistry` |
-| Fixture/plan gates | primary `defineEntrypoint(...)` identity-agreement refusal before output or authored executable work; private `NormalizedRuntimeTopology` exact-copy and defensive §15.1 agreement law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; no body/loader/acquisition/live-value access; compiled plan, catalog, startup rollback, and finalization records |
+| Fixture/plan gates | primary `defineEntrypoint(...)` identity-agreement refusal before output or authored executable work; private `NormalizedRuntimeTopology` exact-copy and defensive §15.1 agreement law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; exact three-field synchronous compiler result, closed/frozen DTOs, stable exact-ref table snapshots, compiler `TypeError` before result, and no compiler finding/diagnostic/observation work; no body/loader/acquisition/live-value access; catalog, startup rollback, and finalization records |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
 | Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
 | Provider separation gates | provider acquire/release represented as `ProviderEffectPlan`; bootgraph modules carry identity/dependency ordering facts only; neither is an ordinary `EffectExecutionDescriptor` procedure plan |
@@ -7668,7 +8109,7 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Plugin classification | Topology plus lane-specific builder | Surface-local route, command, workflow, shell, desktop facts |
 | Execution | native oRPC handler/official Effect bridge plus cold non-oRPC `.effect(...)` bodies, `defineAsyncStepEffect(...)`, `EffectExecutionDescriptor`, `ExecutionDescriptorTable`, `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`; web route-module loaders remain on the distinct `WebRouteModuleRef` / `WebRouteModuleTable` channel | Additional definition-owned policies and process-runtime-owned adapters for non-oRPC lanes; application/process-owned oRPC context/wrap composition |
 | Resources/providers/profiles | Resource contract, provider implementation, app profile selection | New resource families and providers |
-| Runtime compiler | Normalized provider-handoff referential consistency, provider dependency closure/cycles, topology validation, provider dependency graph, compiled process plan | Additional plan findings and optimization that do not recreate missing/ambiguous authored-selection outcomes |
+| Runtime compiler | Immutable `runtime-compiler@1`, exact §16 operation/result/DTO/reference-table contract, `TypeError` refusal, no findings, and final task-5.1 source/project/blueprint closure | No task-5 version 2 or compiler finding extension; a later change requires an explicit authority amendment and may not recreate missing/ambiguous authored-selection outcomes |
 | Bootgraph | Acquisition/release order and rollback metadata only | Provider-specific refresh and retry strategies |
 | Runtime access | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` live access only | Additional sanctioned redacted handles |
 | Service use and binding | `ServiceUse` is the sole cold public relation; its private carrier preserves exact definition/contract inference plus the exact schema-gated runtime-config binding tree; complete derivation emits the closed binding plan, path-local inheritance/override and equal-diamond law; compiler and process-runtime ownership remain fixed; cache identity excludes invocation, plugin client local names as separate ingredients, schemas, and values, while service-owned dependency local names may contribute only through normalized ids inside `bindingId`; callbacks/live values are forbidden | Call-local memoization and service-local caches that do not add authoring nouns, binding-source variants, public findings, or cache ingredients |
@@ -7811,8 +8252,9 @@ laziness, cold execution and web tables, and refs-only portability through the
 canonical owner. The lab's `stableJson`/`exec:*` identity, explicit binding
 inputs, mutable shapes, public types, Oracle, alternate `deriveRuntimeSpine`,
 and route derivation without an admitted carrier remain rejected. Provider
-graph matching, closure, cycles, and diagnostics remain compiler tasks 5.2
-and 5.4. Task 4.9 changes no source, test, project, blueprint, SDK face, public
+graph matching, closure, cycles, deterministic ordering, and built-in
+`TypeError` refusal remain compiler proof tasks 5.2 and 5.4. Task 4.9 changes no
+source, test, project, blueprint, SDK face, public
 contract, Oracle, optional interior, blueprint version, or alternate path;
 `runtime-derivation@2` remains exact. Tasks 4.10 and 4.11 add their assertions
 only to `complete-derivation.test.ts`.
@@ -7927,7 +8369,7 @@ and proves `ServiceBindingCache`, cache-key construction, and live binding in
 
 | Component/artifact | Owner | Reference placement | Produced by | Consumed by | Phase | Finding / observation channel | Enforcement / acceptance gate |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `RuntimeSchema` | `runtime-schema`, exposed by SDK | `packages/core/runtime/schema` | Runtime schema adaptation | Compiler, config, diagnostics, harness payload validators | Definition through observation | Schema decode/validation/redaction findings | Schema-backed boundary gate |
+| `RuntimeSchema` | `runtime-schema`, exposed by SDK | `packages/core/runtime/schema` | Runtime schema adaptation | Runtime definition/derivation, config, diagnostics, harness payload validators; compiler has no direct `runtime-schema` edge | Definition through observation | Schema decode/validation/redaction findings | Schema-backed boundary gate |
 | `AppDefinition` | App | `apps/<app>/<app>.app.ts` | `defineApp(...)` | `defineEntrypoint(...)`, then runtime derivation through the selected artifact | Definition | App identity and plugin membership findings | App composition snapshot |
 | `ProcessDefinition` | App | `apps/<app>/runtime/processes.ts` | `defineProcessCatalog(...)` | `defineEntrypoint(...)`, then runtime derivation through the selected artifact | Definition | Process identity and role-shape findings | Process-definition snapshot |
 | `Entrypoint` | `runtime-definition`; app-owned selected data | `apps/<app>/<entrypoint>.ts` | Synchronous `defineEntrypoint(...)` from real `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, entrypoint id, and exact five-field identity | Runtime derivation; future `startApp(...)` consumes the exact artifact without reconstruction | Selection | Identity mismatch is built-in `TypeError` before output, external mutation, or authored executable call; text/order noncontractual | Frozen sole-selection-artifact and three-way identity-agreement gate |
@@ -7935,30 +8377,35 @@ and proves `ServiceBindingCache`, cache-key construction, and live binding in
 | `RuntimeResource` | Resource contract family | Provider-neutral root face of `resources/<capability>` | Resource package `defineRuntimeResource(...)` call | Runtime derivation/compiler/providers | Definition through provisioning | Resource coverage, lifetime, observation contributor findings | Resource contract gate |
 | `RuntimeProvider` | Nested provider | Direct public face under `resources/<capability>/providers/<provider>` | Nested provider `defineRuntimeProvider(...)` call | Runtime derivation/compiler/substrate | Definition through provisioning | Derivation-owned selection coverage plus owner-local provider dependency, config, acquisition, and release findings | Provider selection/dependency gate |
 | `ProviderSelection` | App/runtime profile, normalized by runtime derivation | `providers` field in `apps/<app>/runtime/profiles/*`; normalized contract in `packages/core/runtime/derivation` | Generic SDK `providerSelection({ resource, provider, config, lifetime?, role?, instance? })`, then complete derivation | Runtime compiler | Selection/compilation | Unselected optional requirement is the sole finding; required missing/ambiguous or config-iff violation is `TypeError` | Exact normalized selection and config-ref iff-schema gate |
-| `ProviderEffectPlan` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/providers/provider-effect-plan.ts` | Definition-backed `providerFx` facade re-exported by SDK | Runtime compiler and `runtime-substrate-effect`; never bootgraph | Definition/provisioning | Owner-local `provider.effect-plan.missing` finding | Provider effect plan gate |
+| `ProviderEffectPlan` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/providers/provider-effect-plan.ts` | Selected provider `build(...)` during provisioning, after config preflight and boot ordering | `runtime-substrate-effect`; never compiler or bootgraph | Provisioning | Owner-local `provider.effect-plan.missing` finding | Provider effect plan gate |
 | `HabitatEffect` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/effect/habitat-effect.ts` | Definition-owned curated `Effect` facade | Execution descriptors, resource values, substrate raw Effect lowering through process-runtime execution | Definition through invocation | Raw import, yieldability, and owner-local execution findings | `habitat-effect.execution` gate |
 | `EffectExecutionDescriptor` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/execution/descriptor.ts` | Cold `.effect(...)` terminal bodies through the SDK facade; complete derivation lowers each `AsyncStepEffectDescriptor` occurrence into a frozen operational value | Runtime compiler/process execution runtime | Derivation through invocation | Owner-local Effect descriptor findings | Effect descriptor gate |
 | `ExecutionDescriptorRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation; task 4.8 reaches async-step membership only | Runtime compiler / execution registry | Derivation/compilation/mounting | Invalid, duplicate, absent, or descriptor-mismatched ref is `TypeError` | Closed five-variant API; current async-step population and future lane carriers remain distinct |
 | `ExecutionDescriptorTable` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation; task 4.8 derives async-step operational descriptors only | Process runtime / execution registry | Derivation/mounting | Full-ref `get` returns the matching operational descriptor or throws `TypeError`; frozen tuple snapshots only | Exact non-portable table gate through the public derivation operation, never direct test injection |
 | `WebRouteModuleRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler / web surface adapter | Derivation/compilation/mounting | Invalid, duplicate, absent, or loader-mismatched ref is `TypeError` | Exact closed `(kind, ownerId, routeId, path)` gate |
 | `WebRouteModuleTable` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Web surface adapter / selected web host module-loading boundary; never `ExecutionRegistry` | Derivation/mounting | Full-ref `get` returns preserved loader or throws `TypeError`; frozen entry snapshots only | Exact non-portable loader-table separation gate |
-| `CompiledExecutionPlan` | Runtime compiler | `packages/core/runtime/compiler` | `compile-execution-plans.ts` | Execution registry / process execution runtime / adapters | Compilation/mounting/invocation | Owner-local missing plan/policy/bridge findings | Execution plan gate |
-| `CompiledExecutionRegistryInput` | Runtime compiler | `packages/core/runtime/compiler` | Runtime compiler | Process runtime | Compilation/mounting | Owner-local registry-input findings | Registry input gate |
+| `CompiledExecutionPlan` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` from exact ref/policy agreement | Execution registry / process execution runtime / adapters | Compilation/mounting/invocation | Invalid ref/policy input is built-in `TypeError` before compiler result; no compiler finding | Exact `{ kind, ref, policy }` closed-schema gate; no telemetry/error bridge or mode |
+| `CompiledExecutionRegistryInput` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Process runtime | Compilation/mounting | Invalid or duplicate execution-id/ref pairing is built-in `TypeError` before compiler result | Exact closed boundaries-only registry-input gate; no table or descriptor |
 | `ExecutionRegistry` | Process runtime | `packages/core/runtime/process-runtime/execution-registry.ts` | Process runtime | Adapters and process execution runtime | Mounting/invocation | Owner-local identity mismatch and missing-boundary findings | Registry matching gate |
 | `ProcessExecutionRuntime` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/execution-runtime.ts` | Process runtime | Non-oRPC runtime adapter-lowered closures and SDK delegating hooks only | Mounting/invocation | Owner-local non-oRPC execution bridge findings | Execution bridge gate |
 | `EffectRuntimeAccess` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/src/effect-runtime-access.ts` | Process runtime | Process execution and process-runtime adapter interiors only | Mounting/invocation | Owner-local `HabitatEffect` execution findings | Effect runtime access gate |
 | `ManagedRuntimeHandle` | Runtime substrate | `packages/core/runtime/substrate/effect` | Runtime substrate | `EffectRuntimeAccess`, provisioning/finalization | Provisioning/invocation/finalization | Owner-local managed-runtime findings or definition-owned observation records | Managed runtime ownership gate |
 | `ServiceUse` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/service.ts` | `useService(...)` | Runtime derivation; SDK type inference through `ServiceContractOf` | Definition/derivation | Exact three-field public record plus private non-enumerable definition/contract/schema-gated binding carrier | Service-use public-shape, private-binding, and inference gate |
 | `NormalizedRuntimeTopology` | Private `runtime-derivation` foundation | `packages/core/runtime/derivation` | Private runtime derivation from selected launch facts | Complete derivation within the same owner | Derivation | Owner-local refusal channel; task 4.7 proves only order-independent refusal of duplicate facts, service self-loops, and longer service cycles, without prescribing an error class, chosen cycle path, diagnostic order, or finding payload | Owner-local TypeBox decode plus exact-copy, deterministic-order, and refusal gate |
-| `RuntimeDerivationResult` | `runtime-derivation`, exact public contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Synchronous `deriveRuntimeArtifacts({ entrypoint, profileId })` after exactly one topology call | Runtime compiler, process runtime, web adapter/host, and pre-runtime tooling by exact result field | Derivation | One exact optional-provider finding inside graph; every fatal complete-derivation issue is built-in `TypeError` | Exact five-field frozen result and `graph.topology === topology` gate |
-| `DerivationFinding` | `runtime-derivation`, type-only SDK export | `packages/core/runtime/derivation` | Complete derivation only when an optional requirement lacks a selection | Runtime compiler / admitted observation adapter | Derivation | Exactly `provider-selection.optional-missing` with requirement id and resource identity | Sole nonfatal derivation finding gate |
+| `RuntimeDerivationResult` | `runtime-derivation`, exact public contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Synchronous `deriveRuntimeArtifacts({ entrypoint, profileId })` after exactly one topology call | Compiler consumes only the exact `graph` field alongside the original entrypoint; process runtime, web adapter/host, and pre-runtime tooling consume their exact other fields directly | Derivation | One exact optional-provider finding inside graph; every fatal complete-derivation issue is built-in `TypeError` | Exact five-field frozen result and `graph.topology === topology` gate; result/tables/portable artifact never become compiler input |
+| `DerivationFinding` | `runtime-derivation`, type-only SDK export | `packages/core/runtime/derivation` | Complete derivation only when an optional requirement lacks a selection | Derivation caller / admitted observation adapter | Derivation | Exactly `provider-selection.optional-missing` with requirement id and resource identity | Sole nonfatal derivation finding gate; compiler neither copies nor promotes it |
 | `NormalizedAuthoringGraph` | `runtime-derivation`; structurally reachable from the complete result but not a named SDK export | `packages/core/runtime/derivation` | Complete runtime derivation from the exact once-produced `NormalizedRuntimeTopology` and selected cold declarations reachable only through the accepted `Entrypoint` | Runtime compiler | Derivation | Exact optional-provider finding array only; every fatal issue is `TypeError` | Closed graph schema, singular profile, canonical id/order, fresh-freeze snapshot |
 | `ServiceBindingPlan` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation from private-carried selected `ServiceUse` declarations | Runtime compiler | Derivation/compilation | Missing/forbidden refs, invalid override keys, or divergent diamonds are `TypeError` | Exact reduced plan, iff-schema, inheritance, identity, and diamond gate |
 | `CompiledServiceBindingPlan` | Runtime compiler | `packages/core/runtime/compiler` | Runtime compiler from exact `ServiceBindingPlan` | Process runtime | Compilation/mounting/invocation | Unresolved ids or schema-presence mismatch is `TypeError` | Resolved-ref plan with no decoded value or invocation |
 | `SurfaceRuntimePlan` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler | Derivation/compilation | Invalid/dangling/duplicate id or ref is `TypeError` | Exact eleven-field closed surface-plan snapshot |
 | `WorkflowDispatcherDescriptor` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Runtime compiler/process runtime | Derivation/mounting | Invalid/dangling/duplicate workflow identity is `TypeError` | Exact eight-field async-workflow descriptor gate |
 | `PortableRuntimePlanArtifact` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation | Diagnostic tooling and topology export; never compiler input or placement authority | Derivation | Decoder throws `TypeError` for closed-schema, duplicate, noncanonical-order, async-owner, or digest failure | Exact seven-field portable plan gate with verified `sha256:` plus 64 lowercase hex |
-| `CompiledProcessPlan` | Runtime compiler | `packages/core/runtime/compiler` | Runtime compiler | Bootgraph/process runtime/adapters | Compilation through mounting | Owner-local compiler findings | Compiled process plan gate |
+| `CompiledResourcePlan` / `ProviderDependencyGraph` / `BootgraphInput` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Bootgraph and runtime substrate through later admitted private handoffs | Compilation/provisioning | Every invalid or cyclic compiler input is built-in `TypeError` before result; no finding | Exact §16 closed schemas; identity/dependency/config-ref data only, no `ProviderEffectPlan`, build, decoder, callback, or live value |
+| `CompiledSurfacePlan` / `CompiledWorkflowDispatcherPlan` / `CompiledHarnessPlan` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Process runtime/adapters/runtime mounting through later admitted handoffs | Compilation/mounting | Invalid relation or selected id is built-in `TypeError` before result; no finding | Exact §16 closed schemas; selected lane tuple and harness ids only, no adapter/harness compatibility invention |
+| `RuntimeCompilationReferenceTable` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/runtime-compilation-reference-table.ts` | Synchronous `compileRuntimePlan(...)` from exact entrypoint-selected cold values | Later provisioning and process runtime through private handoffs | Compilation through mounting | Unknown, duplicate, or mismatched key is built-in `TypeError` before result | Exact `selectionId` provider and `bindingId` service lookup; stable sorted frozen snapshots; exact refs never copied or invoked |
+| `CompilationObservationSeed` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Later admitted downstream adapter only | Compilation/observation handoff | No compiler finding or publication channel | Exact `{ kind, identity, profileId, roles }` inert data returned separately; compiler never uses `RuntimeObservationPort` |
+| `CompiledProcessPlan` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Bootgraph/process runtime/adapters | Compilation through mounting | Invalid input is built-in `TypeError` before result; no compiler finding/diagnostic API | Exact closed §16 plan schema; contains neither observation seed nor findings |
+| `RuntimeCompilationResult` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compile-runtime-plan.ts` | Synchronous `compileRuntimePlan({ entrypoint, graph })` | Later real terminal composition and downstream private runtime owners | Compilation | Built-in `TypeError` before any result; text/order noncontractual | Exact frozen result shell `{ plan, references, observationSeed }`, recursively frozen data DTOs, and identity-preserving table; no derivation result/table/portable-artifact input and no public SDK face |
 | `Bootgraph` | `runtime-bootgraph` | `packages/core/runtime/bootgraph` | Bootgraph from compiler-owned ordering input | Runtime substrate only | Provisioning | Owner-local ordering/rollback-metadata findings | Bootgraph ordering gate |
 | `BootResourceKey` | `runtime-bootgraph` | `packages/core/runtime/bootgraph` | Bootgraph | Runtime substrate | Provisioning | Owner-local resource identity findings | Boot resource key gate |
 | `BootResourceModule` | `runtime-bootgraph` | `packages/core/runtime/bootgraph` | Bootgraph from compiler identity/dependency facts | Runtime substrate | Provisioning | Owner-local module ordering findings; no executable plan | Boot module gate |
@@ -8057,22 +8504,23 @@ runtime derivation
 @habitat-ai/sdk
   re-exports stable public authoring contracts
   exposes type inference and delegating runtime hooks
-  assembles private runtime owners into one package
+  assembles only admitted public faces and later owns real terminal composition
+  has no task-5 compiler face or compiler source/build edge
   owns no cold runtime contract, raw Effect lowering, or runtime adapter lowering
   is never imported by a private runtime owner
 
 runtime compiler
-  plans processes
-  validates normalized provider-handoff referential consistency, topology,
-  provider dependency closure/cycles, and service closure without a second
-  missing-selection outcome
-  emits CompiledServiceBindingPlan artifacts
-  validates Effect execution boundary policy
-  validates raw Effect authority and official Effect-oRPC bridge import law
-  emits one compiled process plan
-  emits provider dependency graph
-  emits compiled execution plans without terminal modes
-  emits execution registry input
+  is private, package-less, and depends directly only on runtime-definition and runtime-derivation
+  synchronously compiles exactly { entrypoint, graph }
+  accepts no RuntimeDerivationResult, derivation table, or portable artifact
+  validates normalized provider/service/surface/workflow/execution/harness closure
+  validates provider dependency closure/cycles without a second missing-selection outcome
+  returns exactly { plan, references, observationSeed }
+  preserves exact cold providers by selectionId and services by bindingId
+  emits closed frozen DTOs, compiled execution ref/policy pairs, and ordering-only bootgraph input
+  throws built-in TypeError before result for every invalid input
+  emits no finding or diagnostic and never imports, consumes, or publishes RuntimeObservationPort
+  reads/decodes no config and performs no build, acquisition, binding, execution, lowering, or mounting
 
 runtime config
   loads normalized sources once per process before provider acquisition
@@ -8092,7 +8540,8 @@ Effect provisioning/execution kernel
   runs local execution
   creates exactly one ManagedRuntime and no second root Scope
   owns one Layer.effectContext provider-lifecycle adapter
-  executes provider plans in bootgraph order and returns resource Context
+  calls selected cold providers' build only after config preflight and dependency readiness
+  executes returned provider effect plans in bootgraph order and returns resource Context
   forces managedRuntime.context before mounting
   owns raw Effect and ProviderEffectPlan lowering
   receives already-validated provider config and secrets
@@ -8127,7 +8576,8 @@ process execution runtime
   runs non-oRPC descriptor invocations
   executes non-oRPC Effect descriptors at invocation time
   receives explicit ProcedureExecutionContext
-  resolves error and telemetry bridge refs from CompiledExecutionPlan
+  uses CompiledExecutionPlan ref and policy only
+  constructs error and telemetry contexts from process/invocation state
   runs HabitatEffect through EffectRuntimeAccess
   emits owner-local execution findings or admitted observation records
 

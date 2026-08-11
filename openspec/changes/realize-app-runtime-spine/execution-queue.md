@@ -61,9 +61,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   definition-to-selection contract across exactly nine documents: the two
   canonical system documents, the runtime-definition router, and six active
   OpenSpec artifacts. Tasks 4.10 and 4.11 are sealed by the exact landing
-  receipts in [[tasks]]. Task 5.0 is the sole active node: an eight-document,
-  authority-only compiler correction. Task 5.1 does not begin until that law
-  is deterministic.
+  receipts in [[tasks]]. Task 5.0 then sealed the eight-document,
+  authority-only compiler correction with no implementation or `.habitat`
+  mutation. Task 5.1 is now the sole active source node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -301,8 +301,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   and refs-only portability. The lab's `stableJson`/`exec:*` identity, explicit
   binding inputs, mutable shapes, public types, Oracle, alternate
   `deriveRuntimeSpine`, and route derivation without an admitted carrier remain
-  rejected. Provider graph matching, closure, cycles, and diagnostics remain
-  compiler tasks 5.2 and 5.4. No source, test, project, blueprint, SDK face,
+  rejected. Provider graph matching, closure, cycles, and built-in refusal proof
+  remain compiler tasks 5.2 and 5.4 without a compiler diagnostic API. No source,
+  test, project, blueprint, SDK face,
   public contract, Oracle, optional interior, version 3, or alternate path
   changes in task 4.9; `runtime-derivation@2` remains exact.
 - [x] **Definition-to-selection authority correction**: task 4.9a establishes
@@ -319,8 +320,9 @@ The selection/derivation queue is sealed. Task 4.11 changed only
 real handoff plus all four defensive disagreement refusals with zero Effect or
 web-loader calls, and left `runtime-derivation@2`, derivation source, and the
 public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
-is the sole active node and corrects compiler authority without implementation;
-task 5.1 remains blocked until that correction lands.
+is sealed as the exact eight-document compiler-authority correction with no
+implementation, blueprint, or current-realization mutation. Task 5.1 is the
+sole active source node.
 
 ## Task 4.7a Authority Routing
 
@@ -411,8 +413,9 @@ inventory, async ownership/laziness, cold tables, and refs-only portability, so
 no distinct derivation algorithm remains to port. Lab `stableJson`/`exec:*`
 identity, explicit binding inputs, mutable shapes, public types, Oracle,
 alternate `deriveRuntimeSpine`, and route derivation without an admitted carrier
-remain rejected. Provider graph matching, closure, cycles, and diagnostics
-remain compiler tasks 5.2 and 5.4. No source, test, project, blueprint, SDK
+remain rejected. Provider graph matching, closure, cycles, and built-in refusal
+proof remain compiler tasks 5.2 and 5.4 without a compiler diagnostic API. No
+source, test, project, blueprint, SDK
 face, public contract, Oracle, optional interior, blueprint version, or
 alternate path changes.
 
@@ -428,9 +431,75 @@ App/process/entrypoint identity disagreement throws built-in `TypeError` before
 output, external mutation, or authored executable work; no error API, text, or
 validation order is prescribed. Profile agreement stays in task 4.11 because
 launch identity has no profile field, and derivation retains every defensive
-check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. The
-next container is task 5.0's documentation-only compiler authority correction,
-not task 5.1 source implementation.
+check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
+5.0 is sealed as the documentation-only compiler authority correction, so task
+5.1 is the sole next source node.
+
+## Task 5.0 Runtime-Compiler Authority Routing
+
+Task 5.0 is sealed without implementation across exactly eight documents. The
+architecture document routes, `HABITAT_RUNTIME_REALIZATION` §16 solely owns the
+exact compiler mechanics and closed TypeBox DTO fields, and these six OpenSpec
+artifacts preserve archive-safe acceptance and execution routing without
+copying the canonical schema block. No source, test, project, blueprint, SDK or
+public surface, package, runtime behavior, `.habitat` blueprint, or `.habitat`
+current-realization record changed.
+
+Task 5.1 is the sole active source node. It must create the complete exact
+private package-less `runtime-compiler@1` closure in one node, implement the
+baseline synchronous `compileRuntimePlan({ entrypoint, graph }) -> { plan,
+references, observationSeed }`, establish only the real definition and
+derivation edges, activate and apply the closed law, add the LF rule, grow the
+SDK policy pack 13 to 14 and copied/input blueprint directories 9 to 10, and
+prove structure, Nx cache/edges, parity, provenance, and application. The plan
+contains neither `observationSeed` nor `findings`; `observationSeed` is the
+separate result field. No compiler package/public face, Grit source law,
+optional interior, `versions/` directory, successor blueprint, fake SDK export,
+implicit edge, or early terminal-composition edge is admitted. Task 10.6's later
+terminal SDK composition source must establish the final direct
+`@habitat-ai/sdk -> runtime-compiler` edge with a real import and call to
+`compileRuntimePlan(...)`; runtime mounting receives no compiler edge, and
+transitive process-runtime reachability cannot substitute.
+
+The baseline operation must duplicate-check and canonicalize
+`entrypoint.process.roles`, root one process in the agreeing selected surfaces,
+close only their service/semantic/resource/provider/workflow/execution/web
+relations, exclude sibling-role facts, and recover cold provider
+and service definitions through the exact `Entrypoint` for reconciliation with
+normalized identities. A reached unselected optional requirement retains its id
+and exact derivation finding but creates no provider binding/plan/reference.
+Tasks 5.2 and 5.3 add the adversarial optional-branch and closure/exclusion proof;
+the normalized graph itself never becomes a cold-definition carrier.
+
+The compiler project has exactly three focused `nx:run-commands` targets with
+`cache: false`, `parallelism: false`, and `outputs: []`:
+`acceptance:compiled-process-plan` runs `compile-runtime-plan.test.ts`,
+`acceptance:derivation-handoff` runs `derivation-handoff.test.ts`, and
+`acceptance:nx-cache` runs `nx-cache.test.ts`.
+The exact publication/assembly corpus has 18 files: LF policy; three Habitat
+authority/readme files; three compiler blueprint files; the core router; four
+compiler routing/config files; five SDK routing/pack/build files; and the
+Habitat installed-package test. SDK `package.json`, an SDK public-face test,
+product-separation acceptance, root manifests/lock/Nx configuration, and
+`.habitat/index.json` are explicitly outside it; compiler source/tests/tsconfigs are
+the distinct implementation closure.
+
+Tasks 5.2 through 5.4 expand only `compile-runtime-plan.test.ts`; task 5.5
+expands only `derivation-handoff.test.ts`, and `nx-cache.test.ts` remains task
+5.1's owner-cache proof. They prove built-in-`TypeError`-before-result refusal,
+cold exact provider/service definition references with one precomputed,
+referentially stable, canonically sorted frozen snapshot per `providerEntries()`
+and `serviceEntries()`, the exact selected lane tuple and harness ids with
+ordinary identity/reference agreement, closed TypeBox admission, determinism,
+and the real derivation handoff with
+producer-local authoring bindings unavailable. The compiler consumes neither a
+derivation result nor either table or the portable artifact; it never touches
+`ProviderEffectPlan`, config resolution/decoding, acquisition, execution,
+binding/cache, mounting, or live values; it accepts no observation port and
+performs no observation call or publication. Import/implementation absence is
+a reviewed boundary invariant, not a source-inspection behavior assertion. Behavior,
+TypeScript/TypeBox, Habitat, Nx, and SDK pack/provenance tests retain their exact
+owners; runtime source/AST string tests and a fabricated SDK export are invalid.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
@@ -503,17 +572,17 @@ write authority with the active one:
    zero Effect/loader work. Neither node adds an optional interior, fallback,
    version 3, validator, schema, file, project, edge, blueprint, export, or
    error; task 4.11 changes no derivation source or public surface. The exact
-   task-4.11 landing receipt is recorded in [[tasks]]. Before compiler source,
-   seal task 5.0's documentation-only authority correction that makes the
-   compiler contract deterministic. Land the definition-owned
-   provider-effect plan from `6.1` after provider selection and before compiler
-   consumption.
+   task-4.11 landing receipt is recorded in [[tasks]]. Task 5.0 has sealed the
+   documentation-only compiler authority correction. Task 5.1 is the sole next
+   source node; it neither waits for nor consumes `ProviderEffectPlan`.
 2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
    process plan, normalized-handoff referential consistency, provider dependency
-   closure/cycle defense, deterministic boot artifact, and the two
-   path-qualified Fluree integrations without acquiring a provider or
-   publishing another package. Missing or ambiguous authored provider selection
-   is already a derivation `TypeError`, not a reachable compiler diagnostic.
+   closure/cycle defense, the exact selected lane tuple and harness ids,
+   deterministic boot artifact, and the two path-qualified Fluree integrations
+   without acquiring a provider or publishing another package. Missing or
+   ambiguous authored provider selection is already a derivation `TypeError`;
+   every compiler-invalid input also throws built-in `TypeError` before result,
+   and no compiler diagnostic API exists.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before

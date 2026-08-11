@@ -282,7 +282,7 @@ entrypoint       = sole cold selection artifact produced by defineEntrypoint(...
 
 ```text
 runtime derivation    = private foundational topology normalization plus complete plan derivation whose contracts are exposed at @habitat-ai/sdk/runtime/derivation
-runtime compiler      = compiler that turns selected app composition into one compiled process plan
+runtime compiler      = private package-less compiler that validates one selected entrypoint plus its normalized graph and plans one process
 bootgraph             = Habitat-owned lifecycle graph above provider acquisition
 provisioning kernel   = Effect-backed process-local acquisition and release substrate
 process runtime       = process-local binding, projection, adapter lowering, and mount-ready handoff layer
@@ -617,8 +617,8 @@ A concrete process can be read as:
 
 ```text
 entrypoint
-  -> @habitat-ai/sdk facade
-  -> runtime derivation
+  -> @habitat-ai/sdk/runtime/derivation facade
+  -> private runtime derivation
   -> runtime compiler
   -> bootgraph
   -> Effect provisioning kernel
@@ -679,9 +679,11 @@ The assembly law is:
   and ordered config-source declarations, and entrypoints but do not redefine
   service truth;
 - runtime derivation first emits the private foundational `NormalizedRuntimeTopology`, then completes normalized authoring graphs and plan artifacts whose public contracts live at `@habitat-ai/sdk/runtime/derivation`; neither handoff acquires live values;
-- the runtime compiler emits compiled process plans but does not mount harnesses;
+- the private runtime compiler emits the compilation handoff but does not expose a public SDK compiler face, acquire resources, or mount harnesses;
 - bootgraph receives compiler-owned ordering input and emits order/rollback metadata without executing provider plans;
-- the Effect provisioning kernel consumes compiled provider plans plus bootgraph metadata and is the sole producer of the provisioned process;
+- the Effect provisioning kernel consumes compiled resource data, exact cold
+  provider references, decoded config, and bootgraph metadata and is the sole
+  producer of the provisioned process;
 - the process runtime receives compiled plans and provisioned values and does not own semantic meaning;
 - harnesses consume mount-ready surface runtime records or adapter-lowered payloads and do not define ontology;
 - runtime mounting invokes harnesses and coordinates cross-owner shutdown;
@@ -944,6 +946,14 @@ Canonical public imports are SDK-shaped:
 | `@habitat-ai/sdk/runtime/derivation` | Closed complete-derivation face: one derivation operation, exactly three runtime value exports, and the finite type-only contract inventory below |
 | `@habitat-ai/sdk/runtime/harnesses` | Import-safe companion harness contracts; no live handle, registry, or lifecycle owner |
 | `@habitat-ai/sdk/runtime/observation` | Read-only runtime diagnostic, telemetry, topology-record, and catalog facades |
+
+There is no `@habitat-ai/sdk/runtime/compiler` surface and tasks 5.0-5.5 add
+no public compiler export or `@habitat-ai/sdk -> runtime-compiler` source/build
+edge. The compiler remains a private package-less runtime owner. Task 10.6's
+real terminal SDK `startApp(...)` composition source must establish that final
+direct edge only when it actually imports and calls the private compiler;
+metadata, an implicit dependency, runtime-mounting ownership, or transitive
+process-runtime reachability is not a substitute.
 
 `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face, and
 `deriveRuntimeArtifacts(...)` is its sole derivation operation. The SDK root
@@ -2121,8 +2131,8 @@ definition -> selection -> derivation -> compilation -> provisioning -> mounting
 | --- | --- | --- | --- |
 | Definition | Import-safe service, plugin, resource, provider, app, profile, and process declarations, including cold Effect bodies and web route-module loaders | Authors | Selection through `defineEntrypoint(...)`; runtime derivation reaches every selected cold declaration only through the accepted `Entrypoint` |
 | Selection | One frozen `Entrypoint` carrying the selected `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, entrypoint id, and exact five-field launch identity | Synchronous `defineEntrypoint(...)` | Runtime derivation; future `startApp(...)` consumes the same artifact without reconstructing selection |
-| Derivation | Private foundational `NormalizedRuntimeTopology`; complete `NormalizedAuthoringGraph`, provider/service-binding/surface/workflow artifacts, Effect refs/table, distinct web route-module refs/table, and exact-field `PortableRuntimePlanArtifact` — shapes defined in runtime-spec §15 | Private `runtime-derivation` owner; complete-derivation contracts exposed at `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; the runtime compiler consumes the complete graph and plan refs; process runtime consumes the Effect table; the web adapter consumes the web table; pre-runtime tooling consumes the portable artifact |
-| Compilation | Compiled process plan, provider dependency graph, compiled service/surface/harness plans | Runtime compiler | Bootgraph, process runtime, adapters |
+| Derivation | Private foundational `NormalizedRuntimeTopology`; complete `NormalizedAuthoringGraph`, provider/service-binding/surface/workflow artifacts, Effect refs/table, distinct web route-module refs/table, and exact-field `PortableRuntimePlanArtifact` — shapes defined in runtime-spec §15 | Private `runtime-derivation` owner; complete-derivation contracts exposed at `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; the runtime compiler consumes only the complete graph alongside the original entrypoint; process runtime consumes the Effect table; the web adapter consumes the web table; pre-runtime tooling consumes the portable artifact |
+| Compilation | One private exact `{ plan, references, observationSeed }` result for the selected entrypoint and normalized graph | Private package-less runtime compiler | Bootgraph, process runtime, adapters, and later terminal composition through private owner edges; no public compiler face |
 | Provisioning | Successfully decoded private provider/service config state; bootgraph order/rollback metadata; then `ProvisionedProcess` with managed runtime, resource values, finalizers, and owner-local findings | Pre-acquisition runtime config for decoded values; bootgraph for metadata; Effect provisioning kernel for `ProvisionedProcess` | Provisioning kernel; then process runtime |
 | Mounting | Bound services, cache records, mount-ready surface records, adapter-lowered payloads, process-runtime stop handle, returned `NativeHarnessHandle` values, and private `StartedHarness` wrappers | Process runtime/adapters; runtime mounting invokes harnesses and creates wrappers after successful mounts | Runtime mounting and native hosts |
 | Observation | Runtime catalog, diagnostics, telemetry, topology records, and finalization records projected from definition-owned observation records, including records adapted from upstream owner-local findings | Runtime observation | Diagnostic readers and control-plane touchpoints |
@@ -2305,23 +2315,26 @@ The specific artifact types, their portability classification, and the producer/
 
 ### 10.5 Runtime compiler
 
-The runtime compiler consumes runtime-derived artifacts plus the entrypoint's
-selected app, profile, and harness configuration, validates referential
-consistency of the already normalized provider handoff plus provider dependency
-closure and cycles, and emits one `CompiledProcessPlan` plus diagnostics.
-Missing or ambiguous authored selection has already refused during derivation,
-so compilation has no second reachable missing-selection outcome.
+The runtime compiler is the private package-less planning owner between
+derivation and provisioning. It accepts one selected `Entrypoint` plus its
+exact `NormalizedAuthoringGraph`, defends that handoff before output, and
+returns the private compilation handoff. Missing or ambiguous authored
+provider selection has already refused during derivation and is not a second
+compiler outcome. Compilation precedes provisioning and mounting, so an
+invalid handoff returns no plan and no live work begins.
 
-The compiler emits one `CompiledServiceBindingPlan` with resolved dependency
-identities and the admitted normalized binding refs for each
-`ServiceBindingPlan`. The process runtime consumes
-only the compiled form for live binding.
+Compilation is process-local projection, not whole-app planning. It roots the
+plan in the canonicalized entrypoint process roles, closes only their
+service/semantic/resource/provider/workflow/execution/web relations, and excludes facts
+owned solely by sibling app roles. Runtime-realization §16 solely owns that
+closure algorithm and its cold-reference reconciliation.
 
-Compilation precedes provisioning and harness mounting. A compilation failure aborts startup before any resource is acquired.
-
-The runtime compiler does not acquire resources, bind live services, construct native functions, mount harnesses, or write final runtime catalog state.
-
-The complete validation rules, emission contract, and `CompiledProcessPlan` shape are defined in the runtime realization specification, §16.
+The compiler has direct private edges only to `runtime-definition` and
+`runtime-derivation`. It has no current public SDK face or task-5 SDK source
+edge, does not use an observation port, and does not acquire, bind, execute,
+lower, or mount. Runtime-realization §16 alone owns the exact synchronous
+operation, schemas, reference-table mechanics, result fields, refusal law,
+ordering, project/blueprint closure, and task-5 proof allocation.
 
 ### 10.6 Bootgraph and provisioning kernel
 
@@ -2339,10 +2352,12 @@ Habitat plans identity, order, dependency, lifetime, and boundary policy.
 Effect executes scoped acquisition, release, runtime ownership, and process-local coordination.
 ```
 
-The provisioning kernel consumes compiled provider plans plus bootgraph
+The provisioning kernel consumes compiled resource data, exact cold provider
+references, already decoded provider-local config, and bootgraph
 order/rollback metadata. One substrate-owned `Layer.effectContext(...)`
-lifecycle adapter executes those plans in bootgraph order and returns the
-resource Context. The kernel alone executes scoped resource acquisition,
+lifecycle adapter calls the selected provider `build(...)` operations and
+executes their returned effect plans in bootgraph order, producing the resource
+Context. The kernel alone executes scoped resource acquisition,
 release, and failed-startup rollback and alone produces `ProvisionedProcess`.
 It owns exactly one `ManagedRuntime` per started process. `ManagedRuntime.make(...)`
 owns its internal root and layer scopes and builds lazily, so provisioning must
@@ -2489,9 +2504,9 @@ runtime-spec §9.3a and §15.4; they do not enter `ExecutionRegistry`.
 **`traceId` integration invariant.** `EffectBoundaryContext.traceId` is required at every Habitat-managed executable invocation boundary. If the native host does not supply a trace, the adapter or process execution runtime must mint one before invoking `descriptor.run(...)`. Mechanics for the boundary context type and the trace-mint rule are defined in the runtime realization specification, §9.2.
 
 **Pre-runtime artifact reference.** `PortableRuntimePlanArtifact` (the
-pre-runtime planning artifact named at §15.8) is produced alongside the
-complete compiler handoff but is not the compiler's complete input; the
-compiler consumes `NormalizedAuthoringGraph`. Harnesses consume neither
+pre-runtime planning artifact named at §15.8) is produced by complete
+derivation but is not compiler input; the compiler consumes
+`NormalizedAuthoringGraph`. Harnesses consume neither
 artifact directly. The portable artifact is named here so future companion
 deployment specifications can reach its exact seven-field contract through
 the §15.8 platform external interfaces table. It contains no deployment
@@ -2511,11 +2526,25 @@ resources.
 
 It records selected, derived, provisioned, bound, projected, mounted, observed, and stopped topology.
 
-Definition, derivation, compiler, bootgraph, substrate, process-runtime, adapter, harness, and mounting owners expose owner-local findings or publish `RuntimeObservationRecord` values through the definition-owned observation port where their admitted dependency edge permits it. They do not import observation-owned projection types. When projection is required, an admitted downstream consumer adapts returned findings into `RuntimeObservationRecord` values. Runtime observation alone projects those records into `RuntimeDiagnostic`, `RuntimeTelemetry`, `RuntimeTopologyRecord`, and `RuntimeCatalog`.
+Definition, derivation, bootgraph, substrate, process-runtime, adapter, harness,
+and mounting owners expose owner-local findings or publish
+`RuntimeObservationRecord` values through the definition-owned observation port
+where their admitted dependency edge permits it. They do not import
+observation-owned projection types. The compiler is deliberately narrower: it
+returns inert `CompilationObservationSeed` data separately from its plan and
+never imports, consumes, or publishes `RuntimeObservationPort`. A later
+admitted downstream owner may adapt that seed. Runtime observation alone
+projects admitted records into `RuntimeDiagnostic`, `RuntimeTelemetry`,
+`RuntimeTopologyRecord`, and `RuntimeCatalog`.
 
 Runtime diagnostics are the topology projection of structured findings, violations, statuses, and lifecycle events. They name the violated boundary or failed lifecycle phase. They explain; they do not compose.
 
-Runtime telemetry carries process and provisioning context through entrypoint, runtime derivation, runtime compiler, bootgraph, provisioning, service binding, plugin projection, adapter lowering, harness ingress/egress, native execution boundaries, service middleware, async workflows, and finalization.
+Runtime telemetry correlates process and provisioning context across entrypoint,
+runtime derivation, the compiler's returned inert seed, bootgraph,
+provisioning, service binding, plugin projection, adapter lowering, harness
+ingress/egress, native execution boundaries, service middleware, async
+workflows, and finalization. This correlation does not make the compiler an
+observation-port publisher.
 
 Service semantic observability remains service-owned and oRPC-native inside the service boundary. The named platform-external observability interfaces (`PortableRuntimePlanArtifact`, `RuntimeCatalog`, `RuntimeDiagnostic`, `RuntimeTelemetry`) are tabulated at §15.8.
 
@@ -2530,7 +2559,7 @@ Each boundary names the architecture-spec section that establishes it, the runti
 | Lifecycle vocabulary | §10.2 | §24.2, §22.1 | Arch-spec: canonical phase names | Runtime-spec: phase implementation, diagnostics, telemetry correlation | Seven phase names: `definition`, `selection`, `derivation`, `compilation`, `provisioning`, `mounting`, `observation` | Runtime realization spec; TBD: deployment spec |
 | Definition-to-selection handoff | §9.5, §10.2–§10.3 | §10.3, §15.1, §24.2, §27 | Arch-spec: `Entrypoint` as the sole cold selection artifact and `defineEntrypoint(...)` as its producer | Runtime-spec: exact inputs, agreement refusal, freezing, and non-execution mechanics | `AppDefinition`, `RuntimeProfile`, `ProcessDefinition`, `RuntimeLaunchIdentity`, `Entrypoint` | Runtime realization spec |
 | Runtime derivation handoff | §10.4 | §15 | Arch-spec: sole public face, finite export inventory, artifact category names, exact top-level result, and private-foundation/public-completion split | Runtime-spec: exact schemas and method signatures, portability classification, ordering/refusal law, and producer/consumer contracts | Private `NormalizedRuntimeTopology`; structurally reachable nonexported `NormalizedAuthoringGraph`; complete `PortableRuntimePlanArtifact`, `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef` / `ExecutionDescriptorTable` (non-portable), and distinct `WebRouteModuleRef` / `WebRouteModuleTable` (non-portable) | Runtime realization spec |
-| Runtime compiler | §10.5 | §16 | Arch-spec: compiler role in the chain | Runtime-spec: validation list, CompiledProcessPlan shape, emission contract | `CompiledProcessPlan`, `CompiledServiceBindingPlan`, `CompiledExecutionPlan` | Runtime realization spec |
+| Runtime compiler | §10.5 | §16 | Arch-spec: private compiler role, owner edges, and absence of a current public face/SDK edge | Runtime-spec: exact `compileRuntimePlan(...)` signature, closed DTO schemas, cold reference table, result/refusal/order law, exclusions, closure, and proof allocation | Private `RuntimeCompilationResult`, `CompiledProcessPlan`, `RuntimeCompilationReferenceTable`, `CompilationObservationSeed`, and §16 DTO inventory | Runtime realization spec |
 | Bootgraph and provisioning kernel | §10.6 | §17 | Arch-spec: Habitat-vs-Effect control split naming | Runtime-spec: bootgraph ordering, Effect kernel construction, ProvisionedProcess, rollback mechanics | `Bootgraph`, `ProvisionedProcess` | Runtime realization spec |
 | Runtime access | §10.8 | §18.1–§18.2 | Arch-spec: runtime access noun taxonomy | Runtime-spec: RuntimeAccess scoping, ProcessRuntimeAccess, RoleRuntimeAccess shapes | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` | Runtime realization spec; TBD: observability companion spec |
 | Service use and binding | §6.4–§6.6, §7.6, §8.4, §10.4–§10.5, §10.9 | §11.8, §12.4, §15.6, §16, §18.5 | Arch-spec: service-schema/profile-source/private-carrier ownership, transitive binding law, phase handoffs, and cache-key exclusion rule | Runtime-spec: exact source/ref and carrier schemas, normalized and compiled plan shapes, config resolution/decoding mechanics, `ServiceBindingCache` mechanics, and `bindService` contract | `ServiceUse`, `ServiceBindingPlan`, `CompiledServiceBindingPlan`, `ServiceBindingCache`, `ServiceBindingCacheKey`; five context lanes: `deps`, `scope`, `config`, `invocation`, `provided` | Runtime realization spec |
@@ -3473,7 +3502,6 @@ Runtime diagnostics cover at least:
 - service dependency cycle;
 - service binding cache collision;
 - config, secret, or redaction coverage failure;
-- runtime compiler coverage failure;
 - bootgraph identity, dependency, or ordering failure;
 - provisioning-substrate acquisition, rollback, release, or finalizer failure;
 - harness mount failure;
@@ -3767,7 +3795,9 @@ RuntimeAccess != diagnostics
 - bootgraph is process-local only;
 - bootgraph owns process and role acquisition ordering plus rollback/release-order metadata, but executes no acquisition, release, rollback, or finalizer;
 - bootgraph remains ordering data and never becomes an Effect `Layer` DAG;
-- the Effect provisioning kernel consumes compiled provider plans and bootgraph metadata, executes acquisition/release/rollback, and alone produces `ProvisionedProcess`;
+- the Effect provisioning kernel consumes compiled resource data, exact cold
+  provider references, decoded config, and bootgraph metadata, then constructs
+  and executes provider effect plans and alone produces `ProvisionedProcess`;
 - startup failure is fatal for the selected process shape;
 - rollback applies to already-started components in the failed startup subset;
 - finalizers run deterministically in reverse order;
@@ -3821,7 +3851,8 @@ RuntimeAccess != diagnostics
 - live runtime access nouns are `RuntimeAccess`, `ProcessRuntimeAccess`, and `RoleRuntimeAccess`;
 - service handlers do not receive broad `RuntimeAccess`; only their declared `deps`, `scope`, `config`, per-call `invocation`, and execution-derived `provided`;
 - runtime access never exposes raw Effect internals, provider internals, or unredacted config secrets;
-- runtime compiler emits one compiled process plan for one start selection;
+- runtime compiler returns one exact plan, cold-reference table, and inert
+  observation-seed handoff for one start selection;
 - surface adapters lower compiled surface plans, not raw authoring declarations;
 - harnesses consume mounted surface records or adapter-lowered payloads;
 - `RuntimeCatalog` is a diagnostic read model, not live access and not app composition.
@@ -4029,7 +4060,7 @@ flowchart LR
   E --> D
   D --> C
   C --> B
-  C -->|"compiled provider plans"| K
+  C -->|"compiled resource data + cold refs"| K
   B -->|"order + rollback metadata"| K
   K -->|"ProvisionedProcess"| PR
   PR --> RA
@@ -4072,14 +4103,16 @@ derivation
   optional requirement emits the sole finding
 
 compilation
-  runtime compiler validates topology, normalized provider-handoff referential consistency,
-  provider dependency closure/cycles, service closure, harness targets, and emits one compiled
-  process plan; it has no second reachable missing-selection outcome
+  private runtime compiler validates the entrypoint/graph handoff, roots one process in its
+  canonical selected-role surfaces, closes their service/semantic/resource/provider/workflow/execution/web
+  relations while excluding sibling-role facts, and validates dependency cycles and harness ids;
+  it returns exactly plan, cold provider/service references, and inert observation seed,
+  with TypeError before result and no second reachable missing-selection outcome
 
 provisioning
   pre-acquisition runtime config resolves and decodes every provider and service scope/config
   ref; bootgraph emits order and rollback metadata; one substrate Layer.effectContext adapter
-  executes provider plans in that order; the Effect provisioning kernel creates one lazy
+  builds and executes provider effect plans in that order; the Effect provisioning kernel creates one lazy
   ManagedRuntime, forces context before mount, and alone produces ProvisionedProcess
 
 mounting
@@ -4114,7 +4147,7 @@ providers implement runtime capability contracts
 runtime-derivation emits private NormalizedRuntimeTopology, then exactly one complete result whose
 public contracts live at @habitat-ai/sdk/runtime/derivation; its graph has one profile, and web
 loaders remain distinct from Effect descriptors
-runtime compiler emits one compiled process plan
+runtime compiler returns one exact plan/reference-table/observation-seed handoff
 bootgraph emits acquisition/release order and rollback metadata only
 Effect provisioning kernel owns one Layer.effectContext provider-lifecycle adapter, executes
 acquisition/release/rollback, forces the one ManagedRuntime context, and alone produces ProvisionedProcess
