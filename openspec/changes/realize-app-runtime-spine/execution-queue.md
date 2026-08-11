@@ -77,7 +77,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
   6.0 through 6.2 are sealed by their exact receipts or authority records in
   [[tasks]]. Tasks 6.2a through 6.2b are sealed by their exact receipts;
-  task 6.3 is sealed, and task 6.4 is the sole active source node.
+  task 6.3 is sealed, task 6.3a is the sole active documentation node, and task
+  6.4 remains pending behind it.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -863,6 +864,125 @@ decoder/redaction metadata remain in the compiler reference handoff for the
 future substrate to join. Task 6.4 is now active; task 6.5 remains cold, and
 task 7.4 alone proves their live lifecycle.
 
+## Task 6.3a Semantic-Ledger Authority Correction
+
+Task 6.3a supersedes only the then-current task-6.4 activation recorded by the
+sealed task-6.3 receipt above. It is the sole active node and changes exactly
+`design.md`, `authority-amendment.md`, `tasks.md`, this queue,
+`classification-ledger.md`, and `specs/app-runtime-realization/spec.md`. It
+preserves every historical entry and receipt verbatim and touches no proposal,
+stack cut sheet, canonical/system document, router, source, test, project,
+blueprint, `.habitat`, manifest, lockfile, SDK file, runtime behavior, stage,
+commit, or push. Task 6.4 remains pending until this six-file correction lands.
+The `app-runtime-realization` requirement is the sole exact public
+TypeScript/API authority; this queue routes every DTO, callable, operation
+signature, acquire-failure/config shape, and finite SDK inventory there.
+
+The only evidence is
+`77b6c38e8701b8ac9292ef5676385a5e6e096f2:resources/semantic-ledger/**`, exact
+subtree `859b463650e7ad769a56d1b67f328e84584479ef`. Consult it as behavior
+evidence only; do not cherry-pick, merge, or restack it. The task-6.4 execution
+node re-authors the admitted provider-neutral contract and Fluree HTTP behavior
+under current Habitat law.
+
+The execution owner set is closed: resource root `resources/semantic-ledger`,
+Nx `@habitat-ai/resource-semantic-ledger`, `resource@2`, runtime id/value
+`semantic-ledger` / `semanticLedgerResource`; nested provider root
+`resources/semantic-ledger/providers/fluree-http`, Nx
+`provider-semantic-ledger-fluree-http`, `provider@1`, id/default config
+key/value `semantic-ledger.fluree-http` / `semantic-ledger.fluree-http` /
+`semanticLedgerFlureeHttpProvider`. No third project, kind/version,
+package-shaped runtime owner, public memory provider, release member, or
+implicit dependency is admitted.
+
+Task 6.4 has exactly six direct source relations: resource to
+`runtime-definition`; provider to resource, `runtime-definition`, and
+`runtime-schema`; SDK to resource and provider. Its separate root workspace
+devDependency adds `habitat-workspace -> @habitat-ai/resource-semantic-ledger`.
+The expected graph is 27 to 29 projects and 49 to 56 typed edges with no cycle
+and no reverse SDK edge.
+
+The resource face follows the active requirement's exact readonly DTOs, frozen
+term callable, anonymous inputs, eight non-Promise `HabitatEffect` operations,
+and tagged failures. Preserve explicit guards, line-scoped identity bounded to
+128 UTF-8 bytes, applied/refused receipts with no refusal commit and refusal as
+success, exact history, fork, lossless noncolliding merge and collision
+refusal, family lines, lost-answer replay, and guarded contention. Normalize
+redacted failure detail to at most 4,096 UTF-16 code units, truncating longer
+input to the first 4,093 plus literal `...`; exclude URL, body, headers,
+identity, raw response, and vendor exception content. Publish no failure helper,
+classifier, port, named input DTO, detail constant, or extra symbol.
+
+The active requirement alone fixes the required readonly config output/build type and
+two-field acquire failure. One frozen normalizing `RuntimeSchema` wrapper
+delegates `decode` and `validate` to a closed `RuntimeSchema.fromTypeBox(...)`
+base accepting required bounded absolute HTTP(S) `baseUrl` and optional bounded
+integer `timeoutMilliseconds`, with no TypeBox default annotation. Success
+returns a fresh frozen required output using `timeoutMilliseconds ?? 30_000`
+without input mutation; base serializable/redacted shape and exact
+`["baseUrl"]` paths remain. No input type or normalizer is public. Synchronous
+cold build returns one `providerFx.acquireRelease(...)` plan; only its opaque
+`tryPromise` acquire reads global fetch and constructs the resource. Release is
+exactly `release: () => providerFx.succeed(undefined)`, declaring no parameter
+and returning `ProviderFx<void, never>`. Import/build execute nothing and task
+6.4 runs no plan body. Promise and fetch injection stay confined to private
+provider `driver.ts` and the private conformance seam. The provider test may
+prove only public `ProviderEffectPlan` descriptor/metadata shape, TypeScript
+assignability, and import/build coldness. It cannot import/call the accessor,
+inspect the witness, or recover a body. Sealed task 6.1 already proves generic
+witness/body-identity mechanics; task 7.4 alone privately recovers and executes
+this provider's acquire/release through the substrate.
+
+The exact 17 source files are resource `AGENTS.md`, `contract.ts`,
+`habitat.toml`, `package.json`, `project.json`, `tsconfig.build.json`, and
+`tsconfig.json`; tests `contract.test.ts`, `conformance.ts`, and `memory.ts`;
+provider `AGENTS.md`, `driver.ts`, `habitat.toml`, `index.ts`, `project.json`,
+and `tsconfig.json`; and provider `test/provider.test.ts`. The exact ten
+publication files are root `package.json` and `bun.lock`; SDK `AGENTS.md`,
+`README.md`, `package.json`, and `tsdown.config.ts`; SDK
+`src/resources/semantic-ledger/index.ts`, `fluree.ts`, and
+`test/semantic-ledger-public-faces.test.ts`; and
+`apps/habitat/test/installed-package.test.ts`. Their exact union is the 27-file
+task-6.4 diff. The frozen
+`scripts/habitat/product-separation-absence.test.ts` remains untouched.
+
+The root adds only alphabetized devDependency
+`@habitat-ai/resource-semantic-ledger: workspace:*`; workspace patterns remain
+12, release members two, lock workspace entries grow 11 to 12, and lock package
+records grow 1215 to 1216. SDK exports grow 21 to 23, build entries 18 to 20,
+and bundled private workspace specifiers 5 to 7; policy-pack members remain 16
+and copied blueprint directories 11. SDK package metadata adds neither a
+private Habitat dependency nor Fluree dependency/peer/optional metadata.
+
+The neutral SDK face and static `/fluree` subpath expose only the exact
+two-value/twenty-type and two-value/two-type inventories defined by the active
+requirement. `/fluree` is a consumer-selected static import, not a dynamic
+import. No driver, fetch injection, constructor/factory, Promise port, raw
+Effect/runner, plan body/accessor, vendor mechanic, public failure helper/port,
+named input DTO, or schema-normalization helper is public.
+
+Compatibility is exactly `fluree/server:4.1.4`; existing Node, Effect, and
+TypeBox pins remain. There is no Fluree npm metadata or lock record. The neutral
+face cannot reach provider/fetch, and cold `/fluree` imports with global fetch
+absent. Verification is scoped to the active requirement's exact
+TypeScript/inventory/config inference; provider-neutral memory/concurrency
+semantics; private-driver HTTP mapping, redaction, failures, and lost-answer
+recovery without plan access; provider-test public plan descriptor/metadata
+shape, TypeScript assignability, and import/build coldness without accessor,
+witness, or body recovery; Habitat structures; Nx relations/no cycle; and
+SDK/installed exact imports,
+runtime keys, residue absence, neutral isolation, cold `/fluree`, and zero
+vendor metadata. Task 7.4 alone proves exact `tryPromise` fetch/error behavior,
+successful acquisition, no-op release execution, and live lifecycle cleanup.
+
+Stop on a seventh authority file; a 28th implementation file; a second public
+API definition; a new kind/version/project/package; public
+Promise/fetch/driver/factory/helper/port or named input; cycle or implicit edge;
+Fluree version or metadata beyond 4.1.4; extra config field; TypeBox default
+annotation; wrong release callback; task-6.4 accessor import, witness inspection,
+body recovery or invocation; live task-7 behavior; Rawr policy; or
+canonical/system-document edit.
+
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
@@ -939,8 +1059,8 @@ write authority with the active one:
    are sealed by their exact receipts. Tasks 6.0 and 6.1 have sealed the
    provider-effect-plan authority and exact cold plan, and no compiler task
    waits for or consumes `ProviderEffectPlan`.
-2. **Compilation, provider plan, and boot order (`5.1-6.3` sealed;
-   `6.4-6.5` active sequence)**: retain the sealed complete process plan,
+2. **Compilation, provider plan, and boot order (`5.1-6.3` sealed; `6.3a`
+   active; `6.4-6.5` held sequence)**: retain the sealed complete process plan,
    normalized-handoff/provider-closure proof, exact cold runtime-definition
    provider plan, and complete deterministic boot ordering while closing Proxy
    admission before the original proof expansion and two path-qualified Fluree
@@ -950,11 +1070,13 @@ write authority with the active one:
    release-order metadata;
    exact provider references plus provider-owned decoder/redaction metadata
    remain in the compiler reference handoff for the substrate to join later.
-   Both Fluree provider integrations stop at config schema/decode, cold plan,
-   and provider conformance in tasks 6.4/6.5. Missing or ambiguous authored provider
-   selection is already a derivation `TypeError`; every compiler-invalid input
-   also throws built-in `TypeError` before result, and no compiler diagnostic
-   API exists.
+   After task 6.3a closes the exact semantic-ledger authority, both Fluree
+   provider integrations stop at config schema/decode, cold plan, and provider
+   conformance in tasks 6.4/6.5. Semantic-ledger `/fluree` is a static re-export
+   of its cold descriptor with no Fluree npm metadata; task 6.4 executes no plan
+   body. Missing or ambiguous authored provider selection is already a
+   derivation `TypeError`; every compiler-invalid input also throws built-in
+   `TypeError` before result, and no compiler diagnostic API exists.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before

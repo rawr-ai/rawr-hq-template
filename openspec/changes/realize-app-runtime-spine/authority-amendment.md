@@ -828,7 +828,8 @@ and release-order metadata.
 Exact provider references plus provider-owned config decoder and observation
 redaction metadata remain in the compiler reference handoff. The future Effect
 substrate joins those two inputs without either handoff carrying a plan or
-acquire/release body. Tasks 6.4 and 6.5 prove only each qualified Fluree HTTP
+acquire/release body. Task 6.3a closes semantic-ledger authority before source
+work; only after it lands do tasks 6.4 and 6.5 prove each qualified Fluree HTTP
 provider's config schema/decode contract, cold plan construction, and provider
 conformance. Task 7.4 alone runs both provider packages through the real
 substrate to prove single acquisition/release and failure cleanup.
@@ -1048,6 +1049,157 @@ new owner, any source outside the exact corpus, any extra blueprint/version,
 explicit acceptance/verify/aggregate target, SDK export or early edge, finding
 API, source-string/AST proof, provider body, config/decode work, acquisition,
 release, Effect execution, observation, and task-7 behavior.
+
+## Semantic-Ledger Authority Correction
+
+Task 6.3a is the sole active node. It is a documentation-only correction across
+exactly six active OpenSpec artifacts: `design.md`, this amendment, `tasks.md`,
+`execution-queue.md`, `classification-ledger.md`, and
+`specs/app-runtime-realization/spec.md`. The capability requirement and
+scenarios remain the sole archive-safe acceptance owner; the other five files
+route or record the decision. No seventh file changes: `proposal.md`,
+`stack-cut-sheet.md`, canonical/system documents, owner routers, source, tests,
+projects, blueprints, `.habitat`, manifests, lockfiles, SDK files, runtime
+behavior, stages, commits, and pushes are outside this node. Every sealed entry
+and receipt remains verbatim. Task 6.4 is pending until this correction lands.
+That same `app-runtime-realization` requirement is the sole exact public
+TypeScript/API authority: this amendment routes every DTO field, callable
+value, operation signature, acquire-failure/config shape, and finite SDK
+inventory there rather than defining a second public contract.
+
+The exact admitted behavior evidence is
+`77b6c38e8701b8ac9292ef5676385a5e6e096f2:resources/semantic-ledger/**`, subtree
+`859b463650e7ad769a56d1b67f328e84584479ef`. It authorizes no Git ancestry or
+source topology. Task 6.4 MUST re-author only admitted provider-neutral behavior
+under current Habitat law and MUST NOT cherry-pick, merge, or restack the held
+lineage.
+
+Task 6.4 creates exactly two owners. The resource root is
+`resources/semantic-ledger`, Nx identity
+`@habitat-ai/resource-semantic-ledger`, selected blueprint `resource@2`;
+its runtime id/value pair is `semantic-ledger` / `semanticLedgerResource`. The
+nested provider root is `resources/semantic-ledger/providers/fluree-http`, Nx
+identity `provider-semantic-ledger-fluree-http`, selected blueprint
+`provider@1`; its provider id, default config key, and value are respectively
+`semantic-ledger.fluree-http`, `semantic-ledger.fluree-http`, and
+`semanticLedgerFlureeHttpProvider`. A new kind or version, third project,
+package-shaped runtime owner, public memory provider, release member, or
+`implicitDependencies` entry is forbidden.
+
+Direct source relations are exactly resource to `runtime-definition`; provider
+to resource, `runtime-definition`, and `runtime-schema`; and SDK to resource and
+provider. No reverse SDK edge exists. The root's one workspace devDependency
+adds the separate ordinary `habitat-workspace ->
+@habitat-ai/resource-semantic-ledger` package-manager relation. The final graph
+therefore grows from 27 to 29 projects and from 49 to 56 typed edges across that
+root relation plus the six source relations, with no cycle.
+
+The resource value is the exact eight-operation `SemanticLedger` defined only
+by the active requirement. Every operation returns its exact cold
+`HabitatEffect` success/failure value with `never` requirements and never
+Promise. The admitted behavior remains provider-neutral: frozen term
+construction, readonly DTOs, explicit guards, append-only writes, atomic
+contention, applied/refused receipts with refusal as success, line-scoped
+identity bounded to 128 UTF-8 bytes, lost-answer replay, exact history,
+fork/general-merge/collision behavior, and family lines. No resource operation
+exposes provider or workstream policy.
+
+The exact public failure fields, operation/reason unions, and anonymous
+operation inputs live only in the active requirement. Owner-local construction
+normalizes redacted detail to at most 4,096 UTF-16 code units; when longer, it
+retains the first 4,093 code units and appends literal `...`. Neither failure
+detail nor any diagnostic contains a URL, request or response body, headers,
+proposal identity, raw response, or vendor exception. No public failure helper,
+classifier, port, named input DTO, detail constant, or other symbol is admitted.
+
+The provider's exported schema has the exact required readonly config
+output/build type defined by the active requirement. A frozen owner-local
+normalizing `RuntimeSchema` wrapper delegates `decode` and `validate` to a closed
+`RuntimeSchema.fromTypeBox(...)` base accepting required bounded absolute
+HTTP(S) `baseUrl` and optional bounded integer `timeoutMilliseconds`, with no
+TypeBox default annotation. Success returns a fresh frozen required output
+using `timeoutMilliseconds ?? 30_000` without input mutation; serializable and
+redacted shapes remain the base closed schema, with redaction paths exactly
+`["baseUrl"]`. No public input type or normalizer lands. With global fetch
+absent, acquisition yields only the exact two-field failure defined by the
+active requirement.
+
+Synchronous cold provider `build(...)` returns one
+`providerFx.acquireRelease(...)` plan. Only the opaque
+`providerFx.tryPromise(...)` acquire reads `globalThis.fetch` and constructs the
+resource. Exact release is `release: () => providerFx.succeed(undefined)`; the
+callback declares no parameter and returns `ProviderFx<void, never>`. Import and
+build invoke no fetch, Promise, acquire, release, or ledger operation, and task
+6.4 executes no plan body. Promise and injected fetch occur only within private
+provider `driver.ts` and the private test conformance seam. Neither enters a
+package or SDK export; together they allow HTTP transport and shared
+conformance proof without constructing a runtime substrate. The provider test
+may prove only public `ProviderEffectPlan` descriptor/metadata shape,
+TypeScript assignability, and import/build coldness. It MUST NOT import or call
+the private accessor, inspect the witness, or recover a body reference. Sealed
+task 6.1 already proves nominal witness/body-identity mechanics generically;
+task 7.4 alone privately recovers and executes this provider's acquire/release
+through the substrate. Accessor, witness, and bodies remain absent from every
+package, SDK, and public face.
+
+The exact source corpus is 17 files: resource `AGENTS.md`, `contract.ts`,
+`habitat.toml`, `package.json`, `project.json`, `tsconfig.build.json`, and
+`tsconfig.json`; resource tests `contract.test.ts`, `conformance.ts`, and
+`memory.ts`; provider `AGENTS.md`, `driver.ts`, `habitat.toml`, `index.ts`,
+`project.json`, and `tsconfig.json`; and provider `test/provider.test.ts`. The
+exact disjoint publication corpus is ten files: root `package.json` and
+`bun.lock`; `packages/core/sdk/AGENTS.md`, `README.md`, `package.json`, and
+`tsdown.config.ts`; SDK `src/resources/semantic-ledger/index.ts` and
+`fluree.ts`; SDK `test/semantic-ledger-public-faces.test.ts`; and
+`apps/habitat/test/installed-package.test.ts`. Task 6.4 MUST change exactly
+their 27-file union and no 28th file.
+`scripts/habitat/product-separation-absence.test.ts` remains untouched.
+
+Root `package.json` adds only alphabetized devDependency
+`@habitat-ai/resource-semantic-ledger: workspace:*`; workspace patterns remain
+12 and release membership remains the SDK/CLI pair. Regenerated `bun.lock`
+grows its workspace importer from 11 to 12 and package records from 1215 to
+1216. SDK package metadata has zero private Habitat dependencies and zero
+Fluree dependency, peer, or optional-peer declarations. SDK package exports
+grow 21 to 23, build entries 18 to 20, and always-bundled private workspace
+specifiers 5 to 7; the policy pack remains 16 and copied blueprint directories
+remain 11.
+
+The neutral SDK resource face and static `/fluree` face project only the exact
+two-value plus twenty-type and two-value plus two-type inventories defined by
+the active requirement. Consumer-selected means explicit subpath import, not a
+conditional dynamic import. Both faces exclude a driver, injected fetch,
+constructor, factory, Promise port, raw Effect, runner, acquire/release body or
+accessor, vendor mechanic, public failure helper/port, named input DTO, or
+schema-normalization helper.
+
+Compatibility is fixed to `fluree/server:4.1.4` only; current Node, Effect, and
+TypeBox pins remain unchanged. No Fluree npm dependency, peer, optional peer,
+or lock record is admitted. The neutral face cannot reach the provider or
+global fetch. Static `/fluree` import remains cold when fetch is absent.
+TypeScript owns the active requirement's exact public shapes, callable term,
+effect inference, schema output, non-Promise operations, tagged failures, and
+export inventories. Resource tests own provider-neutral semantics,
+historical/fork/merge/line behavior, explicit receipts, and guarded contention
+through the private memory fixture. Private driver/conformance tests own HTTP
+mapping, redaction, failure classification, and lost-answer recovery without
+plan access or execution. The provider test owns only public plan
+descriptor/metadata shape, TypeScript assignability, and import/build coldness;
+it cannot inspect a witness/accessor or recover a body. Sealed task 6.1 owns the
+generic nominal-plan/body-identity proof. Habitat owns the selected structures;
+Nx owns the exact source graph and no-cycle proof; SDK/installed acceptance owns
+exact runtime keys/imports, bundle residue absence, neutral isolation, cold
+Fluree import, and zero vendor metadata. Task 7.4 alone proves `tryPromise`
+fetch/error behavior, successful acquisition, no-op release execution, and live
+substrate failure cleanup.
+
+Task 6.3a or task 6.4 MUST stop on a seventh authority file, a 28th
+implementation file, second public API definition, new
+kind/version/project/package, public Promise/fetch/driver/factory/helper/port or
+named input, cycle or implicit edge, Fluree version or metadata beyond the fixed
+compatibility record, extra config field, TypeBox default annotation, wrong
+release callback, task-6.4 accessor import, witness inspection, body recovery or
+invocation, live task-7 work, Rawr policy, or canonical/system-document edit.
 
 ## Magic Migration Admission
 
