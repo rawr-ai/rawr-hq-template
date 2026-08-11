@@ -1,0 +1,24 @@
+schemaVersion = 1
+id = "runtime-bootgraph"
+version = 1
+
+[[rules]]
+id = "runtime_bootgraph_v1_structure"
+lane = "enforced"
+message = "The runtime bootgraph owner must preserve the exact private lifecycle-ordering source and proof closure."
+remediate = "Restore the package-less runtime-bootgraph shell, four admitted source modules, and two owner-local proofs without adding optional interior, publication, execution, provisioning, or observation authority."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

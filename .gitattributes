@@ -1,6 +1,7 @@
 .habitat/blueprints/app/blueprint.toml text eol=lf
 .habitat/blueprints/app/skill.md text eol=lf
 .habitat/blueprints/app/structure.toml text eol=lf
+.habitat/blueprints/runtime-bootgraph/** text eol=lf
 .habitat/blueprints/runtime-compiler/** text eol=lf
 .habitat/blueprints/runtime-definition/** text eol=lf
 .habitat/blueprints/runtime-derivation/** text eol=lf

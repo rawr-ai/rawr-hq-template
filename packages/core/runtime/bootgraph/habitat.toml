@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-bootgraph"
+ownerProject = "runtime-bootgraph"
+blueprint = "runtime-bootgraph"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/bootgraph"
+
+[selections]
