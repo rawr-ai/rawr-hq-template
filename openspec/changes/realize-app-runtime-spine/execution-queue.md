@@ -63,7 +63,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   OpenSpec artifacts. Tasks 4.10 and 4.11 are sealed by the exact landing
   receipts in [[tasks]]. Task 5.0 then sealed the eight-document,
   authority-only compiler correction with no implementation or `.habitat`
-  mutation. Task 5.1 is now the sole active source node.
+  mutation. Task 5.1 then landed the complete private compiler owner at exact
+  Habitat `main@c8ce735691aa14360c5ea766d05e3fb219250bb0` / tree
+  `96e83ca7881acefd101b394f24e21d2f9abad0c3`; task 5.2 is now the sole active
+  proof-only node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -432,8 +435,9 @@ output, external mutation, or authored executable work; no error API, text, or
 validation order is prescribed. Profile agreement stays in task 4.11 because
 launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
-5.0 is sealed as the documentation-only compiler authority correction, so task
-5.1 is the sole next source node.
+5.0 is sealed as the documentation-only compiler authority correction. Task
+5.1 is sealed by the exact implementation receipt in [[tasks]], so task 5.2 is
+the sole next proof-only node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -445,8 +449,10 @@ copying the canonical schema block. No source, test, project, blueprint, SDK or
 public surface, package, runtime behavior, `.habitat` blueprint, or `.habitat`
 current-realization record changed.
 
-Task 5.1 is the sole active source node. It must create the complete exact
-private package-less `runtime-compiler@1` closure in one node, implement the
+Task 5.1 is sealed at exact Habitat
+`main@c8ce735691aa14360c5ea766d05e3fb219250bb0` / tree
+`96e83ca7881acefd101b394f24e21d2f9abad0c3`. It created the complete exact
+private package-less `runtime-compiler@1` closure in one node and implemented the
 baseline synchronous `compileRuntimePlan({ entrypoint, graph }) -> { plan,
 references, observationSeed }`, establish only the real definition and
 derivation edges, activate and apply the closed law, add the LF rule, grow the
@@ -500,6 +506,9 @@ performs no observation call or publication. Import/implementation absence is
 a reviewed boundary invariant, not a source-inspection behavior assertion. Behavior,
 TypeScript/TypeBox, Habitat, Nx, and SDK pack/provenance tests retain their exact
 owners; runtime source/AST string tests and a fabricated SDK export are invalid.
+Task 5.2 is the sole active proof-only node and may expand only
+`compile-runtime-plan.test.ts` with its allocated provider-branch and closure
+proof; it may not change compiler source or reopen the sealed owner.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
