@@ -558,6 +558,14 @@ copying canonical TypeScript blocks. No `.habitat` file, SDK documentation,
 implementation, source, test, project, blueprint, package/public output,
 runtime behavior, or other OpenSpec file changed in the authority-only gate.
 
+The authority landed through PR #981 at exact head
+`0b3fabdfef79ccc09b3bc520c14c7f2d11a03287` and exact Habitat
+`main@a142b347144902c657c7203b90d9d53b548b95e5` / tree
+`f45fba6599dc9161b821d69b79a5b2256381b703`. Repository Ratchet run
+`31471219815` / job `93714750245` passed the PR head, and push-to-main run
+`31471548022` / job `93715775635` passed the merged SHA. Strict OpenSpec
+validation and the final independent authority and testing reviews were clean.
+
 Task 6.1 is the sole active source node. It preserves byte-identical
 `runtime-definition@1`, creates only the complete independent
 `versions/2/{blueprint.toml,structure.toml}` successor, and selects version 2 in
