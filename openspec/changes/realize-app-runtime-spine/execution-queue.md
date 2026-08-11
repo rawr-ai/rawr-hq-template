@@ -81,6 +81,12 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   The later task-6.3b queue entry supersedes only that activation state: task
   6.3b is sealed by its exact receipt, and task 6.4 is the sole active source
   node.
+  The later task-6.3c queue entry supersedes only that activation state: task
+  6.3c is the sole active documentation-only node, and task 6.4 remains
+  pending until it lands.
+  The later task-6.3d queue entry supersedes only the destination of that
+  future seal: task 6.3c remains current until sealed, its receipt activates
+  pending task 6.3d, and tasks 6.4 and 6.5 remain pending behind task 6.3d.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -1046,6 +1052,134 @@ Graphite mergeability was clean, and push-to-main Repository Ratchet run
 `31524768399` / job `93890259190` passed the exact merged SHA; no Publish
 Habitat run was scheduled. Task 6.4 is the sole active source node.
 
+## Task 6.3c Semantic-Ledger Fluree Mechanics Routing
+
+Every preexisting task-6.3a and task-6.3b entry and receipt above remains
+verbatim. Within activation routing, task 6.3c supersedes only the prior
+activation state and is the sole active documentation-only queue node. Its exact
+corpus remains `design.md`,
+`authority-amendment.md`, `tasks.md`, this queue,
+`classification-ledger.md`, and `specs/app-runtime-realization/spec.md`. The
+last file is the sole exact mechanics and archive-safe acceptance owner. The
+other five contain routing summaries only. No seventh document or executable
+file changes, no task-6.4 source opens, and task 6.4 remains pending until task
+6.3c lands.
+
+The correction preserves the complete public API and the frozen task-6.4
+container: 17 source files plus ten disjoint publication files equal exactly 27
+files; a 28th fails. It also preserves both owners, the six direct source
+relations plus the root workspace relation, 27-to-29 projects, 49-to-56 typed
+edges, every package/lock/SDK count and publication boundary, and task 7.4 as
+the only live acquire/release/failure-cleanup owner.
+
+For execution, follow only the active requirement's corrected merge law.
+Default-graph conflict identity is logical `(subject, predicate)`: every
+bilateral change to one slot conflicts even when resulting object sets are
+equal, while one-sided same-slot changes or disjoint predicates on the same
+subject merge.
+A general merge keeps source-local `t`, produces the native two-parent target
+head, and makes overlapping-position queries union both histories without
+renumbering. Preview `ahead`, `behind`, and `conflicts` retain the exact native
+source-only, target-only, and logical-slot meanings; merge `copied`,
+`conflicts`, `fastForward`, and `t` retain their exact native meanings.
+
+Admit only lines with one colon, family
+`[A-Za-z][A-Za-z0-9.-]{0,127}`, and branch
+`[A-Za-z0-9][A-Za-z0-9._-]{0,127}`. Map every logical IRI through the one
+requirement-owned private fixed reversible storage namespace; reject unsafe
+lines before transport and return a frozen sorted unique line inventory.
+Canonicalize proposals as RDF triple sets,
+refuse zero triples, and derive one exact canonical request body independent of
+public order and duplicates.
+
+Lost-answer recovery is bounded to one acquired `SemanticLedger` lifetime.
+Before the first send, install a line-and-identity entry with the exact canonical
+body, write count, and running/indeterminate/settled state. Its table-owned
+producer is independent of interruptible creator and follower waiters; body
+mismatch refuses without a write. The initial absolute deadline permits one
+initial send and at most one strict-`unknown` replacement, then closes writes
+permanently. Memoize determinate receipt, typed-failure, and defect categories;
+after indeterminate failure, permit only fresh-deadline shared read-only
+submission recovery and never another send. Claim no survival across
+reacquisition or Fluree restart.
+
+Generate private SPARQL aliases and safely render IRIs and literals. Never
+interpolate caller variable or IRI text as syntax. Preserve plain `SELECT` bag
+projection without `DISTINCT`; recursively freeze bindings and all public
+outputs. Decode exact routes, methods, statuses, required success projections,
+and closed error and submission discriminators; require every position and
+counter to be a safe integer, validate the flake-less sentinel, and map a zero
+native write aggregate to refusal rather than application. Do not supply zero
+or another default for missing or malformed fields.
+
+Task-6.4 cold proof installs a throwing, counting `globalThis.fetch` getter and
+proves static import and provider `build(...)` each perform zero reads. Private
+injected-fetch transport/conformance remains outside the plan body, and task
+7.4 alone executes global-fetch acquire and release. Stop this queue on
+subject-wide conflict, renumbering, one-parent general merge, `DISTINCT`, an
+extra namespace, raw caller IRI/variable interpolation, an unsafe line, blind
+resend, durable restart semantics, body-digest storage, lenient decode,
+accepted zero triples or zero aggregate, any import/build fetch read, a seventh
+document, or a 28th task-6.4 file.
+
+Official runtime evidence blocks the source node. Exact refs
+`v4.1.4@07316fa440548247e8985215b8151965d2c72726`,
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, and upstream
+`main@a85e0368285575204d75227742ac9d8ee5d1f0a7` observed on 2026-08-11
+retain byte-identical relevant merge/preview/commit/delta files and numeric
+`ancestor.t` cutoffs in native preview/merge delta, source-replay, and
+copy-chain walks. Because general merge preserves source-local `t`, nested,
+cousin, reverse, and repeated histories can omit reachable commits, miss
+conflicts, and lose facts. Branch-list `BranchInfo.t` is the exact HEAD source;
+`/log` and an ambiguous `/info` projection are not substitutes. Do not
+narrow unrestricted neutral merge with a process- or acquisition-local epoch,
+preflight, single-actor condition, sequence assumption, or degraded no-merge
+behavior. The existing 27-file task-6.4 work in progress is inadmissible. Task
+6.3c remains current until sealed, and its receipt activates task 6.3d rather
+than task 6.4.
+
+## Task 6.3d Fluree Artifact Qualification Routing
+
+Task 6.3d is the pending documentation/evidence-only gate after task 6.3c. It
+uses the same exact six OpenSpec artifacts and no source, test, publication,
+project, proposal, stack cut sheet, canonical/system document, owner router,
+manifest, lockfile, SDK file, runtime behavior, stage, commit, or push. It MUST
+select and pin one immutable, reproducible, wire-compatible Fluree artifact by
+upstream tag and commit plus OCI digest and provenance. The artifact's native
+preview `ahead`/`behind`, conflict delta, source replay, and copy-chain
+traversal MUST terminate by ancestor CID or reachable-set membership rather
+than numeric `t`. Source inspection and provenance alone do not qualify it:
+before selection, task 6.3d runs disposable live-image F1 and F2 against the
+exact digest and records immutable commands and outcomes in the same
+six-document corpus without repository source/test changes. If none exists or
+either vector fails, stop and require a later owner decision between explicit
+fail-closed no-merge capability and redesign. Do not create a local patch or
+deployment promise. Before task 6.3d seals, no Fluree artifact is compatible
+with task 6.4. Successful qualification routes the selected tag, commit, OCI
+digest, and provenance as task 6.4's sole compatibility record and supersedes
+only preserved 4.1.4-only/version stops; all other pins and package-metadata
+exclusions remain unchanged. Tasks 6.4 and 6.5 remain pending behind this
+qualification.
+
+Task 6.3d first executes the vectors through a disposable live probe. When task
+6.4 eventually opens, the existing provider test file repeats mandatory
+live-image F1 and F2 proof without a new file, API, edge, corpus member, or
+count. F1 drives source to high `t` and target to low `t`, performs a clean
+general merge whose target head is below imported source `t`, proves HEAD from
+the exact branch-list `BranchInfo.t`, and proves exact source replay/counters.
+F2 forks a descendant from the high-`t` source, creates a bilateral same-slot
+conflict whose target conflict commit is below `ancestor.t`, repeats after
+target advances above `ancestor.t`, and asserts exact preview
+`ahead`/`behind`/`conflicts` plus native abort with no write. An independent F2
+source-cutoff arm starts from fresh F1 history, adds a disjoint fact to the
+low-`t` merged branch below the high common ancestor, advances the original
+high-`t` line, then proves every reachable source-only commit in `ahead`, exact
+`behind`, zero conflicts, `copied === ahead`, source replay, target
+preservation, target pre-merge `t + 1`, and exact two-parent identity. Memory
+and shared conformance remain the neutral oracle; fake HTTP tests prove only codec, route/status, and
+decoder behavior. Task 6.4 keeps Promise-level waiter/producer proof, while task
+7.4 alone keeps real Effect-interruption proof.
+
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
@@ -1143,6 +1277,12 @@ write authority with the active one:
    The later task-6.3b queue entry supersedes only that activation state: task
    6.3b is sealed, task 6.4 is the sole active source node, and task 6.5 remains
    pending.
+   The later task-6.3c queue entry supersedes only that activation state: task
+   6.3c is the sole active documentation-only node, and tasks 6.4 and 6.5 remain
+   pending until it lands.
+   The later task-6.3d queue entry supersedes only the destination of that
+   future seal: task 6.3c remains current until sealed, task 6.3d follows as a
+   docs/evidence-only gate, and tasks 6.4 and 6.5 remain pending behind it.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before

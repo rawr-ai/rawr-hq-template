@@ -212,6 +212,8 @@ task 2.11 deletion preserved those verticals.
 | External MCP companion projection | Conditional task 13.6, only after an independently versioned `mcp-openapi@1.0.0` artifact exists | Attach the external companion as a `server` surface/process projection through public `@habitat-ai/sdk/runtime/harnesses` descriptor plus readiness/health contract; observe its tool and OpenAPI-resource surface with process-local lifecycle. Core runtime release does not wait for this conditional receipt. If unavailable, preserve the generic harness subpath but make no MCP-specific dependency, subpath, adapter, harness, or release claim. | A copied Magic tarball/source, prompts claim, direct official-MCP-SDK implementation in Habitat, MCP role/kind/app/service/provider/lifecycle authority, sibling controller, MCP-specific unavailable-artifact claim, or blocking the core runtime release while the artifact is unavailable fails. |
 | Semantic-ledger authority correction | Task 6.3a is the sole active documentation-only oracle with no Nx or source target | Across exactly six active OpenSpec artifacts and no seventh file, make the `app-runtime-realization` requirement the sole exact public TypeScript/API authority and route the other five artifacts to it. Freeze evidence-only `77b6c38e8701b8ac9292ef5676385a5e6e096f2:resources/semantic-ledger/**` / subtree `859b463650e7ad769a56d1b67f328e84584479ef`; two existing-kind owners; six source relations plus the root workspace relation; held provider-neutral behavior and bounded redacted failure; a closed TypeBox input plus frozen normalizing required-output/build-config `RuntimeSchema`; exact no-argument release callback; private plan-independent driver/conformance plus public plan-descriptor/metadata/assignability/coldness proof; exact 17+10/27-file corpus with the product-separation test untouched; exact package/lock/SDK/Nx deltas; `fluree/server:4.1.4`-only compatibility; and task-7.4 private recovery/execution. Preserve all sealed receipts verbatim and leave task 6.4 pending. | A second public API authority; seventh authority file; proposal/stack-cut/canonical/router/source/manifest/SDK or product-separation mutation; rewritten receipt; cherry-pick/merge/restack; 28th task-6.4 file; new kind/version/project/package; public Promise/fetch/driver/factory/helper/port/named input; wrong config normalization or release callback; task-6.4 accessor import/call, witness inspection, or body recovery/invocation; extra/reverse/implicit/cyclic edge; wrong count/inventory; failure bound/redaction breach; Fluree npm metadata or compatibility beyond 4.1.4; live task-7 work; or Rawr policy fails task 6.3a. |
 | Semantic-ledger descriptor/schema/package realization correction | Task 6.3b is the sole active documentation-only oracle with no Nx or source target | Across the same exact six active OpenSpec artifacts, route every exact literal, JSON member, TypeScript declaration, public type, and schema mechanic to the `app-runtime-realization` requirement rather than copying a second API block. Freeze the process-only resource descriptor's fixed title/purpose, one ordered lifetime, and absent observation contributor; the provider's exact public/reference identity, fixed title, frozen empty `requires`, exact config-schema reference identity, and absent health; omitted policy/telemetry with all four public metadata fields undefined; annotation-free TypeBox base/wrapper plus one requirement-owned fixed refinement issue string; and source-exported private package/project/tsconfig realization with package main/top-level types absent, contract-plus-provider build through TypeScript project references, and only root/provider SDK `alwaysBundle` additions. Preserve the exact 17+10/27-file corpus, counts, edges, and task-7.4 lifecycle split; open no task-6.4 source and leave task 6.4 pending. | A seventh, executable, proposal, canonical/system, router, or task-6.4 source file; rewritten sealed receipt; second exact API block; or descriptor/schema/package/project/tsconfig drift from the active requirement fails task 6.3b. |
+| Semantic-ledger Fluree mechanics correction | Task 6.3c is the sole active documentation-only oracle with no Nx or source target | Across the same exact six OpenSpec artifacts, route all exact mechanics to the `app-runtime-realization` requirement and preserve the public API, 17+10=27 corpus, topology, counts, publication, and task-7 boundaries. Freeze default-graph collision at logical `(subject, predicate)`, with every bilateral change to one slot conflicting even when object sets are equal while one-sided same-slot changes or disjoint predicates on one subject merge; source-local `t`, a native two-parent general-merge head, exact native counter meanings, and overlapping-position query union without renumbering; one private fixed reversible storage namespace; one-colon lines whose family matches `[A-Za-z][A-Za-z0-9.-]{0,127}` and branch matches `[A-Za-z0-9][A-Za-z0-9._-]{0,127}`; canonical RDF triple-set proposals; one-acquisition pre-send exact-body entries whose table-owned producer is independent of interruptible waiters, whose one initial plus at most one unknown-authorized replacement send closes writes, and whose indeterminate state permits only shared read-only recovery; generated aliases and safe IRI/literal SPARQL; plain `SELECT` bag projection without `DISTINCT`; frozen outputs and sorted unique lines; strict route/status/shape/safe-integer/sentinel decoding with zero-triple and zero-write-aggregate refusal; and a throwing/counting fetch getter proving zero import/build reads. Leave task 6.4 pending. | Subject-wide conflict, position renumbering, a one-parent general merge, `DISTINCT`, an extra namespace, raw caller IRI/variable interpolation, an unsafe line, blind resend, waiter cancellation reaching the producer, a write during read-only recovery, a cross-reacquisition/restart promise, digest-only body storage, lenient decode, accepted zero triples or zero aggregate, an import/build fetch read, a seventh document, a 28th implementation file, a rewritten receipt, a second mechanics/API owner, or any corpus/topology/count/publication/task-7 drift fails task 6.3c. |
+| Semantic-ledger Fluree artifact qualification | Pending task 6.3d is documentation/evidence-only with no Nx or source target | After task 6.3c seals, use the same exact six OpenSpec artifacts to select and pin one immutable, reproducible, wire-compatible Fluree artifact by upstream tag/commit plus OCI digest and provenance. Qualify native preview ahead/behind, conflict delta, source replay, and copy-chain traversal by ancestor CID or reachable-set membership, never numeric `t`; retain branch-list `BranchInfo.t` as the exact HEAD source. Before selection, run disposable live-image F1/F2 against that exact digest, including target-cutoff conflict and independent source-cutoff replay/copy arms, and record immutable evidence without repository source/test changes; when task 6.4 opens, repeat the same vectors in the existing provider test. Successful qualification makes the selected artifact task 6.4's sole compatibility record and supersedes only preserved 4.1.4-only/version stops. Keep memory/shared conformance as the neutral oracle, fake HTTP as codec/status/decoder proof only, Promise waiter proof in task 6.4, and Effect interruption in task 7.4. Preserve all other pins, package-metadata exclusions, APIs, files, edges, corpora, counts, and publication boundaries. Leave tasks 6.4 and 6.5 pending. | Exact official `v4.1.4@07316fa440548247e8985215b8151965d2c72726`, `v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, or observed `main@a85e0368285575204d75227742ac9d8ee5d1f0a7` numeric-`ancestor.t` traversal; `/log` or ambiguous `/info` HEAD inference; source-only qualification; a process/acquisition epoch, preflight, single-actor or sequence restriction; degraded no-merge masquerading as the public law; an unpinned or non-reproducible artifact; fake-HTTP vendor-semantic proof; local patch/deployment promise; source/publication/project mutation; or any new file/API/edge/corpus member fails task 6.3d. If no qualifying artifact exists or any disposable live arm fails, stop for a later owner decision between explicit fail-closed no-merge capability and redesign. |
 | Semantic ledger and later Rawr workstream | After task 6.3a, **co-land** `nx run @habitat-ai/resource-semantic-ledger:test`, `nx run provider-semantic-ledger-fluree-http:test`, focused TypeScript/Habitat/Nx/SDK proof, and installed-package acceptance; later in Rawr, `nx run @rawr/workstream-frame:test` and `nx run-many -t manifest,test -p @rawr/plugin-workstream` | Re-author exactly the two frozen owners and 27 files against the active requirement's exact API. Prove readonly public shapes, frozen term callables, non-Promise `HabitatEffect` operations, required normalized config output, provider-neutral receipts/history/fork/merge/lines/lost-answer/contention, and private plan-independent driver HTTP mapping/redaction/failure behavior. Provider test proves only public plan descriptor/metadata shape, TypeScript assignability, and import/build coldness; it cannot inspect an accessor/witness or recover a body. Sealed task 6.1 owns generic witness/body-identity proof. Prove the exact no-argument release callback through TypeScript assignability, cold static `/fluree`, finite SDK faces, six source relations, 27-to-29 projects, 49-to-56 typed edges/no cycle, and zero vendor metadata/residue. Task 7.4 alone privately recovers/executes acquire/release and proves `tryPromise` fetch/error behavior, successful acquisition, no-op release, and cleanup. Later Rawr consumes only the released neutral face. | Copied Habitat source/Git ancestry, second API definition, direct Fluree coupling in Rawr, public Promise/driver/fetch/factory/helper/port/named input, stale-head authority, lost proposal guard, refused proposal as failure, collision strategy, resource-to-provider reachability, wrong config normalization, warm import/build, task-6.4 accessor/witness/body access or invocation, public/private inventory drift, unresolved workspace output, vendor diagnostic leak, or premature lifecycle proof fails. |
 | Later Rawr research and governance references | In Rawr, **co-land** `nx run @rawr/research-experiment:test` and `nx run rawr:check:governance` | Re-author the accepted service design through released `service@1`, TypeBox, and runtime provisioning, while the unique authority-freeze/toolbox references remain non-executable owner-local guidance. | Package-shaped runtime, manual structural decoding, copied Habitat law, provider construction by a host, or executable authority granted to a reference fails. |
 
@@ -460,6 +462,106 @@ exact two `alwaysBundle` entries remain the resource root and provider subpath.
 No seventh, executable, proposal, canonical/system, router, or task-6.4 source
 file enters. The task-6.3b capability row is the failure oracle for authority
 widening now and execution drift in task 6.4.
+
+## Task 6.3c Authority Routing
+
+Every preexisting task-6.3a and task-6.3b sentence, row, and receipt above
+remains verbatim. Within activation routing, task 6.3c supersedes only their
+activation state and is the sole active documentation-only correction. Its
+exact corpus is the same six
+OpenSpec artifacts: `design.md`, `authority-amendment.md`, `tasks.md`,
+`execution-queue.md`, this ledger, and
+`specs/app-runtime-realization/spec.md`. The specification is the sole exact
+mechanics and archive-safe acceptance owner; the other five files route it. No
+seventh document or task-6.4 source changes, and task 6.4 stays pending until
+task 6.3c lands.
+
+The task-6.3c capability row classifies the correction without changing its
+public API, descriptor/schema/package/project/tsconfig realization, exact
+17+10=27 corpus, two-owner graph, 27-to-29 projects, 49-to-56 typed edges,
+package/lock/SDK counts, publication boundary, or task-7.4 allocation. It routes
+default-graph conflict to logical `(subject, predicate)` rather than the whole
+subject, makes one-sided same-slot and same-subject disjoint-predicate changes
+noncolliding while bilateral same-slot changes conflict even for equal objects,
+and retains source-local positions, the native two-parent
+general-merge head, exact native counters, and union reads over overlapping
+`t`.
+
+The same row routes one private fixed reversible storage namespace, exact
+one-colon family/branch grammars, frozen sorted unique line output, canonical
+RDF triple-set proposal bodies, and acquisition-local exact-body entries. Their
+table-owned producer is independent of interruptible waiters; the initial
+deadline permits one send plus at most one strict-`unknown` replacement and then
+closes writes, while indeterminate state permits only fresh-deadline shared
+read-only recovery. Nothing promises recovery across reacquisition or restart.
+It also routes generated aliases,
+safe IRI/literal SPARQL, plain `SELECT` bag projection without `DISTINCT`, frozen
+outputs, zero-triple and zero-write-aggregate refusal, strict
+route/status/shape/safe-integer/sentinel decoding, and zero-read import/build
+proof through a throwing, counting fetch getter.
+
+The row is the failure oracle for subject-wide conflict, renumbering, a
+one-parent merge, `DISTINCT`, extra namespace, raw caller IRI or variable
+interpolation, unsafe line admission, blind resend, durable restart semantics,
+body-digest storage, lenient decoding, accepted zero triples or aggregate,
+import/build fetch access, a seventh document, a 28th implementation file, or
+any public/corpus/topology/count/publication/task-7 widening.
+
+The task-6.3d row supersedes every task-6.3c implication that official
+`fluree/server:4.1.4` can realize unrestricted neutral merge. Exact refs
+`v4.1.4@07316fa440548247e8985215b8151965d2c72726`,
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, and upstream
+`main@a85e0368285575204d75227742ac9d8ee5d1f0a7` observed on 2026-08-11
+retain byte-identical relevant merge/preview/commit/delta files and numeric
+`ancestor.t` cutoffs. Once a general merge retains source-local `t`, nested,
+cousin, reverse, and repeated histories can omit reachable commits, miss
+conflicts, and lose facts.
+Branch-list `BranchInfo.t` remains the exact HEAD source, not `/log` or an
+ambiguous `/info` response. No process- or acquisition-local epoch, preflight,
+single-actor condition, sequence assumption, or degraded no-merge behavior may
+narrow the public law. The existing task-6.4 27-file work in progress is
+inadmissible. Task 6.3c remains current until sealed, and its receipt activates
+task 6.3d rather than task 6.4.
+
+## Task 6.3d Artifact Qualification Routing
+
+Task 6.3d is pending as the documentation/evidence-only gate before task 6.4.
+It uses the same exact six OpenSpec artifacts and no source, test, publication,
+project, proposal, stack cut sheet, canonical/system document, owner router,
+manifest, lockfile, SDK file, runtime behavior, stage, commit, or push. It MUST
+select and pin one immutable, reproducible, wire-compatible Fluree artifact by
+upstream tag and commit plus OCI digest and provenance whose native preview
+ahead/behind, conflict delta, source replay, and copy-chain traversal terminate
+by ancestor CID or reachable-set membership rather than numeric `t`. If none
+exists, work stops for a later owner decision between explicit fail-closed
+no-merge capability and redesign, without a local patch or deployment promise.
+
+Source inspection and provenance alone do not qualify the artifact. Before
+selection, task 6.3d runs disposable live-image F1 and F2 against the exact OCI
+digest and records immutable commands and outcomes in this six-document corpus
+without repository source/test changes. Before it seals, no Fluree artifact is
+compatible with task 6.4. Successful qualification routes the selected tag,
+commit, OCI digest, and provenance as task 6.4's sole compatibility record and
+supersedes only the preserved 4.1.4-only/version stop; all other pins and
+package-metadata exclusions remain unchanged.
+
+Task 6.3d first executes the vectors through a disposable live probe. The
+existing provider test then repeats them as the eventual mandatory acceptance
+owner without any new file, API, edge, corpus member, or count. F1 establishes
+a high-`t` source, low-`t` target, and clean general merge whose target head is
+below imported source `t`, using exact branch-list `BranchInfo.t` as HEAD and
+proving exact source replay/counters. F2 forks from the high-`t` source, creates
+a bilateral same-slot conflict whose target conflict commit is below
+`ancestor.t`, repeats above `ancestor.t`, and proves exact preview counters,
+native abort/no-write. An independent F2 source-cutoff arm starts from fresh F1
+history, writes disjoint facts on the low-`t` and original high-`t` lines, then
+proves every reachable source-only commit in `ahead`, exact `behind`, zero
+conflicts, `copied === ahead`, source replay, target preservation, target
+pre-merge `t + 1`, and exact two-parent identity.
+Memory/shared conformance remains the neutral oracle; fake HTTP proves only
+codec, route/status, and decoder behavior. Promise-level waiter proof remains
+task 6.4 work and real Effect interruption remains task 7.4 work. Tasks 6.4 and
+6.5 stay pending behind task 6.3d.
 
 
 ## Command And Policy Inventory
