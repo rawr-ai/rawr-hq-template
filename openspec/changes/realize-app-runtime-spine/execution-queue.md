@@ -74,9 +74,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   / tree `3d175be09bfc070a6fe8651d32e8a9483b05e16c`, and task 5.5 sealed the real
   derivation handoff at exact Habitat
   `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` / tree
-  `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence is sealed;
-  task 6.0 now seals the provider-effect-plan authority correction across its
-  exact nine-document surface. Task 6.1 is the sole next source container.
+  `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
+  6.0 through 6.1 are sealed by their exact receipts in [[tasks]]. Task 6.2 is
+  the sole next source container.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -342,9 +342,9 @@ web-loader calls, and left `runtime-derivation@2`, derivation source, and the
 public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
   is sealed as the exact eight-document compiler-authority correction with no
   implementation, blueprint, or current-realization mutation. Tasks 5.1 through
-  5.5 are sealed by their exact receipts in [[tasks]]. Task 6.0 is sealed as the
-  exact nine-document provider-effect-plan authority correction. Task 6.1 is
-  now the sole active source container.
+  5.5 are sealed by their exact receipts in [[tasks]]. Tasks 6.0 and 6.1 are
+  sealed as the exact provider-effect-plan authority and implementation
+  containers. Task 6.2 is now the sole active source container.
 
 ## Task 4.7a Authority Routing
 
@@ -456,8 +456,8 @@ launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Tasks
 5.1 through 5.5 are sealed by the exact implementation and proof receipts in
-[[tasks]]. Task 6.0 is sealed as the documentation-only provider-effect-plan
-authority correction, and task 6.1 is the sole next source node.
+[[tasks]]. Tasks 6.0 and 6.1 are sealed as the provider-effect-plan authority
+and implementation containers, and task 6.2 is the sole next source node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -543,9 +543,8 @@ input-nonmutation, built-in-refusal, and zero-downstream-work proof. Task 5.5 is
 sealed at exact Habitat `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` /
 tree `8371a139957c583fbb160407d783619c1ee514fb` by the exact receipt in [[tasks]].
 It expanded only `derivation-handoff.test.ts` with the real producer handoff and
-eight bounded corrupted-artifact refusals. The compiler sequence and task 6.0
-provider-effect-plan authority correction are sealed; task 6.1 is the sole
-active source container.
+eight bounded corrupted-artifact refusals. The compiler sequence and tasks 6.0
+through 6.1 are sealed; task 6.2 is the sole active source container.
 
 ## Task 6.0 Provider-Effect-Plan Authority Routing
 
@@ -566,7 +565,7 @@ The authority landed through PR #981 at exact head
 `31471548022` / job `93715775635` passed the merged SHA. Strict OpenSpec
 validation and the final independent authority and testing reviews were clean.
 
-Task 6.1 is the sole active source node. It preserves byte-identical
+Task 6.1 is sealed. It preserves byte-identical
 `runtime-definition@1`, creates only the complete independent
 `versions/2/{blueprint.toml,structure.toml}` successor, and selects version 2 in
 the existing definition manifest. The successor closure remains one flat
@@ -624,6 +623,19 @@ positive/negative nominal anti-forgery; behavior owns cold construction,
 descriptor flags/body identity, accessor forgery rejection, and zero build.
 Habitat/Nx and SDK/installed-package proof retain their distinct structure and
 publication truth; runtime source-string and AST assertions remain invalid.
+
+The task-6.1 implementation landed through PR #983 at exact head
+`277fcce939b4b9fc4be5af40cecee08e0d30547b` and exact Habitat
+`main@58a05767692e8637e216cde8258184f66cbc10f2` / tree
+`c9b7044477f397e3c60c014c7584014727f96d56`. It changed exactly the authorized
+25-file corpus. Runtime-definition, derivation, compiler, SDK public-face, and
+installed-package proofs passed; all focused typechecks, builds, the selected
+v2 Habitat structure law, strict OpenSpec validation, and `bun run check` were
+green; and both independent implementation reviews were clean. Repository
+Ratchet run `31475855872` / job `93729290160`, Publish Habitat run
+`31475855945` with Ubuntu job `93729290086` and Windows job `93729290010`, and
+push-to-main Repository Ratchet run `31477239888` / job `93733666035` all
+passed on their exact SHAs. Task 6.2 is the sole active source node.
 
 Task 6.3 keeps the ordered boot artifact limited to resource/provider identity,
 dependency order, deduplication, rollback order, and release-order metadata.
@@ -708,16 +720,17 @@ write authority with the active one:
    error; task 4.11 changes no derivation source or public surface. The exact
    task-4.11 landing receipt is recorded in [[tasks]]. Task 5.0 has sealed the
    documentation-only compiler authority correction and tasks 5.1 through 5.5
-   are sealed by their exact receipts. Task 6.0 has sealed the documentation-only
-   provider-effect-plan correction; task 6.1 is the sole next source node, and
-   no compiler task waits for or consumes `ProviderEffectPlan`.
-2. **Compilation, provider plan, and boot order (`5.1-5.5` and `6.0` sealed;
-   `6.1-6.5` active sequence)**: retain the sealed complete process plan and
-   normalized-handoff/provider-closure proof; realize the exact cold
-   runtime-definition provider plan before deterministic boot ordering and the
-   two path-qualified Fluree integrations. Compiler and bootgraph acquire no
-   provider and carry no plan body. The ordered artifact contains only
-   identity, dependency, deduplication, rollback, and release-order metadata;
+   are sealed by their exact receipts. Tasks 6.0 and 6.1 have sealed the
+   provider-effect-plan authority and exact cold plan, and no compiler task
+   waits for or consumes `ProviderEffectPlan`.
+2. **Compilation, provider plan, and boot order (`5.1-5.5` and `6.0-6.1`
+   sealed; `6.2-6.5` active sequence)**: retain the sealed complete process
+   plan, normalized-handoff/provider-closure proof, and exact cold
+   runtime-definition provider plan while implementing deterministic boot
+   ordering and the two path-qualified Fluree integrations. Compiler and
+   bootgraph acquire no provider and carry no plan body. The ordered artifact
+   contains only identity, dependency, deduplication, rollback, and
+   release-order metadata;
    exact provider references plus provider-owned decoder/redaction metadata
    remain in the compiler reference handoff for the substrate to join later.
    Both Fluree provider integrations stop at config schema/decode, cold plan,
