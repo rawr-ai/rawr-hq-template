@@ -1210,10 +1210,28 @@ values, never property access. No code unwraps a Proxy. Every refusal is a
 synchronous built-in `TypeError` before result with zero trap, getter, callback,
 or external-work invocation.
 
+Task 6.2a.1 is the sole active documentation-only build-config law correction.
+It changes exactly the same eight documents as task 6.2a and preserves the
+sealed task-6.2 and task-6.2a entries and receipts verbatim. Runtime realization
+§17 remains the sole exact mechanics owner, while the active capability
+requirement and scenarios alone retain archive-safe acceptance. Exact source
+`isProxy` import and emitted specifier remain `node:util/types`. Pinned tsdown
+0.22.14's neutral-platform `onlyImport` audit admits the Node package root, not
+that emitted subpath literal, so task 6.2b must add `node:util` exactly once
+immediately after retained `node:crypto`, never add literal `node:util/types`,
+and produce exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`.
+Task 6.2a.1 changes no implementation, source, test, project, blueprint,
+`.habitat` record, config, package/public output, SDK face or edge, platform,
+runtime behavior, or other OpenSpec file.
+
 Task 6.2b repairs exactly `src/bootgraph.ts`, `test/bootgraph.test.ts`, and
-`tsdown.config.ts` in the existing bootgraph owner. The config adds
-`node:util/types` exactly once to the existing `deps.onlyImport` list while
-retaining neutral platform, every prior entry, and every other option. The
+`tsdown.config.ts` in the existing bootgraph owner. The source imports exact
+`isProxy` from `node:util/types`, while the config adds `node:util` exactly once
+immediately after `node:crypto` to the existing `deps.onlyImport` list and never
+adds literal `node:util/types`. Its final array is exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`,
+retaining neutral platform and every other option. The
 behavior test owns real active-Proxy, revoked-Proxy, accessor, and
 proxied-prototype canaries plus a synchronous non-Promise,
 closed-schema-valid successful output unchanged in shape.
@@ -1229,6 +1247,12 @@ project, blueprint, version, target, SDK surface, finding, diagnostic, unwrap,
 provider/config/Effect/observation path, or external-work hook. Stop rather than
 widen if the repair needs a fourth file, a platform or unrelated config change,
 a public/SDK change, or weaker task-6.2 invariant.
+
+Focused verification must prove the emitted `node:util/types` import is accepted
+through the package-root `node:util` allowance by the actual neutral owner build
+and must rerun the existing `nx-cache.test.ts` unchanged to prove cache
+restoration and relevant-input invalidation. Neither verification path widens
+the three-file task-6.2b edit corpus.
 
 Only after task 6.2b lands, task 6.3 resumes its original proof-only scope and
 expands only the already-created

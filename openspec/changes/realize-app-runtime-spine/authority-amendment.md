@@ -819,9 +819,10 @@ those mechanics only for the allocated provider-package proof. Derivation and
 compilation call no provider `build(...)`; compiler and bootgraph carry no plan
 or provider-plan body.
 
-Task 6.2 created the ordered boot artifact. Task 6.2a/6.2b close its Proxy
-admission boundary before task 6.3 expands the original existing behavior
-proof. The artifact stays limited to selection-backed
+Task 6.2 created the ordered boot artifact. Task 6.2a closes Proxy admission,
+task 6.2a.1 corrects its build-config law, and task 6.2b performs the bounded
+repair before task 6.3 expands the original existing behavior proof. The
+artifact stays limited to selection-backed
 resource/provider identity, dependency order, deduplication, rollback order,
 and release-order metadata.
 Exact provider references plus provider-owned config decoder and observation
@@ -985,10 +986,26 @@ admitted own data-descriptor values, never property access. Proxy unwrapping is
 forbidden. Every such input throws built-in `TypeError` synchronously before
 result, with zero proxy traps, getters, callbacks, or external work.
 
+Task 6.2a.1 is the sole active documentation-only build-config law correction.
+It uses exactly the same eight-document corpus as task 6.2a, leaves the sealed
+task-6.2 and task-6.2a entries and receipts verbatim, and changes no
+implementation, source, test, project, blueprint, `.habitat` record, config,
+package/public output, SDK face or edge, platform, runtime behavior, or other
+OpenSpec file. Runtime realization §17 alone owns exact mechanics; the active
+capability requirement and scenarios alone retain archive-safe acceptance.
+The source import and emitted specifier remain exact `node:util/types`, but
+pinned tsdown 0.22.14's neutral-platform `onlyImport` audit admits the package
+root. Task 6.2b therefore adds `node:util` exactly once immediately after
+retained `node:crypto`, never literal `node:util/types`, producing exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`.
+
 Task 6.2b changes exactly existing bootgraph `src/bootgraph.ts`,
-`test/bootgraph.test.ts`, and `tsdown.config.ts`. It imports exact `isProxy` and
-adds `node:util/types` exactly once to existing `deps.onlyImport`, retaining
-`platform: "neutral"`, all prior entries, and every other option. Behavior proof
+`test/bootgraph.test.ts`, and `tsdown.config.ts`. It imports exact `isProxy`
+from `node:util/types` in source and adds package root `node:util` exactly once
+immediately after retained `node:crypto` in existing `deps.onlyImport`, never
+literal `node:util/types`. The final array is exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`,
+retaining `platform: "neutral"` and every other option. Behavior proof
 uses real active and revoked Proxy, accessor, and proxied-prototype canaries and
 also proves one synchronous non-Promise, closed-schema-valid successful output
 unchanged in shape. Project topology and TypeScript, rather than a tautological
@@ -1002,6 +1019,12 @@ surface, unwrap, finding, diagnostic, execution path, provider/config work,
 Effect, observation, or external-work hook. Stop if exact refusal requires a
 fourth file, another dependency or edge, platform or unrelated config change,
 public/SDK work, or weakened task-6.2 law.
+
+Task 6.2b verification distinguishes those two specifiers: the actual neutral
+owner build proves the emitted `node:util/types` subpath passes through the
+package-root `node:util` allowance, and unchanged `nx-cache.test.ts` proves
+cache restoration plus relevant-input invalidation without entering the repair
+edit corpus.
 
 After task 6.2b lands, task 6.3 resumes its original proof-only scope and
 expands only the existing

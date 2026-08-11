@@ -81,8 +81,16 @@ The exact sectional source ledger is [[authority-amendment]].
   Documentation-only task 6.2a now freezes Proxy admission across the exact two
   canonical system documents and these six active OpenSpec artifacts; the active
   `app-runtime-realization` capability spec alone retains archive-safe acceptance
-  without copying the canonical TypeScript block. Task 6.2b is a three-file
-  repair: exact `isProxy` from `node:util/types` refuses active and revoked
+  without copying the canonical TypeScript block. Pending documentation-only
+  task 6.2a.1 corrects the build-config law across that same exact
+  eight-document corpus and is the sole active documentation node. Canonical
+  runtime §17 remains the sole mechanics owner: source keeps the emitted
+  `node:util/types` subpath import, while pinned tsdown 0.22.14 audits the
+  package-root allowance, so the retained neutral `deps.onlyImport` array gains
+  `node:util` exactly once after `node:crypto` and never contains literal
+  `node:util/types`. The correction changes no implementation or config. After
+  it lands, task 6.2b resumes as the same three-file repair: exact `isProxy`
+  from `node:util/types` refuses active and revoked
   Proxies at the shell or any nested record/array, and refuses a proxied
   prototype, before any caller-trapping operation, result, trap, getter,
   callback, or external work. It preserves the neutral build, exact owner

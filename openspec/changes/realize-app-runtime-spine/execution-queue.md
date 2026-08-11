@@ -76,8 +76,9 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` / tree
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
   6.0 through 6.2 are sealed by their exact receipts or authority records in
-  [[tasks]]. Task 6.2a is sealed by its exact receipt; three-file repair task
-  6.2b is the sole active source node, then unchanged one-file task 6.3 resumes.
+  [[tasks]]. Task 6.2a is sealed by its exact receipt; task 6.2a.1 is the sole
+  active documentation node, then exact three-file repair task 6.2b and
+  unchanged one-file task 6.3 resume in order.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -346,6 +347,11 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   two system and six OpenSpec authority documents without implementation. Task
   6.2b then repairs exactly bootgraph source, behavior proof, and build config;
   task 6.3 resumes only afterward.
+- [ ] **Runtime-bootgraph build-config law correction**: task 6.2a.1 is the sole
+  active documentation node across that same exact eight-document corpus. It
+  keeps source import/emission at `node:util/types` but routes pinned tsdown
+  0.22.14's neutral `onlyImport` audit to package root `node:util`, admitted
+  exactly once after `node:crypto`, without implementation or config edits.
 
 The selection/derivation queue is sealed. Task 4.11 changed only
 `packages/core/runtime/derivation/test/complete-derivation.test.ts`, proved the
@@ -357,8 +363,9 @@ public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
   5.5 are sealed by their exact receipts in [[tasks]]. Tasks 6.0 through 6.2
   are sealed as the exact provider-effect-plan authority/implementation and
   bootgraph authority/implementation containers. Task 6.2a is sealed; exact
-  three-file repair task 6.2b is now the sole active source container, followed
-  by the original one-file task 6.3 proof.
+  eight-document task 6.2a.1 is now the sole active documentation container,
+  followed by the original three-file task 6.2b repair and one-file task 6.3
+  proof.
 
 ## Task 4.7a Authority Routing
 
@@ -471,8 +478,9 @@ check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Tasks
 5.1 through 5.5 are sealed by the exact implementation and proof receipts in
 [[tasks]]. Tasks 6.0 through 6.2a are sealed as the provider-effect-plan and
-bootgraph authority/implementation containers, task 6.2b is the sole next
-three-file source repair, and task 6.3 resumes afterward.
+bootgraph authority/implementation containers, task 6.2a.1 is the sole active
+eight-document correction, task 6.2b resumes as the exact three-file source
+repair, and task 6.3 resumes afterward.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -561,8 +569,8 @@ sealed at exact Habitat `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` /
 tree `8371a139957c583fbb160407d783619c1ee514fb` by the exact receipt in [[tasks]].
 It expanded only `derivation-handoff.test.ts` with the real producer handoff and
 eight bounded corrupted-artifact refusals. The compiler sequence and tasks 6.0
-through 6.2a are sealed; task 6.2b is the sole active three-file source repair,
-followed by task 6.3.
+through 6.2a are sealed; task 6.2a.1 is the sole active documentation correction,
+followed by exact three-file task 6.2b and task 6.3.
 
 ## Task 6.0 Provider-Effect-Plan Authority Routing
 
@@ -666,7 +674,7 @@ artifact copies the canonical TypeScript block. No source, test, project,
 blueprint, `.habitat` record, package/public output, SDK edge, runtime behavior,
 or other OpenSpec file changed. Task 6.2 subsequently sealed the complete
 source node, task 6.2a sealed the bounded Proxy-admission authority, and task
-6.2b is the sole active repair.
+6.2a.1 is the sole active documentation correction before task 6.2b resumes.
 
 The authority landed through PR #985 at exact final head
 `97ea53487d4fdbb5c5b0add744c4ff9f599dd360` and exact merged Habitat
@@ -680,8 +688,8 @@ CLEAN. Repository Ratchet run `31482158724` / job `93749365181` passed the exact
 PR head, Graphite was clean, and no Publish Habitat workflow was scheduled.
 Push-to-main Repository Ratchet run `31482357946` / job `93749987961` passed the
 exact merged SHA. Task 6.2 subsequently sealed the complete source node, task
-6.2a sealed Proxy-admission authority, and task 6.2b is the sole active repair
-before task 6.3.
+6.2a sealed Proxy-admission authority, and task 6.2a.1 is the sole active
+documentation correction before task 6.2b and task 6.3 resume in order.
 
 Task 6.2 created the complete private package-less `runtime-bootgraph@1` owner
 and full synchronous `orderBootgraph(...)` source from compiler-owned
@@ -771,10 +779,41 @@ mergeability, and push-to-main Repository Ratchet run `31491882562` / job
 `93780078213` all passed on their exact SHAs; no Publish Habitat run was
 scheduled. Task 6.2b is the sole active source repair.
 
+## Task 6.2a.1 Runtime-Bootgraph Build-Config Law Correction
+
+Task 6.2a.1 is the sole active documentation node and changes exactly the same
+eight documents as task 6.2a: `docs/system/HABITAT_ARCHITECTURE.md`;
+`docs/system/HABITAT_RUNTIME_REALIZATION.md`; and this change's `proposal.md`,
+`design.md`, `authority-amendment.md`, `tasks.md`, `execution-queue.md`, and
+`specs/app-runtime-realization/spec.md`. The architecture document routes,
+canonical runtime §17 alone owns exact mechanics, and the active capability
+requirement/scenarios alone preserve archive-safe acceptance. The sealed
+task-6.2 and task-6.2a entries and receipts remain verbatim.
+
+The source's exact `isProxy` import and emitted specifier remain
+`node:util/types`. Pinned tsdown 0.22.14's neutral-platform `onlyImport` audit
+admits its Node package root instead, so task 6.2b adds `node:util` exactly once
+immediately after retained `node:crypto`, never literal `node:util/types`, and
+produces exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`
+while retaining every other option. The actual owner build must prove the
+emitted subpath is admitted through that package-root allowance; unchanged
+`nx-cache.test.ts` must continue to prove cache restoration and relevant-input
+invalidation.
+
+This correction changes no implementation, source, test, project, blueprint,
+`.habitat` record, config, package/public output, SDK face or edge, platform,
+runtime behavior, task-7 work, or other OpenSpec file. It adds no ninth document
+or classification-ledger entry. After it lands, task 6.2b resumes the exact
+existing three-file repair; only after 6.2b lands does unchanged task 6.3 resume.
+
 Task 6.2b is the sole next source-bearing repair and changes exactly existing
 bootgraph `src/bootgraph.ts`, `test/bootgraph.test.ts`, and `tsdown.config.ts`.
-It adds `node:util/types` exactly once to existing `deps.onlyImport` while
-retaining `platform: "neutral"`, all prior entries, and every other option.
+Source imports exact `isProxy` from `node:util/types`; config adds `node:util`
+exactly once immediately after retained `node:crypto` in existing
+`deps.onlyImport`, never literal `node:util/types`, and yields exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`
+while retaining `platform: "neutral"` and every other option.
 Behavior proof owns real active/revoked Proxy, accessor, and proxied-prototype
 canaries plus a synchronous non-Promise, closed-schema-valid successful output
 unchanged in shape. Topology and TypeScript own non-injectable
@@ -876,8 +915,8 @@ write authority with the active one:
    are sealed by their exact receipts. Tasks 6.0 and 6.1 have sealed the
    provider-effect-plan authority and exact cold plan, and no compiler task
    waits for or consumes `ProviderEffectPlan`.
-2. **Compilation, provider plan, and boot order (`5.1-6.2` sealed;
-   `6.2a-6.5` active sequence)**: retain the sealed complete process plan,
+2. **Compilation, provider plan, and boot order (`5.1-6.2a` sealed;
+   `6.2a.1-6.5` active sequence)**: retain the sealed complete process plan,
    normalized-handoff/provider-closure proof, exact cold runtime-definition
    provider plan, and complete deterministic boot ordering while closing Proxy
    admission before the original proof expansion and two path-qualified Fluree

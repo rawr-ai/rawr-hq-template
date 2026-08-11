@@ -1531,8 +1531,19 @@ owner. The other five OpenSpec artifacts MUST route or record the correction
 without copying the canonical TypeScript block. Task 6.2a MUST change no
 implementation, source, test, project, blueprint, `.habitat` record, config,
 package/public output, SDK edge, runtime behavior, or other OpenSpec file. Task
-6.2b MUST be the sole next source-bearing repair node, and only after it lands
-MUST unchanged one-file task 6.3 resume.
+6.2a.1 MUST now be the sole active documentation-only correction. After it
+lands, task 6.2b MUST resume as the exact same three-file source-bearing repair
+node, and only after 6.2b lands MUST unchanged one-file task 6.3 resume.
+
+Task 6.2a.1 MUST correct runtime-bootgraph build-config authority across exactly
+the same eight documents as task 6.2a. It MUST preserve the sealed task-6.2 and
+task-6.2a entries and receipts verbatim and MUST change no implementation,
+source, test, project, blueprint, `.habitat` record, config, package/public
+output, SDK face or edge, platform, runtime behavior, or other OpenSpec file.
+`HABITAT_RUNTIME_REALIZATION.md` §17 MUST remain the sole exact mechanics owner;
+this requirement and its scenarios MUST remain the sole archive-safe acceptance
+owner. No ninth document, classification-ledger change, `.habitat` record,
+public or SDK work, platform/edge change, or task-7 work is admitted.
 
 Task 6.2 MUST create the complete private package-less
 `runtime-bootgraph@1` owner at `packages/core/runtime/bootgraph` and MUST
@@ -1583,9 +1594,13 @@ Task 6.2b MUST repair Proxy admission in exactly
 `packages/core/runtime/bootgraph/src/bootgraph.ts`,
 `packages/core/runtime/bootgraph/test/bootgraph.test.ts`, and
 `packages/core/runtime/bootgraph/tsdown.config.ts`. The source MUST use exact
-`isProxy` from `node:util/types`; the config MUST add `node:util/types` exactly
-once to the existing `deps.onlyImport` list while retaining
-`platform: "neutral"`, every prior entry, and every other option. No fourth
+`isProxy` from `node:util/types`, which remains the emitted subpath specifier.
+Pinned tsdown 0.22.14's neutral-platform `onlyImport` audit MUST instead admit
+the Node package root: the config MUST add `node:util` exactly once immediately
+after retained `node:crypto`, MUST never contain literal `node:util/types`, and
+MUST yield exactly
+`["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`
+while retaining `platform: "neutral"` and every other option. No fourth
 file, other new dependency or project edge, public/SDK surface, package
 identity, project, blueprint, version, target, finding, diagnostic, unwrap, or
 task-7 behavior is admitted.
@@ -1726,6 +1741,19 @@ call.
   source, test, project, blueprint, `.habitat` record, config, public/SDK output,
   runtime behavior, or other OpenSpec file changes
 
+#### Scenario: Build-config authority correction remains documentation-only
+
+- **WHEN** pending task 6.2a.1 is reviewed before the repair resumes
+- **THEN** only the same two canonical system documents and six active OpenSpec
+  artifacts used by task 6.2a comprise its exact eight-document authority corpus
+- **AND** runtime realization §17 remains the sole exact mechanics owner while
+  this requirement and its scenarios remain the sole archive-safe acceptance
+  owner
+- **AND** the sealed task-6.2 and task-6.2a entries and receipts remain verbatim,
+  no ninth document or classification ledger changes, and no implementation,
+  source, test, project, blueprint, `.habitat` record, config, public/SDK output,
+  platform, edge, runtime behavior, task-7 work, or other OpenSpec file changes
+
 #### Scenario: Active Proxy input refuses without observation
 
 - **WHEN** the input shell or any nested input record or array is a real active
@@ -1757,8 +1785,15 @@ call.
 
 - **WHEN** task 6.2b applies the Proxy-admission repair
 - **THEN** only existing `src/bootgraph.ts`, `test/bootgraph.test.ts`, and
-  `tsdown.config.ts` change, and `node:util/types` appears exactly once in the
-  retained neutral-platform `deps.onlyImport` configuration
+  `tsdown.config.ts` change; source imports and emits `node:util/types`, while
+  retained neutral-platform `deps.onlyImport` contains package root `node:util`
+  exactly once immediately after `node:crypto` and never literal
+  `node:util/types`
+- **AND** its exact final array is
+  `["@orpc/contract", "@orpc/server", "@standard-schema/spec", "node:crypto", "node:util", "typebox"]`
+- **AND** the actual owner build under pinned tsdown 0.22.14 accepts the emitted
+  subpath through that package-root allowance, while unchanged
+  `nx-cache.test.ts` proves cache restoration and relevant-input invalidation
 - **AND** a valid input returns synchronously as a non-Promise with the exact
   closed-schema-valid output unchanged in shape, while real Proxy,
   revoked-Proxy, accessor, and proxied-prototype canaries prove the refusal
