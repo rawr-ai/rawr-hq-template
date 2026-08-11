@@ -1895,6 +1895,17 @@ router, implementation, source, test, project, blueprint, `.habitat` record,
 manifest, lockfile, SDK file, runtime behavior, stage, commit, or push. Task 6.4
 MUST remain pending until this correction lands.
 
+After task 6.3a is sealed, task 6.3b MUST be the sole active
+documentation-only node. It MUST change exactly the same six OpenSpec artifacts
+named above and no seventh file. It MUST preserve every task 6.3a sentence and
+receipt verbatim and MUST change no proposal, stack cut sheet,
+canonical/system document, owner router, executable, implementation, source,
+test, project, blueprint, `.habitat` record, manifest, lockfile, SDK file,
+runtime behavior, stage, commit, or push. Task 6.4 MUST remain pending until
+task 6.3b lands. This specification remains the sole exact public API and
+mechanics authority; `tasks.md` is only the routed execution summary, and no
+other artifact may restate these exact mechanics as a second authority.
+
 The sole evidence admitted to task 6.4 MUST be commit
 `77b6c38e8701b8ac9292ef5676385a5e6e096f2`, path
 `resources/semantic-ledger/**`, exact subtree
@@ -2086,6 +2097,40 @@ export type FlureeHttpSemanticLedgerAcquireFailure = Readonly<{
 }>;
 ```
 
+The exact exported descriptor types are:
+
+```ts
+export declare const semanticLedgerResource: RuntimeResource<
+  "semantic-ledger",
+  SemanticLedger
+>;
+
+export declare const semanticLedgerFlureeHttpProvider: RuntimeProvider<
+  typeof semanticLedgerResource,
+  FlureeHttpSemanticLedgerConfig,
+  FlureeHttpSemanticLedgerAcquireFailure
+>;
+```
+
+`semanticLedgerResource` MUST be constructed with exact id
+`"semantic-ledger"`, title `"Semantic ledger"`, purpose
+`"Provides append-only temporal graph ledger operations."`, default lifetime
+`"process"`, and the frozen ordered allowed-lifetime list `["process"]`
+containing exactly one member. Its
+`observationContributor` property MUST be absent. The descriptor MUST retain
+the exact generic type shown above rather than widen either the id or resource
+value.
+
+`semanticLedgerFlureeHttpProvider` MUST be constructed with exact id and
+title `"semantic-ledger.fluree-http"` and
+`"Fluree HTTP semantic ledger"`. Its `provides` value MUST be the exact
+`semanticLedgerResource` reference, its `requires` value MUST be a frozen empty
+array, its `configSchema` MUST be the exact exported
+`FlureeHttpSemanticLedgerConfigSchema` reference, and its
+`defaultConfigKey` MUST be `"semantic-ledger.fluree-http"`. Its `health`
+property MUST be absent. The descriptor MUST retain all three exact generic
+arguments shown above.
+
 The `term` value MUST be frozen, expose exactly the three callable keys shown,
 and return the corresponding frozen variant. Every operation input MUST remain
 an anonymous `Readonly` record and every public array MUST remain readonly.
@@ -2128,6 +2173,47 @@ integer `timeoutMilliseconds` from 100 through 300000 inclusive. It rejects
 every additional field. It MUST NOT attach a TypeBox default annotation and
 MUST NOT export an input type or normalization helper.
 
+That owner-local input schema MUST be annotation-free and default-free and MUST
+be structurally exact to this TypeBox expression:
+
+```ts
+Type.Object(
+  {
+    baseUrl: Type.Refine(
+      Type.String({ minLength: 1, maxLength: 2048 }),
+      (value) => {
+        try {
+          const url = new URL(value);
+          return (
+            (url.protocol === "http:" || url.protocol === "https:") &&
+            url.username === "" &&
+            url.password === "" &&
+            !value.includes("?") &&
+            !value.includes("#")
+          );
+        } catch {
+          return false;
+        }
+      },
+      () =>
+        "Expected an absolute HTTP or HTTPS URL without credentials, query, or fragment"
+    ),
+    timeoutMilliseconds: Type.Optional(
+      Type.Integer({ minimum: 100, maximum: 300000 })
+    ),
+  },
+  { additionalProperties: false }
+);
+```
+
+No schema node may add `default`, `description`, `title`, `$id`, examples, or
+another annotation. The refinement error MUST be exactly
+`"Expected an absolute HTTP or HTTPS URL without credentials, query, or
+fragment"`. The refinement MUST inspect raw `value` with
+`!value.includes("?") && !value.includes("#")` exactly as shown rather than
+checking `url.search` or `url.hash`, so an empty query or fragment delimiter is
+also refused.
+
 An owner-local base check MUST be created with
 `RuntimeSchema.fromTypeBox(...)` and exact redaction paths `["baseUrl"]`. The
 exported `FlureeHttpSemanticLedgerConfigSchema` MUST be a frozen owner-local
@@ -2144,6 +2230,17 @@ MUST have exactly the two fields frozen above and no diagnostic payload.
 exact config type received by provider `build(...)`; no separate public input or
 build-config type exists.
 
+The `RuntimeSchema.fromTypeBox(...)` options object MUST contain only
+`redaction: { paths: ["baseUrl"] }`; it MUST omit `description`. The frozen
+exported wrapper MUST reuse the base check's `kind`, `serializable`,
+`redaction`, and `toRedactedShape` by exact reference and MUST have no own
+`description` property. Each wrapper method MUST call the matching base method.
+A base failure MUST be returned by exact result identity, unchanged. A base
+success MUST produce a fresh frozen success result containing a fresh frozen
+`FlureeHttpSemanticLedgerConfig` with the exact admitted `baseUrl` and
+`timeoutMilliseconds: value.timeoutMilliseconds ?? 30_000`; neither the result
+nor config object may be reused across successful calls.
+
 Provider `build(...)` MUST be synchronous and cold and MUST return exactly one
 `providerFx.acquireRelease(...)` plan. Only the opaque
 `providerFx.tryPromise(...)` acquire MAY read `globalThis.fetch` and construct
@@ -2155,6 +2252,30 @@ execute no plan body. Promise and injected fetch MUST exist only in private
 provider `driver.ts` and the private test conformance seam. Neither MUST be
 exported by the resource package or SDK; they MUST permit transport and shared
 conformance proof without constructing a runtime substrate.
+
+The `providerFx.acquireRelease(...)` input MUST omit both `policy` and
+`telemetry`. Its exact public descriptor MUST nevertheless retain the required
+phase metadata keys with explicit `undefined` values:
+
+```ts
+{
+  kind: "provider.effect-plan",
+  acquire: {
+    boundary: "provider.acquire",
+    policy: undefined,
+    telemetry: undefined,
+  },
+  release: {
+    boundary: "provider.release",
+    policy: undefined,
+    telemetry: undefined,
+  },
+}
+```
+
+This public shape does not include the existing non-enumerable private witness.
+The no-argument release callback, private witness/body identity law, and task
+7.4-only execution boundary remain unchanged.
 
 The task-6.4 provider test MUST prove only the public `ProviderEffectPlan`
 descriptor/metadata shape, TypeScript assignability, and import/build coldness.
@@ -2179,6 +2300,177 @@ Task 6.4's exact source corpus MUST be these 17 files:
 `providers/fluree-http/project.json`, `providers/fluree-http/tsconfig.json`, and
 `providers/fluree-http/test/provider.test.ts`.
 
+Within that corpus, the private source package `package.json` MUST have exactly
+this semantic inventory and no `main` or top-level `types` member:
+
+```json
+{
+  "name": "@habitat-ai/resource-semantic-ledger",
+  "version": "0.1.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rawr-ai/rawr-hq-template.git",
+    "directory": "resources/semantic-ledger"
+  },
+  "type": "module",
+  "files": [
+    "contract.ts",
+    "providers/fluree-http/driver.ts",
+    "providers/fluree-http/index.ts"
+  ],
+  "exports": {
+    ".": {
+      "types": "./contract.ts",
+      "default": "./contract.ts"
+    },
+    "./providers/fluree-http": {
+      "types": "./providers/fluree-http/index.ts",
+      "default": "./providers/fluree-http/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "bun test test/contract.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "typebox": "1.3.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:resource",
+      "layer:resource-contract",
+      "resource:semantic-ledger"
+    ]
+  }
+}
+```
+
+The resource `project.json` MUST be semantically exact to:
+
+```json
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat-ai/resource-semantic-ledger",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/semantic-ledger/providers/**/*.ts",
+      "!{workspaceRoot}/resources/semantic-ledger/providers/**/test/**",
+      "!{workspaceRoot}/resources/semantic-ledger/providers/**/*.test.*",
+      "!{workspaceRoot}/resources/semantic-ledger/providers/**/*.spec.*",
+      "!{workspaceRoot}/resources/semantic-ledger/providers/**/vitest.config.*"
+    ]
+  },
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}
+```
+
+It MUST omit `projectType`, `sourceRoot`, and `implicitDependencies`; its
+package scripts MUST infer `build` and `typecheck`, so neither target may be
+declared explicitly. The resource `tsconfig.json` MUST be semantically exact
+to:
+
+```json
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "files": [
+    "contract.ts",
+    "test/contract.test.ts",
+    "test/conformance.ts",
+    "test/memory.ts"
+  ]
+}
+```
+
+The resource `tsconfig.build.json` MUST be semantically exact to:
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "."
+  },
+  "files": [
+    "contract.ts",
+    "providers/fluree-http/driver.ts",
+    "providers/fluree-http/index.ts"
+  ],
+  "references": [
+    { "path": "../../packages/core/runtime/definition" },
+    { "path": "../../packages/core/runtime/schema" }
+  ]
+}
+```
+
+The provider `project.json` MUST be semantically exact to:
+
+```json
+{
+  "name": "provider-semantic-ledger-fluree-http",
+  "projectType": "library",
+  "sourceRoot": "resources/semantic-ledger/providers/fluree-http",
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:semantic-ledger",
+    "provider:fluree-http"
+  ],
+  "targets": {
+    "check": {
+      "executor": "nx:noop"
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p {projectRoot}/tsconfig.json --noEmit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test {projectRoot}/test"
+      }
+    }
+  }
+}
+```
+
+It MUST have exactly those four tags and MUST omit `implicitDependencies`. The
+provider `tsconfig.json` MUST be semantically exact to:
+
+```json
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "files": [
+    "driver.ts",
+    "index.ts",
+    "test/provider.test.ts"
+  ]
+}
+```
+
 Its exact disjoint publication corpus MUST be these ten files: root
 `package.json` and `bun.lock`; `packages/core/sdk/AGENTS.md`, `README.md`,
 `package.json`, and `tsdown.config.ts`; SDK
@@ -2197,6 +2489,36 @@ dependencies and zero Fluree dependency, peer, or optional-peer metadata. SDK
 exports MUST grow 21 to 23, tsdown entries 18 to 20, and private bundled
 workspace specifiers 5 to 7. Policy-pack membership MUST remain 16 and copied
 blueprint directories MUST remain 11.
+
+The only additions to the SDK tsdown `alwaysBundle` inventory MUST be, in this
+order, `@habitat-ai/resource-semantic-ledger` and
+`@habitat-ai/resource-semantic-ledger/providers/fluree-http`. The existing
+exact SDK face, count, publication-corpus, pack-membership, and copied-blueprint
+law MUST otherwise remain unchanged.
+
+SDK source wiring and SDK bundling MUST remain distinct exact authorities.
+`packages/core/sdk/src/resources/semantic-ledger/index.ts` MUST re-export the
+neutral values and types below only from
+`@habitat-ai/resource-semantic-ledger`; it MUST have no provider source import.
+That package-root source import MUST create the direct
+`@habitat-ai/sdk -> @habitat-ai/resource-semantic-ledger` Nx relation.
+
+`packages/core/sdk/src/resources/semantic-ledger/fluree.ts` MUST re-export the
+exact `/fluree` values and types below only from the direct relative source
+specifier
+`"../../../../../../resources/semantic-ledger/providers/fluree-http/index"`.
+The specifier MUST omit `.ts` and MUST NOT be replaced by
+`@habitat-ai/resource-semantic-ledger/providers/fluree-http` in SDK source.
+That package-subpath source import would map to the root
+`@habitat-ai/resource-semantic-ledger` Nx project and therefore cannot establish
+or prove the SDK-to-provider relation.
+That exact relative source import MUST create the direct
+`@habitat-ai/sdk -> provider-semantic-ledger-fluree-http` Nx relation. Inside
+the provider source, the package self-import MUST remain exactly
+`@habitat-ai/resource-semantic-ledger`, establishing the provider-to-resource
+relation. The two ordered `alwaysBundle` specifiers above remain unchanged:
+their package-subpath role in bundling MUST NOT substitute for either exact
+source import or its Nx edge.
 
 `@habitat-ai/sdk/resources/semantic-ledger` MUST export exactly runtime values
 `semanticLedgerResource` and `term` and types `Binding`, `GraphNode`,
@@ -2255,6 +2577,71 @@ substrate.
   no seventh file or executable artifact changes
 - **AND** the held commit/path/tree is retained only as evidence with no
   cherry-pick, merge, restack, or ancestry claim
+
+#### Scenario: The task-6.3b refinement remains documentation-only and archive-safe
+
+- **WHEN** task 6.3b is reviewed before task 6.4 begins
+- **THEN** exactly the same six OpenSpec artifacts named above contain the
+  refinement, no seventh file changes, and every task-6.3a sentence and receipt
+  remains verbatim
+- **AND** this specification is the sole exact API and mechanics authority,
+  `tasks.md` remains only a routed execution summary, and task 6.4 remains
+  pending until task 6.3b lands
+- **AND** no executable, implementation, source, test, project, blueprint,
+  manifest, lockfile, SDK, canonical/system document, owner router, proposal,
+  runtime behavior, stage, commit, or push changes
+
+#### Scenario: Resource, provider, plan, and config descriptors are exact
+
+- **WHEN** task 6.4's public descriptors and owner-local config mechanics are
+  inspected
+- **THEN** the resource and provider retain the exact generic types, ids,
+  titles, purpose, lifetimes, exact reference identities, frozen empty
+  requirements, config key, and absent optional members declared above
+- **AND** `acquireRelease(...)` omits policy and telemetry while the public
+  acquire/release records retain their exact boundaries and explicit
+  `policy: undefined` and `telemetry: undefined` keys
+- **AND** the closed annotation-free/default-free TypeBox schema uses the exact
+  URL refinement, error, timeout bounds, and additional-property refusal above
+- **AND** the frozen wrapper reuses the base kind, serializable schema,
+  redaction, and redacted-shape callable by exact reference, omits description,
+  returns an unchanged base failure by identity, and returns a fresh frozen
+  success result and config on every success
+- **AND** the no-argument release, private witness/body identity, and task-7.4
+  execution boundaries remain unchanged
+
+#### Scenario: Source package, Nx projects, TypeScript projects, and bundling are exact
+
+- **WHEN** task 6.4's package, project, tsconfig, and SDK build metadata are
+  inspected
+- **THEN** the private source package has exactly the package JSON inventory,
+  source-file export map, scripts, dependencies, development dependency, and
+  Nx tags above, with `main` and top-level `types` absent
+- **AND** the resource project has exactly its schema, name, production input,
+  explicit check/test targets, inferred package build/typecheck, and declared
+  absences, while its two tsconfigs have exactly the files, options, and two
+  project references above
+- **AND** the provider project and tsconfig have exactly the root, four tags,
+  three targets, three files, and declared implicit-dependency absence above
+- **AND** the SDK adds exactly the two ordered `alwaysBundle` specifiers and
+  preserves every existing exact face, count, corpus, pack, and blueprint law
+
+#### Scenario: SDK source wiring establishes both qualified Nx edges
+
+- **WHEN** the two SDK semantic-ledger entry modules and the typed Nx graph are
+  inspected
+- **THEN** the neutral entry re-exports only from the resource package root and
+  that source import creates the direct SDK-to-resource relation
+- **AND** the `/fluree` entry re-exports its exact values and types only from
+  `"../../../../../../resources/semantic-ledger/providers/fluree-http/index"`
+  without a `.ts` suffix, and that source import creates the direct
+  SDK-to-provider relation
+- **AND** SDK source does not import the provider package subpath, while the
+  subpath would map to the root resource Nx project rather than the provider;
+  the provider's package self-import remains
+  `@habitat-ai/resource-semantic-ledger` and creates its resource relation
+- **AND** both ordered `alwaysBundle` package specifiers remain exact without
+  serving as source-edge evidence or changing any face, count, or corpus law
 
 #### Scenario: The exact resource and provider owners land together
 
@@ -2352,6 +2739,20 @@ substrate.
   execution
 - **THEN** the active task stops without widening or partially landing
 - **AND** task 7.4 remains the only owner of live provider acquisition, release,
+  and failure-cleanup proof
+
+#### Scenario: Task-6.3b exactness drift stops separately
+
+- **WHEN** task 6.3b or later task 6.4 would drift a descriptor type, field,
+  literal, reference, absence, or plan metadata; the schema, URL refinement,
+  wrapper identity, or result freeze; the package JSON, export, script,
+  dependency, or tag inventory; a project JSON, named input, target, tsconfig,
+  file, or project reference; an SDK source specifier, provider self-import, or
+  source-created Nx edge; or the SDK `alwaysBundle` additions
+- **THEN** the active task stops without widening the six-document authority
+  boundary or partially landing
+- **AND** the sealed task-6.3a stop record above remains historical authority
+  and task 7.4 remains the only owner of live provider acquisition, release,
   and failure-cleanup proof
 
 ### Requirement: Runtime providers remain cold until Effect provisioning

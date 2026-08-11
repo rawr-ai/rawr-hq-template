@@ -78,6 +78,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   6.0 through 6.2 are sealed by their exact receipts or authority records in
   [[tasks]]. Tasks 6.2a through 6.3a are sealed by their exact receipts; task
   6.4 is the sole active source node.
+  The later task-6.3b queue entry supersedes only that activation state: task
+  6.3b is the sole active documentation-only node, and task 6.4 remains pending.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -994,6 +996,41 @@ annotation; wrong release callback; task-6.4 accessor import, witness inspection
 body recovery or invocation; live task-7 behavior; Rawr policy; or
 canonical/system-document edit.
 
+## Task 6.3b Semantic-Ledger Descriptor Realization Routing
+
+Every preexisting task-6.3a sentence and receipt above remains verbatim. Task
+6.3b supersedes only that historical activation state and is the sole active
+documentation-only node. It uses the same exact six-document correction scope:
+`design.md`, `authority-amendment.md`, `tasks.md`, this queue,
+`classification-ledger.md`, and `specs/app-runtime-realization/spec.md`. The
+last requirement remains the sole exact authority for every literal, JSON
+member, TypeScript declaration, public type, and schema mechanic; the other five
+artifacts only route or summarize it. No seventh file, proposal, stack cut
+sheet, canonical/system document, router, executable file, or task-6.4 source
+changes. Task 6.4 remains pending until task 6.3b lands.
+
+The routed law freezes a process-only resource descriptor with the
+requirement-owned exact public type, fixed title and purpose, one ordered
+lifetime, and no observation contributor. It freezes the provider's exact
+public type and reference identity, fixed title, frozen empty `requires`, exact
+config-schema reference identity, and absent health. Policy and telemetry are
+omitted from the cold plan, leaving all four public metadata fields `undefined`.
+The TypeBox base and normalizing wrapper carry no description, default, or
+serializable annotations; the requirement alone owns their one fixed
+refinement issue string.
+
+The same authority freezes the source-exported private package/project/tsconfig
+realization: package `main` and top-level `types` remain absent, the resource
+build covers contract plus provider through TypeScript project references, and
+SDK `alwaysBundle` adds only the resource root and provider subpath. The
+requirement-owned SDK source wiring keeps the neutral entry on the package root
+and makes `/fluree` a direct relative provider-source re-export, creating the
+real SDK-to-provider Nx edge without copying the literal path; those exact two
+`alwaysBundle` entries remain. Task 6.3b preserves the existing 17+10/27-file
+corpus, counts, edges, and task-7.4 lifecycle split. Stop on any seventh or
+executable file, second exact API block, task-6.4 source, or
+descriptor/schema/package/project/tsconfig drift from the active requirement.
+
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
@@ -1088,6 +1125,8 @@ write authority with the active one:
    body. Missing or ambiguous authored provider selection is already a
    derivation `TypeError`; every compiler-invalid input also throws built-in
    `TypeError` before result, and no compiler diagnostic API exists.
+   The later task-6.3b queue entry supersedes only that activation state: task
+   6.3b is active, and the task-6.4/6.5 source sequence remains pending.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before
