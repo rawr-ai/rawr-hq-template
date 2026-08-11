@@ -18,6 +18,7 @@ export default defineConfig({
       "@orpc/server",
       "@standard-schema/spec",
       "node:crypto",
+      "node:util",
       "typebox",
     ],
   },
