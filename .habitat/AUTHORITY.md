@@ -91,11 +91,11 @@ cannot duplicate, weaken, or replace generic kind law.
 
 ## Current Realization
 
-The accepted protocol-1 SDK pack contains thirteen sorted members: `app@1`,
+The accepted protocol-1 SDK pack contains fourteen sorted members: `app@1`,
 `package@1`, `plugin@1`,
 `plugin-nx@1`, `provider@1`, `resource@1`, `resource@2`,
-`runtime-definition@1`, `runtime-derivation@1`, `runtime-derivation@2`,
-`service@1`, `service@2`, and `service@3`. Existing version-1
+`runtime-compiler@1`, `runtime-definition@1`, `runtime-derivation@1`,
+`runtime-derivation@2`, `service@1`, `service@2`, and `service@3`. Existing version-1
 members remain immutable for exact existing selections. `runtime-definition@1`
 closes only the cold private runtime-definition owner introduced by task 4.1;
 it does not create `app@2`, a live runtime, or a native host. The version-2
@@ -108,6 +108,10 @@ engine, or relation engine is part of this gate.
 `runtime-derivation@2` independently closes the complete private runtime-
 derivation owner and its behavior proofs; it neither inherits nor traverses
 the version-1 closure.
+`runtime-compiler@1` closes the exact private package-less compiler structure.
+Its SDK carriage is policy-asset assembly only: it bundles no compiler
+implementation and creates neither an SDK-to-compiler source/build edge nor a
+public compiler face.
 `service@3` preserves the complete version-2 service shape and acquisition but
 selects the terminal SDK's side-effect-only official Effect-oRPC bootstrap.
 SDK-internal services that would create a reverse dependency remain on their

@@ -1,0 +1,67 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "runtime-compiler-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "habitat.toml",
+  "project.json",
+  "src",
+  "test",
+  "tsconfig.json",
+  "tsconfig.test.json",
+  "tsdown.config.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-compiler-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|project.json|tsconfig.json|tsconfig.test.json|tsdown.config.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-compiler-source"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "closed"
+required = [
+  "compile-runtime-plan.ts",
+  "compiled-process-plan.ts",
+  "index.ts",
+  "runtime-compilation-reference-table.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-compiler-source-files"
+rootRole = "project"
+relativePath = "src/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-compiler-proof"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+required = [
+  "compile-runtime-plan.test.ts",
+  "derivation-handoff.test.ts",
+  "nx-cache.test.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-compiler-proof-files"
+rootRole = "project"
+relativePath = "test/*.test.ts"
+kind = "file"
+mode = "closed"

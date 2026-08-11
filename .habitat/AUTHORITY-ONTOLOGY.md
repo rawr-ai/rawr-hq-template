@@ -140,10 +140,11 @@ Application bounds execution.
 
 ## Current Realization
 
-The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits thirteen
+The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits fourteen
 members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
-`resource@1`, `resource@2`, `runtime-definition@1`, `runtime-derivation@1`,
-`runtime-derivation@2`, `service@1`, `service@2`, and `service@3`.
+`resource@1`, `resource@2`, `runtime-compiler@1`, `runtime-definition@1`,
+`runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`, and
+`service@3`.
 `runtime-definition@1` is the closed cold private definition owner,
 not a live runtime or an `app@2` successor. The version-1 resource and service
 closures preserve their `habitat-cli-v0.5.13` bytes. Their complete version-2
@@ -152,6 +153,10 @@ to definition-owned `rootPatterns`.
 `runtime-derivation@1` is the immutable topology-only predecessor;
 `runtime-derivation@2` is an independent complete definition for the finished
 derivation owner, with no inheritance, fallback, or cross-version traversal.
+`runtime-compiler@1` is the closed private package-less compiler structure.
+Policy-pack carriage copies only its definition and runner assets; it neither
+bundles compiler implementation nor creates a public compiler face or an
+SDK-to-compiler source/build edge.
 `service@3` is not a new kind or relation. It is the complete consumer-facing
 service successor whose official Effect-oRPC bootstrap is projected through
 the terminal SDK while SDK-internal services preserve an acyclic earlier

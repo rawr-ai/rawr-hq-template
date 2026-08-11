@@ -37,6 +37,11 @@
       "path": "dist/blueprints/resource/versions/2/blueprint.toml"
     },
     {
+      "id": "runtime-compiler",
+      "version": 1,
+      "path": "dist/blueprints/runtime-compiler/blueprint.toml"
+    },
+    {
       "id": "runtime-definition",
       "version": 1,
       "path": "dist/blueprints/runtime-definition/blueprint.toml"

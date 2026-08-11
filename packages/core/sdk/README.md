@@ -68,6 +68,11 @@ the input, normalized facts, derived plans and tables, portable artifact, and
 findings. The facade directly projects the private owner and exposes no second
 implementation or public derivation error API.
 
+The private `runtime-compiler@1` blueprint is carried as an inert package asset
+only. This package exposes no compiler JavaScript or declaration entry and does
+not bundle or depend on the compiler implementation; task 10.6 owns the later
+real terminal-composition edge.
+
 The isolated `@habitat-ai/sdk/telemetry` entry exposes the provider-neutral
 technical telemetry contract and declarative OpenTelemetry Node configuration.
 It exports no provider acquisition, lease, exporter factory, or instrumentation
@@ -103,10 +108,10 @@ their exact runtime and harness owners; none is repeated by an individual
 service or plugin.
 
 `habitat-pack.json` is the closed protocol-1 policy envelope. It declares
-exactly thirteen sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
-`provider@1`, `resource@1`, `resource@2`, `runtime-definition@1`,
-`runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`, and
-`service@3`.
+exactly fourteen sorted members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`,
+`provider@1`, `resource@1`, `resource@2`, `runtime-compiler@1`,
+`runtime-definition@1`, `runtime-derivation@1`, `runtime-derivation@2`,
+`service@1`, `service@2`, and `service@3`.
 Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; later versions
 resolve from `dist/blueprints/<id>/versions/<version>/blueprint.toml`. Presence in
 `dist/blueprints` alone grants no authority.
@@ -119,6 +124,9 @@ authoring copy is inert during resolution, while a different local definition
 at the same identity is rejected as drift.
 Each member path locates one immutable, complete definition and runner-asset
 closure. A version neither inherits nor traverses assets from another version.
+`runtime-compiler@1` carries only the exact private compiler structure closure;
+its membership creates no implementation bundle, public compiler face, or SDK
+source/build edge.
 `runtime-derivation@1` preserves the topology-only predecessor closure.
 `runtime-derivation@2` independently closes the complete derivation owner and
 its behavior proofs, without inheritance, fallback, or cross-version assets.
@@ -126,6 +134,8 @@ its behavior proofs, without inheritance, fallback, or cross-version assets.
 Each selected definition exposes only its required `project` anchor.
 Source-specific structure scopes carry blueprint-owned `src/**` relative
 paths; a caller-authored `source` binding is rejected as an unknown root role.
+The SDK build copies and hashes exactly ten blueprint directories, including
+the asset-only `runtime-compiler` directory.
 
 `resource@1` and `resource@2` include the provider-neutral Effect failure law
 promoted from the Magic Migration evidence at commit

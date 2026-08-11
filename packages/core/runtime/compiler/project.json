@@ -1,0 +1,62 @@
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "runtime-compiler",
+  "root": "packages/core/runtime/compiler",
+  "sourceRoot": "packages/core/runtime/compiler/src",
+  "projectType": "library",
+  "tags": ["type:runtime", "capability:habitat", "role:runtime-compiler"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bunx tsc -p packages/core/runtime/compiler/tsconfig.json --noEmit",
+          "bunx tsc -p packages/core/runtime/compiler/tsconfig.test.json --noEmit"
+        ]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "parallelism": false,
+      "options": {
+        "command": "bun test packages/core/runtime/compiler/test"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsdown --config packages/core/runtime/compiler/tsdown.config.ts"
+      }
+    },
+    "acceptance:compiled-process-plan": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "outputs": [],
+      "options": {
+        "command": "bun test packages/core/runtime/compiler/test/compile-runtime-plan.test.ts"
+      }
+    },
+    "acceptance:derivation-handoff": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "outputs": [],
+      "options": {
+        "command": "bun test packages/core/runtime/compiler/test/derivation-handoff.test.ts"
+      }
+    },
+    "acceptance:nx-cache": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "outputs": [],
+      "options": {
+        "command": "bun test packages/core/runtime/compiler/test/nx-cache.test.ts"
+      }
+    },
+    "check": {
+      "executor": "nx:noop"
+    }
+  }
+}

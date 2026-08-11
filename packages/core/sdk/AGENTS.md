@@ -7,7 +7,8 @@
   runtime-definition, and complete runtime-derivation owners behind isolated
   public surfaces.
 - Transport the repository's generic Habitat blueprint bytes from the canonical
-  `.habitat/blueprints` tree as generated package assets.
+  `.habitat/blueprints` tree as generated package assets, including the private
+  runtime-compiler structure without bundling its implementation.
 
 ## Scope
 
@@ -48,6 +49,10 @@
 - `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face. It
   exposes exactly three runtime values and twenty-six type-only contracts from
   the private owner, with no second implementation or public error API.
+- `runtime-compiler@1` is transported only as a policy-pack blueprint closure.
+  The SDK exposes no compiler JavaScript or declaration face and has no
+  source/build dependency on the private compiler until terminal composition
+  consumes it in task 10.6.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -77,9 +82,9 @@
   manager has not run dependency install scripts.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact
-  thirteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
+  fourteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
   `plugin-nx@1`, `provider@1`,
-  `resource@1`, `resource@2`, `runtime-definition@1`,
+  `resource@1`, `resource@2`, `runtime-compiler@1`, `runtime-definition@1`,
   `runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`,
   and `service@3`. The version-1
   resource and service members preserve their released bytes; each version-2
@@ -90,6 +95,9 @@
   services.
   `runtime-derivation@1` preserves its immutable topology-only closure;
   `runtime-derivation@2` independently closes the finished derivation owner.
+  `runtime-compiler@1` closes the private compiler structure, but its
+  policy-pack membership is asset carriage rather than an implementation or
+  public-face edge.
   Shipped files are not members merely by being present.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
@@ -124,6 +132,9 @@
   modifying the canonical authoring source. Exact producer definitions resolve
   as inert duplicates of the package authority; drift at the same identity is
   rejected.
+- The copied and hashed build-input inventory contains exactly ten blueprint
+  directories. `runtime-compiler` contributes assets only and does not enter
+  the SDK entry graph or bundled private implementation set.
 
 ## Interfaces
 
@@ -154,6 +165,7 @@
 - [[../runtime/schema/AGENTS|Private runtime-schema owner]]
 - [[../runtime/definition/AGENTS|Private runtime-definition owner]]
 - [[../runtime/derivation/AGENTS|Private runtime-derivation owner]]
+- [[../runtime/compiler/AGENTS|Private runtime-compiler owner]]
 
 ## Validation
 
