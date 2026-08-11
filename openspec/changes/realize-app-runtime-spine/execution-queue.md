@@ -79,7 +79,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   [[tasks]]. Tasks 6.2a through 6.3a are sealed by their exact receipts; task
   6.4 is the sole active source node.
   The later task-6.3b queue entry supersedes only that activation state: task
-  6.3b is the sole active documentation-only node, and task 6.4 remains pending.
+  6.3b is sealed by its exact receipt, and task 6.4 is the sole active source
+  node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -999,15 +1000,15 @@ canonical/system-document edit.
 ## Task 6.3b Semantic-Ledger Descriptor Realization Routing
 
 Every preexisting task-6.3a sentence and receipt above remains verbatim. Task
-6.3b supersedes only that historical activation state and is the sole active
-documentation-only node. It uses the same exact six-document correction scope:
+6.3b superseded only that historical activation state and is now sealed. It
+uses the same exact six-document correction scope:
 `design.md`, `authority-amendment.md`, `tasks.md`, this queue,
 `classification-ledger.md`, and `specs/app-runtime-realization/spec.md`. The
 last requirement remains the sole exact authority for every literal, JSON
 member, TypeScript declaration, public type, and schema mechanic; the other five
 artifacts only route or summarize it. No seventh file, proposal, stack cut
 sheet, canonical/system document, router, executable file, or task-6.4 source
-changes. Task 6.4 remains pending until task 6.3b lands.
+changes. Task 6.4 is now the sole active source node.
 
 The routed law freezes a process-only resource descriptor with the
 requirement-owned exact public type, fixed title and purpose, one ordered
@@ -1030,6 +1031,20 @@ real SDK-to-provider Nx edge without copying the literal path; those exact two
 corpus, counts, edges, and task-7.4 lifecycle split. Stop on any seventh or
 executable file, second exact API block, task-6.4 source, or
 descriptor/schema/package/project/tsconfig drift from the active requirement.
+
+Task 6.3b landed through authority PR #999 at exact final head
+`e8ff820db8099f56f3e644e722344fde1ac9a060` and exact Habitat
+`main@778176e7f82e5bd434f8532baba64779a0f4b443` / tree
+`4ba9e31bb0da248011bd9e30950124bd114c453e`. The exact six-document authority
+corpus was `design.md`, `authority-amendment.md`, `tasks.md`, this queue,
+`classification-ledger.md`, and `specs/app-runtime-realization/spec.md`; it
+changed no implementation and was intentionally `+541/-0`. Strict OpenSpec
+validation and diff, scope, and zero-deletion checks
+passed, and independent constitutional and TypeBox/TypeScript/testing reviews
+were CLEAN. Repository Ratchet PR run `31524571180` / job `93889597727` passed,
+Graphite mergeability was clean, and push-to-main Repository Ratchet run
+`31524768399` / job `93890259190` passed the exact merged SHA; no Publish
+Habitat run was scheduled. Task 6.4 is the sole active source node.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
@@ -1126,7 +1141,8 @@ write authority with the active one:
    derivation `TypeError`; every compiler-invalid input also throws built-in
    `TypeError` before result, and no compiler diagnostic API exists.
    The later task-6.3b queue entry supersedes only that activation state: task
-   6.3b is active, and the task-6.4/6.5 source sequence remains pending.
+   6.3b is sealed, task 6.4 is the sole active source node, and task 6.5 remains
+   pending.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before
