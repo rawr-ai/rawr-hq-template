@@ -658,6 +658,19 @@ artifact copies the canonical TypeScript block. No source, test, project,
 blueprint, `.habitat` record, package/public output, SDK edge, runtime behavior,
 or other OpenSpec file changed. Task 6.2 is the sole active source node.
 
+The authority landed through PR #985 at exact final head
+`97ea53487d4fdbb5c5b0add744c4ff9f599dd360` and exact merged Habitat
+`main@038710dcfc0c249d6e376e2f5ad14b7a830e050b`. Its exact eight-document
+corpus was `docs/system/HABITAT_ARCHITECTURE.md`;
+`docs/system/HABITAT_RUNTIME_REALIZATION.md`; and this change's `proposal.md`,
+`design.md`, `authority-amendment.md`, `tasks.md`, `execution-queue.md`, and
+`specs/app-runtime-realization/spec.md`. Strict OpenSpec validation and scoped
+diff checks passed; independent constitutional and TypeBox/testing reviews were
+CLEAN. Repository Ratchet run `31482158724` / job `93749365181` passed the exact
+PR head, Graphite was clean, and no Publish Habitat workflow was scheduled.
+Push-to-main Repository Ratchet run `31482357946` / job `93749987961` passed the
+exact merged SHA. Task 6.2 remains the sole active source node.
+
 Task 6.2 creates the complete private package-less `runtime-bootgraph@1` owner
 and full synchronous `orderBootgraph(...)` source from compiler-owned
 `BootgraphInput`. Its exact implementation closure is four source files, the
