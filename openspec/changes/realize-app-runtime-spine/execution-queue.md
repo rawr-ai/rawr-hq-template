@@ -76,9 +76,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` / tree
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence and tasks
   6.0 through 6.2 are sealed by their exact receipts or authority records in
-  [[tasks]]. Tasks 6.2a through 6.2b are sealed by their exact receipts;
-  task 6.3 is sealed, task 6.3a is the sole active documentation node, and task
-  6.4 remains pending behind it.
+  [[tasks]]. Tasks 6.2a through 6.3a are sealed by their exact receipts; task
+  6.4 is the sole active source node.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -867,7 +866,7 @@ task 7.4 alone proves their live lifecycle.
 ## Task 6.3a Semantic-Ledger Authority Correction
 
 Task 6.3a supersedes only the then-current task-6.4 activation recorded by the
-sealed task-6.3 receipt above. It is the sole active node and changes exactly
+sealed task-6.3 receipt above. It changes exactly
 `design.md`, `authority-amendment.md`, `tasks.md`, this queue,
 `classification-ledger.md`, and `specs/app-runtime-realization/spec.md`. It
 preserves every historical entry and receipt verbatim and touches no proposal,
@@ -975,6 +974,18 @@ runtime keys, residue absence, neutral isolation, cold `/fluree`, and zero
 vendor metadata. Task 7.4 alone proves exact `tryPromise` fetch/error behavior,
 successful acquisition, no-op release execution, and live lifecycle cleanup.
 
+Task 6.3a landed through PR #997 at exact final head
+`fe0beebc722fa6898c8fb7924b6845eadb75f82f` and exact Habitat
+`main@1308b3ce486deaa01e8d73e7cd7eca3796c197df` / tree
+`2117105e46bbc0ccfb070091ad5cd026d59ab614`. The exact six-document corpus
+changed no implementation; strict OpenSpec validation and diff checks passed;
+and independent constitutional, TypeBox/TypeScript/testing,
+publication/topology, and engineering-preflight reviews were CLEAN. Repository
+Ratchet run `31517527904` / job `93866304368`, Graphite mergeability, and
+push-to-main Repository Ratchet run `31518239282` / job `93868616274` all
+passed on their exact SHAs; no Publish Habitat run was scheduled. Task 6.4 is
+the sole active source node.
+
 Stop on a seventh authority file; a 28th implementation file; a second public
 API definition; a new kind/version/project/package; public
 Promise/fetch/driver/factory/helper/port or named input; cycle or implicit edge;
@@ -1059,8 +1070,8 @@ write authority with the active one:
    are sealed by their exact receipts. Tasks 6.0 and 6.1 have sealed the
    provider-effect-plan authority and exact cold plan, and no compiler task
    waits for or consumes `ProviderEffectPlan`.
-2. **Compilation, provider plan, and boot order (`5.1-6.3` sealed; `6.3a`
-   active; `6.4-6.5` held sequence)**: retain the sealed complete process plan,
+2. **Compilation, provider plan, and boot order (`5.1-6.3a` sealed;
+   `6.4-6.5` active sequence)**: retain the sealed complete process plan,
    normalized-handoff/provider-closure proof, exact cold runtime-definition
    provider plan, and complete deterministic boot ordering while closing Proxy
    admission before the original proof expansion and two path-qualified Fluree
@@ -1070,8 +1081,8 @@ write authority with the active one:
    release-order metadata;
    exact provider references plus provider-owned decoder/redaction metadata
    remain in the compiler reference handoff for the substrate to join later.
-   After task 6.3a closes the exact semantic-ledger authority, both Fluree
-   provider integrations stop at config schema/decode, cold plan, and provider
+   Both Fluree provider integrations stop at config schema/decode, cold plan,
+   and provider
    conformance in tasks 6.4/6.5. Semantic-ledger `/fluree` is a static re-export
    of its cold descriptor with no Fluree npm metadata; task 6.4 executes no plan
    body. Missing or ambiguous authored provider selection is already a
