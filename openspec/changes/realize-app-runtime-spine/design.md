@@ -407,21 +407,24 @@ blueprint-qualified source and tests, but no `package.json`. Dependency arrows
 are consumer to dependency and the table admits no other private edge. The one
 terminal public project remains
 `@habitat-ai/sdk` at `packages/core/sdk`. A direct assembly edge may co-land only
-with its real public projection or terminal composition consumer. The
-noncompiler delivery tasks authorize the exact edges
+with its real public projection or terminal composition consumer. The ordinary
+delivery tasks authorize the exact edges
 `@habitat-ai/sdk -> runtime-schema`, `runtime-definition`,
-`runtime-derivation`, `runtime-bootgraph`,
+`runtime-derivation`,
 `runtime-substrate-effect`, `runtime-process-runtime`, `runtime-harnesses`,
 `runtime-observation`, and `runtime-mounting`. Real source/build references, not
 publication metadata or an `implicitDependencies` substitute, must establish
 those edges. No private runtime project imports the SDK facade.
 
-That noncompiler list does not authorize an early compiler edge. The first
-`runtime-compiler@1` node has only its real definition and derivation imports
-and no public edge or compiler export. Task 10.6's later terminal SDK composition
-source establishes the final direct `@habitat-ai/sdk -> runtime-compiler`
-assembly edge only when its real `compileRuntimePlan(...)` import, call, and
-consumer proof co-land. Runtime mounting gets no compiler edge, and transitive
+That list does not authorize an early compiler or bootgraph edge. The first
+`runtime-compiler@1` node has only its real definition and derivation imports;
+the first `runtime-bootgraph@1` node has only its real compiler import. Neither
+has a public face or early SDK source/build edge. Task 10.6's later terminal SDK
+composition source establishes the final direct edges
+`@habitat-ai/sdk -> runtime-compiler` and
+`@habitat-ai/sdk -> runtime-bootgraph` only when its real
+`compileRuntimePlan(...)` and `orderBootgraph(...)` imports, calls, and consumer
+proof co-land. Runtime mounting gets neither edge, and transitive
 process-runtime reachability is not a substitute.
 
 The final SDK edge to `runtime-derivation` is an explicit seven-step delivery.
@@ -1111,6 +1114,92 @@ truth. Habitat and Nx own structure, application, edges, and cache; SDK and
 installed-package tests own public inventories and packed provenance.
 Source-string or AST assertions are not a proof path.
 
+### Keep boot ordering private, closed, and deterministic
+
+Completed documentation-only task 6.1a closes bootgraph authority across the
+two canonical system documents and these six active OpenSpec artifacts.
+`HABITAT_ARCHITECTURE` routes ownership, canonical
+`HABITAT_RUNTIME_REALIZATION` §17 alone owns the exact TypeScript, DTO, ordering,
+refusal, freezing, owner-closure, corpus, and task mechanics, and the active
+capability requirement alone preserves archive-safe acceptance. No OpenSpec
+artifact copies the canonical TypeScript block. The correction changes no
+implementation, source, test, project, blueprint, package/public output,
+`.habitat` record, SDK edge, or runtime behavior; task 6.2 is the sole next
+source node.
+
+Task 6.2 creates the complete private package-less `runtime-bootgraph@1` owner
+and the full synchronous `orderBootgraph(...)` operation. The operation accepts
+only compiler-owned `BootgraphInput`. One selected compiler node becomes one
+selection-id-backed resource key carrying resource, lifetime, and optional role
+and instance identity; one module retains that key and provider identity. An
+edge from one selection to another means the source depends on the target. Kahn
+ordering therefore emits dependencies first and breaks every ready-set tie by
+ascending `selectionId`. Module and order collections are acquisition order;
+rollback and release collections are its exact reverse. Repeated dependency
+targets for one module deduplicate and sort by `selectionId`, while an exact
+repeated edge triple refuses.
+Every occurrence of a node key inside modules, dependencies, forward order, and
+reverse orders reuses that one exact frozen key object.
+
+Caller-reachable refusals are separate: malformed or surplus input; duplicate
+`selectionId`; duplicate exact lifecycle resource identity tuple
+`(resourceId, lifetime, role-or-empty, instance-or-empty)`; duplicate exact
+edge; dangling endpoint; self-cycle; and multi-node cycle. Each throws built-in
+`TypeError` before a result. Independently, the implementation validates every
+produced artifact against the closed output schema and exact internal
+module/order/reverse/reference relations before return; disagreement throws the
+same built-in `TypeError` as a defensive invariant, not as a caller-reachable
+refusal fixture. Accepted output is a fresh recursive frozen copy. Input is
+neither mutated nor newly frozen, and its preexisting frozen state, property
+descriptors, and reference identities remain unchanged. The operation has no
+findings and performs no provider build, config/decode, Effect, acquisition,
+release, observation, or other external work. It carries no provider reference,
+provider-plan body, decoder/redaction metadata, live value, or compiler result
+surface beyond the ordering artifact.
+
+The complete task-6.2 implementation/proof closure is exactly the four source
+files `bootgraph.ts`, `boot-resource-key.ts`, `boot-resource-module.ts`, and
+`index.ts`; the two tests `bootgraph.test.ts` and `nx-cache.test.ts`; and the two
+project tsconfigs. Its separate publication/assembly closure is exactly the
+repository LF file; three Habitat authority/readme files; three bootgraph
+blueprint files; the core router; bootgraph `AGENTS.md`, `habitat.toml`,
+`project.json`, and `tsdown.config.ts`; SDK `AGENTS.md`, `README.md`,
+`habitat-pack.json`, `project.json`, and `tsdown.config.ts`; and Habitat installed
+package acceptance. The project root has exactly eight entries, `src` four,
+`test` two, and the blueprint root three; `src/index.ts` is the sole private
+assembly interface.
+
+Task 6.2's baseline `bootgraph.test.ts` must prove one nontrivial dependency
+graph's exact ordering, output shape, schema admission, and key-reference reuse,
+plus one representative malformed-input generic `TypeError`. That paired
+positive/negative proof prevents an empty or constant implementation from
+satisfying the complete source node.
+
+The sole owner edge is `runtime-bootgraph -> runtime-compiler`, established by
+the real relative compiler import and tsconfig reference. Task 6.2 grows Nx
+projects 26 to 27, adds the exact bootgraph-blueprint LF rule, grows the sorted
+protocol-1 SDK pack 15 to 16 by inserting
+`runtime-bootgraph@1` before `runtime-compiler@1`, copied/input blueprint
+directories 10 to 11, and SDK build inputs 13 to 14; SDK JavaScript entries
+remain 18 and exports remain 21. The SDK
+changes carry policy assets only: they create no SDK source/build edge, bootgraph
+public face, package export, or release member. Explicit owner targets are only
+`typecheck`, `test`, `build`, and `check`; policy and application targets remain
+inferred. Installed proof owns pack parity, exact fixture instance, resolution
+and application provenance, structure, and restoration.
+
+Task 6.3 is proof-only and expands only the already-created
+`bootgraph.test.ts`. It adds permutation, tie-break, identity-reuse, dedupe,
+freeze/state-preservation, empty/disconnected, coldness, and cumulative deleted
+`packages/bootgraph` / `@rawr/bootgraph` absence proof; validates every
+successful output against the closed schema and exact output relations; and
+exhaustively proves only caller-reachable input refusals. It does not fabricate
+an internal output-disagreement fixture and changes no source, project,
+blueprint, pack, SDK/public files, or `nx-cache.test.ts`. The frozen
+product-separation test remains untouched. Task 10.6 alone adds the real terminal SDK
+edge when `startApp(...)` composition imports and calls `orderBootgraph(...)`
+beside `compileRuntimePlan(...)`.
+
 ### Give one Effect kernel the process lifecycle
 
 Before the first acquisition, provisioning materializes every declared source
@@ -1132,8 +1221,9 @@ release-defect continuation, rollback, reverse order, inert repeated
 disposal/release, and runtime close. It does not lower or register another
 adapter.
 
-Bootgraph owns only resource/provider identity, dependency order, deduplication,
-rollback order, and release-order metadata. Exact provider references plus
+The bootgraph artifact owns only selection-backed resource/provider identity,
+dependency order, deduplication, rollback order, and release-order metadata.
+Exact provider references plus
 provider-owned config decoder and observation-redaction metadata stay in the
 compiler reference handoff. The Effect substrate joins those inputs; neither
 handoff carries a provider plan or acquire/release body, and bootgraph never

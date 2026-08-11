@@ -765,11 +765,14 @@ registry identity or release membership. `schema`, `definition`, and
 `derivation` own the upstream implementations required by later phases. No
 private runtime owner imports the terminal public SDK facade. The SDK exposes
 only the public families below, so the build graph remains acyclic while
-consumers install one package. Task 5 creates no compiler facade or SDK source
-edge. Only task 10.6's later real terminal SDK `startApp(...)` composition
-source may add `@habitat-ai/sdk -> runtime-compiler` when it actually imports and calls
-`compileRuntimePlan(...)`; neither runtime mounting nor transitive
-process-runtime reachability is a substitute.
+consumers install one package. Tasks 5 and 6.2-6.3 create no compiler or
+bootgraph facade and no SDK source edge to either owner. Only task 10.6's later
+real terminal SDK `startApp(...)` composition source may add
+`@habitat-ai/sdk -> runtime-compiler` and
+`@habitat-ai/sdk -> runtime-bootgraph` when it actually imports and calls
+`compileRuntimePlan(...)` and `orderBootgraph(...)`; runtime mounting,
+publication metadata, and transitive private-owner reachability are not
+substitutes.
 
 The closed private implementation graph is:
 
@@ -1195,7 +1198,7 @@ Names remain layer-specific. Similar concepts in different layers use different 
 | Runtime derivation | Private `NormalizedRuntimeTopology`; exact complete graph structurally reachable through `RuntimeDerivationResult`; `ServiceBindingPlan`, `SurfaceRuntimePlan`, `WorkflowDispatcherDescriptor`, `ExecutionDescriptorRef` / `ExecutionDescriptorTable`, `WebRouteModuleRef` / `WebRouteModuleTable`, and `PortableRuntimePlanArtifact` through `@habitat-ai/sdk/runtime/derivation` | Complete derivation consumes the topology foundation; compiler consumes only the graph alongside the original entrypoint; process runtime consumes the Effect table; web adapter consumes the web table; pre-runtime tooling consumes the portable artifact |
 | Runtime-definition execution model, re-exported by SDK | `HabitatEffect`, `ExecutionDescriptor`, `EffectExecutionDescriptor`, `ExecutionBoundaryKind`, `ProviderEffectBoundaryKind`, `RuntimeEffectBoundaryKind`, `EffectExecutionPolicy` | Runtime derivation, runtime compiler for exact ref/policy agreement only, process execution runtime, substrate provider lowering |
 | Runtime compilation | Private `compileRuntimePlan(...)`, `CompiledProcessPlan`, `RuntimeCompilationReferenceTable`, `CompilationObservationSeed`, and the closed §16 compiler DTO inventory | Bootgraph, process runtime, surface adapters, and later terminal composition through private owner edges; no public compiler face |
-| Lifecycle ordering | `Bootgraph`, `BootResourceKey`, `BootResourceModule`, acquisition/release order, rollback order | Runtime substrate |
+| Lifecycle ordering | Private `orderBootgraph(...)`, `Bootgraph`, `BootResourceKey`, `BootResourceModule`, acquisition/release order, and rollback order; no public face, finding, or observation channel | Runtime substrate and later real terminal composition through private owner edges |
 | Provisioning | `ProvisionedProcess`, `ManagedRuntimeHandle` | Process runtime |
 | Runtime execution context | `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, `ProcedureExecutionContext`, `BoundaryErrors`, `BoundaryTelemetry` | Process runtime adapter lowering and SDK delegating hooks |
 | Live access | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess`, `SurfaceRuntimeAccess` | Service binding, plugin projection, harness adapters |
@@ -6269,56 +6272,240 @@ add another cache target or test file.
 
 Bootgraph orders lifecycle.
 
-`Bootgraph` is the Habitat lifecycle ordering graph above provider acquisition. It receives ordering-only `BootgraphInput` from the compiler and emits ordered resource keys plus rollback/reverse-release metadata for `runtime-substrate-effect`.
+`runtime-bootgraph` is the private package-less Nx owner at
+`packages/core/runtime/bootgraph`. Its sole direct private dependency is
+`runtime-compiler`, established by real imports of the compiler-owned
+`BootgraphInput` contract and schema. No other private edge,
+`implicitDependencies` substitute, package identity, workspace link, registry
+identity, or release membership is admitted.
 
-Bootgraph owns stable lifecycle identity, dependency graph resolution, deterministic ordering, dedupe, and rollback/reverse-release order as metadata. It does not consume provider plans, execute acquisition/release/rollback, register live finalizers, assemble typed live contexts, or produce `ProvisionedProcess`.
+Its sole operation is synchronous:
 
-File: `packages/core/runtime/bootgraph/_tree.txt`  
-Layer: runtime lifecycle placement  
-Exactness: normative package placement and owner.
+```ts
+export declare function orderBootgraph(input: BootgraphInput): Bootgraph;
+```
+
+`orderBootgraph(input)` accepts exactly the compiler-owned closed
+`BootgraphInput`. Runtime admission uses the exact compiler-owned
+`BootgraphInputSchema`; bootgraph defines no parallel input schema. The input
+shell and nested records must expose the schema's exact own data properties,
+and `nodes` and `edges` must be dense own-data arrays with no holes, inherited
+entries, accessors, or surplus keys. The operation emits one closed recursively
+frozen `Bootgraph` and performs no asynchronous, executable, provider, config,
+Effect, or observation work. Every caller-reachable invalid input throws
+built-in `TypeError` before a result; error text, check order, and selected cycle
+path are noncontractual. There is no bootgraph finding, diagnostic result,
+partial result, custom error, or observation call.
+
+Task 6.2 creates exactly the following complete owner and version-1 blueprint:
 
 ```text
 packages/core/runtime/bootgraph/
+  AGENTS.md
+  habitat.toml
+  project.json
   src/
-    bootgraph.ts
     boot-resource-key.ts
     boot-resource-module.ts
-    ordering.ts
-    rollback-order.ts
-    findings.ts
+    bootgraph.ts
+    index.ts
+  test/
+    bootgraph.test.ts
+    nx-cache.test.ts
+  tsconfig.json
+  tsconfig.test.json
+  tsdown.config.ts
+
+.habitat/blueprints/runtime-bootgraph/
+  blueprint.toml
+  structure.toml
+  skill.md
 ```
 
-Bootgraph does not own app identity, app composition membership, service domain authority, plugin meaning, public API meaning, durable workflow semantics, native harness behavior, execution descriptor meaning, or deployment placement.
+The project root has exactly eight top-level entries, `src/` exactly four
+files, `test/` exactly two files, and the blueprint root exactly three files.
+The blueprint is one complete positive closed `runtime-bootgraph@1`; it has no
+optional interior, `versions/` directory, Grit rule, second version, or
+inheritance. `src/index.ts` is the sole private assembly interface. Task 6.2
+defines only the explicit task-2.4 `typecheck`, `test`, `build`, and `check`
+targets; Habitat's plugin infers the selected policy and application targets.
+No explicit acceptance, verify, aggregate, or nested scheduler target is added.
 
-### 17.2 Boot resource key and module
+Bootgraph does not own app identity, app composition membership, service domain
+authority, plugin meaning, public API meaning, durable workflow semantics,
+native harness behavior, execution descriptor meaning, or deployment
+placement. It has no SDK JavaScript/declaration face and no SDK source/build
+edge in tasks 6.2-6.3. Packing `runtime-bootgraph@1` is policy-asset carriage
+only. Task 10.6's terminal `startApp(...)` composition establishes the real
+`@habitat-ai/sdk -> runtime-bootgraph` edge only when it imports and calls
+`orderBootgraph(...)`.
 
-File: `packages/core/runtime/bootgraph/src/boot-resource-module.ts`  
-Layer: bootgraph module input  
-Exactness: normative for bootgraph module responsibilities.
+### 17.2 Closed bootgraph DTOs, ordering, and task allocation
+
+The three bootgraph DTOs are closed TypeBox
+`ReadonlyObject(..., { additionalProperties: false })` schemas. Immutable
+collections use the same readonly-array transformation as compiler DTOs, and
+their TypeScript types derive with `Static`. The bootgraph owner reuses the
+compiler-owned node field schemas rather than importing or restating
+definition or derivation authority.
 
 ```ts
-export interface BootResourceKey {
-  readonly kind: "boot.resource-key";
-  readonly resourceId: string;
-  readonly lifetime: ResourceLifetime;
-  readonly instanceKey?: string;
-  readonly owner: RuntimeRequirementOwnerRef;
-}
+import { ReadonlyObject, type Static, type TSchema, Type } from "typebox";
 
-export interface BootResourceModule {
-  readonly key: BootResourceKey;
-  readonly providerId: string;
-  readonly dependencies: readonly BootResourceKey[];
-}
+import {
+  type BootgraphInput,
+  BootgraphInputSchema,
+  ProviderDependencyNodeSchema,
+} from "../../compiler/src";
+
+const closedBootgraph = { additionalProperties: false } as const;
+const immutable = <T extends TSchema>(schema: T) =>
+  ReadonlyObject(Type.Array(schema));
+const ProviderResourceSchema = Type.Index(
+  ProviderDependencyNodeSchema,
+  ["resource"],
+);
+
+export const BootResourceKeySchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("boot.resource-key"),
+  selectionId: Type.Index(ProviderDependencyNodeSchema, ["selectionId"]),
+  resourceId: Type.Index(ProviderResourceSchema, ["resourceId"]),
+  lifetime: Type.Index(ProviderResourceSchema, ["lifetime"]),
+  role: Type.Optional(Type.Index(ProviderResourceSchema, ["role"])),
+  instance: Type.Optional(Type.Index(ProviderResourceSchema, ["instance"])),
+}), closedBootgraph);
+
+export const BootResourceModuleSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("boot.resource-module"),
+  key: BootResourceKeySchema,
+  providerId: Type.Index(ProviderDependencyNodeSchema, ["providerId"]),
+  dependencies: immutable(BootResourceKeySchema),
+}), closedBootgraph);
+
+export const BootgraphSchema = ReadonlyObject(Type.Object({
+  kind: Type.Literal("bootgraph.ordered"),
+  modules: immutable(BootResourceModuleSchema),
+  order: immutable(BootResourceKeySchema),
+  rollbackOrder: immutable(BootResourceKeySchema),
+  releaseOrder: immutable(BootResourceKeySchema),
+}), closedBootgraph);
+
+export type BootResourceKey = Static<typeof BootResourceKeySchema>;
+export type BootResourceModule = Static<typeof BootResourceModuleSchema>;
+export type Bootgraph = Static<typeof BootgraphSchema>;
+
+export declare function orderBootgraph(input: BootgraphInput): Bootgraph;
 ```
 
-Bootgraph modules are ordering records emitted from compiler input. Provider
-authors do not author `BootResourceModule` directly, and these records carry no
-provider plan, acquire Effect, release callback, private witness, or executable
-metadata. Bootgraph never calls provider `build(...)` and never reads a
-`ProviderEffectPlan`. The substrate executes startup in bootgraph order,
-executes failed-startup rollback for already-acquired providers using
-rollback-order metadata, and releases in reverse order.
+One compiler node produces one exact key by copying its `selectionId` plus its
+exact resource `resourceId`, `lifetime`, optional `role`, and optional
+`instance`. The corresponding module copies the node's exact `providerId`.
+Bootgraph does not invent owner identity: requirement owners are not present in
+`BootgraphInput`, and one selected provider may satisfy requirements from more
+than one owner. `selectionId` is the stable join identity retained for the
+later compiler-reference handoff.
+
+For an edge `fromSelectionId -> toSelectionId`, `from` depends on `to`, so the
+`to` module precedes the `from` module. Ordering uses Kahn's algorithm. Whenever
+more than one node is ready, ascending ECMAScript code-unit `selectionId` order
+is the sole tie-break. A module's dependencies are deduplicated by target
+`selectionId` and sorted by that same order. An exact duplicate edge triple
+`(fromSelectionId, requirementId, toSelectionId)` still refuses rather than
+being silently normalized. `modules` are in acquisition order, `order` is the
+exact key projection of `modules`, and `rollbackOrder` and `releaseOrder` are
+each the exact reverse of `order`. The substrate applies rollback metadata only
+to the acquired startup prefix.
+
+The operation validates runtime input against the exact imported
+`BootgraphInputSchema` and separately enforces the own/dense data admission
+above without creating a second schema. Closed admission, duplicate
+`selectionId`, duplicate lifecycle resource identity tuple
+`(resourceId, lifetime, role ?? "", instance ?? "")`, duplicate exact edge,
+dangling source or target, self-cycle, or longer cycle throws built-in
+`TypeError` before result. An identity-equivalent accepted input with different
+node or edge authoring order produces deeply equal output. Every result object
+and collection is a fresh recursive copy and recursively frozen.
+`orderBootgraph(...)` neither mutates nor newly freezes the input: every input
+object, array, descriptor, frozen/unfrozen state, and reference retains its
+prior state after success or refusal. Exactly one
+fresh `BootResourceKey` object is created per accepted node. That same frozen
+object is reused by exact reference as its module `key`, every dependency entry
+that names it, its `order` entry, and its reverse-order entries; bootgraph does
+not reconstruct identity-equivalent key objects at those internal handoffs.
+Before return, the implementation defensively validates the candidate result
+against `BootgraphSchema` and validates exact module/order/reverse/reference
+relations. Any disagreement throws built-in `TypeError` before publication,
+but it is an implementation invariant, not a caller-reachable refusal seam;
+tests do not fabricate internal output corruption.
+The operation accepts no compiled plan, compilation result, reference table,
+or observation seed, and no output contains a requirement owner, `instanceKey`,
+provider reference, config decoder, redaction metadata, provider plan,
+acquire/release body, private witness, Effect, live value, finding, observation
+seed, or observation port.
+
+Task 6.2 implements this complete operation, owner, and positive law in one
+node. Baseline proof in the existing `bootgraph.test.ts` covers one nontrivial
+dependency graph and asserts its exact ordered module/key shape, successful
+`BootgraphSchema` validation, key-reference reuse, rollback/release reversal,
+and recursive freeze, plus one representative malformed-input built-in
+`TypeError`. Its exact 26-file source/publication corpus is:
+
+```text
+.gitattributes
+.habitat/AUTHORITY.md
+.habitat/AUTHORITY-ONTOLOGY.md
+.habitat/README.md
+.habitat/blueprints/runtime-bootgraph/blueprint.toml
+.habitat/blueprints/runtime-bootgraph/skill.md
+.habitat/blueprints/runtime-bootgraph/structure.toml
+packages/core/AGENTS.md
+packages/core/runtime/bootgraph/AGENTS.md
+packages/core/runtime/bootgraph/habitat.toml
+packages/core/runtime/bootgraph/project.json
+packages/core/runtime/bootgraph/src/boot-resource-key.ts
+packages/core/runtime/bootgraph/src/boot-resource-module.ts
+packages/core/runtime/bootgraph/src/bootgraph.ts
+packages/core/runtime/bootgraph/src/index.ts
+packages/core/runtime/bootgraph/test/bootgraph.test.ts
+packages/core/runtime/bootgraph/test/nx-cache.test.ts
+packages/core/runtime/bootgraph/tsconfig.json
+packages/core/runtime/bootgraph/tsconfig.test.json
+packages/core/runtime/bootgraph/tsdown.config.ts
+packages/core/sdk/AGENTS.md
+packages/core/sdk/README.md
+packages/core/sdk/habitat-pack.json
+packages/core/sdk/project.json
+packages/core/sdk/tsdown.config.ts
+apps/habitat/test/installed-package.test.ts
+```
+
+The same node adds the exact LF rule for
+`.habitat/blueprints/runtime-bootgraph/**`, advances the protocol-1 SDK pack
+from fifteen to sixteen sorted members, copied/input blueprint directories
+from ten to eleven, SDK build inputs from thirteen to fourteen, and Nx projects
+from twenty-six to twenty-seven. SDK JavaScript build entries remain eighteen
+and package exports remain twenty-one. `packages/core/sdk/package.json`, every
+SDK public-face test, root manifests, lockfile, root Nx configuration,
+`.habitat/index.json`, and any source outside the exact corpus remain excluded.
+
+Task 6.3 is proof-only and edits only `bootgraph.test.ts`. It proves
+permutation-independent Kahn ordering and tie-breaking, shared-dependency
+dedupe, exact key-object identity reuse, recursive output freeze and preservation
+of the input's prior descriptors/references/frozen state, empty/disconnected
+graphs, and the exhaustive caller-reachable admission/duplicate/dangling/cycle
+`TypeError` matrix. Successful outputs must satisfy `BootgraphSchema` plus the
+exact module/order/reverse/reference relations; task 6.3 does not fabricate an
+internal output-disagreement refusal. It also proves zero
+provider/config/Effect/observation work and changes no source, project,
+blueprint, pack, public surface, or cache proof. `nx-cache.test.ts` remains task
+6.2's sole unchanged-cache restoration and relevant-input invalidation proof.
+
+The deleted `packages/bootgraph` predecessor remains absent. Its
+`@rawr/bootgraph` package/project identity and `BOOTGRAPH_RESERVATION` constant
+are not aliases, compatibility surfaces, or implementation or test inputs.
+Provider authors do not author `BootResourceModule` directly. The substrate
+executes startup in bootgraph order, executes failed-startup rollback for the
+already-acquired prefix, and releases in reverse order.
 
 ### 17.3 Effect provisioning/execution kernel
 
@@ -8122,8 +8309,11 @@ The SDK does not acquire resources, execute providers, construct managed runtime
 
 The runtime compiler does not acquire resources or mount harnesses.
 
-Bootgraph owns lifecycle order and rollback/release-order metadata only; it is
-never a `Layer` DAG. Runtime-substrate-effect owns one
+Bootgraph synchronously consumes only compiler `BootgraphInput` through
+`orderBootgraph(...)` and owns closed lifecycle identity plus acquisition,
+rollback, and release-order metadata. Invalid ordering input throws built-in
+`TypeError` before a result; bootgraph has no finding or observation channel and
+is never a `Layer` DAG. Runtime-substrate-effect owns one
 `Layer.effectContext(...)` lifecycle adapter, executes acquisition, release,
 rollback, layer-scoped finalizers, process-local coordination, and structured
 execution, and alone produces `ProvisionedProcess`. Neither owns service domain
@@ -8349,7 +8539,7 @@ Gate families are:
 | Type gates | `defineService` lane inference, runtime-carried schema inference, `provided` carrier rule, `ServiceContractOf` inference from private-carried `ServiceUse`, non-oRPC descriptor inference, native handler and official bridge inference, `HabitatEffect` yieldability where applicable, literal-preserving `requireResource(...)`, `RuntimeProvider` unknown erasure defaults versus helper-only undefined/never inference, nominal provider-plan anti-forgery, contract errors |
 | Runtime behavior gates | one lazy `ManagedRuntime` forced through `context()` before mount; one `Layer.effectContext(...)` provider adapter; no second root `Scope`; non-oRPC descriptor execution through `ProcessExecutionRuntime`; native oRPC Effect execution through official `.effect(...)` and its internal bridge; `effect/context` and `effect/wrap`; abort/finalizer/resource-release order; single physical bridge/oRPC realm; `EffectRuntimeAccess` internal-only; service binding cache invocation exclusion; provider acquire/release finalization |
 | Registry gates | Effect descriptor table is present; full structural ref lookup returns the exact matching operational descriptor or throws `TypeError`; frozen readonly tuple snapshots use canonical ref order; every Effect ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation; full structural web ref lookup returns the exact preserved loader or throws `TypeError`; frozen web-entry snapshots use `(ownerId, routeId, path)`; web refs never enter `ExecutionRegistry` |
-| Fixture/plan gates | primary `defineEntrypoint(...)` identity-agreement refusal before output or authored executable work; private `NormalizedRuntimeTopology` exact-copy and defensive §15.1 agreement law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; exact three-field synchronous compiler result, closed/frozen DTOs, stable exact-ref table snapshots, compiler `TypeError` before result, and no compiler finding/diagnostic/observation work; no body/loader/acquisition/live-value access; catalog, startup rollback, and finalization records |
+| Fixture/plan gates | primary `defineEntrypoint(...)` identity-agreement refusal before output or authored executable work; private `NormalizedRuntimeTopology` exact-copy and defensive §15.1 agreement law; complete five-field synchronous derivation result with graph/topology identity; exact closed graph and normalized carrier schemas with one profile; deterministic ids/order except authored config precedence; provider config iff schema; service lane iff/inheritance/diamond rules; exact one optional-provider finding and built-in `TypeError` fatal refusal; distinct Effect/web tables; exact seven-field artifact decoder rejection of surplus fields, duplicates, noncanonical order, and digest mismatch; exact three-field synchronous compiler result, closed/frozen DTOs, stable exact-ref table snapshots, compiler `TypeError` before result, and no compiler finding/diagnostic/observation work; exact synchronous `orderBootgraph(...)`, closed/frozen identity/order DTOs, deterministic Kahn ordering, duplicate/dangling/cycle `TypeError`, and no bootgraph finding/observation/work; no body/loader/acquisition/live-value access; catalog, startup rollback, and finalization records |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
 | Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
 | Provider separation gates | exact provider face inventories; `ProviderFx<TValue, TError> = HabitatEffect<TValue, TError, never>`; required synchronous build and release; exact build context and resource-map type optionality; task-6.1 cold construction with no callback invocation, exact public plan/boundary enumerability, recursive fresh-container freeze, opaque body identity, and private accessor witness rejection; task-7.2 concrete requirement-reference map behavior, real beta.101 `Effect.acquireRelease(acquire, release)` construction/use with indivisible acquisition and immediate post-success finalizer registration, sync-throw/rejection typed mapping, typed failure without registration, and build/forgery/Effect defect classification; task-7.3 cleanup recovery/observation, unexpected release-defect continuation, rollback, reverse order, inert repeated disposal/release, and runtime close; derivation/compiler zero-build proof; bootgraph carries no plan or body; no Promise result, raw Effect/runtime primitive, public plan accessor, or runner |
@@ -8371,7 +8561,7 @@ Locked foundation behavior is not reserved. Flexible areas still expose owners, 
 | Execution | native oRPC handler/official Effect bridge plus cold non-oRPC `.effect(...)` bodies, `defineAsyncStepEffect(...)`, `EffectExecutionDescriptor`, `ExecutionDescriptorTable`, `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`; web route-module loaders remain on the distinct `WebRouteModuleRef` / `WebRouteModuleTable` channel | Additional definition-owned policies and process-runtime-owned adapters for non-oRPC lanes; application/process-owned oRPC context/wrap composition |
 | Resources/providers/profiles | Resource contract, provider implementation, app profile selection | New resource families and providers |
 | Runtime compiler | Immutable `runtime-compiler@1`, exact §16 operation/result/DTO/reference-table contract, `TypeError` refusal, no findings, and final task-5.1 source/project/blueprint closure | No task-5 version 2 or compiler finding extension; a later change requires an explicit authority amendment and may not recreate missing/ambiguous authored-selection outcomes |
-| Bootgraph | Acquisition/release order and rollback metadata only | Provider-specific refresh and retry strategies |
+| Bootgraph | Immutable `runtime-bootgraph@1`, exact §17 `orderBootgraph(...)` and closed DTO contract, deterministic Kahn order, reverse rollback/release metadata, built-in `TypeError`, no findings, no public face, and final task-6.2 source/project/blueprint closure | No task-6 version 2, public bootgraph facade, finding extension, provider-specific refresh, or retry policy; a later change requires explicit authority and cannot move provider/config/Effect/observation work into bootgraph |
 | Runtime access | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess` live access only | Additional sanctioned redacted handles |
 | Service use and binding | `ServiceUse` is the sole cold public relation; its private carrier preserves exact definition/contract inference plus the exact schema-gated runtime-config binding tree; complete derivation emits the closed binding plan, path-local inheritance/override and equal-diamond law; compiler and process-runtime ownership remain fixed; cache identity excludes invocation, plugin client local names as separate ingredients, schemas, and values, while service-owned dependency local names may contribute only through normalized ids inside `bindingId`; callbacks/live values are forbidden | Call-local memoization and service-local caches that do not add authoring nouns, binding-source variants, public findings, or cache ingredients |
 | Workflow dispatcher | Descriptor derived before runtime; live event-admission dispatcher materialized after provisioning | Additional event-admission options only; run controls require a separate capability |
@@ -8827,9 +9017,9 @@ behavior.
 | `CompilationObservationSeed` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Later admitted downstream adapter only | Compilation/observation handoff | No compiler finding or publication channel | Exact `{ kind, identity, profileId, roles }` inert data returned separately; compiler never uses `RuntimeObservationPort` |
 | `CompiledProcessPlan` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Bootgraph/process runtime/adapters | Compilation through mounting | Invalid input is built-in `TypeError` before result; no compiler finding/diagnostic API | Exact closed §16 plan schema; contains neither observation seed nor findings |
 | `RuntimeCompilationResult` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compile-runtime-plan.ts` | Synchronous `compileRuntimePlan({ entrypoint, graph })` | Later real terminal composition and downstream private runtime owners | Compilation | Built-in `TypeError` before any result; text/order noncontractual | Exact frozen result shell `{ plan, references, observationSeed }`, recursively frozen data DTOs, and identity-preserving table; no derivation result/table/portable-artifact input and no public SDK face |
-| `Bootgraph` | `runtime-bootgraph` | `packages/core/runtime/bootgraph` | Bootgraph from compiler-owned ordering input | Runtime substrate only | Provisioning | Owner-local ordering/rollback-metadata findings | Bootgraph ordering gate |
-| `BootResourceKey` | `runtime-bootgraph` | `packages/core/runtime/bootgraph` | Bootgraph | Runtime substrate | Provisioning | Owner-local resource identity findings | Boot resource key gate |
-| `BootResourceModule` | `runtime-bootgraph` | `packages/core/runtime/bootgraph` | Bootgraph from compiler identity/dependency facts | Runtime substrate | Provisioning | Owner-local module ordering findings; no executable plan | Boot module gate |
+| `Bootgraph` | Private `runtime-bootgraph` | `packages/core/runtime/bootgraph/src/bootgraph.ts` | Synchronous `orderBootgraph(BootgraphInput)` after exact compiler-owned schema plus own/dense admission | Runtime substrate; later terminal composition establishes the SDK edge only through a real call | Provisioning ordering handoff | Caller-reachable built-in `TypeError` before result for closed/own/dense admission, duplicate `selectionId`, duplicate `(resourceId, lifetime, role ?? "", instance ?? "")` resource identity, duplicate exact edge, dangling endpoint, or cycle; defensive output/schema disagreement also refuses before return but is not a caller test seam; no finding or observation channel | Exact §17 closed schema and relations, deterministic Kahn order, fresh frozen output with input state preserved, task-6.2 baseline/complete-law gate, and task-6.3 exhaustive proof-only gate |
+| `BootResourceKey` | Private `runtime-bootgraph` | `packages/core/runtime/bootgraph/src/boot-resource-key.ts` | `orderBootgraph(...)` from one exact compiler provider node | `Bootgraph` and runtime substrate | Provisioning ordering handoff | No finding or observation channel | Exact closed `{ kind, selectionId, resourceId, lifetime, role?, instance? }` schema/type and identity projection gate |
+| `BootResourceModule` | Private `runtime-bootgraph` | `packages/core/runtime/bootgraph/src/boot-resource-module.ts` | `orderBootgraph(...)` from one exact compiler node plus its outgoing dependency edges | `Bootgraph` and runtime substrate | Provisioning ordering handoff | No finding or observation channel; carries no executable plan | Exact closed `{ kind, key, providerId, dependencies }` schema/type, dependency-dedupe, and order gate |
 | `ProvisionedProcess` | `runtime-substrate-effect` | `packages/core/runtime/substrate/effect` | Runtime substrate alone | Process runtime | Provisioning/mounting/finalization | Owner-local provisioning findings or definition-owned observation records | Provisioned process gate |
 | `RuntimeAccess` | `runtime-process-runtime` | `packages/core/runtime/process-runtime` | Process runtime | Runtime adapters, harnesses, and runtime mounting | Mounting | Owner-local access findings | Runtime access gate |
 | `ProcessRuntime` mount-ready handoff | `runtime-process-runtime` | `packages/core/runtime/process-runtime` | Process runtime | Runtime mounting | Mounting/finalization | Mount-ready records, owner-local findings, and process-owned stop handle; no `StartedHarness` | Process runtime handoff gate |

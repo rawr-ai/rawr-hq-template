@@ -1506,6 +1506,237 @@ carry no provider plan or acquire/release body.
 - **AND** neither the compiler result nor bootgraph ordering records carry a
   provider plan or acquire/release body
 
+### Requirement: Runtime bootgraph authority and delivery stay closed
+
+Completed task 6.1a MUST remain a documentation-only authority correction
+across exactly eight documents: `HABITAT_ARCHITECTURE.md` as the ownership
+router; `HABITAT_RUNTIME_REALIZATION.md` §17 as the sole exact TypeScript, DTO,
+ordering, refusal, freezing, project/blueprint closure, corpus, topology, and
+task-mechanics authority; and these six active OpenSpec artifacts. This
+requirement and its scenarios MUST remain the sole archive-safe acceptance
+owner. The other five OpenSpec artifacts MUST route or record the decision
+without copying the canonical TypeScript block. Task 6.1a MUST change no
+implementation, source, test, project, blueprint, `.habitat` record,
+package/public output, SDK edge, runtime behavior, or other OpenSpec file. Task
+6.2 MUST remain the sole next source node.
+
+Task 6.2 MUST create the complete private package-less
+`runtime-bootgraph@1` owner at `packages/core/runtime/bootgraph` and MUST
+implement the complete synchronous `orderBootgraph(...)` operation in that
+same node. The owner MUST consume only compiler-owned `BootgraphInput`; it MUST
+accept no compiled plan, compilation result, reference table, observation seed,
+definition/derivation input, or second ordering carrier. Its exact project
+closure MUST be eight root entries (`AGENTS.md`, `habitat.toml`, `project.json`,
+`src`, `test`, `tsconfig.json`, `tsconfig.test.json`, and
+`tsdown.config.ts`), exactly four source files, exactly two tests, and exactly
+three blueprint files, and `src/index.ts` MUST be the sole private assembly
+interface. The positive closed `runtime-bootgraph@1` MUST have no
+optional interior, `versions/`, second version, inheritance, Grit rule,
+`package.json`, extra source/test file, or alternate assembly interface.
+
+The exact task-6.2 implementation/proof corpus MUST be eight files:
+`packages/core/runtime/bootgraph/src/bootgraph.ts`;
+`packages/core/runtime/bootgraph/src/boot-resource-key.ts`;
+`packages/core/runtime/bootgraph/src/boot-resource-module.ts`;
+`packages/core/runtime/bootgraph/src/index.ts`;
+`packages/core/runtime/bootgraph/test/bootgraph.test.ts`;
+`packages/core/runtime/bootgraph/test/nx-cache.test.ts`;
+`packages/core/runtime/bootgraph/tsconfig.json`; and
+`packages/core/runtime/bootgraph/tsconfig.test.json`. Its exact separate
+18-file publication/assembly corpus MUST be `.gitattributes`;
+`.habitat/AUTHORITY.md`; `.habitat/AUTHORITY-ONTOLOGY.md`;
+`.habitat/README.md`;
+`.habitat/blueprints/runtime-bootgraph/blueprint.toml`;
+`.habitat/blueprints/runtime-bootgraph/skill.md`;
+`.habitat/blueprints/runtime-bootgraph/structure.toml`;
+`apps/habitat/test/installed-package.test.ts`; `packages/core/AGENTS.md`;
+`packages/core/runtime/bootgraph/AGENTS.md`;
+`packages/core/runtime/bootgraph/habitat.toml`;
+`packages/core/runtime/bootgraph/project.json`;
+`packages/core/runtime/bootgraph/tsdown.config.ts`;
+`packages/core/sdk/AGENTS.md`; `packages/core/sdk/README.md`;
+`packages/core/sdk/habitat-pack.json`; `packages/core/sdk/project.json`; and
+`packages/core/sdk/tsdown.config.ts`. Their union MUST impose an exact 26-file
+task ceiling.
+
+Task 6.2's baseline `bootgraph.test.ts` MUST prove one nontrivial dependency
+graph's exact ordering, output shape, closed-schema admission, and key-reference
+reuse, plus one representative malformed-input generic `TypeError`. This paired
+positive/negative baseline MUST prevent an empty or constant stub from
+satisfying the complete source node.
+
+For each accepted compiler node, `orderBootgraph(...)` MUST produce one
+selection-id-backed resource key with the canonical kind plus `selectionId`,
+`resourceId`, `lifetime`, and only the applicable optional `role` and
+`instance`, never a requirement owner or `instanceKey`; its module MUST retain
+that key, provider identity, and dependency keys. A dependency edge from one
+selection to another MUST mean dependent to dependency, so the target precedes
+the source.
+Ordering MUST use Kahn's algorithm and ascending ECMAScript code-unit
+`selectionId` as the sole ready-node tie-break. `modules` and `order` MUST be
+acquisition order; `rollbackOrder` and `releaseOrder` MUST each be its exact
+reverse. Repeated dependency targets for one module MUST deduplicate by target
+selection and sort by `selectionId`, while a duplicate exact
+`(fromSelectionId, requirementId, toSelectionId)` edge MUST refuse. Exactly one
+fresh key object MUST be created
+per node and that same frozen object MUST be reused by exact reference as its
+module key, every dependency occurrence, and every forward and reverse order
+entry.
+
+Malformed or surplus input, duplicate `selectionId`, duplicate exact lifecycle
+resource identity tuple `(resourceId, lifetime, role-or-empty,
+instance-or-empty)`, duplicate exact edge, dangling source or target,
+self-cycle, and multi-node cycle MUST be separate caller-reachable refusals that
+throw built-in `TypeError` before any result. Error text, validation order, and
+selected cycle path MUST remain noncontractual. Independently, before return,
+the implementation MUST validate every produced artifact against the closed
+output schema and the exact module/order/reverse/reference relations. Internal
+output or schema disagreement MUST throw built-in `TypeError` as a defensive
+pre-return invariant, but MUST NOT be treated as a caller-reachable refusal or
+require a fabricated test input. Every accepted output object and collection
+MUST be a fresh recursive copy and recursively frozen. Input MUST be neither
+mutated nor newly frozen; its preexisting frozen state, property descriptors,
+and reference identities MUST remain unchanged. The operation MUST perform no
+provider build, config/source resolution or decode, Effect
+construction/execution, acquisition, release, finalizer registration,
+observation, callback, or other external work. It MUST return no finding,
+diagnostic, partial result, provider reference, decoder/redaction metadata,
+provider plan or acquire/release body, private witness or live value, and it
+MUST gain no public API projection.
+
+Task 6.2 MUST establish only `runtime-bootgraph -> runtime-compiler`, through a
+real relative compiler import and matching tsconfig reference, with no
+`implicitDependencies`. The exact LF rule for
+`.habitat/blueprints/runtime-bootgraph/**` MUST land. Nx projects MUST grow 26
+to 27. The sorted protocol-1 SDK pack MUST grow 15 to 16 members by inserting
+`runtime-bootgraph@1` before
+`runtime-compiler@1`; copied/input blueprint directories MUST grow 10 to 11;
+SDK build inputs MUST grow 13 to 14. SDK JavaScript entries MUST remain 18,
+package exports MUST remain 21, and SDK release membership MUST remain
+unchanged. These SDK changes MUST be policy-asset carriage only and MUST create
+no SDK source/build edge, source entry, bootgraph public face, package export,
+or private-owner release member. The owner MUST explicitly define only
+`typecheck`, `test`, `build`, and `check`; `check:policy` and
+`habitat:application:runtime-bootgraph:runtime_bootgraph_v1_structure` MUST be
+inferred. It MUST define no explicit acceptance, verify, aggregate, or nested
+scheduler target. Installed-package acceptance MUST prove pack parity, the
+exact fixture instance, resolution and application provenance, structure, and
+restoration; `nx-cache.test.ts` MUST remain the sole unchanged-cache restoration
+and relevant-input invalidation proof.
+
+Task 6.3 MUST be proof-only and MUST expand only the existing
+`packages/core/runtime/bootgraph/test/bootgraph.test.ts`. It MUST validate every
+successful output against the closed schema and exact
+module/order/reverse/reference relations. It MUST prove the complete
+permutation, tie-break, dedupe, exact-identity reuse, output freeze/input-state
+preservation, empty/disconnected, absent-finding, and zero-work matrix, and MUST
+exhaustively prove every caller-reachable malformed/surplus,
+duplicate-`selectionId`, duplicate exact lifecycle resource identity tuple,
+duplicate exact edge, dangling source/target, self-cycle, and multi-node-cycle
+refusal. It MUST NOT fabricate a caller-reachable internal output/schema
+disagreement case; that remains the implementation's defensive pre-return
+invariant. It MUST change no source, project, blueprint, pack, SDK/public
+surface, or `nx-cache.test.ts`. Its cumulative predecessor-absence proof MUST
+retain the absence of `packages/bootgraph` and `BOOTGRAPH_RESERVATION`, any Nx
+`@rawr/bootgraph` identity, the old root/package identity from root workspaces
+and parsed `bun.lock`, and any `package.json` in the fresh owner, while proving
+the exact new project identity, root, and sole edge. It MUST NOT edit
+`scripts/habitat/product-separation-absence.test.ts` or use runtime source-string
+or AST assertions.
+
+Task 6.2 MUST explicitly exclude `packages/core/sdk/package.json`, every SDK
+source/public face and public-face test, `.habitat/index.json`, root manifests,
+the lockfile, root Nx configuration, product-separation acceptance, every file
+outside the exact 26-file corpus, another project/blueprint/version/target,
+package/public identity, early SDK edge/export, finding API, provider body,
+config/decode work, acquisition/release/finalizer behavior, Effect execution,
+observation, and every task-7 behavior. Task 10.6 alone MUST establish the real
+`@habitat-ai/sdk -> runtime-bootgraph` edge when terminal `startApp(...)`
+composition imports and calls `orderBootgraph(...)` beside its real compiler
+call.
+
+#### Scenario: The authority correction remains documentation-only
+
+- **WHEN** completed task 6.1a is reviewed after archive
+- **THEN** only the two canonical system documents and six active OpenSpec
+  artifacts comprise its exact authority surface
+- **AND** runtime realization §17 remains the sole exact TypeScript/mechanics
+  owner while this requirement remains the sole archive-safe acceptance owner
+- **AND** no canonical TypeScript block or implementation change appears in the
+  OpenSpec routing artifacts
+
+#### Scenario: The complete owner lands with policy assets but no public face
+
+- **WHEN** task 6.2 creates and implements `runtime-bootgraph@1`
+- **THEN** its exact 26-file corpus, 8/4/2/3 closure, sole real compiler edge,
+  explicit four targets, inferred policy/application, and 27-project graph are
+  present together
+- **AND** pack, blueprint-directory, and SDK-input counts become 16, 11, and 14
+  while JavaScript entries and exports remain 18 and 21
+- **AND** installed proof establishes parity, fixture resolution, provenance,
+  application, structure, and restoration without an SDK bootgraph source face
+
+#### Scenario: The complete source node cannot pass as a stub
+
+- **WHEN** task 6.2 runs its baseline `bootgraph.test.ts`
+- **THEN** one nontrivial dependency graph proves exact ordering, output shape,
+  closed-schema admission, and exact key-reference reuse
+- **AND** one representative malformed input throws generic built-in `TypeError`
+  before result or external work
+
+#### Scenario: Bootgraph ordering is deterministic, referential, and cold
+
+- **WHEN** equivalent compiler-owned inputs differ only in node/edge authoring
+  order and contain shared dependency targets
+- **THEN** both produce deeply equal Kahn acquisition order with
+  `selectionId` tie-breaking, deduplicated target dependencies, and exact
+  reverse rollback/release order
+- **AND** each node's one fresh frozen key is reused by exact reference at every
+  output occurrence while the input is neither mutated nor newly frozen and its
+  preexisting frozen state, property descriptors, and reference identities are
+  preserved
+- **AND** no finding, provider/config/Effect/observation work, plan body, or live
+  value is produced
+
+#### Scenario: Caller-reachable invalid ordering input refuses before result
+
+- **WHEN** input is malformed or surplus, duplicates a `selectionId`, duplicates
+  the exact lifecycle resource identity tuple, duplicates an exact edge triple,
+  dangles either endpoint, or contains a self/multi-node cycle
+- **THEN** `orderBootgraph(...)` throws built-in `TypeError` before returning any
+  artifact or performing external work
+- **AND** no diagnostic, finding, partial result, or prescribed error text/order
+  is introduced
+
+#### Scenario: Defensive output agreement is checked before return
+
+- **WHEN** `orderBootgraph(...)` has constructed a candidate successful artifact
+- **THEN** it validates that artifact against the closed output schema and exact
+  module/order/reverse/reference relations before returning it
+- **AND** internal disagreement throws built-in `TypeError` as a defensive
+  invariant rather than a caller-reachable refusal fixture
+
+#### Scenario: Adversarial proof remains one existing test file
+
+- **WHEN** task 6.3 expands bootgraph proof after the complete source node lands
+- **THEN** only the existing `bootgraph.test.ts` changes and every task-6.2
+  source, project, blueprint, pack, public, and cache file remains unchanged
+- **AND** every successful output is validated against the schema and exact
+  output relations while every caller-reachable input refusal is exhausted
+- **AND** no caller-reachable internal output-disagreement case is fabricated
+- **AND** cumulative old-root/package/reservation absence is proven there while
+  the frozen product-separation test remains untouched
+
+#### Scenario: Terminal composition creates the first SDK bootgraph edge
+
+- **WHEN** task 10.6's terminal SDK `startApp(...)` composition really imports
+  and calls both compilation and bootgraph ordering
+- **THEN** the SDK gains direct compiler and bootgraph edges from those real
+  source calls
+- **AND** blueprint asset carriage, publication metadata, an inert import,
+  `implicitDependencies`, and transitive process-runtime reachability cannot
+  substitute
+
 ### Requirement: Runtime providers remain cold until Effect provisioning
 
 A `RuntimeProvider` MUST implement one `RuntimeResource` contract and own its
@@ -1515,7 +1746,7 @@ TypeBox `RuntimeObservationRecord` and narrow non-authorizing
 `RuntimeObservationPort`; build MUST receive that port through the exact
 task-6.1 context without importing the downstream observation implementation.
 The compiler reference handoff MUST retain the exact provider references plus
-provider-owned config decoder and observation-redaction metadata. The task-6.3
+provider-owned config decoder and observation-redaction metadata. The task-6.2
 ordered boot artifact MUST carry only resource/provider identity,
 dependency order, deduplication, rollback order, and release-order metadata.
 The future Effect substrate MUST join those two inputs; neither handoff may
@@ -1570,7 +1801,7 @@ plus failure cleanup for each.
 
 #### Scenario: Compiler references and boot order remain separate
 
-- **WHEN** task 6.3 emits the ordered boot artifact beside the compiler
+- **WHEN** task 6.2 emits the ordered boot artifact beside the compiler
   reference handoff
 - **THEN** the boot artifact contains only resource/provider identity,
   dependency order, deduplication, rollback order, and release-order metadata
@@ -1864,13 +2095,15 @@ registry identities, or release members. Every private root MUST have
 listed project and MUST remain the sole downstream assembler of their outputs
 into one package only when the corresponding real public projection or terminal
 composition consumer lands. Task 5.1 MUST create no SDK-to-compiler edge or
-compiler public face. Task 10.6's terminal SDK composition source MUST establish
-the final direct `@habitat-ai/sdk -> runtime-compiler` edge through its real
-`compileRuntimePlan(...)` import and call; runtime mounting MUST have no compiler
-edge and transitive process-runtime reachability MUST NOT substitute. Real
-source/build references MUST establish every edge; `implicitDependencies` and
-publication metadata are not substitutes. No private runtime project may import
-the public facade.
+compiler public face, and tasks 6.2-6.3 MUST create no SDK-to-bootgraph source
+edge or public face. Task 10.6's terminal SDK composition source MUST establish
+the final direct `@habitat-ai/sdk -> runtime-compiler` and
+`@habitat-ai/sdk -> runtime-bootgraph` edges through its real imports and calls
+to `compileRuntimePlan(...)` and `orderBootgraph(...)`; runtime mounting MUST
+have neither edge and transitive process-runtime reachability MUST NOT
+substitute. Real source/build references MUST establish every edge;
+`implicitDependencies`, publication metadata, and blueprint asset carriage are
+not substitutes. No private runtime project may import the public facade.
 
 `runtime-mounting` MUST publish only through the definition-owned observation
 port supplied by the terminal SDK composition root. It MUST NOT import

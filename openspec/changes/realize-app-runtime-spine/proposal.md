@@ -72,6 +72,24 @@ The exact sectional source ledger is [[authority-amendment]].
   reference handoff for the substrate to join. The two qualified Fluree
   provider tasks stay cold, while task 7.4 alone proves their single
   acquisition/release and failure cleanup through the real substrate.
+- Close bootgraph authority before its owner lands. Completed documentation-only
+  task 6.1a routes every exact TypeScript shape and ordering, refusal, freeze,
+  owner-closure, publication-corpus, and proof mechanic solely to canonical
+  `HABITAT_RUNTIME_REALIZATION` §17; the active `app-runtime-realization`
+  capability spec alone retains
+  archive-safe acceptance without copying the canonical TypeScript block. Task
+  6.2 then creates the complete private package-less `runtime-bootgraph@1` owner
+  and full synchronous `orderBootgraph(...)` implementation from compiler-owned
+  `BootgraphInput`; its baseline behavior test proves a nontrivial ordered,
+  schema-valid, referential result plus one representative malformed-input
+  `TypeError`, so the complete source node cannot pass as a stub. Task 6.3 only
+  expands that existing test with exhaustive reachable-input proof and
+  successful-output validation; defensive internal output disagreement remains
+  a pre-return invariant rather than a caller-reachable fixture. The owner
+  has only `runtime-bootgraph -> runtime-compiler`, publishes no SDK face or
+  package export, and gains the real `@habitat-ai/sdk -> runtime-bootgraph` edge
+  only in task 10.6 when terminal `startApp(...)` composition imports and calls
+  the operation.
 - Keep Effect lifetime authority with the app/process and native execution
   authority with the selected bridge. Public `effect/context` and `effect/wrap`
   carry the process-owned Context, resource lifetime, policy, and telemetry;
