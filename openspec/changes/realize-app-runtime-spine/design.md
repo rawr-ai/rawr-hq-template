@@ -1033,34 +1033,123 @@ and process runtime alone constructs `BoundService` values through
 predecessor `ProcessView`, `RoleView`, `ServiceBoundary`, and author-facing
 `ServiceBinding` names are rejected rather than adapted.
 
+### Keep provider plans cold and definition-owned
+
+Task 6.0 closes provider-effect-plan authority before source work across the
+two canonical system documents, the runtime-definition router, and the six
+active OpenSpec artifacts. Canonical `HABITAT_RUNTIME_REALIZATION` §13.4 and
+its directly affected §§17, 25, and 27 alone own exact mechanics; the active
+`app-runtime-realization` requirement and scenarios alone retain archive-safe
+acceptance. This design records ownership, delivery, and proof allocation
+without reproducing the canonical TypeScript blocks. Task 6.0 changes no
+source, test, project, blueprint, package/public output, SDK documentation,
+`.habitat` record, or runtime behavior. Task 6.1 is the sole next source node.
+
+`ProviderEffectPlan` is operational interior of `runtime-definition`, not a
+kind, project, package, bootgraph record, or new runtime phase. A provider's
+required synchronous `build(...)` receives exactly already-decoded config, the
+`RuntimeResourceMap` operational contract, and the definition-owned observation
+port. It receives no scope or telemetry client and returns a cold plan rather
+than an acquisition result. Task 6.1 types only that map contract and changes
+`requireResource(...)` to preserve its full const input/readonly shape for exact
+true, exact false, absent, and widened optionality inference. It creates no map
+instance or factory. Task 7.2 alone assembles the substrate-private concrete
+frozen map and proves exact declared-reference lookup and copied-reference miss.
+
+A `ProviderFx` is the curated `HabitatEffect` value with requirements fixed to
+`never`; it is never a thunk, Promise, raw value, or terminal result. Acquire
+retains its typed error. Release is required, receives only the acquired value,
+and returns an infallible provider Effect. `providerFx` admits exactly
+`succeed`, `tryPromise`, and `acquireRelease`. The plan publicly contains only
+`kind` plus acquire and release boundary records; each boundary record contains
+only its boundary, policy, and telemetry metadata. Construction recursively
+freezes fresh plan, metadata, and private-witness containers while preserving
+the opaque acquire Effect and release callback by exact identity without
+traversal, copying, freezing, or invocation. The non-enumerable witness and its
+accessor remain private to runtime owners. The `RuntimeProvider` interface keeps
+erasure-friendly `unknown`/`unknown` config and acquire-error defaults; only the
+`defineRuntimeProvider(...)` helper defaults schema-free config to `undefined`
+and acquire error to `never`.
+
+Task 6.1 proves definition construction only: no `tryPromise`, release, build, or other
+authored callback runs; body identity and metadata/descriptor freezing remain
+exact; and the private accessor accepts a genuine nominal plan while rejecting
+a forged lookalike. Task 7.2 executes synchronous-throw/rejection mapping,
+proves no release registration on typed acquire failure, and classifies build,
+forgery, and Effect defects. It also constructs and uses the real beta.101
+`Effect.acquireRelease(acquire, release)` adapter and registers release
+immediately after successful acquisition. Task 7.3 executes cleanup through
+that adapter and proves expected-cleanup observation, release-defect
+continuation, rollback, reverse order, inert repeated disposal/release, and
+runtime close; it does not lower or register another adapter. Raw Effect, Exit,
+Scope, Layer, ManagedRuntime, `ProviderScope`, terminal runners, witness access,
+and alternate plan constructors remain absent from both public provider faces.
+
+Task 6.1 preserves byte-identical `runtime-definition@1` and creates only the
+complete independent version-2 blueprint and structure files. The selected
+successor remains flat with eight shell entries, the existing ten source files
+plus `provider-effect-plan.ts`, and the existing two proof files plus
+`provider-effect-plan.test.ts`; it adds no skill, Grit rule, inheritance,
+fallback, optional interior, version 3, nested providers directory, or second
+owner. The exact eight-file behavior corpus, including `src/resource.ts`, and
+separate 17-file
+publication/assembly corpus are closed by the active acceptance requirement,
+giving task 6.1 a 25-file ceiling.
+
+Task 6.1 evolves the existing terminal provider root, which exposes only
+`defineRuntimeProvider` as a value and the four admitted
+provider/build/resource-map types, and adds only the provider Effect subpath,
+which exposes only `providerFx` as a value and the five admitted acquire,
+release, plan, Effect, and facade types. Publication grows the SDK pack from 14 to 15,
+JavaScript build specifiers from 17 to 18, and runtime authoring subpaths from 8
+to 9 while copied/input blueprint directories remain 10. TypeScript owns const
+requirement preservation, map overloads, ProviderFx/error inference, required
+never-release, and positive/negative nominal anti-forgery. Definition,
+derivation, and compiler behavior tests own cold no-callback construction,
+descriptor flags/body identity, accessor forgery rejection, and zero-build
+truth. Habitat and Nx own structure, application, edges, and cache; SDK and
+installed-package tests own public inventories and packed provenance.
+Source-string or AST assertions are not a proof path.
+
 ### Give one Effect kernel the process lifecycle
 
-Providers are cold descriptors that own resource requirements, provider config
-schema/decoder, observation redaction metadata, health/refresh metadata, and
-`build(...)`. Before the first acquisition, provisioning materializes every
-declared source and preflights every provider config plus service scope/config
-ref using exact authored-order first-hit lookup and owning-schema decode. Any
-required-source, declared memory/test, malformed/unreadable source, exhausted
-key, or winning-decode refusal yields zero acquisition; only an absent optional
-dotenv/file source skips. The full validated provider value then passes through
-provider build, acquire, and release. Only provider-
-owned diagnostic, telemetry, and catalog projections apply redaction. The build
-context receives the definition-owned `RuntimeObservationPort`; it never imports
-the downstream observation implementation. Its
-`ProviderEffectPlan` owns cold acquire/release execution plus admitted execution
-policy and telemetry labels; it does not own dependency order or live
-registration. Bootgraph owns resource keys, dependency order, deduplication,
-rollback order, static finalization order/policy metadata, and the provider
-reference as ordinary data, never as a Layer dependency graph. For each started
-process the Effect substrate creates exactly one `effect@4.0.0-beta.101`
-`ManagedRuntime` from exactly one `Layer.effectContext` lifecycle adapter. That
-adapter consumes bootgraph order, receives already decoded provider config,
-builds only after dependencies exist, acquires resources, registers each plan's release
-after successful acquisition, and returns the assembled process Context. The
-substrate forces the managed context before mount and exposes only one
-`ManagedRuntimeHandle`. `ManagedRuntime` owns its scopes, fibers, and reverse
-release; Habitat constructs no second root `Scope`, second ManagedRuntime, or
-per-execution runtime.
+Before the first acquisition, provisioning materializes every declared source
+and preflights every provider config plus service scope/config ref using exact
+authored-order first-hit lookup and owning-schema decode. Any required-source,
+declared memory/test, malformed/unreadable source, exhausted-key, or
+winning-decode refusal yields zero acquisition; only an absent optional
+dotenv/file source skips. Only provider-owned diagnostic, telemetry, and
+catalog projections apply redaction.
+
+Task 7.2 assembles the private frozen dependency-resource map from exact
+declared requirement references, joins the ordered boot artifact with the
+compiler reference handoff, constructs and uses the real beta.101
+`Effect.acquireRelease(acquire, release)` adapter, registers release immediately
+after successful acquire, proves `tryPromise` mapping and failed-acquire
+non-registration, and classifies build, plan-forgery, and Effect defects. Task
+7.3 exercises that adapter to prove expected-cleanup recovery and observation,
+release-defect continuation, rollback, reverse order, inert repeated
+disposal/release, and runtime close. It does not lower or register another
+adapter.
+
+Bootgraph owns only resource/provider identity, dependency order, deduplication,
+rollback order, and release-order metadata. Exact provider references plus
+provider-owned config decoder and observation-redaction metadata stay in the
+compiler reference handoff. The Effect substrate joins those inputs; neither
+handoff carries a provider plan or acquire/release body, and bootgraph never
+becomes a Layer dependency graph. For each started process the Effect substrate creates exactly one
+`effect@4.0.0-beta.101` `ManagedRuntime` from exactly one
+`Layer.effectContext` lifecycle adapter. Only after config preflight and
+dependency readiness does that adapter call synchronous provider `build(...)`,
+privately recover the returned plan bodies, construct and use
+`Effect.acquireRelease(acquire, release)`, execute acquire, and register required
+release immediately after successful acquisition. A typed acquire failure
+registers no release; failed startup rolls back the acquired prefix, and reverse
+release continues after each infallible cleanup Effect. The adapter returns the
+assembled process Context. The substrate forces the managed context before
+mount and exposes only one `ManagedRuntimeHandle`. `ManagedRuntime` owns its
+scopes, fibers, and reverse release; Habitat constructs no second root `Scope`,
+second ManagedRuntime, or per-execution runtime.
 
 Domain services remain Habitat services bound by process runtime. They are not
 Effect services, Context tags, or Layer nodes, and service dependency direction
@@ -1079,6 +1168,13 @@ per-`ProcessExecutionRuntime` managed runtimes are rejected. Magic's
 process-local scoped acquisition and provider release order are behavior
 evidence only; its live product resource bag, direct `Layer.build`, domain
 service construction, and entrypoint-selected providers are not ported.
+
+Tasks 6.4 and 6.5 stop at each qualified Fluree HTTP provider's config
+schema/decode contract, cold plan construction, and provider conformance; they
+perform no live acquisition, release, or failure cleanup. Task 7.4 runs both the
+semantic-ledger and temporal-inquiry provider packages through the real Effect
+substrate to prove single acquisition/release and failure cleanup before adding
+the admitted lab and Magic process-lifetime assertions.
 
 ### Centralize process context without stealing native execution
 

@@ -751,6 +751,132 @@ derivation-to-compilation handoff proof makes producer-local authoring bindings
 unavailable after the real graph and entrypoint cross the boundary; it does not
 require derivation source to become unavailable.
 
+## Provider-Effect-Plan Authority Correction
+
+Task 6.0 is complete as a documentation-only authority correction across
+exactly nine documents: `HABITAT_ARCHITECTURE.md` as router;
+`HABITAT_RUNTIME_REALIZATION.md` §13.4 and its directly affected §§17, 25,
+and 27 as the sole exact mechanics owner;
+`packages/core/runtime/definition/AGENTS.md` as definition-owner router; and the
+six active OpenSpec artifacts. The active `app-runtime-realization` requirement
+and scenarios are the sole archive-safe acceptance owner. The other five
+OpenSpec artifacts route or record the correction without copying the canonical
+TypeScript blocks. Task 6.0 changes no `.habitat` file, SDK documentation,
+implementation, source, test, project, blueprint, package/public output,
+runtime behavior, or other OpenSpec file. Task 6.1 is the sole next source node.
+
+`ProviderEffectPlan` is operational interior of the existing package-less
+`runtime-definition` owner. It is not a Habitat kind, Nx project, package,
+public runtime owner, or bootgraph artifact. A cold `ProviderFx<TValue,
+TError>` is the curated `HabitatEffect<TValue, TError, never>` value itself,
+never a thunk, Promise, acquired value, raw Effect, or runner result. Acquire
+retains typed `TError`. Release is mandatory, receives only the acquired value,
+and returns an infallible `ProviderFx<void, never>`. `RuntimeProvider` gains the
+acquire-error generic and a required synchronous `build(...)` operation; build
+returns the cold plan and never an acquisition result. The interface keeps
+erasure-friendly config/acquire-error defaults of `unknown`/`unknown`; only
+`defineRuntimeProvider(...)` helper inference defaults schema-free config to
+`undefined` and acquire error to `never`.
+
+`ProviderBuildContext` contains exactly the already-decoded provider config, a
+`RuntimeResourceMap` contract for already-provisioned declared dependencies,
+and the definition-owned observation port. It contains no lifecycle scope or
+telemetry client. Task 6.1 defines only the `has(...)`/three-overload `get(...)`
+TypeScript contract and no concrete map instance or factory. Its companion
+`requireResource(...)` change preserves the entire const input type and readonly
+shape so exact true, exact false, absence, and widened optionality remain
+available to overload inference. Task 7.2 alone assembles the substrate-private
+concrete frozen map, keys lookup by exact declared requirement reference, and
+proves that an identity-equivalent copy misses.
+
+The public plan has exactly enumerable `kind`, `acquire`, and `release` keys.
+Its acquire and release records each have exactly enumerable `boundary`,
+`policy`, and `telemetry` keys and carry their canonical acquire or release
+boundary respectively. Construction fresh-copies and recursively freezes the
+plan, both boundary records, policy metadata, telemetry metadata, and the
+private witness container. It preserves the opaque acquire Effect and release
+callback by exact reference and never traverses, copies, freezes, or invokes
+either body during construction. A private non-enumerable symbol witness holds
+those bodies. Its accessor remains private to later runtime owners and is never
+re-exported through either SDK face.
+
+`providerFx` has exactly `succeed`, `tryPromise`, and `acquireRelease`. Task 6.1
+proves only cold construction, inference, required never-error release,
+metadata/witness descriptor behavior, exact opaque body identity, zero callback
+or build invocation, and private-accessor rejection of a forged witness. Its
+TypeScript proof includes positive nominal assignment of a real plan and
+negative assignment of a structural lookalike. Task 7.2 alone executes
+`tryPromise`, proves synchronous-throw/rejection mapping and no release on typed
+acquire failure, classifies build throw, forged plan, and Effect defect,
+constructs and uses the real beta.101 `Effect.acquireRelease(acquire, release)`
+adapter, and registers release immediately after successful acquisition. Task
+7.3 executes and proves expected-cleanup observation, release-defect observation
+with later-release continuation, rollback, reverse release order, inert repeated
+disposal/release, and runtime close through that already-constructed adapter; it
+does not lower or register another adapter. Tasks 7.1 through 7.3 retain the
+live registration, rollback, and ManagedRuntime mechanics; task 7.4 consumes
+those mechanics only for the allocated provider-package proof. Derivation and
+compilation call no provider `build(...)`; compiler and bootgraph carry no plan
+or provider-plan body.
+
+Task 6.3 keeps the ordered boot artifact limited to resource/provider identity,
+dependency order, deduplication, rollback order, and release-order metadata.
+Exact provider references plus provider-owned config decoder and observation
+redaction metadata remain in the compiler reference handoff. The future Effect
+substrate joins those two inputs without either handoff carrying a plan or
+acquire/release body. Tasks 6.4 and 6.5 prove only each qualified Fluree HTTP
+provider's config schema/decode contract, cold plan construction, and provider
+conformance. Task 7.4 alone runs both provider packages through the real
+substrate to prove single acquisition/release and failure cleanup.
+
+Task 6.1 evolves the existing provider root and adds only the provider Effect
+subpath. The provider root exports only runtime value `defineRuntimeProvider`
+and the four types
+`ProviderBuildContext`, `RuntimeProvider`, `RuntimeProviderHealthDescriptor`,
+and `RuntimeResourceMap`. The provider Effect face exports only runtime value
+`providerFx` and the five types `ProviderAcquire`, `ProviderEffectPlan`,
+`ProviderFx`, `ProviderFxFacade`, and `ProviderRelease`. Neither face exposes
+the witness or accessor, raw Effect, Exit, Scope, Layer, ManagedRuntime,
+`ProviderScope`, a terminal runner, or another constructor.
+
+Immutable `runtime-definition@1` remains byte-identical. Task 6.1 creates only
+`.habitat/blueprints/runtime-definition/versions/2/blueprint.toml` and
+`structure.toml`, selects version 2 in the existing definition manifest, and
+admits the complete flat successor: eight shell entries, eleven source files
+(the existing ten plus `provider-effect-plan.ts`), and three proof files
+(`definition.test.ts`, `provider-effect-plan.test.ts`, and `nx-cache.test.ts`).
+It adds no version-specific skill, Grit rule, inheritance, fallback, optional
+interior, version 3, new kind/project/package, or nested `src/providers` path.
+
+The exact implementation/behavior corpus is eight files: definition
+`src/provider.ts`, `src/provider-effect-plan.ts`, `src/resource.ts`,
+`src/index.ts`, `test/definition.test.ts`, and
+`test/provider-effect-plan.test.ts`; derivation
+`test/complete-derivation.test.ts`; and compiler
+`test/compile-runtime-plan.test.ts`. The exact separate publication/assembly
+corpus is 17 files: repository LF policy; three Habitat authority/readme files;
+the two version-2 blueprint files; definition `AGENTS.md` and `habitat.toml`;
+the SDK provider root and provider Effect entries; SDK `AGENTS.md`, `README.md`,
+`habitat-pack.json`, `package.json`, `tsdown.config.ts`, and
+`test/runtime-authoring-public-faces.test.ts`; and the Habitat installed-package
+test. The combined task-6.1 diff ceiling is therefore 25 files.
+
+That publication grows the sorted SDK policy pack from 14 to 15 by adding
+`runtime-definition@2`, leaves copied/input blueprint directories at 10, grows
+JavaScript build specifiers from 17 to 18, and grows runtime authoring subpaths
+from 8 to 9. It explicitly excludes definition `project.json` and
+`tsdown.config.ts`, `.habitat/index.json`, root manifests, the lockfile, root Nx
+configuration, product-separation acceptance, and every other SDK face.
+TypeScript owns const-input/readonly requirement preservation, map overloads,
+ProviderFx/error inference, required never-release, no-Promise admission, and
+positive/negative nominal anti-forgery. Owner behavior tests own cold
+no-callback construction, exact enumerability and descriptor flags,
+metadata/witness freezing, opaque body identity, private-accessor forged-witness
+rejection, and zero-build proof. Habitat and Nx own successor
+structure/application and unchanged edge/cache proof; SDK and installed-package
+acceptance own exact public inventories, counts, parity, provenance, and cold
+imports. Runtime source-string and AST inspection are not accepted proof.
+
 ## Magic Migration Admission
 
 Magic Migration is implementation evidence, not product or specification

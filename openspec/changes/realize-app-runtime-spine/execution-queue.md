@@ -75,8 +75,8 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   derivation handoff at exact Habitat
   `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` / tree
   `8371a139957c583fbb160407d783619c1ee514fb`. The compiler sequence is sealed;
-  the provider-plan authority correction is the sole next container, and task
-  6.1 source remains blocked until that authority is explicit.
+  task 6.0 now seals the provider-effect-plan authority correction across its
+  exact nine-document surface. Task 6.1 is the sole next source container.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -327,6 +327,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   prescribed text, or prescribed order. Profile agreement remains task 4.11
   derivation defense because the exact five-field launch identity has no
   profile field.
+- [x] **Provider-effect-plan authority correction**: task 6.0 establishes
+  `ProviderEffectPlan` as cold operational interior of `runtime-definition`,
+  fixes exact curated-Effect acquire/release, build-context/resource-map,
+  private-witness, public SDK, successor-blueprint, failure, corpus, and proof
+  boundaries, and changes no implementation or `.habitat` record. Canonical
+  runtime §13.4 and directly affected §§17, 25, and 27 alone own exact
+  mechanics; the active capability spec alone owns archive-safe acceptance.
 
 The selection/derivation queue is sealed. Task 4.11 changed only
 `packages/core/runtime/derivation/test/complete-derivation.test.ts`, proved the
@@ -335,8 +342,9 @@ web-loader calls, and left `runtime-derivation@2`, derivation source, and the
 public surface unchanged. Its exact landing receipt is in [[tasks]]. Task 5.0
   is sealed as the exact eight-document compiler-authority correction with no
   implementation, blueprint, or current-realization mutation. Tasks 5.1 through
-  5.5 are sealed by their exact receipts in [[tasks]]. The provider-plan
-  authority correction is the sole next container; task 6.1 source is not active.
+  5.5 are sealed by their exact receipts in [[tasks]]. Task 6.0 is sealed as the
+  exact nine-document provider-effect-plan authority correction. Task 6.1 is
+  now the sole active source container.
 
 ## Task 4.7a Authority Routing
 
@@ -448,8 +456,8 @@ launch identity has no profile field, and derivation retains every defensive
 check. Tasks 4.10 and 4.11 are sealed by the exact receipts in [[tasks]]. Task
 5.0 is sealed as the documentation-only compiler authority correction. Tasks
 5.1 through 5.5 are sealed by the exact implementation and proof receipts in
-[[tasks]]. The provider-plan authority correction is the sole next container;
-task 6.1 source remains blocked until that authority is explicit.
+[[tasks]]. Task 6.0 is sealed as the documentation-only provider-effect-plan
+authority correction, and task 6.1 is the sole next source node.
 
 ## Task 5.0 Runtime-Compiler Authority Routing
 
@@ -535,9 +543,89 @@ input-nonmutation, built-in-refusal, and zero-downstream-work proof. Task 5.5 is
 sealed at exact Habitat `main@7592bd3edd7cb75cf297211fe620f584c65b8b65` /
 tree `8371a139957c583fbb160407d783619c1ee514fb` by the exact receipt in [[tasks]].
 It expanded only `derivation-handoff.test.ts` with the real producer handoff and
-eight bounded corrupted-artifact refusals. The compiler sequence is sealed; the
-provider-plan authority correction is the sole active container and task 6.1
-source remains blocked.
+eight bounded corrupted-artifact refusals. The compiler sequence and task 6.0
+provider-effect-plan authority correction are sealed; task 6.1 is the sole
+active source container.
+
+## Task 6.0 Provider-Effect-Plan Authority Routing
+
+Task 6.0 is sealed without implementation across exactly nine documents. The
+architecture document routes, canonical `HABITAT_RUNTIME_REALIZATION` §13.4
+and directly affected §§17, 25, and 27 solely own exact mechanics, the
+runtime-definition `AGENTS.md` routes its owner, and these six active OpenSpec
+artifacts preserve archive-safe acceptance and execution routing without
+copying canonical TypeScript blocks. No `.habitat` file, SDK documentation,
+implementation, source, test, project, blueprint, package/public output,
+runtime behavior, or other OpenSpec file changed in the authority-only gate.
+
+Task 6.1 is the sole active source node. It preserves byte-identical
+`runtime-definition@1`, creates only the complete independent
+`versions/2/{blueprint.toml,structure.toml}` successor, and selects version 2 in
+the existing definition manifest. The successor closure remains one flat
+package-less owner with exactly eight shell entries, eleven source files (the
+existing ten plus `provider-effect-plan.ts`), and three proof files
+(`definition.test.ts`, `provider-effect-plan.test.ts`, and `nx-cache.test.ts`).
+It adds no skill, Grit, inheritance, fallback, optional interior, version 3,
+kind, project, package, or nested providers directory.
+
+The source node implements a required synchronous provider build from exactly
+decoded config, the typed dependency-resource-map contract, and the
+definition-owned observation port. Build returns a cold plan rather than an
+acquisition result and receives no scope or telemetry client. It changes
+`requireResource(...)` to preserve the full const input and readonly shape for
+map-overload inference but creates no concrete map or factory; task 7.2 alone
+assembles the private frozen map and proves exact-reference lookup/copy miss. A `ProviderFx` is
+the curated `HabitatEffect` value with requirements `never`; acquire retains
+typed failure and required release receives only the acquired value and returns
+an infallible provider Effect. The plan exposes only `kind`, acquire, and
+release; each boundary record exposes only boundary, policy, and telemetry.
+Fresh structural/witness containers are recursively frozen while acquire Effect
+and release callback identities remain opaque, unchanged, and uninvoked behind
+the private non-enumerable witness. The `RuntimeProvider` interface stays erasure-friendly at
+`unknown`/`unknown`; only `defineRuntimeProvider(...)` helper inference defaults
+schema-free config to `undefined` and acquire error to `never`.
+
+Task 6.1 evolves the existing provider root, which exports only
+`defineRuntimeProvider` plus its four admitted types, and adds only the provider
+Effect subpath, which exports only `providerFx` plus its five admitted types;
+the facade has exactly `succeed`, `tryPromise`, and `acquireRelease`.
+Neither face exports the private witness/accessor, raw Effect, Exit, Scope,
+Layer, ManagedRuntime, `ProviderScope`, a runner, or an alternate constructor.
+This node proves only cold no-callback construction, exact type/descriptor and
+body-identity behavior, private-accessor forgery rejection, nominal
+positive/negative TypeScript admission, and zero build. Task 7.2 owns executing
+`tryPromise`, failed-acquire non-registration, and build/forgery/Effect defect
+classification; it also constructs and uses the real beta.101
+`Effect.acquireRelease(acquire, release)` adapter and registers release
+immediately after successful acquire. Task 7.3 executes cleanup through that
+adapter and proves observation, release-defect continuation, rollback, reverse
+order, inert repeated disposal/release, and runtime close without lowering or
+registering another adapter. Derivation, compilation, and bootgraph never call
+build or carry a plan body.
+
+The exact eight-file behavior corpus, including definition `src/resource.ts`,
+and separate 17-file publication corpus named by the active requirement form a
+hard 25-file diff ceiling. Publication
+adds `runtime-definition@2` as SDK pack member 15, leaves copied/input blueprint
+directories at 10, grows JavaScript build specifiers 17 to 18, and grows runtime
+authoring subpaths 8 to 9. Definition `project.json` and `tsdown.config.ts`,
+`.habitat/index.json`, root manifests/lock/Nx files, product-separation
+acceptance, and every other SDK face remain excluded. TypeScript owns const
+requirement preservation, map overloads, Effect/error/release inference, and
+positive/negative nominal anti-forgery; behavior owns cold construction,
+descriptor flags/body identity, accessor forgery rejection, and zero build.
+Habitat/Nx and SDK/installed-package proof retain their distinct structure and
+publication truth; runtime source-string and AST assertions remain invalid.
+
+Task 6.3 keeps the ordered boot artifact limited to resource/provider identity,
+dependency order, deduplication, rollback order, and release-order metadata.
+Exact provider references plus provider-owned config decoder and observation
+redaction metadata stay in the compiler reference handoff; the future Effect
+substrate joins the two inputs, and neither carries a provider plan or
+acquire/release body. Tasks 6.4 and 6.5 prove only config schema/decode, cold
+plan construction, and conformance for their qualified Fluree HTTP providers.
+Task 7.4 alone runs both provider packages through the real substrate to prove
+single acquisition/release and failure cleanup.
 
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
@@ -612,22 +700,34 @@ write authority with the active one:
    error; task 4.11 changes no derivation source or public surface. The exact
    task-4.11 landing receipt is recorded in [[tasks]]. Task 5.0 has sealed the
    documentation-only compiler authority correction and tasks 5.1 through 5.5
-   are sealed by their exact receipts. The provider-plan authority correction is
-   the sole next container; task 6.1 source remains blocked, and no compiler task
-   waits for or consumes `ProviderEffectPlan`.
-2. **Compilation and boot order (`5.1-5.5`, `6.2-6.5`)**: seal the complete
-   process plan, normalized-handoff referential consistency, provider dependency
-   closure/cycle defense, the exact selected lane tuple and harness ids,
-   deterministic boot artifact, and the two path-qualified Fluree integrations
-   without acquiring a provider or publishing another package. Missing or
-   ambiguous authored provider selection is already a derivation `TypeError`;
-   every compiler-invalid input also throws built-in `TypeError` before result,
-   and no compiler diagnostic API exists.
+   are sealed by their exact receipts. Task 6.0 has sealed the documentation-only
+   provider-effect-plan correction; task 6.1 is the sole next source node, and
+   no compiler task waits for or consumes `ProviderEffectPlan`.
+2. **Compilation, provider plan, and boot order (`5.1-5.5` and `6.0` sealed;
+   `6.1-6.5` active sequence)**: retain the sealed complete process plan and
+   normalized-handoff/provider-closure proof; realize the exact cold
+   runtime-definition provider plan before deterministic boot ordering and the
+   two path-qualified Fluree integrations. Compiler and bootgraph acquire no
+   provider and carry no plan body. The ordered artifact contains only
+   identity, dependency, deduplication, rollback, and release-order metadata;
+   exact provider references plus provider-owned decoder/redaction metadata
+   remain in the compiler reference handoff for the substrate to join later.
+   Both Fluree provider integrations stop at config schema/decode, cold plan,
+   and provider conformance in tasks 6.4/6.5. Missing or ambiguous authored provider
+   selection is already a derivation `TypeError`; every compiler-invalid input
+   also throws built-in `TypeError` before result, and no compiler diagnostic
+   API exists.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before
-   first acquisition, then wait for provider dependencies before `build`;
-   force the context before mount and prove rollback and reverse release.
+   first acquisition, assemble exact-reference dependency lookup, then wait for
+   provider dependencies before `build`; task 7.2 constructs and uses the real
+   `Effect.acquireRelease(acquire, release)` adapter, registers release
+   immediately after successful acquire, and proves typed/defect acquisition
+   outcomes. Task 7.3 executes cleanup, rollback, reverse continuation,
+   repeated-disposal, and close proofs through that adapter. Task 7.4 runs both
+   qualified Fluree provider packages through the real substrate for single
+   acquisition/release and failure cleanup. Force the context before mount.
 4. **Process runtime (`8.1-9.2`, `10.1`)**: bind services, lower adapters, match
    execution descriptors, prove actual `{ identity, profileId, bindingId }`
    cache construction/reuse, run only non-oRPC Effect lanes, and return one
