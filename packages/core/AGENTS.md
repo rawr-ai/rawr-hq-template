@@ -50,6 +50,7 @@
 - [Private runtime-schema owner](runtime/schema/AGENTS.md)
 - [Private runtime-definition owner](runtime/definition/AGENTS.md)
 - [Private runtime-derivation owner](runtime/derivation/AGENTS.md)
+- [Private runtime-compiler owner](runtime/compiler/AGENTS.md)
 
 ## Validation
 

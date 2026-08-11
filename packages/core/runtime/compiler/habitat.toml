@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-compiler"
+ownerProject = "runtime-compiler"
+blueprint = "runtime-compiler"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/compiler"
+
+[selections]
