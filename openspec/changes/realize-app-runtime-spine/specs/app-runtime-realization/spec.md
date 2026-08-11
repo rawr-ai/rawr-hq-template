@@ -185,9 +185,11 @@ an app, entrypoint, adapter, harness, service, plugin, or provider.
   selected surface
 - **THEN** the Habitat core derivation owner emits `NormalizedRuntimeTopology`
   and then the complete `NormalizedAuthoringGraph` before the runtime compiler
-  emits one `CompiledProcessPlan`
+  synchronously returns one `RuntimeCompilationResult` containing exactly the
+  compiled plan, cold reference table, and observation seed
 - **AND** provisioning and mounting consume that plan through their declared
   boundaries even when unused plan collections are empty
+- **AND** the plan itself contains neither the observation seed nor findings
 
 #### Scenario: A downstream boundary receives upstream declarations
 
@@ -203,12 +205,14 @@ decision, or substitute an equivalent-looking artifact. A mismatched artifact
 MUST fail before the downstream owner emits output or invokes executable work;
 for a mutating boundary it MUST also fail before external mutation. Behavior
 proof MUST exercise each producer-to-consumer edge independently with the
-upstream source made unavailable after handoff.
+producer-local authoring bindings or earlier declarations that are not part of
+the emitted artifact made unavailable after handoff. It MUST NOT require the
+producer's implementation source code to become unavailable.
 
 #### Scenario: Qualified phase artifact is consumed
 
-- **WHEN** a phase producer emits its canonical artifact and the upstream source
-  becomes unavailable
+- **WHEN** a phase producer emits its canonical artifact and producer-local
+  authoring bindings outside that artifact become unavailable
 - **THEN** the immediate downstream owner completes from that artifact alone
 - **AND** an identity-mismatched artifact is refused before downstream output
   or executable work and, where applicable, before external mutation
@@ -1053,44 +1057,238 @@ owner whose invariant it implements.
   emits `configRef` exactly when the provider owns a config schema
 - **AND** the resource package does not enumerate or import the provider
 
-#### Scenario: Compiler owns bounded diagnostic normalization
+#### Scenario: Compiler preserves selected provider references cold
 
-- **WHEN** compilation normalizes matching failures into bounded diagnostics
-- **THEN** that implementation remains inside `runtime-compiler`
-- **AND** bootgraph and runtime mounting receive the qualified compiler artifact only
-  through the admitted downstream handoffs rather than importing
-  compiler-private helpers
-- **AND** the implementation remains inside the closed named-owner topology and
-  outside app-selectable provider inventory
-- **AND** every selected concrete provider resolves from its resource provider
-  project
+- **WHEN** compilation receives a complete normalized graph and recovers the
+  selected provider and service definitions through the exact supplied
+  `Entrypoint`
+- **THEN** it reconciles those cold references with the graph's normalized
+  selection and binding identities and retains the exact references without
+  copying or invoking them
+- **AND** every selected concrete provider still resolves from its resource
+  provider project
+
+### Requirement: Runtime-compiler authority is closed before source activation
+
+Task 5.0 MUST remain a completed documentation-only authority correction across
+exactly eight documents: `HABITAT_ARCHITECTURE.md` as router,
+`HABITAT_RUNTIME_REALIZATION.md` §16 as the sole exact mechanics and closed
+TypeBox DTO owner, and the six active OpenSpec artifacts. This requirement and
+its scenarios MUST remain the sole archive-safe acceptance owner. The other
+OpenSpec artifacts MUST route or record the decision without copying §16's full
+schema block. Task 5.0 MUST change no implementation, source, test, project,
+blueprint, SDK/public surface, export, package, runtime behavior, `.habitat`
+blueprint, or `.habitat` current-realization record. Task 5.1 MUST be the sole
+next source node.
+
+Task 5.1 MUST create and fully activate private package-less
+`runtime-compiler@1`. The blueprint root MUST contain exactly
+`blueprint.toml`, `structure.toml`, and `skill.md`. The project root
+`packages/core/runtime/compiler` MUST contain exactly `AGENTS.md`,
+`habitat.toml`, `project.json`, `src`, `test`, `tsconfig.json`,
+`tsconfig.test.json`, and `tsdown.config.ts`. `src` MUST contain exactly
+`compile-runtime-plan.ts`, `compiled-process-plan.ts`, `index.ts`, and
+`runtime-compilation-reference-table.ts`; `test` MUST contain exactly
+`compile-runtime-plan.test.ts`, `derivation-handoff.test.ts`, and
+`nx-cache.test.ts`.
+
+That node MUST establish only the real direct edges
+`runtime-compiler -> runtime-definition` and
+`runtime-compiler -> runtime-derivation`, activate and apply version 1, add the
+LF rule, grow the sorted SDK policy pack from 13 to 14 members, grow copied and
+input blueprint directories from 9 to 10, and prove exact structure, both Nx
+edges, cache restoration/invalidation, packed parity, provenance, and
+application. It MUST add no optional interior, `package.json`, `versions/`
+directory, Grit source law, successor blueprint, compiler package/public
+face/export, fake SDK export,
+`implicitDependencies`, publication-metadata edge, or early
+terminal-composition edge. A later terminal composition source MAY establish a
+direct compiler edge only when its real `compileRuntimePlan(...)` import and
+consumer proof co-land. Specifically, task 10.6's terminal SDK composition
+source MUST establish the final direct
+`@habitat-ai/sdk -> runtime-compiler` assembly relation when it actually imports
+and calls the operation. Runtime mounting MUST receive no compiler edge, and
+transitive process-runtime reachability MUST NOT substitute.
+
+The compiler project MUST define exactly three focused targets:
+`acceptance:compiled-process-plan` runs `compile-runtime-plan.test.ts`,
+`acceptance:derivation-handoff` runs `derivation-handoff.test.ts`, and
+`acceptance:nx-cache` runs `nx-cache.test.ts`. Each MUST use
+`nx:run-commands`, set `cache: false` and `parallelism: false`, and declare
+`outputs: []`.
+
+Task 5.1's exact publication/assembly corpus MUST be the following 18 files:
+`.gitattributes`; `.habitat/AUTHORITY.md`;
+`.habitat/AUTHORITY-ONTOLOGY.md`; `.habitat/README.md`;
+`.habitat/blueprints/runtime-compiler/blueprint.toml`;
+`.habitat/blueprints/runtime-compiler/skill.md`;
+`.habitat/blueprints/runtime-compiler/structure.toml`;
+`packages/core/AGENTS.md`; `packages/core/runtime/compiler/AGENTS.md`;
+`packages/core/runtime/compiler/habitat.toml`;
+`packages/core/runtime/compiler/project.json`;
+`packages/core/runtime/compiler/tsdown.config.ts`;
+`packages/core/sdk/AGENTS.md`; `packages/core/sdk/README.md`;
+`packages/core/sdk/habitat-pack.json`; `packages/core/sdk/project.json`;
+`packages/core/sdk/tsdown.config.ts`; and
+`apps/habitat/test/installed-package.test.ts`. It MUST exclude
+`packages/core/sdk/package.json`, every SDK public-face test, the
+product-separation test, root manifests, the lockfile, root Nx configuration,
+and `.habitat/index.json`. Remaining compiler source, tests, and tsconfigs MUST stay
+in the distinct implementation closure rather than the publication corpus.
+
+Tasks 5.2 through 5.5 MUST be proof-only expansions within the existing exact
+compiler test closure and MUST change no compiler or derivation source, project
+topology, blueprint, pack, or public surface. Behavior tests MUST own semantic
+planning and refusal, TypeScript and TypeBox MUST own type and closed admission,
+Habitat MUST own exact structure, Nx MUST own exact edges and cache behavior,
+and SDK pack/installed-blueprint acceptance MUST prove provenance only. Runtime
+source or AST string inspection and a fabricated compiler export MUST NOT count
+as proof.
+
+Task 5.2 MUST add only normalized provider-handoff; required and
+selected-optional requirement matching; unselected-optional requirement or
+dependency id retention with its exact derivation finding and no
+binding/node/edge/resource/reference; missing-finding refusal; dependency
+closure; dangling required dependency; and direct/transitive cycle proof to
+`compile-runtime-plan.test.ts`. Task 5.3 MUST add only selected-process roots,
+canonical role agreement, transitive service/semantic/resource/provider/
+workflow/execution/web closure, exclusion of unrelated app-role and semantic
+facts, selected harness ids, ordinary identity/reference agreement,
+explicit-empty, and no-invented-compatibility proof plus cold
+reference identity/stable snapshots and the observable observation-seed data
+boundary with no port input, call, or publication. Import/implementation absence
+remains a reviewed boundary rather than a source-inspection behavior assertion.
+Task 5.4 MUST add only
+ordering, freeze, schema closure, built-in-TypeError, absent diagnostic/finding,
+and zero downstream-work proof to that file. Task 5.5 MUST add only the real
+derivation handoff and corrupted-artifact proof to `derivation-handoff.test.ts`,
+making producer-local authoring bindings unavailable rather than derivation
+source.
+`nx-cache.test.ts` MUST remain task 5.1's sole owner-cache proof.
+
+#### Scenario: The baseline compiler owner is activated completely
+
+- **WHEN** task 5.1 lands the first compiler realization
+- **THEN** the exact blueprint, project, source, and test closures exist together
+  under selected and applied `runtime-compiler@1`
+- **AND** the policy pack, copied/input directory counts, LF rule, application,
+  provenance, exact real edges, and cache behavior all pass in the same node
+- **AND** no optional interior, package identity, Grit source law, successor
+  blueprint, public compiler face, or early terminal-composition edge exists
+- **AND** the three focused acceptance targets and exact 18-file
+  publication/assembly corpus match their closed declarations without an
+  excluded SDK, repository, or index file
+
+#### Scenario: Compiler proof remains with the qualified truth owner
+
+- **WHEN** tasks 5.2 through 5.5 extend compiler acceptance
+- **THEN** each edits only its allocated existing compiler test file and
+  preserves all task-5.1 source and structure
+- **AND** behavior, TypeScript/TypeBox, Habitat, Nx, and SDK pack/provenance each
+  prove only their allocated truth rather than inspecting runtime source strings
+  or fabricating a public compiler export
 
 ### Requirement: Compilation proves complete process closure
 
-The runtime compiler MUST consume the normalized authoring graph plus selected
-app, profile, entrypoint, environment, role, and harness facts. It MUST validate
-topology, normalized-handoff referential consistency, provider dependency
-closure and cycle freedom, service binding closure, execution descriptor
-agreement, adapter targets, and harness targets before it emits exactly one
-`CompiledProcessPlan`. Authored missing or ambiguous provider selection is a
-fatal built-in `TypeError` owned by derivation; it MUST NOT remain reachable as
-a compiler diagnostic. Compilation MUST defend against a corrupt normalized
-artifact, but MUST NOT acquire resources, bind live services, execute Effects,
-construct native callbacks, or mount hosts.
+The private runtime compiler MUST expose exactly one synchronous internal
+operation, `compileRuntimePlan({ entrypoint, graph })`, consuming the exact
+selected `Entrypoint` and complete `NormalizedAuthoringGraph`. It MUST NOT
+accept a derivation result, `ExecutionDescriptorTable`, `WebRouteModuleTable`,
+or `PortableRuntimePlanArtifact`. It MUST return exactly one
+`RuntimeCompilationResult` with the three fields `{ plan, references,
+observationSeed }`. Canonical runtime §16 alone owns the exact closed TypeBox
+DTO fields for the plan, its nested records, and the seed, plus the exact private
+operational reference-table contract. `CompiledProcessPlan` MUST contain neither
+`observationSeed` nor `findings`.
 
-#### Scenario: Corrupt normalized provider handoff is refused
+After whole-graph closed-schema admission and entrypoint/graph identity
+agreement, the compiler MUST duplicate-check and canonicalize
+`entrypoint.process.roles`, require that result to equal
+`graph.topology.roleRequirements`, and project exactly one process. Its roots
+MUST be the surface plans whose roles occur in that canonical role set. It MUST
+close transitively over those surfaces' service bindings and child bindings,
+their semantic dependency records, direct and service-owned resource
+requirements, selected providers and their provider dependencies, workflow
+dispatchers, Effect execution refs, and web route-module refs. The plan and cold
+reference table MUST contain only that closure. Valid
+whole-app facts for roles outside the selected process MUST remain excluded and
+MUST NOT become process-local provisioning, mounting, dependency, or cycle
+outcomes. Within the selected closure the compiler MUST validate normalized
+referential consistency, provider dependency closure and cycle freedom, service
+binding and semantic dependency closure, surface and workflow relation
+agreement, execution-ref agreement, selected-role and selected-harness-id
+identity/reference agreement, duplicates, and canonical order. For adapter and harness planning, it MUST
+carry only the exact selected lane tuple and selected harness ids;
+adapter-target
+resolution remains task 10.1 and harness-descriptor compatibility remains tasks
+10.2 through 10.3. Every invalid compiler input MUST throw built-in `TypeError`
+before any result exists. There MUST be no `CompilationFinding`, compiler
+diagnostic result, public/custom error API, prescribed error text, or prescribed
+validation order. Authored missing or ambiguous provider selection and the sole
+optional-provider finding MUST remain derivation-owned.
 
-- **WHEN** a normalized handoff contains a dangling or mismatched provider
-  selection reference, an incomplete dependency target, or a provider cycle
-- **THEN** compilation returns a bounded corrupt-artifact/dependency diagnostic
-- **AND** provisioning never begins, while authored missing or ambiguous
-  provider selection remains an earlier derivation `TypeError`
+Every reached required resource requirement MUST resolve to exactly one
+selection or throw `TypeError`. A reached optional requirement with a selection
+MUST follow the ordinary provider closure. A reached optional requirement with
+no selection MUST retain its requirement or dependency id, require the exact
+derivation-owned `provider-selection.optional-missing` finding, and emit no
+binding, provider node or edge, compiled resource, or cold reference for that
+branch. The compiler MUST NOT copy or rename that finding into its result.
 
-#### Scenario: Executable boundary is mismatched
+`RuntimeCompilationReferenceTable` MUST retain the exact cold provider and
+service definition references. Repeated `providerEntries()` calls MUST return
+the same one-time, referentially stable, canonically sorted frozen provider
+snapshot, and repeated `serviceEntries()` calls MUST do the same for the service
+snapshot. The table MUST NOT copy or invoke a definition, descriptor, callback,
+loader, Effect, provider, or service implementation. `observationSeed` MUST
+remain returned cold structural data; the compiler MUST NOT import, consume,
+implement, call, or publish through `RuntimeObservationPort`.
 
-- **WHEN** a compiled execution plan and its descriptor reference do not agree
-  on execution identity or policy
-- **THEN** compilation or execution-registry assembly fails before invocation
+Compilation MUST NOT accept, construct, or consume `ProviderEffectPlan`; resolve
+or decode config; build or acquire a provider; execute an Effect, body, loader,
+or callback; bind a service or construct a cache; resolve adapter targets; check
+harness descriptor compatibility; construct native functions; mount hosts;
+access live values; or publish observation.
+
+#### Scenario: A complete cold process is compiled
+
+- **WHEN** the real compiler receives an agreeing real `Entrypoint` and complete
+  normalized graph
+- **THEN** it synchronously returns exactly `{ plan, references,
+  observationSeed }`, with plan and seed conforming to the closed §16 TypeBox
+  DTOs and references conforming to the exact private table contract
+- **AND** the plan contains the exact selected lane tuple and harness ids,
+  contains only the transitive closure rooted in the selected process roles,
+  excludes valid facts owned solely by other app roles, preserves explicit
+  empty collections, and contains neither `observationSeed` nor `findings`
+- **AND** no authored executable or downstream lifecycle work occurs
+
+#### Scenario: Reference-table snapshots are stable and cold
+
+- **WHEN** provider and service reference entries are read repeatedly
+- **THEN** `providerEntries()` and `serviceEntries()` each return their same
+  referentially stable, canonically sorted frozen snapshot
+- **AND** the referenced definitions retain exact identity without copying or
+  invocation
+
+#### Scenario: Invalid compiler input is refused without a diagnostic result
+
+- **WHEN** the entrypoint and graph disagree or the normalized graph contains a
+  dangling/mismatched reference, incomplete dependency closure, cycle,
+  duplicate, unsupported identity/reference, or invalid closed DTO shape
+- **THEN** `compileRuntimePlan(...)` throws built-in `TypeError` before returning
+  any part of `RuntimeCompilationResult`
+- **AND** there is no compiler finding or diagnostic output and no provisioning,
+  execution, mounting, observation publication, or external mutation begins
+
+#### Scenario: Real derivation hands off without its authoring bindings
+
+- **WHEN** the real derivation producer consumes the exact selected `Entrypoint`,
+  emits the complete normalized graph, and its producer-local authoring bindings
+  become unavailable
+- **THEN** the real compiler completes from that entrypoint and graph alone
+- **AND** it receives no derivation result, non-portable table, or portable
+  artifact and invokes no authored executable
 
 ### Requirement: Runtime providers remain cold until Effect provisioning
 
@@ -1352,9 +1550,15 @@ registry identities, or release members. Every private root MUST have
 `project.json` and its blueprint-qualified source and tests but no
 `package.json`. The terminal SDK MUST have one direct assembly edge to each
 listed project and MUST remain the sole downstream assembler of their outputs
-into one package. Real source/build references MUST establish the edges;
-`implicitDependencies` and publication metadata are not substitutes. No private
-runtime project may import the public facade.
+into one package only when the corresponding real public projection or terminal
+composition consumer lands. Task 5.1 MUST create no SDK-to-compiler edge or
+compiler public face. Task 10.6's terminal SDK composition source MUST establish
+the final direct `@habitat-ai/sdk -> runtime-compiler` edge through its real
+`compileRuntimePlan(...)` import and call; runtime mounting MUST have no compiler
+edge and transitive process-runtime reachability MUST NOT substitute. Real
+source/build references MUST establish every edge; `implicitDependencies` and
+publication metadata are not substitutes. No private runtime project may import
+the public facade.
 
 `runtime-mounting` MUST publish only through the definition-owned observation
 port supplied by the terminal SDK composition root. It MUST NOT import

@@ -584,8 +584,9 @@ and refs-only portability under canonical Habitat schemas and ownership. No
 distinct lab derivation algorithm remains to port. The lab's
 `stableJson`/`exec:*` identity, explicit binding inputs, mutable shapes, public
 types, Oracle, alternate `deriveRuntimeSpine`, and route derivation without an
-admitted carrier remain rejected. Provider graph matching, closure, cycles,
-and diagnostics stay with compiler tasks 5.2 and 5.4. Task 4.9 changes no
+admitted carrier remain rejected. Provider graph matching, closure, cycles, and
+built-in refusal proof stay with compiler tasks 5.2 and 5.4; they do not create
+compiler diagnostics. Task 4.9 changes no
 source, test, project, blueprint, SDK face, public contract, Oracle, optional
 interior, blueprint version, or alternate path and leaves
 `runtime-derivation@2` exact.
@@ -629,6 +630,126 @@ source becomes unavailable, and corrupts each of the three launch-identity
 agreements plus profile agreement independently. Every mismatch is refused
 before a derivation result and with zero Effect-body or loader invocation. No
 derivation source or public surface changes.
+
+## Runtime-Compiler Authority Correction
+
+Task 5.0 is complete as a documentation-only authority correction across
+exactly eight documents: `HABITAT_ARCHITECTURE.md` as router,
+`HABITAT_RUNTIME_REALIZATION.md` §16 as the sole exact mechanics owner, and the
+six active OpenSpec artifacts. The active `app-runtime-realization` requirement
+and scenarios are the sole archive-safe acceptance owner. The other five
+OpenSpec artifacts route or record the decision without copying §16's exact
+TypeBox schema block. Task 5.0 changes no implementation, source, test, project,
+blueprint, SDK face, public contract, export, package, runtime behavior, or
+`.habitat` current-realization record. Task 5.1 is the sole next source node.
+
+The first compiler realization is private package-less `runtime-compiler@1` at
+`packages/core/runtime/compiler`. Its exact real private edges are
+`runtime-compiler -> runtime-definition` and
+`runtime-compiler -> runtime-derivation`; neither `implicitDependencies` nor
+publication metadata may stand in for them. Task 5.1 creates no compiler
+package identity, public compiler face, or early terminal-composition edge. The
+later task 10.6 terminal SDK composition source MUST establish the final direct
+`@habitat-ai/sdk -> runtime-compiler` assembly edge when its real
+`compileRuntimePlan(...)` import, call, and consumer proof co-land. Runtime
+mounting receives no compiler edge, and transitive process-runtime reachability
+is not a substitute.
+
+The sole synchronous operation is
+`compileRuntimePlan({ entrypoint, graph }) -> { plan, references,
+observationSeed }`. It consumes the exact selected `Entrypoint` and complete
+`NormalizedAuthoringGraph`, not a derivation result, either non-portable table,
+or `PortableRuntimePlanArtifact`. Canonical runtime §16 alone defines the exact
+closed TypeBox DTO fields for `CompiledProcessPlan`, its nested DTOs, and
+`CompilationObservationSeed`, plus the exact private operational
+`RuntimeCompilationReferenceTable` contract. The reference table contains only
+exact cold provider and service reference identity. Repeated
+`providerEntries()` calls return the same one-time, referentially stable,
+canonically sorted frozen provider snapshot, and repeated
+`serviceEntries()` calls do the same for the service snapshot. Provider and
+service definitions remain their exact references; the table neither copies nor
+invokes a referenced descriptor, callback, loader, Effect, provider, or service
+implementation.
+
+Compilation duplicate-checks and canonicalizes the entrypoint process roles,
+requires agreement with the graph, roots one process in the selected surfaces,
+then closes transitively over only their service bindings, semantic
+dependencies, resources/providers, workflows, Effect refs, and web refs. Unrelated
+app-role facts enter neither the plan nor the reference table. The cold provider
+and service definitions come through the exact `Entrypoint` and are reconciled
+against normalized identities; the graph remains closed data rather than a
+cold-definition carrier.
+
+`CompiledProcessPlan` contains neither `observationSeed` nor `findings`.
+`observationSeed` is a separate field of the returned
+`RuntimeCompilationResult`, beside `plan` and `references`.
+
+Every invalid compiler input, including handoff disagreement, dangling or
+mismatched reference, incomplete dependency closure, cycle, duplicate,
+unsupported identity/reference, or closed-schema failure, throws built-in `TypeError`
+before any result exists. Version 1 has no `CompilationFinding`, compiler
+diagnostic collection, public error API, prescribed error text, or prescribed
+validation order. The sole optional-provider finding remains derivation-owned
+and is not converted into compiler output. A reached unselected optional
+requirement retains its requirement or dependency id but creates no binding,
+provider node/edge, compiled resource, or cold reference.
+
+`observationSeed` is returned cold structural data. The compiler never imports,
+consumes, implements, calls, or publishes through `RuntimeObservationPort`.
+Adapter and harness planning is limited to the canonical lane tuple and selected
+harness ids with ordinary identity/reference agreement; adapter-target
+resolution and harness-descriptor compatibility remain with tasks 10.1 and
+10.2-10.3 respectively. Compilation performs no
+`ProviderEffectPlan` construction or consumption, config-source resolution or
+decoding, provider build/acquisition, Effect execution, service binding, cache
+construction, native callback construction, harness mounting, live-value
+access, or observation publication.
+
+Task 5.1 owns the complete structural activation and baseline complete plan. Its
+blueprint root is exactly `blueprint.toml`, `structure.toml`, and `skill.md`;
+its project shell is exactly `AGENTS.md`, `habitat.toml`, `project.json`, `src`,
+`test`, `tsconfig.json`, `tsconfig.test.json`, and `tsdown.config.ts`.
+`src` contains exactly `compile-runtime-plan.ts`,
+`compiled-process-plan.ts`, `index.ts`, and
+`runtime-compilation-reference-table.ts`; `test` contains exactly
+`compile-runtime-plan.test.ts`, `derivation-handoff.test.ts`, and
+`nx-cache.test.ts`. The same node selects and applies version 1, adds the LF
+rule, grows the SDK pack from 13 to 14 sorted members and copied/input blueprint
+directories from 9 to 10, and proves packed parity, provenance, application,
+the two exact Nx edges, and cache restoration/invalidation. It adds no optional
+interior, `package.json`, `versions/` directory, Grit source law, successor
+blueprint, public compiler export, or fake SDK export.
+
+The compiler project owns exactly three focused `nx:run-commands` acceptance
+targets with `cache: false`, `parallelism: false`, and `outputs: []`:
+`acceptance:compiled-process-plan` runs `compile-runtime-plan.test.ts`,
+`acceptance:derivation-handoff` runs `derivation-handoff.test.ts`, and
+`acceptance:nx-cache` runs `nx-cache.test.ts`.
+
+Task 5.1's exact publication/assembly corpus has 18 files:
+`.gitattributes`; `.habitat/AUTHORITY.md`,
+`.habitat/AUTHORITY-ONTOLOGY.md`, `.habitat/README.md`; the three exact compiler
+blueprint files; `packages/core/AGENTS.md`; compiler `AGENTS.md`,
+`habitat.toml`, `project.json`, and `tsdown.config.ts`; SDK `AGENTS.md`,
+`README.md`, `habitat-pack.json`, `project.json`, and `tsdown.config.ts`; and
+`apps/habitat/test/installed-package.test.ts`. It explicitly excludes SDK
+`package.json`, an SDK public-face test, the product-separation test, root
+manifests, lockfile, root Nx configuration, and `.habitat/index.json`. Compiler
+source, tests, and tsconfigs remain the distinct implementation closure rather
+than publication files.
+
+Tasks 5.2 through 5.4 are proof-only expansions of
+`compile-runtime-plan.test.ts`; task 5.5 expands only
+`derivation-handoff.test.ts`, while `nx-cache.test.ts` remains task 5.1's sole
+owner-cache proof. They change no compiler source, project topology, blueprint,
+pack, or public surface. Behavior tests own semantic planning and refusal,
+TypeScript and TypeBox own type/closed admission, Habitat owns the exact
+structure, Nx owns the exact edges and cache behavior, and SDK pack tests own
+only policy-pack and installed-blueprint provenance. Runtime source/AST string
+inspection and a fabricated SDK compiler export are not accepted proof. The
+derivation-to-compilation handoff proof makes producer-local authoring bindings
+unavailable after the real graph and entrypoint cross the boundary; it does not
+require derivation source to become unavailable.
 
 ## Magic Migration Admission
 
