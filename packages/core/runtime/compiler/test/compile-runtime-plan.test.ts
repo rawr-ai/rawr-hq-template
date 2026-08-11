@@ -18,6 +18,7 @@ import {
   defineWorkflow,
   Effect,
   type Entrypoint,
+  providerFx,
   providerSelection,
   type RuntimeProvider,
   requireResource,
@@ -240,6 +241,10 @@ const ZERO_PROCESS_CLOSURE_CALLS = {
   effectCalls: 0,
   loaderCalls: 0,
   observationContributionCalls: 0,
+  providerAcquireCalls: 0,
+  providerBuildCalls: 0,
+  providerRecoveryCalls: 0,
+  providerReleaseCalls: 0,
   projectCalls: 0,
   schemaCalls: 0,
 } as const;
@@ -662,6 +667,10 @@ function makeProcessClosureFixture(
   let effectCalls = 0;
   let loaderCalls = 0;
   let observationContributionCalls = 0;
+  let providerAcquireCalls = 0;
+  let providerBuildCalls = 0;
+  let providerRecoveryCalls = 0;
+  let providerReleaseCalls = 0;
   let projectCalls = 0;
   let schemaCalls = 0;
 
@@ -848,6 +857,26 @@ function makeProcessClosureFixture(
     },
   });
 
+  const providerAcquire = (): unknown => {
+    providerAcquireCalls += 1;
+    return {};
+  };
+  const providerRecovery = (_cause: unknown) => {
+    providerRecoveryCalls += 1;
+    return { _tag: "FixtureProviderAcquireError" } as const;
+  };
+  const providerRelease = (_value: unknown) => {
+    providerReleaseCalls += 1;
+    return providerFx.succeed(undefined);
+  };
+  const providerBuild = () => {
+    providerBuildCalls += 1;
+    return providerFx.acquireRelease({
+      acquire: providerFx.tryPromise({ try: providerAcquire, catch: providerRecovery }),
+      release: providerRelease,
+    });
+  };
+
   const selectedPluginProvider: RuntimeProvider = {
     kind: "runtime.provider",
     id: "fixture.selected.plugin-provider",
@@ -855,6 +884,7 @@ function makeProcessClosureFixture(
     provides: selectedPluginResource,
     requires: [],
     ...(options.configured ? { configSchema: processClosureInputSchema } : {}),
+    build: providerBuild,
   };
   const selectedServiceProvider: RuntimeProvider = {
     kind: "runtime.provider",
@@ -862,6 +892,7 @@ function makeProcessClosureFixture(
     title: "Selected service provider",
     provides: selectedServiceResource,
     requires: [],
+    build: providerBuild,
   };
   const unrelatedServerProvider: RuntimeProvider = {
     kind: "runtime.provider",
@@ -869,6 +900,7 @@ function makeProcessClosureFixture(
     title: "Unrelated server provider",
     provides: unrelatedServerResource,
     requires: [],
+    build: providerBuild,
   };
   const selectedPluginProviderSelection = providerSelection({
     resource: selectedPluginResource,
@@ -1547,6 +1579,10 @@ function makeProcessClosureFixture(
       effectCalls,
       loaderCalls,
       observationContributionCalls,
+      providerAcquireCalls,
+      providerBuildCalls,
+      providerRecoveryCalls,
+      providerReleaseCalls,
       projectCalls,
       schemaCalls,
     }),
@@ -1599,6 +1635,7 @@ function makeProcessClosureFixture(
 
 function makeProviderBranchFixture(options: { readonly cycle?: ProviderCycle } = {}) {
   let projectCalls = 0;
+  let providerBuildCalls = 0;
   const resourceA = defineRuntimeResource<string, unknown>({
     id: "fixture.resource-a",
     title: "Resource A",
@@ -1662,6 +1699,14 @@ function makeProviderBranchFixture(options: { readonly cycle?: ProviderCycle } =
     lifetime: "process" as const,
   };
 
+  const providerBuild = () => {
+    providerBuildCalls += 1;
+    return providerFx.acquireRelease({
+      acquire: providerFx.succeed<unknown>({}),
+      release: () => providerFx.succeed(undefined),
+    });
+  };
+
   const providerC = defineRuntimeProvider({
     id: "fixture.provider-c",
     title: "Provider C",
@@ -1676,12 +1721,14 @@ function makeProviderBranchFixture(options: { readonly cycle?: ProviderCycle } =
             }),
           ]
         : [],
+    build: providerBuild,
   });
   const providerB = defineRuntimeProvider({
     id: "fixture.provider-b",
     title: "Provider B",
     provides: resourceB,
     requires: [requireResource({ resource: resourceC, reason: "B requires C" })],
+    build: providerBuild,
   });
   const providerA = defineRuntimeProvider({
     id: "fixture.provider-a",
@@ -1704,18 +1751,21 @@ function makeProviderBranchFixture(options: { readonly cycle?: ProviderCycle } =
           ]
         : []),
     ],
+    build: providerBuild,
   });
   const competingProviderA = defineRuntimeProvider({
     id: "fixture.provider-a-competing",
     title: "Competing provider A",
     provides: resourceA,
     requires: [],
+    build: providerBuild,
   });
   const selectedOptionalProvider = defineRuntimeProvider({
     id: "fixture.selected-optional-provider",
     title: "Selected optional provider",
     provides: selectedOptionalResource,
     requires: [],
+    build: providerBuild,
   });
 
   const plugin = definePlugin({
@@ -1853,7 +1903,7 @@ function makeProviderBranchFixture(options: { readonly cycle?: ProviderCycle } =
   return {
     input: { entrypoint, graph } satisfies RuntimeCompilationInput,
     authoredSelections,
-    counters: () => ({ projectCalls }),
+    counters: () => ({ projectCalls, providerBuildCalls }),
     providers: {
       a: providerA,
       competingA: competingProviderA,
@@ -1915,7 +1965,10 @@ function replaceAuthoredProvider(
 
 function expectCompilerRefusal(
   input: RuntimeCompilationInput,
-  counters: () => { readonly projectCalls: number }
+  counters: () => {
+    readonly projectCalls: number;
+    readonly providerBuildCalls: number;
+  }
 ): void {
   let result: ReturnType<typeof compileRuntimePlan> | undefined;
   let thrown: unknown;
@@ -1927,7 +1980,7 @@ function expectCompilerRefusal(
 
   expect(thrown).toBeInstanceOf(TypeError);
   expect(result).toBeUndefined();
-  expect(counters()).toEqual({ projectCalls: 0 });
+  expect(counters()).toEqual({ projectCalls: 0, providerBuildCalls: 0 });
 }
 
 describe("compileRuntimePlan", () => {
@@ -2285,6 +2338,22 @@ describe("compileRuntimePlan", () => {
     expect(new Map(firstProviderSnapshot).get(selections.selectedService.selectionId)).toBe(
       fixture.providers.selectedService
     );
+    for (const [, provider] of firstProviderSnapshot) {
+      expect(Object.hasOwn(provider, "build")).toBe(true);
+      expect(Object.hasOwn(provider, "plan")).toBe(false);
+      expect(Object.hasOwn(provider, "acquire")).toBe(false);
+      expect(Object.hasOwn(provider, "release")).toBe(false);
+    }
+    for (const selection of result.plan.providerSelections) {
+      expect(Object.hasOwn(selection, "plan")).toBe(false);
+      expect(Object.hasOwn(selection, "acquire")).toBe(false);
+      expect(Object.hasOwn(selection, "release")).toBe(false);
+    }
+    for (const resource of result.plan.compiledResources) {
+      expect(Object.hasOwn(resource, "plan")).toBe(false);
+      expect(Object.hasOwn(resource, "acquire")).toBe(false);
+      expect(Object.hasOwn(resource, "release")).toBe(false);
+    }
 
     const firstServiceSnapshot = result.references.serviceEntries();
     const secondServiceSnapshot = result.references.serviceEntries();
@@ -2496,7 +2565,7 @@ describe("compileRuntimePlan", () => {
       });
     }
     expect(processFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
-    expect(providerFixture.counters()).toEqual({ projectCalls: 0 });
+    expect(providerFixture.counters()).toEqual({ projectCalls: 0, providerBuildCalls: 0 });
   });
 
   test("is deterministic across equivalent authored app, provider, plugin, and role orders", () => {
@@ -2595,7 +2664,7 @@ describe("compileRuntimePlan", () => {
     expect(Object.isFrozen(firstFixture.services.selectedRoot)).toBe(false);
     expect(firstFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
     expect(secondFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
-    expect(providerFixture.counters()).toEqual({ projectCalls: 0 });
+    expect(providerFixture.counters()).toEqual({ projectCalls: 0, providerBuildCalls: 0 });
   });
 
   test("orders every plan and seed DTO collection by its exact behavior tuple", () => {
@@ -2658,7 +2727,7 @@ describe("compileRuntimePlan", () => {
     expect(providerResult.plan.compiledResources.length).toBeGreaterThan(1);
     expect(providerResult.plan.surfaces[0]?.resources.length).toBeGreaterThan(1);
     expect(processFixture.counters()).toEqual(ZERO_PROCESS_CLOSURE_CALLS);
-    expect(providerFixture.counters()).toEqual({ projectCalls: 0 });
+    expect(providerFixture.counters()).toEqual({ projectCalls: 0, providerBuildCalls: 0 });
   });
 
   test("refuses malformed closed admission before result or downstream work", () => {
@@ -3051,7 +3120,7 @@ describe("compileRuntimePlan", () => {
     ).toBe(false);
     expect(result).not.toHaveProperty("findings");
     expect(result.plan).not.toHaveProperty("findings");
-    expect(fixture.counters()).toEqual({ projectCalls: 0 });
+    expect(fixture.counters()).toEqual({ projectCalls: 0, providerBuildCalls: 0 });
   });
 
   test("refuses a reason-only disagreement in the cold provider handoff", () => {
@@ -3065,6 +3134,7 @@ describe("compileRuntimePlan", () => {
           ? requireResource({ ...requirement, reason: "A requires B after drift" })
           : requirement
       ),
+      build: fixture.providers.a.build,
     });
     const providers = fixture.authoredSelections.map((selection) =>
       selection.provider.id === fixture.providers.a.id

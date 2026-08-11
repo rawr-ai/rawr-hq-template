@@ -5,5 +5,6 @@ export * from "./observation";
 export * from "./plugin";
 export * from "./profile";
 export * from "./provider";
+export * from "./provider-effect-plan";
 export * from "./resource";
 export * from "./service";

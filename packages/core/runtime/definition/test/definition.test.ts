@@ -9,7 +9,12 @@ import type {
   EffectExecutionDescriptor,
   Entrypoint,
   HabitatEffect,
+  ProviderBuildContext,
+  ProviderEffectPlan,
   ProviderSelection,
+  RuntimeProvider,
+  RuntimeResource,
+  RuntimeResourceMap,
   ServiceContractOf,
   ServiceDefinition,
   ServiceUses,
@@ -35,10 +40,12 @@ import {
   defineWebAppPlugin,
   defineWorkflow,
   Effect,
+  providerFx,
   providerSelection,
   RuntimeObservationRecordSchema,
   readHabitatEffectOperation,
   readServiceUse,
+  requireResource,
   resourceDep,
   runtimeLaunchIdentity,
   semanticDep,
@@ -92,6 +99,203 @@ type ServiceSchemaChannels<TDefinition> =
   >
     ? readonly [TScope, TConfig, TInvocation]
     : never;
+
+type RuntimeProviderChannels<TProvider> =
+  TProvider extends RuntimeProvider<infer TResource, infer TConfig, infer TAcquireError>
+    ? readonly [TResource, TConfig, TAcquireError]
+    : never;
+
+interface ProviderTypeOracleValue {
+  readonly now: () => Date;
+}
+
+interface ProviderTypeOracleAcquireError {
+  readonly _tag: "ProviderTypeOracleAcquireError";
+}
+
+function createProviderDefinitionTypeOracle(
+  resources: RuntimeResourceMap,
+  widenedOptional: boolean | undefined
+) {
+  const resource = defineRuntimeResource<"typing.clock", ProviderTypeOracleValue>({
+    id: "typing.clock",
+    title: "Typing clock",
+    purpose: "Exercises provider authoring inference.",
+  });
+  const exactOptional = requireResource({
+    resource,
+    optional: true,
+    reason: "Optional clock",
+    proof: "whole-input" as const,
+  });
+  const exactRequired = requireResource({
+    resource,
+    optional: false,
+    reason: "Required clock",
+  });
+  const absentOptionality = requireResource({
+    resource,
+    reason: "Required clock by absence",
+  });
+  const widenedRequirement = requireResource({
+    resource,
+    optional: widenedOptional,
+    reason: "Widened optionality",
+  });
+  const defaultAcquire = providerFx.succeed<ProviderTypeOracleValue>({
+    now: () => new Date(0),
+  });
+  const defaultProvider = defineRuntimeProvider({
+    id: "typing.clock.default",
+    title: "Default typing clock",
+    provides: resource,
+    requires: [],
+    build: (context) => {
+      if (false) {
+        // @ts-expect-error Provider build context contains no lifecycle scope.
+        context.scope;
+        // @ts-expect-error Provider build context contains no telemetry client.
+        context.telemetry;
+      }
+      return providerFx.acquireRelease({
+        acquire: defaultAcquire,
+        release: () => providerFx.succeed(undefined),
+      });
+    },
+  });
+  const typedAcquire = providerFx.tryPromise<
+    ProviderTypeOracleValue,
+    ProviderTypeOracleAcquireError
+  >({
+    try: () => ({ now: () => new Date(0) }),
+    catch: () => ({ _tag: "ProviderTypeOracleAcquireError" }),
+  });
+  const typedProvider = defineRuntimeProvider({
+    id: "typing.clock.typed",
+    title: "Typed typing clock",
+    provides: resource,
+    requires: [],
+    build: () =>
+      providerFx.acquireRelease({
+        acquire: typedAcquire,
+        release: () => providerFx.succeed(undefined),
+      }),
+  });
+
+  return {
+    absentOptionality,
+    absentOptionalityValue: resources.get(absentOptionality),
+    defaultProvider,
+    exactOptional,
+    exactOptionalValue: resources.get(exactOptional),
+    exactRequired,
+    exactRequiredValue: resources.get(exactRequired),
+    hasOptional: resources.has(exactOptional),
+    resource,
+    typedProvider,
+    widenedRequirement,
+    widenedValue: resources.get(widenedRequirement),
+  };
+}
+
+type ProviderDefinitionTypeOracleShape = ReturnType<typeof createProviderDefinitionTypeOracle>;
+type DefaultProviderBuildContext = Parameters<
+  ProviderDefinitionTypeOracleShape["defaultProvider"]["build"]
+>[0];
+
+export type ProviderDefinitionTypeOracle = readonly [
+  Assert<
+    TypesEqual<
+      RuntimeProviderChannels<RuntimeProvider>,
+      readonly [RuntimeResource, unknown, unknown]
+    >
+  >,
+  Assert<
+    TypesEqual<
+      RuntimeProviderChannels<ProviderDefinitionTypeOracleShape["defaultProvider"]>,
+      readonly [ProviderDefinitionTypeOracleShape["resource"], undefined, never]
+    >
+  >,
+  Assert<
+    TypesEqual<
+      RuntimeProviderChannels<ProviderDefinitionTypeOracleShape["typedProvider"]>,
+      readonly [
+        ProviderDefinitionTypeOracleShape["resource"],
+        undefined,
+        ProviderTypeOracleAcquireError,
+      ]
+    >
+  >,
+  Assert<TypesEqual<DefaultProviderBuildContext, ProviderBuildContext<undefined>>>,
+  Assert<TypesEqual<keyof DefaultProviderBuildContext, "config" | "observation" | "resources">>,
+  Assert<TypesEqual<Extract<keyof RuntimeResourceMap, string>, "get" | "has">>,
+  Assert<TypesEqual<ProviderDefinitionTypeOracleShape["hasOptional"], boolean>>,
+  Assert<TypesEqual<ProviderDefinitionTypeOracleShape["exactOptional"]["optional"], true>>,
+  Assert<TypesEqual<ProviderDefinitionTypeOracleShape["exactOptional"]["proof"], "whole-input">>,
+  Assert<TypesEqual<ProviderDefinitionTypeOracleShape["exactRequired"]["optional"], false>>,
+  Assert<
+    TypesEqual<
+      Extract<"optional", keyof ProviderDefinitionTypeOracleShape["absentOptionality"]>,
+      never
+    >
+  >,
+  Assert<
+    TypesEqual<
+      ProviderDefinitionTypeOracleShape["widenedRequirement"]["optional"],
+      boolean | undefined
+    >
+  >,
+  Assert<
+    TypesEqual<
+      ProviderDefinitionTypeOracleShape["exactOptionalValue"],
+      ProviderTypeOracleValue | undefined
+    >
+  >,
+  Assert<
+    TypesEqual<ProviderDefinitionTypeOracleShape["exactRequiredValue"], ProviderTypeOracleValue>
+  >,
+  Assert<
+    TypesEqual<ProviderDefinitionTypeOracleShape["absentOptionalityValue"], ProviderTypeOracleValue>
+  >,
+  Assert<
+    TypesEqual<
+      ProviderDefinitionTypeOracleShape["widenedValue"],
+      ProviderTypeOracleValue | undefined
+    >
+  >,
+  Assert<
+    TypesEqual<
+      ReturnType<ProviderDefinitionTypeOracleShape["typedProvider"]["build"]>,
+      ProviderEffectPlan<ProviderTypeOracleValue, ProviderTypeOracleAcquireError>
+    >
+  >,
+];
+
+declare const providerDefinitionTypeOracle: ProviderDefinitionTypeOracleShape;
+
+if (false) {
+  // @ts-expect-error The whole-input requirement result is readonly.
+  providerDefinitionTypeOracle.exactOptional.reason = "mutated";
+  // @ts-expect-error A runtime provider declaration requires synchronous build.
+  defineRuntimeProvider({
+    id: "typing.clock.missing-build",
+    title: "Missing build",
+    provides: providerDefinitionTypeOracle.resource,
+    requires: [],
+  });
+  defineRuntimeProvider({
+    id: "typing.clock.async-build",
+    title: "Async build",
+    provides: providerDefinitionTypeOracle.resource,
+    requires: [],
+    build: async () =>
+      // @ts-expect-error Provider build returns a plan synchronously, never a Promise.
+      providerFx.acquireRelease({
+        acquire: providerFx.succeed<ProviderTypeOracleValue>({ now: () => new Date(0) }),
+        release: () => providerFx.succeed(undefined),
+      }),
+  });
+}
 
 function createWebDefinitionTypeOracle() {
   return defineWebAppPlugin.factory()({
@@ -378,6 +582,14 @@ describe("runtime definition", () => {
     const configSchema = RuntimeSchema.fromTypeBox(Type.Object({ zone: Type.String() }), {
       redaction: { paths: ["zone"] },
     });
+    let providerBuildCalls = 0;
+    const providerBuild = () => {
+      providerBuildCalls += 1;
+      return providerFx.acquireRelease({
+        acquire: providerFx.succeed({ now: () => new Date(0) }),
+        release: () => providerFx.succeed(undefined),
+      });
+    };
     const provider = defineRuntimeProvider({
       id: "clock.system",
       title: "System clock",
@@ -386,6 +598,7 @@ describe("runtime definition", () => {
       configSchema,
       defaultConfigKey: "clock.primary",
       health: { kind: "provider.health", required: true },
+      build: providerBuild,
     });
     const providerConfig = { kind: "runtime.config", key: "clock.selected" } as const;
     const selectedProvider = providerSelection({
@@ -506,7 +719,8 @@ describe("runtime definition", () => {
       "test",
     ]);
     expect(profile.configSources.every(Object.isFrozen)).toBe(true);
-    expect("build" in provider).toBe(false);
+    expect(provider.build).toBe(providerBuild);
+    expect(providerBuildCalls).toBe(0);
     expect(() =>
       providerSelection({
         resource,

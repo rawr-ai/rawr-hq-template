@@ -2,7 +2,7 @@ schemaVersion = 1
 id = "runtime-definition"
 ownerProject = "runtime-definition"
 blueprint = "runtime-definition"
-blueprintVersion = 1
+blueprintVersion = 2
 
 [roots]
 project = "packages/core/runtime/definition"

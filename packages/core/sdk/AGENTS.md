@@ -44,8 +44,13 @@
 - Implemented app, Effect, execution, service, resource, provider, profile, and
   runtime-schema authoring faces project only cold definition capabilities.
   `@habitat-ai/sdk/runtime/profiles` is the sole cold provider-selection face.
-  These faces expose no `startApp`, provider Effect plan, managed runtime,
-  native harness, or observation read model.
+  `@habitat-ai/sdk/runtime/providers` exposes only `defineRuntimeProvider` and
+  the four provider/build/resource-map types. The separate
+  `@habitat-ai/sdk/runtime/providers/effect` face exposes only `providerFx` and
+  the five provider-plan types. Neither provider face exports the private plan
+  witness/accessor, raw Effect/runtime primitives, a runner, or an alternate
+  constructor. These faces expose no `startApp`, managed runtime, native
+  harness, or observation read model.
 - `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face. It
   exposes exactly three runtime values and twenty-six type-only contracts from
   the private owner, with no second implementation or public error API.
@@ -82,11 +87,11 @@
   manager has not run dependency install scripts.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact
-  fourteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
+  fifteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
   `plugin-nx@1`, `provider@1`,
   `resource@1`, `resource@2`, `runtime-compiler@1`, `runtime-definition@1`,
-  `runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`,
-  and `service@3`. The version-1
+  `runtime-definition@2`, `runtime-derivation@1`, `runtime-derivation@2`,
+  `service@1`, `service@2`, and `service@3`. The version-1
   resource and service members preserve their released bytes; each version-2
   member is a complete successor with the same law and structure and narrowed
   Grit acquisition.
@@ -95,6 +100,9 @@
   services.
   `runtime-derivation@1` preserves its immutable topology-only closure;
   `runtime-derivation@2` independently closes the finished derivation owner.
+  `runtime-definition@1` preserves the immutable original definition closure;
+  `runtime-definition@2` independently closes the provider-plan authoring
+  owner and its behavior proofs.
   `runtime-compiler@1` closes the private compiler structure, but its
   policy-pack membership is asset carriage rather than an implementation or
   public-face edge.
@@ -115,8 +123,10 @@
   readonly boundary-lane and disjoint module-projection types; and
   `src/service/schema.ts` separately assembles the private runtime-schema owner.
   App, Effect, execution, and runtime entry modules project implemented cold
-  definition capabilities. `src/runtime/derivation/index.ts` directly projects
-  the one private derivation owner without wrapping or duplicating it.
+  definition capabilities. The two `src/runtime/providers` entries directly
+  project the exact provider descriptor and provider-plan authoring faces.
+  `src/runtime/derivation/index.ts` directly projects the one private
+  derivation owner without wrapping or duplicating it.
   The `src/plugins/*` entries project only the corresponding private cold
   definitions and native oRPC authoring values; they do not introduce a host,
   loader, adapter, dispatcher, or execution runner. `src/telemetry.ts` assembles the private
@@ -149,6 +159,8 @@
 - Public cold runtime authoring: `@habitat-ai/sdk/app`,
   `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
   `@habitat-ai/sdk/runtime/*` subpaths.
+- Public cold provider authoring: `@habitat-ai/sdk/runtime/providers` and
+  `@habitat-ai/sdk/runtime/providers/effect`.
 - Public complete runtime derivation: `@habitat-ai/sdk/runtime/derivation`.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and

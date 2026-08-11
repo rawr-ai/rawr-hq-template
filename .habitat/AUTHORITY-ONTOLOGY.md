@@ -140,13 +140,16 @@ Application bounds execution.
 
 ## Current Realization
 
-The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits fourteen
+The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits fifteen
 members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
 `resource@1`, `resource@2`, `runtime-compiler@1`, `runtime-definition@1`,
-`runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`, and
-`service@3`.
-`runtime-definition@1` is the closed cold private definition owner,
-not a live runtime or an `app@2` successor. The version-1 resource and service
+`runtime-definition@2`, `runtime-derivation@1`, `runtime-derivation@2`,
+`service@1`, `service@2`, and `service@3`.
+`runtime-definition@1` is the immutable original cold private definition
+closure. `runtime-definition@2` independently closes the provider-plan
+authoring owner and its behavior proofs; neither version inherits, falls back,
+or traverses the other version's assets, and neither is a live runtime or an
+`app@2` successor. The version-1 resource and service
 closures preserve their `habitat-cli-v0.5.13` bytes. Their complete version-2
 successors retain the same law and structure while narrowing Grit acquisition
 to definition-owned `rootPatterns`.
