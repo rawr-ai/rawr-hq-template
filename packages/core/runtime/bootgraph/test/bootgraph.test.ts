@@ -324,3 +324,218 @@ describe("runtime bootgraph", () => {
     expect("BOOTGRAPH_RESERVATION" in runtimeBootgraph).toBe(false);
   });
 });
+
+describe("runtime bootgraph task 6.2b Proxy admission", () => {
+  type ProxyWrapper = <T extends object>(target: T) => T;
+  type ProxyCandidate = {
+    readonly name: string;
+    readonly create: (wrap: ProxyWrapper) => unknown;
+  };
+
+  function expectBuiltInTypeError(value: unknown, name: string): void {
+    const noResult = Symbol("no result");
+    let result: unknown = noResult;
+    let thrown: unknown;
+    try {
+      result = orderBootgraph(value as BootgraphInput);
+    } catch (error) {
+      thrown = error;
+    }
+    expect(result, name).toBe(noResult);
+    expect(thrown, name).toBeInstanceOf(TypeError);
+    expect(thrown instanceof TypeError ? thrown.constructor : undefined, name).toBe(TypeError);
+  }
+
+  const proxyCandidates: readonly ProxyCandidate[] = [
+    {
+      name: "input shell",
+      create: (wrap) => wrap(copyInput()),
+    },
+    {
+      name: "nodes array",
+      create: (wrap) => {
+        const value = copyInput();
+        return { ...value, nodes: wrap(value.nodes) };
+      },
+    },
+    {
+      name: "edges array",
+      create: (wrap) => {
+        const value = copyInput();
+        return { ...value, edges: wrap(value.edges) };
+      },
+    },
+    {
+      name: "node record",
+      create: (wrap) => {
+        const value = copyInput();
+        return { ...value, nodes: [wrap(value.nodes[0]!), ...value.nodes.slice(1)] };
+      },
+    },
+    {
+      name: "resource record",
+      create: (wrap) => {
+        const value = copyInput();
+        const firstNode = value.nodes[0]!;
+        return {
+          ...value,
+          nodes: [{ ...firstNode, resource: wrap(firstNode.resource) }, ...value.nodes.slice(1)],
+        };
+      },
+    },
+    {
+      name: "edge record",
+      create: (wrap) => {
+        const value = copyInput();
+        return { ...value, edges: [wrap(value.edges[0]!), ...value.edges.slice(1)] };
+      },
+    },
+  ];
+
+  test("refuses active and revoked Proxies at all six container positions without traps", () => {
+    const marker = new Error("Proxy trap invoked");
+    let trapCalls = 0;
+    const trap = (): never => {
+      trapCalls += 1;
+      throw marker;
+    };
+    const handler = <T extends object>(): ProxyHandler<T> => ({
+      getPrototypeOf: trap,
+      ownKeys: trap,
+      getOwnPropertyDescriptor: trap,
+      has: trap,
+      get: trap,
+    });
+    const activeProxy: ProxyWrapper = <T extends object>(target: T): T =>
+      new Proxy(target, handler<T>());
+    const revokedProxy: ProxyWrapper = <T extends object>(target: T): T => {
+      const revocable = Proxy.revocable(target, handler<T>());
+      revocable.revoke();
+      return revocable.proxy;
+    };
+
+    for (const { name, create } of proxyCandidates) {
+      expectBuiltInTypeError(create(activeProxy), `active ${name}`);
+      expectBuiltInTypeError(create(revokedProxy), `revoked ${name}`);
+    }
+    expect(trapCalls).toBe(0);
+  });
+
+  test("refuses direct and inherited proxied record and array prototypes without traps", () => {
+    const marker = new Error("prototype Proxy trap invoked");
+    let trapCalls = 0;
+    const trap = (): never => {
+      trapCalls += 1;
+      throw marker;
+    };
+    const handler: ProxyHandler<object> = {
+      getPrototypeOf: trap,
+      ownKeys: trap,
+      getOwnPropertyDescriptor: trap,
+      has: trap,
+      get: trap,
+    };
+    const proxiedPrototype = new Proxy({}, handler);
+    const inheritedPrototype = Object.create(proxiedPrototype);
+    const revokedPrototype = Proxy.revocable({}, handler);
+    revokedPrototype.revoke();
+    const revokedInheritedPrototype = Object.create(revokedPrototype.proxy);
+
+    const directRecord = copyInput();
+    Object.setPrototypeOf(directRecord, proxiedPrototype);
+    const inheritedRecord = copyInput();
+    Object.setPrototypeOf(inheritedRecord, inheritedPrototype);
+    const directArray = copyInput();
+    Object.setPrototypeOf(directArray.nodes, proxiedPrototype);
+    const inheritedArray = copyInput();
+    Object.setPrototypeOf(inheritedArray.nodes, inheritedPrototype);
+    const revokedDirectRecord = copyInput();
+    Object.setPrototypeOf(revokedDirectRecord, revokedPrototype.proxy);
+    const revokedInheritedRecord = copyInput();
+    Object.setPrototypeOf(revokedInheritedRecord, revokedInheritedPrototype);
+    const revokedDirectArray = copyInput();
+    Object.setPrototypeOf(revokedDirectArray.nodes, revokedPrototype.proxy);
+    const revokedInheritedArray = copyInput();
+    Object.setPrototypeOf(revokedInheritedArray.nodes, revokedInheritedPrototype);
+
+    const cases = [
+      { name: "direct record prototype", value: directRecord },
+      { name: "inherited record prototype", value: inheritedRecord },
+      { name: "direct array prototype", value: directArray },
+      { name: "inherited array prototype", value: inheritedArray },
+      { name: "revoked direct record prototype", value: revokedDirectRecord },
+      { name: "revoked inherited record prototype", value: revokedInheritedRecord },
+      { name: "revoked direct array prototype", value: revokedDirectArray },
+      { name: "revoked inherited array prototype", value: revokedInheritedArray },
+    ] as const;
+    for (const { name, value } of cases) expectBuiltInTypeError(value, name);
+    expect(trapCalls).toBe(0);
+  });
+
+  test("refuses record-field and array-index accessors without invoking getters", () => {
+    const marker = new Error("getter invoked");
+    let getterCalls = 0;
+    const getter = (): never => {
+      getterCalls += 1;
+      throw marker;
+    };
+
+    const recordField = copyInput();
+    Object.defineProperty(recordField, "nodes", {
+      configurable: true,
+      enumerable: true,
+      get: getter,
+    });
+    const arrayIndex = copyInput();
+    const nodes = [...arrayIndex.nodes];
+    Object.defineProperty(nodes, "0", {
+      configurable: true,
+      enumerable: true,
+      get: getter,
+    });
+
+    expectBuiltInTypeError(recordField, "record field accessor");
+    expectBuiltInTypeError({ ...arrayIndex, nodes }, "array index accessor");
+    expect(getterCalls).toBe(0);
+  });
+
+  test("preserves one synchronous exact closed-schema-valid success", () => {
+    const validSelectionId = selectionId("4");
+    const value = {
+      kind: "bootgraph.input",
+      nodes: [
+        {
+          selectionId: validSelectionId,
+          providerId: "provider.worker",
+          resource: { resourceId: "resource.worker", lifetime: "process" },
+        },
+      ],
+      edges: [],
+    } as const satisfies BootgraphInput;
+    const key = {
+      kind: "boot.resource-key",
+      selectionId: validSelectionId,
+      resourceId: "resource.worker",
+      lifetime: "process",
+    } as const;
+
+    const result = orderBootgraph(value);
+
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(Check(BootgraphSchema, result)).toBe(true);
+    expect(result).toEqual({
+      kind: "bootgraph.ordered",
+      modules: [
+        {
+          kind: "boot.resource-module",
+          key,
+          providerId: "provider.worker",
+          dependencies: [],
+        },
+      ],
+      order: [key],
+      rollbackOrder: [key],
+      releaseOrder: [key],
+    });
+  });
+});
