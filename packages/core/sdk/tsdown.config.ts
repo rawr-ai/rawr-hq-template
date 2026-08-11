@@ -15,6 +15,7 @@ const blueprintIds = [
   "plugin-nx",
   "provider",
   "resource",
+  "runtime-bootgraph",
   "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",

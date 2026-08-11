@@ -1,0 +1,63 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "runtime-bootgraph-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "habitat.toml",
+  "project.json",
+  "src",
+  "test",
+  "tsconfig.json",
+  "tsconfig.test.json",
+  "tsdown.config.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-bootgraph-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|project.json|tsconfig.json|tsconfig.test.json|tsdown.config.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-bootgraph-source"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "closed"
+required = [
+  "boot-resource-key.ts",
+  "boot-resource-module.ts",
+  "bootgraph.ts",
+  "index.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-bootgraph-source-files"
+rootRole = "project"
+relativePath = "src/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-bootgraph-proof"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+required = ["bootgraph.test.ts", "nx-cache.test.ts"]
+allowed = []
+
+[[scopes]]
+name = "runtime-bootgraph-proof-files"
+rootRole = "project"
+relativePath = "test/*.test.ts"
+kind = "file"
+mode = "closed"

@@ -91,13 +91,14 @@ cannot duplicate, weaken, or replace generic kind law.
 
 ## Current Realization
 
-The accepted protocol-1 SDK pack contains fifteen sorted members: `app@1`,
+The accepted protocol-1 SDK pack contains sixteen sorted members: `app@1`,
 `package@1`, `plugin@1`,
 `plugin-nx@1`, `provider@1`, `resource@1`, `resource@2`,
-`runtime-compiler@1`, `runtime-definition@1`, `runtime-definition@2`,
-`runtime-derivation@1`, `runtime-derivation@2`, `service@1`, `service@2`, and
-`service@3`. Existing version-1 members remain immutable for exact existing
-selections. `runtime-definition@1` preserves the original cold private owner.
+`runtime-bootgraph@1`, `runtime-compiler@1`, `runtime-definition@1`,
+`runtime-definition@2`, `runtime-derivation@1`, `runtime-derivation@2`,
+`service@1`, `service@2`, and `service@3`. Existing version-1 members remain
+immutable for exact existing selections. `runtime-definition@1` preserves the
+original cold private owner.
 `runtime-definition@2` independently closes the provider-plan authoring owner
 and its behavior proofs without inheritance, fallback, or cross-version asset
 traversal; neither version creates `app@2`, a live runtime, or a native host.
@@ -111,6 +112,10 @@ gate.
 `runtime-derivation@2` independently closes the complete private runtime-
 derivation owner and its behavior proofs; it neither inherits nor traverses
 the version-1 closure.
+`runtime-bootgraph@1` closes the exact private package-less lifecycle-ordering
+structure. Its SDK carriage is policy-asset assembly only: it bundles no
+bootgraph implementation and creates neither an SDK-to-bootgraph source/build
+edge nor a public bootgraph face.
 `runtime-compiler@1` closes the exact private package-less compiler structure.
 Its SDK carriage is policy-asset assembly only: it bundles no compiler
 implementation and creates neither an SDK-to-compiler source/build edge nor a

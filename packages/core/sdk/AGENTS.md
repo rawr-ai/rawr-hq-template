@@ -8,7 +8,8 @@
   public surfaces.
 - Transport the repository's generic Habitat blueprint bytes from the canonical
   `.habitat/blueprints` tree as generated package assets, including the private
-  runtime-compiler structure without bundling its implementation.
+  runtime-compiler and runtime-bootgraph structures without bundling their
+  implementations.
 
 ## Scope
 
@@ -58,6 +59,10 @@
   The SDK exposes no compiler JavaScript or declaration face and has no
   source/build dependency on the private compiler until terminal composition
   consumes it in task 10.6.
+- `runtime-bootgraph@1` is transported only as a policy-pack blueprint closure.
+  The SDK exposes no bootgraph JavaScript or declaration face and has no
+  source/build dependency on the private bootgraph until terminal composition
+  consumes it in task 10.6.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -87,11 +92,11 @@
   manager has not run dependency install scripts.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact
-  fifteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
+  sixteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
   `plugin-nx@1`, `provider@1`,
-  `resource@1`, `resource@2`, `runtime-compiler@1`, `runtime-definition@1`,
-  `runtime-definition@2`, `runtime-derivation@1`, `runtime-derivation@2`,
-  `service@1`, `service@2`, and `service@3`. The version-1
+  `resource@1`, `resource@2`, `runtime-bootgraph@1`, `runtime-compiler@1`,
+  `runtime-definition@1`, `runtime-definition@2`, `runtime-derivation@1`,
+  `runtime-derivation@2`, `service@1`, `service@2`, and `service@3`. The version-1
   resource and service members preserve their released bytes; each version-2
   member is a complete successor with the same law and structure and narrowed
   Grit acquisition.
@@ -103,6 +108,9 @@
   `runtime-definition@1` preserves the immutable original definition closure;
   `runtime-definition@2` independently closes the provider-plan authoring
   owner and its behavior proofs.
+  `runtime-bootgraph@1` closes the private lifecycle-ordering structure, but
+  its policy-pack membership is asset carriage rather than an implementation
+  or public-face edge.
   `runtime-compiler@1` closes the private compiler structure, but its
   policy-pack membership is asset carriage rather than an implementation or
   public-face edge.
@@ -142,9 +150,10 @@
   modifying the canonical authoring source. Exact producer definitions resolve
   as inert duplicates of the package authority; drift at the same identity is
   rejected.
-- The copied and hashed build-input inventory contains exactly ten blueprint
-  directories. `runtime-compiler` contributes assets only and does not enter
-  the SDK entry graph or bundled private implementation set.
+- The copied and hashed build-input inventory contains exactly eleven blueprint
+  directories and fourteen total inputs. `runtime-compiler` and
+  `runtime-bootgraph` contribute assets only and do not enter the SDK entry
+  graph or bundled private implementation set.
 
 ## Interfaces
 
@@ -178,6 +187,7 @@
 - [[../runtime/definition/AGENTS|Private runtime-definition owner]]
 - [[../runtime/derivation/AGENTS|Private runtime-derivation owner]]
 - [[../runtime/compiler/AGENTS|Private runtime-compiler owner]]
+- [[../runtime/bootgraph/AGENTS|Private runtime-bootgraph owner]]
 
 ## Validation
 

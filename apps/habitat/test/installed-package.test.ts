@@ -87,10 +87,16 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "plugin-nx",
   "provider",
   "resource",
+  "runtime-bootgraph",
   "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",
   "service",
+] as const;
+const RUNTIME_BOOTGRAPH_V1_CLOSURE = [
+  "runtime-bootgraph/blueprint.toml",
+  "runtime-bootgraph/skill.md",
+  "runtime-bootgraph/structure.toml",
 ] as const;
 const RUNTIME_COMPILER_V1_CLOSURE = [
   "runtime-compiler/blueprint.toml",
@@ -879,6 +885,8 @@ describe("installed Habitat products", () => {
     expect(
       Object.keys(sdkManifest.dependencies ?? {}).filter((name) => name.startsWith("@habitat-ai/"))
     ).toEqual([]);
+    expect(sdkManifest.exports?.["./runtime/bootgraph"]).toBeUndefined();
+    expect(() => generatedServiceRequire.resolve("@habitat-ai/sdk/runtime/bootgraph")).toThrow();
     expect(sdkManifest.exports?.["./runtime/providers"]).toEqual({
       types: "./dist/runtime/providers/index.d.ts",
       import: "./dist/runtime/providers/index.js",
@@ -1119,6 +1127,7 @@ describe("installed Habitat products", () => {
       "provider@1",
       "resource@1",
       "resource@2",
+      "runtime-bootgraph@1",
       "runtime-compiler@1",
       "runtime-definition@1",
       "runtime-definition@2",
@@ -1179,6 +1188,17 @@ describe("installed Habitat products", () => {
       );
       expect(await sha256File(path.join(installedBlueprintRoot, relativePath)), relativePath).toBe(
         expectedSha256
+      );
+    }
+    for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
+      const bootgraphClosure = (await listFiles(path.join(blueprintRoot, "runtime-bootgraph")))
+        .map((relativePath) => path.posix.join("runtime-bootgraph", relativePath))
+        .sort();
+      expect(bootgraphClosure, blueprintRoot).toEqual([...RUNTIME_BOOTGRAPH_V1_CLOSURE]);
+    }
+    for (const relativePath of RUNTIME_BOOTGRAPH_V1_CLOSURE) {
+      expect(await readFile(path.join(installedBlueprintRoot, relativePath)), relativePath).toEqual(
+        await readFile(path.join(canonicalBlueprintRoot, relativePath))
       );
     }
     for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
@@ -1323,6 +1343,12 @@ describe("installed Habitat products", () => {
             ownerProject: "@fixture/resource-v2-acceptance",
           }),
           expect.objectContaining({
+            blueprint: "runtime-bootgraph",
+            blueprintVersion: 1,
+            id: "runtime-bootgraph-acceptance",
+            ownerProject: "@fixture/runtime-bootgraph-acceptance",
+          }),
+          expect.objectContaining({
             blueprint: "runtime-compiler",
             blueprintVersion: 1,
             id: "runtime-compiler-acceptance",
@@ -1418,6 +1444,18 @@ describe("installed Habitat products", () => {
           }),
           expect.objectContaining({
             blueprintVersion: 1,
+            instanceId: "runtime-bootgraph-acceptance",
+            ruleId: "runtime_bootgraph_v1_structure",
+            provenance: expect.objectContaining({ kind: "policy-pack" }),
+            runner: expect.objectContaining({
+              name: "habitat",
+              structure: expect.objectContaining({
+                provenance: expect.objectContaining({ kind: "policy-pack" }),
+              }),
+            }),
+          }),
+          expect.objectContaining({
+            blueprintVersion: 1,
             instanceId: "runtime-compiler-acceptance",
             ruleId: "runtime_compiler_v1_structure",
             provenance: expect.objectContaining({ kind: "policy-pack" }),
@@ -1461,6 +1499,11 @@ describe("installed Habitat products", () => {
         id: "resource",
         path: "dist/blueprints/resource/versions/2/blueprint.toml",
         version: 2,
+      },
+      {
+        id: "runtime-bootgraph",
+        path: "dist/blueprints/runtime-bootgraph/blueprint.toml",
+        version: 1,
       },
       {
         id: "runtime-compiler",
@@ -1511,6 +1554,10 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           definition: expect.objectContaining({ id: "resource", version: 2 }),
+          provenance: expect.objectContaining({ kind: "policy-pack" }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "runtime-bootgraph", version: 1 }),
           provenance: expect.objectContaining({ kind: "policy-pack" }),
         }),
         expect.objectContaining({
@@ -1578,6 +1625,14 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           disposition: { kind: "evaluated" },
+          instanceId: "runtime-bootgraph-acceptance",
+          ownerProject: "@fixture/runtime-bootgraph-acceptance",
+          ruleId: "runtime_bootgraph_v1_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          disposition: { kind: "evaluated" },
           instanceId: "runtime-compiler-acceptance",
           ownerProject: "@fixture/runtime-compiler-acceptance",
           ruleId: "runtime_compiler_v1_structure",
@@ -1639,6 +1694,131 @@ describe("installed Habitat products", () => {
           instanceId: "runtime-definition-acceptance",
           ownerProject: "@fixture/runtime-definition-acceptance",
           ruleId: "runtime_definition_v2_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+      ],
+      ok: true,
+    });
+
+    const runtimeBootgraphCheckArgs = [
+      "check",
+      "--instance",
+      "runtime-bootgraph-acceptance",
+      "--rule",
+      "runtime_bootgraph_v1_structure",
+    ] as const;
+    const checkedRuntimeBootgraph = await run(habitat, runtimeBootgraphCheckArgs, {
+      cwd: consumerRoot,
+    });
+    expect(
+      checkedRuntimeBootgraph,
+      checkedRuntimeBootgraph.stderr || checkedRuntimeBootgraph.stdout
+    ).toMatchObject({ exitCode: 0, stderr: "" });
+    expect(JSON.parse(checkedRuntimeBootgraph.stdout)).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        expect.objectContaining({
+          disposition: { kind: "evaluated" },
+          findings: [],
+          instanceId: "runtime-bootgraph-acceptance",
+          ownerProject: "@fixture/runtime-bootgraph-acceptance",
+          ruleId: "runtime_bootgraph_v1_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+      ],
+      ok: true,
+    });
+
+    const runtimeBootgraphFixtureRoot = path.join(
+      consumerRoot,
+      "packages/runtime-bootgraph-acceptance"
+    );
+    const bootResourceModulePath = path.join(
+      runtimeBootgraphFixtureRoot,
+      "src/boot-resource-module.ts"
+    );
+    const bootResourceModuleBytes = await readFile(bootResourceModulePath);
+    await rm(bootResourceModulePath);
+    try {
+      const missingBootResourceModule = await run(habitat, runtimeBootgraphCheckArgs, {
+        cwd: consumerRoot,
+      });
+      expect(
+        missingBootResourceModule,
+        missingBootResourceModule.stderr || missingBootResourceModule.stdout
+      ).toMatchObject({ exitCode: 1, stderr: "" });
+      expect(JSON.parse(missingBootResourceModule.stdout)).toMatchObject({
+        _tag: "Completed",
+        applications: [
+          expect.objectContaining({
+            findings: [
+              expect.objectContaining({
+                code: "missing-required-child",
+                path: "packages/runtime-bootgraph-acceptance/src",
+              }),
+            ],
+            instanceId: "runtime-bootgraph-acceptance",
+            ownerProject: "@fixture/runtime-bootgraph-acceptance",
+            ruleId: "runtime_bootgraph_v1_structure",
+            runner: "habitat",
+            status: "fail",
+          }),
+        ],
+        ok: false,
+      });
+    } finally {
+      await writeFile(bootResourceModulePath, bootResourceModuleBytes);
+    }
+
+    const forbiddenBootgraphPackagePath = path.join(runtimeBootgraphFixtureRoot, "package.json");
+    await writeFile(forbiddenBootgraphPackagePath, '{"private":true}\n');
+    try {
+      const unexpectedBootgraphPackage = await run(habitat, runtimeBootgraphCheckArgs, {
+        cwd: consumerRoot,
+      });
+      expect(
+        unexpectedBootgraphPackage,
+        unexpectedBootgraphPackage.stderr || unexpectedBootgraphPackage.stdout
+      ).toMatchObject({ exitCode: 1, stderr: "" });
+      expect(JSON.parse(unexpectedBootgraphPackage.stdout)).toMatchObject({
+        _tag: "Completed",
+        applications: [
+          expect.objectContaining({
+            findings: [
+              expect.objectContaining({
+                code: "unexpected-child",
+                path: "packages/runtime-bootgraph-acceptance/package.json",
+              }),
+            ],
+            instanceId: "runtime-bootgraph-acceptance",
+            ownerProject: "@fixture/runtime-bootgraph-acceptance",
+            ruleId: "runtime_bootgraph_v1_structure",
+            runner: "habitat",
+            status: "fail",
+          }),
+        ],
+        ok: false,
+      });
+    } finally {
+      await rm(forbiddenBootgraphPackagePath, { force: true });
+    }
+
+    const restoredRuntimeBootgraph = await run(habitat, runtimeBootgraphCheckArgs, {
+      cwd: consumerRoot,
+    });
+    expect(
+      restoredRuntimeBootgraph,
+      restoredRuntimeBootgraph.stderr || restoredRuntimeBootgraph.stdout
+    ).toMatchObject({ exitCode: 0, stderr: "" });
+    expect(JSON.parse(restoredRuntimeBootgraph.stdout)).toMatchObject({
+      _tag: "Completed",
+      applications: [
+        expect.objectContaining({
+          findings: [],
+          instanceId: "runtime-bootgraph-acceptance",
+          ruleId: "runtime_bootgraph_v1_structure",
           runner: "habitat",
           status: "pass",
         }),
@@ -3928,6 +4108,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       null,
       2
     )}\n`,
+    ...runtimeBootgraphAcceptanceFiles(),
     ...runtimeCompilerAcceptanceFiles(),
     ...runtimeDefinitionAcceptanceFiles(),
     ...runtimeDerivationAcceptanceFiles(),
@@ -4215,6 +4396,68 @@ blueprintVersion = 3
 
 [roots]
 project = "packages/root-pattern-acceptance"
+
+[selections]
+`;
+}
+
+function runtimeBootgraphAcceptanceFiles(): Readonly<Record<string, string>> {
+  const root = "packages/runtime-bootgraph-acceptance";
+  const sourceFiles = [
+    "boot-resource-key.ts",
+    "boot-resource-module.ts",
+    "bootgraph.ts",
+    "index.ts",
+  ];
+  const proofFiles = ["bootgraph.test.ts", "nx-cache.test.ts"];
+
+  return {
+    [`${root}/AGENTS.md`]: "# Runtime Bootgraph Acceptance Fixture\n",
+    [`${root}/habitat.toml`]: runtimeBootgraphAcceptanceInstanceToml(),
+    [`${root}/project.json`]: `${JSON.stringify(
+      {
+        name: "@fixture/runtime-bootgraph-acceptance",
+        projectType: "library",
+        root,
+        sourceRoot: `${root}/src`,
+        tags: ["type:runtime", "role:runtime-bootgraph-acceptance"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.json`]: `${JSON.stringify(
+      {
+        extends: "../../../tsconfig.base.json",
+        compilerOptions: { noEmit: true },
+        include: ["src/**/*.ts", "test/**/*.ts"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.test.json`]: `${JSON.stringify(
+      { extends: "./tsconfig.json", include: ["test/**/*.ts"] },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsdown.config.ts`]: 'export default { entry: ["src/index.ts"] };\n',
+    ...Object.fromEntries(
+      sourceFiles.map((filename) => [`${root}/src/${filename}`, "export {};\n"])
+    ),
+    ...Object.fromEntries(
+      proofFiles.map((filename) => [`${root}/test/${filename}`, "export {};\n"])
+    ),
+  };
+}
+
+function runtimeBootgraphAcceptanceInstanceToml(): string {
+  return `schemaVersion = 1
+id = "runtime-bootgraph-acceptance"
+ownerProject = "@fixture/runtime-bootgraph-acceptance"
+blueprint = "runtime-bootgraph"
+blueprintVersion = 1
+
+[roots]
+project = "packages/runtime-bootgraph-acceptance"
 
 [selections]
 `;
