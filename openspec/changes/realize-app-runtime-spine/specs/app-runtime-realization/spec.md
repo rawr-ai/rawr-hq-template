@@ -2738,6 +2738,138 @@ task 6.3d, select an artifact, or open task 6.4 or task 6.5; task 6.3e remains
 the sole active owner decision until it seals and creates deterministic
 successor work.
 
+Task 6.3e MUST select option (b): preserve unrestricted provider-neutral merge
+and redesign only its vendor/runtime realization. It MUST preserve every
+preexisting task-6.3a, task-6.3b, task-6.3c, and task-6.3d line and receipt
+byte-identically, together with every public API, behavior, config, topology,
+file, edge, corpus, count, publication boundary, package-metadata exclusion,
+task-6.4 Promise-level waiter allocation, and task-7.4 lifecycle and
+Effect-interruption allocation. It MUST reject option (a)'s fail-closed
+no-merge capability, provider-side ancestry or merge emulation, a sidecar or
+proxy, a process/acquisition epoch, preflight, single-actor or sequence
+restriction, and a third Habitat owner, API, project, or package.
+
+The smallest admitted realization MUST be one corrected, independently
+released external Fluree server artifact based on exact official
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`. The existing
+`provider-semantic-ledger-fluree-http` owner MUST consume the qualified image as
+ordinary external OCI compatibility evidence. Habitat MUST NOT own, package,
+publish, proxy, or emulate that server realization. The provider MUST retain its
+exact existing config and API: it can address `baseUrl` but cannot attest which
+binary or image digest serves that URL. Exact OCI digest selection and pinning
+MUST therefore remain deployment-handoff evidence and configuration, never a
+provider config field, provider descriptor field, resource API, or runtime
+attestation claim.
+
+The official source tuple is the immutable correction baseline, not a selected
+task-6.4 compatibility artifact. No corrected source origin, external
+repository, registry origin, tag, corrected commit, OCI digest, or provenance
+is selected by task 6.3e. Neither `rawr-ai/db` nor any registry namespace MAY be
+represented as existing, reserved, selected, or organization-authorized by
+this decision.
+
+This decision change MUST modify exactly the same six OpenSpec artifacts and no
+seventh file, source, test, publication, project, proposal, stack cut sheet,
+canonical/system document, owner router, manifest, lockfile, SDK file, runtime
+behavior, stage, commit, push, or external system. It MUST add exactly one new
+unchecked task, 6.3f, so the decision-change ledger is exactly 56 checked tasks
+out of 115 total. Task 6.3e MUST remain unchecked in this decision change. Task
+6.3d MUST remain unchecked, stopped, and unsealed unless a later complete
+official-universe rerun under the preserved `G`/`I`/`U` law positively qualifies
+an official artifact. Tasks 6.4 and 6.5 MUST remain pending and closed.
+
+The generic first-unchecked-container rule MUST NOT reactivate stopped task
+6.3d. For this semantic-ledger sequence, the latest explicit task-state record
+is authoritative: task 6.3e is active and unchecked through the decision change;
+after its required landing receipt, task 6.3f is active while task 6.3d remains
+unchecked and stopped and tasks 6.4/6.5 remain closed.
+
+After the six-document task-6.3e decision merges and its exact-main Repository
+Ratchet passes, one immediate landing-provenance receipt MUST change exactly
+`tasks.md` and `execution-queue.md`. It MUST record the PR, final head, exact
+main/tree, and check outcomes; change only the task-6.3e checkbox from unchecked
+to checked; activate task 6.3f; preserve task 6.3d unchecked, stopped, and
+unsealed; preserve tasks 6.4 and 6.5 pending and closed; and perform no external
+mutation. No other authority artifact changes in that receipt.
+
+Task 6.3f MUST be a Habitat documentation/evidence qualification with an
+external prerequisite. Before any external repository creation, source-origin
+selection, registry-origin or namespace selection, publication, signing,
+maintenance or security commitment, licensing decision, artifact-retention
+commitment, or upstream-rebase commitment, explicit organization authorization
+MUST identify and approve the responsible owners and exact origins. Until that
+authorization exists, task 6.3f MUST stop at `AUTHORIZATION_REQUIRED` and MUST
+perform no external mutation. Planning text and read-only evidence MUST NOT be
+misrepresented as authorization.
+
+After the authorization prerequisite is recorded, each preview or merge MUST
+compute the complete source-head and target-head reachable CID sets once as
+`S` and `T`. From those immutable sets it MUST derive the full differences
+`S \ T` and `T \ S`
+once and MUST feed those identical CID memberships to preview `ahead` and
+`behind`, conflict-delta evaluation, source replay, and copy traversal. Numeric
+`t` MUST NOT decide membership, terminate a walk, or otherwise own replay
+topology. An internal common-ancestor CID MAY assist deterministic ordering but
+MUST NOT filter either difference or own correctness; stopping at one ancestor
+is insufficient for multi-parent and criss-cross histories. The public
+`LedgerMergePreview` MUST remain unchanged and expose no ancestor field or
+singular-ancestor promise.
+
+The corrected server MUST preserve the v4.1.5 HTTP wire routes, methods,
+statuses, and response shapes; physical storage representation and compatibility;
+branch-list `BranchInfo.t` as the exact HEAD source; source-local `t` on copied
+commits; and the native two-parent general-merge head. It MUST NOT add a Habitat
+wire extension, provider-side correction, alternate storage namespace, sidecar,
+proxy, epoch, preflight, or sequence restriction. The authorized external fork
+MUST own regressions that directly prove shared CID-set use and falsify the
+former numeric cutoff through criss-cross histories, distinct CIDs with equal
+`t`, nonmonotonic reachable `t`, upgrade/reopen of unmodified v4.1.5 storage,
+and restart/reopen after corrected merges. Those regressions MUST cover every
+corrected preview-counter, conflict-delta, source-replay, and copy path while
+preserving every unchanged wire, storage, HEAD, source-local-position, and
+two-parent semantic.
+
+The external build MUST freeze the complete toolchain, build recipe, base
+images, and dependency inputs. At least two independent clean builders with no
+shared output or build cache MUST produce, for the OCI index and for every
+admitted platform manifest, corresponding bytes identical to one another and
+to the published bytes, with digests exactly equal to the published index and
+platform digests. The published artifact MUST retain verifiable source/build
+provenance, a complete SBOM, and every required license and notice in both
+source and image distributions.
+
+A derivative, fork, or image based on the BUSL-1.1 source MUST conspicuously
+preserve that license and notice, MUST use distinct derivative branding, and
+MUST NOT rely on any ungranted Fluree trademark right. Deployment MUST remain
+within the Additional Use Grant and MUST NOT expose the artifact as a Database
+Service. If the intended exposure could be a Database Service, task 6.3f MUST
+stop at `LICENSE_REQUIRED` and select nothing until another applicable license
+has been obtained and recorded.
+
+Every admitted runnable platform MUST then pass disposable live F1, the complete
+F2 conflict arm both below and above the former `ancestor.t` cutoff, and the
+independent F2 source-cutoff replay/copy arm. Each platform MUST preserve exact
+branch-list HEAD evidence, ancestry, preview counters, native conflict abort and
+no-write behavior, source replay, target preservation, `copied === ahead`,
+target pre-merge `t + 1`, and exact two-parent identity. Source inspection,
+fork-owned regressions, one platform, one build, provenance alone, or a
+partially published index cannot qualify the artifact.
+
+Only after authorization, corrected-source regressions, unchanged compatibility,
+two independent reproducible builds, provenance, SBOM, license/use review, and
+all-platform live vectors all pass MAY task 6.3f select one exact compatibility
+tuple for task 6.4. That tuple MUST contain the official v4.1.5 base tag and
+commit; the organization-authorized corrected source origin, release ref, and
+commit; the organization-authorized registry origin and repository; the
+published OCI index digest; the complete ordered admitted-platform-to-manifest-
+digest map; and immutable provenance, SBOM, license/notice, rebuild, and live-
+vector receipt identities. Task 6.4 MUST use only that exact tuple as
+compatibility evidence, while any real deployment MUST pin its exact digest in
+the deployment handoff rather than the provider. Task 6.4 MUST remain closed on
+any missing or failed tuple member. A 6.3f selection supersedes only the
+preserved Fluree compatibility stops; every other existing contract and
+allocation remains unchanged.
+
 Every operation input MUST be runtime-admitted before state access or
 transport. Each input shell, nested record, term variant, guard, node,
 property, pattern, and response-independent collection MUST have its exact own
@@ -3638,6 +3770,72 @@ inspection, body recovery, or acquire/release execution.
   `execution-queue.md`, records immutable landing/check identities, leaves task
   6.3d unchecked and unsealed, and lands before task-6.3e decision edits
 
+#### Scenario: Task 6.3e selects the provider-neutral corrected-artifact direction
+
+- **WHEN** the task-6.3e owner decision is reviewed after the no-candidate
+  landing receipt
+- **THEN** option (b) preserves unrestricted provider-neutral merge and every
+  existing API, behavior, config, topology, corpus, publication, package-
+  metadata exclusion, Promise-level waiter allocation, and task-7 allocation
+- **AND** the smallest admitted realization is one independently released
+  corrected external Fluree server artifact based on exact official
+  `v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, consumed by the existing
+  provider as ordinary external OCI compatibility evidence
+- **AND** the provider keeps its exact `baseUrl` config and no binary-attestation
+  API, while the deployment handoff alone owns the exact digest pin
+- **AND** fail-closed no-merge, provider-side emulation, sidecar/proxy,
+  epoch/preflight/sequence or singular-ancestor restriction, and a third Habitat
+  owner, API, project, or package remain rejected
+- **AND** exactly the six authorized OpenSpec artifacts change additively, task
+  6.3e remains unchecked, exactly one unchecked task 6.3f is added, the count is
+  56/115, task 6.3d remains unchecked/stopped/unsealed, and tasks 6.4/6.5 remain
+  closed
+- **AND** no external origin, repository, namespace, tag, corrected commit,
+  digest, or provenance is selected, and neither `rawr-ai/db` nor any registry
+  namespace is represented as existing or authorized
+
+#### Scenario: Task 6.3e landing activates only the authorized successor
+
+- **WHEN** the six-document decision merges and exact-main Repository Ratchet
+  passes
+- **THEN** one immediate receipt changes exactly `tasks.md` and
+  `execution-queue.md`, records PR/head/main/tree/check identities, and flips
+  only task 6.3e to checked
+- **AND** task 6.3f becomes active, task 6.3d remains unchecked, stopped, and
+  unsealed, and tasks 6.4 and 6.5 remain pending and closed
+- **AND** the receipt performs no external mutation and the explicit task-state
+  record overrides the generic first-unchecked rule
+
+#### Scenario: Task 6.3f qualifies every external artifact dimension together
+
+- **WHEN** task 6.3f begins after its landing receipt
+- **THEN** it stops at `AUTHORIZATION_REQUIRED` before external mutation until
+  explicit organization authorization names the source and registry origins and
+  owns repository creation, publication/signing, maintenance/security,
+  licensing/retention, and upstream rebases
+- **AND** after authorization, one complete source and target reachable-CID set
+  pair `S` and `T` yields `S \ T` and `T \ S` once, and the identical sets feed
+  preview counters, conflict delta, source replay, and copy without numeric-`t`
+  or singular-ancestor topology ownership
+- **AND** wire/storage, branch-list `BranchInfo.t`, source-local `t`, and native
+  two-parent semantics remain unchanged, the public preview gains no ancestor
+  field, and fork-owned criss-cross/equal-`t`/nonmonotonic-`t`/storage-upgrade/
+  restart regressions prove both the correction and preservation
+- **AND** a frozen toolchain, recipe, base-image, and dependency set produces at
+  least two independent byte-identical corresponding index/platform builds that
+  match every published digest, with provenance, complete SBOM, and retained
+  license/notice evidence
+- **AND** BUSL-1.1 and its notice remain conspicuous, derivative branding is
+  distinct, no ungranted trademark is relied upon, and deployment stays within
+  the Additional Use Grant and outside a Database Service; otherwise it stops
+  at `LICENSE_REQUIRED` until another license is obtained
+- **AND** live F1 and both F2 arms pass on every admitted platform before one
+  exact source/registry/index/platform/provenance/SBOM/license/evidence tuple is
+  selected for task 6.4, with the deployment handoff rather than provider config
+  owning the digest pin
+- **AND** any partial authorization, correction, build, platform matrix,
+  evidence chain, license posture, or live outcome leaves task 6.4 closed
+
 #### Scenario: Semantic input, storage, and query realization are canonical and safe
 
 - **WHEN** task 6.4 admits a semantic operation and renders its private Fluree
@@ -3979,6 +4177,31 @@ inspection, body recovery, or acquire/release execution.
   decision between explicit fail-closed no-merge capability and redesign
 - **AND** task 6.4 retains Promise-level waiter/producer proof and task 7.4
   retains real Effect-interruption proof
+
+#### Scenario: Task-6.3e and task-6.3f realization drift stops separately
+
+- **WHEN** task 6.3e or 6.3f would narrow unrestricted merge; introduce
+  provider-side emulation, sidecar/proxy, epoch/preflight/sequence or singular-
+  ancestor restriction, or a third Habitat owner/API/project/package; claim an
+  unauthorized source or registry identity including `rawr-ai/db`; mutate an
+  external system before organization authorization; drift the exact v4.1.5
+  base or unchanged wire/storage/HEAD/source-local-position/two-parent law;
+  compute different reachability memberships for preview/conflict/replay/copy;
+  let numeric `t` or one ancestor own topology; add a public ancestor or digest
+  API; omit a required fork-owned DAG/storage/restart regression; accept fewer
+  than two reproducible builds or any unmatched index/platform digest; omit
+  provenance, SBOM, license, notice, distinct branding, use-grant, trademark,
+  retention, security, or maintenance evidence; expose a Database Service
+  without another license; skip an admitted platform or either F2 arm; or
+  partially open task 6.4
+- **THEN** the active task stops without selecting a compatibility tuple or
+  widening Habitat
+- **AND** absent organization authorization the exact stop is
+  `AUTHORIZATION_REQUIRED`; Database Service exposure without another license
+  stops at `LICENSE_REQUIRED`; and any later failed qualification remains
+  unselected
+- **AND** task 6.3d stays unchecked/stopped/unsealed absent a separate positive
+  official-universe rerun, and tasks 6.4 and 6.5 remain pending and closed
 
 ### Requirement: Runtime providers remain cold until Effect provisioning
 

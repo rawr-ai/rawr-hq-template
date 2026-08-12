@@ -1627,6 +1627,51 @@ bounded-inventory rerun trigger. Any rerun follows the complete universe and
 source-before-live qualification contract in the sole specification owner; the
 trigger itself neither selects an artifact nor opens tasks 6.4 or 6.5.
 
+### Preserve unrestricted merge through a corrected external server
+
+Task 6.3e selects option (b). Unrestricted provider-neutral merge remains the
+product capability; every existing API, behavior, config, topology, corpus,
+publication boundary, package-metadata exclusion, Promise-level task-6.4 proof,
+and task-7.4 lifecycle allocation remains unchanged. The fail-closed no-merge
+alternative is rejected, as are provider-side emulation, sidecar/proxy
+translation, epoch, preflight or sequence restrictions, a singular-ancestor
+correctness rule, and a third Habitat owner, API, project, or package.
+
+The smallest realization is one corrected, independently released external
+Fluree server artifact based on exact official
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`. The existing Fluree HTTP
+provider consumes it as ordinary external OCI compatibility evidence; Habitat
+does not absorb the server fork or grow another runtime owner. Because that
+provider cannot attest the binary behind its `baseUrl`, the deployment handoff
+owns the exact OCI digest pin without changing provider config or API. The
+active `app-runtime-realization` requirement alone owns exact mechanics and
+acceptance, while this design records only the chosen direction and boundary.
+
+No source repository or registry namespace is selected or authorized here.
+The decision specifically does not assert that `rawr-ai/db` or any registry
+namespace exists. Organization authorization must precede external repository
+creation, source/registry origin selection, publication, signing, ongoing
+maintenance and security ownership, licensing and retention commitments, and
+an upstream-rebase commitment. Until that authorization exists, pending task
+6.3f stops at `AUTHORIZATION_REQUIRED` before external mutation.
+
+After its task-6.3e landing receipt activates it, task 6.3f remains a Habitat
+documentation/evidence qualification with an external prerequisite. It routes
+the exact shared full-reachable-set correction, fork-owned criss-cross,
+equal/nonmonotonic-position, storage-upgrade and restart regressions,
+reproducible build, provenance/SBOM/license, distinct derivative branding,
+BUSL-1.1 deployment, and every-platform live-vector gates to the sole
+specification owner. Only a complete pass selects the exact external
+compatibility tuple for task 6.4.
+
+Task 6.3d remains unchecked, stopped, and unsealed unless a later full official
+universe rerun positively qualifies an official artifact. Task 6.3e remains
+unchecked in this six-document decision change, producing 56 checked tasks out
+of 115 total after adding the one unchecked task 6.3f. Tasks 6.4 and 6.5 remain
+pending and closed. The immediate post-merge receipt changes only `tasks.md`
+and `execution-queue.md`, checks only task 6.3e, activates task 6.3f, records
+the landing/check identities, and performs no external mutation.
+
 ### Give one Effect kernel the process lifecycle
 
 Before the first acquisition, provisioning materializes every declared source
@@ -1706,6 +1751,11 @@ The later task-6.3d `NO_CANDIDATE` disposition supersedes only that activation
 and positive-selection route: task 6.3e is the sole active owner-decision node,
 task 6.3d remains unchecked and stopped, and tasks 6.4 and 6.5 remain pending
 and closed.
+The task-6.3e option-(b) decision is the latest routing state: task 6.3e remains
+active and unchecked through this decision change; its immediate post-merge
+receipt checks only 6.3e and activates pending task 6.3f. Stopped task 6.3d
+remains unchecked outside the ordinary first-unchecked rule, and tasks 6.4 and
+6.5 remain pending and closed behind task 6.3f.
 
 ### Centralize process context without stealing native execution
 
