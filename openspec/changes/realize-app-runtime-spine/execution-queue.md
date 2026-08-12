@@ -90,6 +90,10 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   The landed task-6.3c receipt now supersedes that future state: task 6.3d is
   the sole active documentation/evidence-only qualification node, and tasks
   6.4 and 6.5 remain pending and closed behind it.
+  The landed task-6.3d negative-evidence change and its exact-main receipt now
+  supersede only that activation state: task 6.3d remains unchecked, stopped,
+  and unsealed; task 6.3e is the sole active owner-decision node; and tasks 6.4
+  and 6.5 remain pending and closed.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -1229,6 +1233,24 @@ main/tree, and check outcomes; keep task 6.3d unchecked, stopped, and unsealed;
 reaffirm task 6.3e as the sole active owner-decision node and tasks 6.4/6.5 as
 closed; and do not select an artifact or modify the other four authority files.
 This is landing provenance, not a task-6.3d positive seal.
+
+The six-document negative-evidence change landed through
+[PR #1003](https://github.com/rawr-ai/rawr-hq-template/pull/1003) at exact final
+head `e34d75e030347ad6fc7ef30b08c7d859a33611aa` and exact Habitat
+`main@b54b08d1811695806df495a44eaaca022fe55afd` / tree
+`264c755b0d58218db447211bd8aebff4f426fdf9`. The diff changed exactly the six
+authorized documents and was intentionally `+653/-0`. PR Repository Ratchet
+[run `31549616714`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31549616714) /
+[job `93969258123`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31549616714/job/93969258123)
+passed, [Graphite mergeability](https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/1003)
+was clean, and push-to-main Repository Ratchet
+[run `31549772993`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31549772993) /
+[job `93969751182`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31549772993/job/93969751182)
+passed the exact merged SHA; no Publish Habitat run was scheduled. This records
+landing provenance only: task 6.3d remains unchecked and unsealed at
+`STOPPED — NO_CANDIDATE; positive qualification unsealed`, with no artifact
+selected and no positive compatibility record. Task 6.3e remains the sole
+active owner-decision node; tasks 6.4 and 6.5 remain pending and closed.
 
 A new advertised canonical upstream ref or new official registry image triggers
 only the complete bounded-inventory rerun defined by the specification. The
