@@ -94,6 +94,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   supersede only that activation state: task 6.3d remains unchecked, stopped,
   and unsealed; task 6.3e is the sole active owner-decision node; and tasks 6.4
   and 6.5 remain pending and closed.
+  The task-6.3e decision entry below is the latest precedence. It selects option
+  (b), preserves unrestricted provider-neutral merge, and makes pending task
+  6.3f the sole deterministic successor after the immediate task-6.3e landing
+  receipt. In this decision change task 6.3e remains active and unchecked, task
+  6.3d remains stopped and unchecked, the count is 56 checked of 115 total, and
+  tasks 6.4 and 6.5 remain pending and closed. For this sequence, explicit
+  task-state routing overrides the generic first-unchecked rule.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -1257,6 +1264,43 @@ only the complete bounded-inventory rerun defined by the specification. The
 trigger alone does not change queue ownership, qualify an artifact, or open
 tasks 6.4/6.5.
 
+## Task 6.3e Decision And Task 6.3f External Qualification Routing
+
+Task 6.3e selects option (b): preserve unrestricted provider-neutral merge and
+redesign only the vendor/runtime realization. The smallest direction is one
+corrected, independently released external Fluree server artifact based on
+exact official `v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, consumed
+by the existing Fluree HTTP provider as ordinary external OCI compatibility
+evidence. Every existing API, behavior, config, topology, corpus, publication,
+package-metadata exclusion, and task-7 allocation remains unchanged. The
+provider gains no digest field or attestation API; deployment owns the exact
+image pin. Fail-closed no-merge, provider-side emulation,
+sidecar/proxy/epoch/preflight/sequence restrictions, singular-ancestor
+correctness, and a third Habitat owner/API/project/package remain rejected.
+
+The active `app-runtime-realization` requirement is the sole exact mechanics
+and acceptance owner. This queue selects no source or registry origin and does
+not claim that `rawr-ai/db` or any registry namespace exists or is approved.
+Pending task 6.3f has an external prerequisite and stops at
+`AUTHORIZATION_REQUIRED` before any external mutation until explicit
+organization authorization covers source/registry origins, repository creation,
+publication/signing, maintenance/security, licensing/retention, and upstream
+rebases. Only afterward may its shared full-reachable-set correction,
+fork-owned DAG/storage/restart regressions, frozen-build,
+provenance/SBOM/license/branding, BUSL-1.1, and all-platform F1/F2 qualification
+proceed under the exact specification.
+
+Task 6.3d remains unchecked, stopped, and unsealed unless a later complete
+official-universe rerun positively qualifies. Task 6.3e remains unchecked in
+this six-document decision change; adding exactly one unchecked task 6.3f makes
+the current count 56/115. Tasks 6.4 and 6.5 remain pending and closed.
+
+Immediately after this decision merges and exact-main Repository Ratchet
+passes, land one receipt in exactly `tasks.md` and this queue. It records the
+PR, final head, exact main/tree, and checks; flips only task 6.3e to checked;
+activates task 6.3f; preserves task 6.3d unchecked, stopped, and unsealed; keeps
+tasks 6.4/6.5 closed; and performs no external mutation.
+
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
@@ -1367,6 +1411,11 @@ write authority with the active one:
    and positive-selection route: task 6.3e is the sole active owner-decision
    node, task 6.3d remains unchecked and stopped, and tasks 6.4 and 6.5 remain
    pending and closed.
+   The task-6.3e option-(b) decision is the latest dependency precedence: task
+   6.3e remains active and unchecked in the decision change; its immediate
+   two-file landing receipt checks only 6.3e and activates task 6.3f. Task 6.3d
+   remains stopped and unchecked unless a later positive official-universe
+   rerun qualifies, and tasks 6.4 and 6.5 remain closed behind task 6.3f.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before
@@ -1450,3 +1499,8 @@ Only the first unchecked container is active. Later containers may supply
 acceptance obligations or frozen source evidence, but they do not share write
 authority with the active container. Gates A through C are a temporary
 publication barrier, not a compatibility architecture.
+
+The task-6.3e/task-6.3f state above is an explicit exception to that generic
+first-unchecked rule: stopped task 6.3d remains unchecked without becoming
+active. Task 6.3e is active through this decision change; after its immediate
+landing receipt, task 6.3f is active while tasks 6.4 and 6.5 remain closed.

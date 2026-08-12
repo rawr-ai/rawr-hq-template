@@ -1417,6 +1417,55 @@ advertised canonical upstream ref or new official registry image triggers only
 a complete bounded-inventory rerun under the sole specification owner and does
 not itself reopen source or tasks 6.4/6.5.
 
+## Task 6.3e Provider-Neutral Realization Decision
+
+Task 6.3e selects option (b): preserve the unrestricted provider-neutral
+semantic-ledger merge law and redesign only its vendor/runtime realization.
+The active `specs/app-runtime-realization/spec.md` requirement remains the sole
+exact mechanics and archive-safe acceptance owner. This amendment and the
+other four routing artifacts summarize that decision without restating a
+second contract.
+
+The smallest admitted realization is one corrected, independently released
+external Fluree server artifact based on exact official
+`v4.1.5@d767927dae550a6ecde8f15603ad9c195de60351`, consumed by the existing
+Fluree HTTP provider as ordinary external OCI compatibility evidence. The
+provider keeps its existing config and cannot attest the binary behind its
+`baseUrl`; the exact image-digest pin belongs to the deployment handoff, not a
+provider API. This direction preserves every existing API, behavior, config,
+topology, corpus, publication boundary, package-metadata exclusion,
+Promise-level task-6.4 allocation, and task-7.4 allocation. It rejects
+fail-closed no-merge, provider-side emulation, a sidecar or proxy, an epoch,
+preflight or sequence restriction, and any third Habitat owner, API, project,
+or package.
+
+No external source repository or registry origin is authorized by this
+decision. In particular, it makes no claim that `rawr-ai/db` or any registry
+namespace exists or is approved. External repository creation, source- and
+registry-origin selection, publication and signing, maintenance and security
+ownership, licensing and retention, and an upstream-rebase commitment require
+explicit organization authorization.
+
+Task 6.3f is the one new pending documentation/evidence qualification node. It
+has an external prerequisite and remains pending until the immediate task-6.3e
+landing receipt activates it. Until the organization authorization above
+exists, task 6.3f stops at `AUTHORIZATION_REQUIRED` before any external
+mutation. After authorization, its exact full-reachable-set correction,
+fork-owned regression, reproducibility, provenance, SBOM, license, and
+all-platform live-proof gates are owned only by the active specification.
+BUSL-1.1 license and notice preservation, distinct derivative branding without
+trademark reliance, and deployment within the Additional Use Grant rather than
+as a Database Service, or under another obtained license, are mandatory gates.
+
+Task 6.3d remains unchecked, stopped, and unsealed unless a later complete
+official-universe rerun positively qualifies an official artifact. Task 6.3e
+remains unchecked in this decision change, and tasks 6.4 and 6.5 remain pending
+and closed. After this six-document decision merges and exact-main Repository
+Ratchet passes, one immediate receipt changes exactly `tasks.md` and
+`execution-queue.md`, checks only task 6.3e, activates task 6.3f, records the
+PR, final head, exact main/tree, and checks, preserves task 6.3d unchecked, and
+performs no external mutation.
+
 ## Magic Migration Admission
 
 Magic Migration is implementation evidence, not product or specification
