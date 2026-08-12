@@ -101,6 +101,13 @@ in [[design]], [[classification-ledger]], [[stack-cut-sheet]], and [[tasks]].
   6.3d remains stopped and unchecked, the count is 56 checked of 115 total, and
   tasks 6.4 and 6.5 remain pending and closed. For this sequence, explicit
   task-state routing overrides the generic first-unchecked rule.
+  The landed task-6.3e receipt now supersedes only that activation state: task
+  6.3e is sealed at exact Habitat
+  `main@270d614921cb802e976da38bd6f098915dc91bab`, task 6.3f is the sole
+  active node at `AUTHORIZATION_REQUIRED`, task 6.3d remains unchecked,
+  stopped, and unsealed, the count is 57 checked of 115 total, and tasks 6.4
+  and 6.5 remain pending and closed. No external source, registry, artifact, or
+  other external state was mutated.
 - The accepted pre-Gate-A semantic sieve removes only closures already
   classified for deletion and carrying no retained capability. It does not
   weaken or substitute for the publication barrier around surviving readers.
@@ -1301,6 +1308,31 @@ PR, final head, exact main/tree, and checks; flips only task 6.3e to checked;
 activates task 6.3f; preserves task 6.3d unchecked, stopped, and unsealed; keeps
 tasks 6.4/6.5 closed; and performs no external mutation.
 
+That receipt is now exact. The six-document option-(b) decision landed through
+[PR #1005](https://github.com/rawr-ai/rawr-hq-template/pull/1005) at exact final
+head `5de8ae6d9e545a942f50329642ed68da666aa774` and exact Habitat
+`main@270d614921cb802e976da38bd6f098915dc91bab` / tree
+`31e3886106861caa244d38e6eaf8a2177e065cf3`. Its diff changed exactly the six
+authorized OpenSpec documents and was intentionally `+415/-0`; strict OpenSpec
+validation, exact scope/zero-deletion/task-count checks, the full repository
+check, and independent authority, vendor/mechanics/license, and additive-state
+reviews passed. PR Repository Ratchet [run
+`31551783271`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31551783271)
+/ [job
+`93975816894`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31551783271/job/93975816894)
+passed, [Graphite
+mergeability](https://app.graphite.com/github/pr/rawr-ai/rawr-hq-template/1005)
+was clean, and push-to-main Repository Ratchet [run
+`31551897112`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31551897112)
+/ [job
+`93976154576`](https://github.com/rawr-ai/rawr-hq-template/actions/runs/31551897112/job/93976154576)
+passed the exact merged SHA; no Publish Habitat run was scheduled. This
+two-file bookkeeping receipt flips only task 6.3e to checked, yields 57/115,
+leaves task 6.3d unchecked, stopped, and unsealed, and activates task 6.3f as
+the sole active node at `AUTHORIZATION_REQUIRED`. Tasks 6.4 and 6.5 remain
+pending and closed. No external source, registry, artifact, or other external
+state was selected or mutated.
+
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
@@ -1416,6 +1448,10 @@ write authority with the active one:
    two-file landing receipt checks only 6.3e and activates task 6.3f. Task 6.3d
    remains stopped and unchecked unless a later positive official-universe
    rerun qualifies, and tasks 6.4 and 6.5 remain closed behind task 6.3f.
+   The task-6.3e receipt has now landed: task 6.3e is sealed, task 6.3f is the
+   sole active node at `AUTHORIZATION_REQUIRED`, task 6.3d remains stopped,
+   unchecked, and unsealed, and tasks 6.4 and 6.5 remain pending and closed.
+   No external mutation is admitted before the task-6.3f authorization gate.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before
