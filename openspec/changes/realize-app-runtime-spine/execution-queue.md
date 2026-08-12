@@ -1205,6 +1205,36 @@ and shared conformance remain the neutral oracle; fake HTTP tests prove only cod
 decoder behavior. Task 6.4 keeps Promise-level waiter/producer proof, while task
 7.4 alone keeps real Effect-interruption proof.
 
+## Task 6.3d No-Candidate Receipt And Task 6.3e Routing
+
+The active `app-runtime-realization` requirement and its archive-safe scenario
+are the sole exact owner of the bounded official universe, commands, hashes,
+source classifications, and live-test disposition. This queue records only the
+result: `STOPPED — NO_CANDIDATE; positive qualification unsealed`, no artifact
+selected, and no positive compatibility record created.
+
+Task 6.3d remains unchecked and unsealed. Its negative receipt does not falsify
+or narrow unrestricted neutral merge, does not supersede a preserved
+4.1.4-only/version stop, and does not change any prior API, file, edge, corpus,
+count, publication, package-metadata exclusion, Promise-level waiter allocation,
+or task-7.4 Effect-interruption allocation. Task 6.3e is now the sole active
+owner-decision node. It opens no source, selects no artifact, and does not check
+off task 6.3d. Tasks 6.4 and 6.5 remain pending and closed until the decision
+seals and creates deterministic successor work.
+
+After this six-document negative-evidence node merges and exact-main Repository
+Ratchet passes, land one immediate receipt in exactly this queue and `tasks.md`
+before task-6.3e decision work begins. Record the PR, final head, exact
+main/tree, and check outcomes; keep task 6.3d unchecked, stopped, and unsealed;
+reaffirm task 6.3e as the sole active owner-decision node and tasks 6.4/6.5 as
+closed; and do not select an artifact or modify the other four authority files.
+This is landing provenance, not a task-6.3d positive seal.
+
+A new advertised canonical upstream ref or new official registry image triggers
+only the complete bounded-inventory rerun defined by the specification. The
+trigger alone does not change queue ownership, qualify an artifact, or open
+tasks 6.4/6.5.
+
 The remaining containers execute in this dependency order. A later container
 may supply a frozen oracle or acceptance obligation, but it does not share
 write authority with the active one:
@@ -1311,6 +1341,10 @@ write authority with the active one:
    The landed task-6.3c receipt now supersedes that future state: task 6.3d is
    the sole active documentation/evidence-only qualification node, and tasks
    6.4 and 6.5 remain pending and closed behind it.
+   The later task-6.3d `NO_CANDIDATE` receipt supersedes only that activation
+   and positive-selection route: task 6.3e is the sole active owner-decision
+   node, task 6.3d remains unchecked and stopped, and tasks 6.4 and 6.5 remain
+   pending and closed.
 3. **Provisioning (`7.1-7.5`)**: build one process-owned beta.101
    `ManagedRuntime` from one `Layer.effectContext` lifecycle adapter. Preflight
    every declared source and all provider plus service scope/config refs before

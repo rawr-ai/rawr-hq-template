@@ -1383,6 +1383,40 @@ conformance remain the neutral oracle; fake HTTP tests prove only codec,
 route/status, and decoder behavior. Task 6.4 retains Promise-level
 waiter/producer proof, while task 7.4 alone owns real Effect interruption.
 
+## Task 6.3d No-Candidate Receipt Routing
+
+The exact bounded official universe, immutable evidence, source classification,
+and live-test disposition are owned only by the active
+`specs/app-runtime-realization/spec.md` requirement and its archive-safe
+scenario. The other five authorized OpenSpec artifacts, including this
+amendment, route that authority without restating a second mechanics or evidence
+contract.
+
+That sole owner records no selected artifact and the status
+`STOPPED — NO_CANDIDATE; positive qualification unsealed`. This is a negative
+qualification stop, not a positive seal: task 6.3d remains unchecked and
+unsealed, and task 6.3e becomes the sole active owner-decision node. Task 6.3e
+opens no source, selects no artifact, and does not check off task 6.3d. Tasks 6.4
+and 6.5 remain pending and closed until the owner decision seals and creates
+deterministic successor work.
+
+After this six-document negative-evidence change merges and its exact-main
+Repository Ratchet passes, one immediate landing-provenance receipt changes
+only `tasks.md` and `execution-queue.md` before task-6.3e decision work begins.
+It records the PR, final head, exact main/tree, and check outcomes; leaves task
+6.3d unchecked, stopped, and unsealed; reaffirms task 6.3e as the sole active
+owner-decision node and tasks 6.4/6.5 as closed; and neither selects an artifact
+nor modifies the other four authority artifacts.
+
+The receipt does not falsify or narrow the unrestricted neutral merge law.
+Without a positive qualification, no tag, commit, OCI digest, provenance, or
+compatibility target is selected; no preserved 4.1.4-only/version stop is
+superseded; and every prior API, file, edge, corpus, count, publication,
+package-metadata exclusion, and task-7 boundary remains authoritative. A new
+advertised canonical upstream ref or new official registry image triggers only
+a complete bounded-inventory rerun under the sole specification owner and does
+not itself reopen source or tasks 6.4/6.5.
+
 ## Magic Migration Admission
 
 Magic Migration is implementation evidence, not product or specification
