@@ -1592,6 +1592,41 @@ The memory fixture and shared conformance remain the neutral oracle. Fake HTTP p
 route/status, and decoder behavior. Task 6.4 retains Promise-level waiter proof;
 task 7.4 alone retains real Effect-interruption proof.
 
+#### Task 6.3d no-candidate disposition
+
+Task 6.3d is `STOPPED — NO_CANDIDATE; positive qualification unsealed`. The
+bounded official-universe receipt selected no Fluree artifact, and the exact
+universe, source inspection, immutable evidence, classifications, and live-test
+status are owned solely by
+`specs/app-runtime-realization/spec.md`. This design only routes that result.
+
+The negative receipt leaves task 6.3d unchecked and unsealed. It classifies the
+currently bounded official vendor realizations; it does not falsify or narrow
+the unrestricted neutral merge law. Because no positive qualification sealed,
+no selected tag, commit, OCI digest, provenance, compatibility statement, or
+task-6.4 acceptance target exists, and no preserved 4.1.4-only/version stop is
+superseded. Every prior API, descriptor, config, file, edge, corpus, count,
+publication, package-metadata exclusion, and task-7 allocation remains in force.
+
+Task 6.3e is the sole active owner-decision node. It chooses between explicitly
+redefining the public capability as fail-closed with no merge capability and
+redesigning vendor/runtime realization while preserving unrestricted neutral
+merge. It opens no source, selects no artifact, and does not check off task
+6.3d. Tasks 6.4 and 6.5 remain pending and closed until that decision seals and
+creates deterministic successor work.
+
+The merged six-document negative-evidence node receives one immediate
+landing-provenance receipt in only `tasks.md` and `execution-queue.md` after
+exact-main Ratchet and before task-6.3e decision edits. The receipt records the
+PR/head/main/tree/check identities while leaving task 6.3d unchecked, stopped,
+and unsealed, selecting no artifact, and preserving the other four authority
+artifacts byte-for-byte.
+
+A new advertised canonical upstream ref or new official registry image is the
+bounded-inventory rerun trigger. Any rerun follows the complete universe and
+source-before-live qualification contract in the sole specification owner; the
+trigger itself neither selects an artifact nor opens tasks 6.4 or 6.5.
+
 ### Give one Effect kernel the process lifecycle
 
 Before the first acquisition, provisioning materializes every declared source
@@ -1667,6 +1702,10 @@ pending until it lands.
 The later task-6.3d routing entry supersedes only the destination of that future
 seal: task 6.3c stays current until sealed, pending task 6.3d follows it, and
 tasks 6.4 and 6.5 remain pending behind task 6.3d.
+The later task-6.3d `NO_CANDIDATE` disposition supersedes only that activation
+and positive-selection route: task 6.3e is the sole active owner-decision node,
+task 6.3d remains unchecked and stopped, and tasks 6.4 and 6.5 remain pending
+and closed.
 
 ### Centralize process context without stealing native execution
 

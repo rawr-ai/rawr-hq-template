@@ -563,6 +563,35 @@ codec, route/status, and decoder behavior. Promise-level waiter proof remains
 task 6.4 work and real Effect interruption remains task 7.4 work. Tasks 6.4 and
 6.5 stay pending behind task 6.3d.
 
+## Task 6.3d No-Candidate Classification
+
+The active `specs/app-runtime-realization/spec.md` requirement and its
+archive-safe scenario are the sole exact mechanics and evidence ledger for the
+bounded official universe. This classification ledger routes only its result:
+`STOPPED — NO_CANDIDATE; positive qualification unsealed`, with every official
+runnable-manifest record and provenance-bound tuple classified once, no selected
+artifact, and no live F1/F2 run because no candidate passed the mandatory source
+predicate.
+
+This is vendor-artifact `NO_CANDIDATE`, not a failure or falsification of the
+unrestricted neutral merge capability. Task 6.3d remains unchecked and unsealed;
+task 6.3e is the sole active owner-decision node and opens no implementation or
+artifact selection. Tasks 6.4 and 6.5 remain pending and closed. With no positive
+qualification, no historical compatibility stop is superseded and every prior
+pin, API, file, edge, corpus, count, publication, package-metadata exclusion,
+Promise-level waiter owner, and task-7.4 Effect-interruption owner is preserved.
+
+The six-document negative-evidence change is followed immediately by one
+two-file landing-provenance receipt in `tasks.md` and `execution-queue.md`
+after merge and exact-main Ratchet. That bookkeeping receipt records immutable
+landing/check identities without checking or sealing task 6.3d, selecting an
+artifact, changing this ledger, or beginning task-6.3e decision edits.
+
+A new advertised canonical upstream ref or new official registry image is the
+only inventory-change trigger routed here. It requires the complete bounded
+rerun owned by the specification and does not itself reactivate task 6.3d,
+select an artifact, or open tasks 6.4/6.5.
+
 
 ## Command And Policy Inventory
 
