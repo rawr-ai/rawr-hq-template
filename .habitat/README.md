@@ -58,11 +58,8 @@ The current selected generic kinds are:
 - `app`: one closed product-composition shell. Narrower app kinds own their
   host-specific runtime and entrypoint faces.
 
-The accepted SDK protocol-1 policy pack admits exactly sixteen sorted members:
-`app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`, `resource@1`,
-`resource@2`, `runtime-bootgraph@1`, `runtime-compiler@1`,
-`runtime-definition@1`, `runtime-definition@2`, `runtime-derivation@1`,
-`runtime-derivation@2`, `service@1`, `service@2`, and `service@3`.
+The SDK protocol-1 policy pack's sorted member inventory is declared in
+[its manifest](../packages/core/sdk/habitat-pack.json).
 Each member resolves its definition and runner assets from the selected
 package with policy-pack provenance. A repository activates one only through
 its own `habitat.toml` instance; an exact producer-source copy is inert, and a
@@ -73,21 +70,25 @@ positive law, native Nx generator, complete package closure, and
 packed-consumer construction proof.
 The `runtime-definition@1` member preserves the original cold private
 definition closure. `runtime-definition@2` independently closes the
-provider-plan authoring owner and its behavior proofs; neither version
-inherits, falls back to, or traverses the other version's assets, and neither
-realizes `app@2`, live runtime execution, or a native host.
-The `runtime-bootgraph@1` member closes the exact private package-less
-lifecycle-ordering structure. The SDK carries only its definition and runner
+provider-plan authoring owner and its behavior proofs. The selected
+`runtime-definition@3` preserves that cold contract with closed owner-local
+TypeScript helper and proof subdirectories. Every version is independent and
+immutable; none realizes `app@2`, live runtime execution, or a native host.
+The `runtime-bootgraph@1` member preserves the original private package-less
+lifecycle-ordering closure. The selected complete `runtime-bootgraph@2` admits
+private helper and proof subdirectories. The SDK carries only definition and runner
 assets, with no bootgraph implementation bundle, public bootgraph face, or
 SDK-to-bootgraph source/build edge.
-The `runtime-compiler@1` member closes the exact private package-less compiler
-structure. The SDK carries only its definition and runner assets, with no
+The `runtime-compiler@1` member preserves the original private package-less
+compiler closure. The selected complete `runtime-compiler@2` admits private
+helper and proof subdirectories. The SDK carries only definition and runner assets, with no
 compiler implementation bundle, public compiler face, or SDK-to-compiler
 source/build edge.
 The `runtime-derivation@1` member preserves its immutable topology-only
 closure. `runtime-derivation@2` independently closes the finished private
-derivation owner and its behavior proofs; neither version inherits, falls back
-to, or traverses the other version's assets.
+derivation owner and its behavior proofs. The selected `runtime-derivation@3`
+preserves those contracts with a closed owner-local TypeScript helper and proof
+grammar. No version inherits, falls back to, or traverses another's assets.
 The version-1 resource and service closures preserve the exact
 `habitat-cli-v0.5.13` definition and runner-asset bytes. Their version-2
 successors retain the same structure and semantic law while narrowing Grit

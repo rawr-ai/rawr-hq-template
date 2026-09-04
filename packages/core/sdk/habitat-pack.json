@@ -42,9 +42,19 @@
       "path": "dist/blueprints/runtime-bootgraph/blueprint.toml"
     },
     {
+      "id": "runtime-bootgraph",
+      "version": 2,
+      "path": "dist/blueprints/runtime-bootgraph/versions/2/blueprint.toml"
+    },
+    {
       "id": "runtime-compiler",
       "version": 1,
       "path": "dist/blueprints/runtime-compiler/blueprint.toml"
+    },
+    {
+      "id": "runtime-compiler",
+      "version": 2,
+      "path": "dist/blueprints/runtime-compiler/versions/2/blueprint.toml"
     },
     {
       "id": "runtime-definition",
@@ -57,6 +67,11 @@
       "path": "dist/blueprints/runtime-definition/versions/2/blueprint.toml"
     },
     {
+      "id": "runtime-definition",
+      "version": 3,
+      "path": "dist/blueprints/runtime-definition/versions/3/blueprint.toml"
+    },
+    {
       "id": "runtime-derivation",
       "version": 1,
       "path": "dist/blueprints/runtime-derivation/blueprint.toml"
@@ -65,6 +80,11 @@
       "id": "runtime-derivation",
       "version": 2,
       "path": "dist/blueprints/runtime-derivation/versions/2/blueprint.toml"
+    },
+    {
+      "id": "runtime-derivation",
+      "version": 3,
+      "path": "dist/blueprints/runtime-derivation/versions/3/blueprint.toml"
     },
     {
       "id": "service",

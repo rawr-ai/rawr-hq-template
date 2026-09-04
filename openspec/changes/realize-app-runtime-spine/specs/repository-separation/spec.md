@@ -2,200 +2,133 @@
 
 ### Requirement: Habitat contains no downstream product source
 
-The Habitat repository MUST contain only platform source, the Habitat self-host,
-qualified owner-local conformance fixtures, and platform-owned records. A downstream product
-MUST own its app composition, profiles, entrypoints, services, resources,
-providers, plugins, topics, policy, tests, and product documentation in its own
-repository. Habitat MUST expose reusable capability only through versioned
-package interfaces and ordinary release artifacts. No downstream repository may
-consume a Habitat workspace path, Git synchronization relationship, copied
-implementation, alias, or compatibility export.
+Habitat MUST contain platform source, its self-host, qualified owner-local
+conformance fixtures and platform-owned records only. Downstream products own
+their app composition, profiles, entrypoints, services, resources/providers,
+plugins, topics, policy, tests and product documentation in their repositories.
+Released package interfaces, not workspace paths, continuing Git ancestry,
+copied implementation, aliases or compatibility exports, cross that boundary.
 
 #### Scenario: Repository ownership is inspected
 
-- **WHEN** Habitat and a downstream product repository are inspected after separation
-- **THEN** Habitat contains no downstream product source or private product package identity
-- **AND** the downstream product builds and runs using exact released Habitat package interfaces
+- **WHEN** Habitat and a downstream product are inspected
+- **THEN** each capability has one semantic owner and Habitat contains no private product source identity
+- **AND** the product builds against exact released Habitat interfaces
 
-### Requirement: Semantic classification precedes runtime implementation
+### Requirement: Retained capabilities have a destination and acceptance owner
 
-Every current Habitat repository capability MUST be classified from its
-behavior and invariants as Habitat platform, proven Rawr product, qualified
-owner-local conformance fixture, or delete. A current path, package name,
-command name, or Rawr prefix MUST NOT establish ownership. Every retained
-capability MUST have one exact destination and acceptance owner; an ambiguous
-capability MUST be deleted. Before the independent Rawr move, Habitat MAY land
-only the bounded `runtime-schema` adaptation and public service/CLI interfaces
-required to compile the destination projects. That prerequisite MUST perform no
-app selection, provider acquisition, execution, mounting, observation, or
-product policy. The independent Rawr move, every other Habitat owner move and
-deletion, and exact-main gates in both repositories MUST complete before any
-other private runtime implementation begins.
+Classification MUST use behavior and invariants rather than current names or
+paths. Every retained capability needs a qualified destination and acceptance.
+Mixed source is evidence, not a merge unit. Ambiguous or occupied source MUST
+remain held until its owner/disposition is established; classification alone
+MUST NOT authorize deleting user work. A completed transfer retires predecessor
+readers with its accepted replacement, not a later compatibility cleanup.
 
-#### Scenario: Runtime implementation gate is evaluated
+Habitat retains CLI/catalog, native Oclif plugins, curated agent-plugin lifecycle,
+content resources/providers, development operations, runtime/observation and
+CLI generators. Rawr owns the admitted corpus, Hyperresearch, session-intelligence
+and separately admitted later product behavior. Unused predecessor export-
+destination, doctor/HQ/reflect/routine/tools-export/workflow-harden/config/journal/
+security/hello, example-todo and synthetic production fixtures MUST remain absent.
+Indispensable behavior fixtures stay owner-local, outside production membership.
 
-- **WHEN** the first private Habitat runtime owner other than the bounded schema-adaptation prerequisite is ready to receive implementation
-- **THEN** Habitat canonical `main` contains only platform source, `apps/habitat`, and qualified owner-local conformance fixtures
-- **AND** Rawr canonical `main` contains only the product closure admitted by its owner-local OpenSpec
-- **AND** no compatibility app, path, alias, copied implementation, or synchronization relationship exists
+#### Scenario: Final inventories are compared
 
-### Requirement: The accepted capability destinations are closed
+- **WHEN** current project, command and package inventories are evaluated
+- **THEN** retained capabilities match their destination and named acceptance owner
+- **AND** cumulative product-separation acceptance proves retired identities/readers remain absent
+- **AND** agent-plugin export behavior does not recreate the unused export-destination owner
 
-Habitat MUST retain its existing CLI and catalog; native Oclif plugin mechanics;
-agent-plugin lifecycle; content-workspace, agent-plugin package-output,
-native-agent-provider, and versioned-content resources/providers;
-development/repository operations; runtime mounting and non-authorizing
-observation; and Habitat CLI generators.
-Rawr's initial finite source migration MUST receive only the proven ChatGPT
-corpus, Hyperresearch, and session-intelligence domain services/topics. The unused agent-plugin
-export-destination owner, predecessor agent-plugin creation, root doctor, HQ
-shell/PID and graph commands, reflect, routine check/snapshot, tools export,
-workflow harden, config, journal, security, hello, example-todo production projects, and
-synthetic codex-slice/run-fixture production commands/projects MUST be deleted.
-Indispensable test behavior MAY remain only as an owner-local conformance
-fixture outside production membership.
+### Requirement: Product movement is finite and destination-owned
 
-#### Scenario: Final capability inventories are compared
-
-- **WHEN** Habitat and Rawr exact-main project and command inventories are compared with the classification ledger
-- **THEN** every retained capability has exactly one listed owner and acceptance target
-- **AND** `nx run habitat:acceptance:product-separation-absence` passes against the cumulative exact predecessor inventory
-- **AND** every deleted capability, predecessor owner, production example, reader, and compatibility path is absent
-- **AND** agent-plugin export behavior remains available without the unreachable export-destination resource/provider
-
-### Requirement: Initial Rawr movement is one finite native Nx import migration
-
-The existing `rawr-ai/rawr` repository MUST be selected through a clean
-worktree from canonical `origin/main`
-`b02a9394a1476a90c11a871b678e28591d69bfa3`. Its legacy Turborepo-era source is
-migration input, not target topology, and MUST be dispositioned by a Rawr
-owner-local OpenSpec. Proven ChatGPT corpus, Hyperresearch, and
-session-intelligence service/topic
-projects MUST move through a finite, destination-owned migration event using
-native `nx import` from one frozen Habitat source/ref with explicit source and
-destination directories and filtered Git history. The Rawr owner-local record
-MUST enumerate each exact invocation before execution. Cohesive projects SHOULD
-import together; otherwise dependencies MUST import leaf-first. The destination
-MUST reconcile external root configuration and local dependency edges and pass
-its Nx graph before landing. The completed migration MUST NOT create an ongoing
-ancestry, copy, mirror, or synchronization dependency.
-
-#### Scenario: Rawr accepts the imported product closure
-
-- **WHEN** the native Nx imports and destination reconciliation complete
-- **THEN** only the admitted ChatGPT corpus, Hyperresearch, and session-intelligence projects and their owner-local verification remain as imported product source
-- **AND** the Rawr Nx graph and every initial-product target named in the capability classification ledger's behavioral acceptance matrix pass from the clean destination worktree
-
-### Requirement: Later Rawr products require owner-local admission
-
-Habitat and Rawr MUST keep every stack-only product capability outside the
-initial six-project import until its own owner-local record admits the domain,
-source behavior, released Habitat prerequisites, and destination acceptance.
-Workstream and research-experiment capabilities MAY follow that route after
-separation. They MUST NOT enter Habitat platform ownership, broaden the initial
-migration, or create a continuing source relationship.
+The initial admitted Rawr service/topic migration MUST remain a completed finite
+native Nx import, with filtered history and destination-owned reconciliation,
+not an ongoing source relationship. Later workstream, research-experiment,
+session or reference material requires a separate owner-local admission based
+on unique behavior and actually needed released interfaces. A held source MUST
+retire only after its destination accepts the replacement.
 
 #### Scenario: A later product source is evaluated
 
-- **WHEN** a held Habitat-side adoption source has a Rawr product destination
-- **THEN** Rawr admits and lands the product through its own record after the required Habitat release exists
-- **AND** the Habitat source is retired only after destination acceptance
+- **WHEN** a held mixed Habitat-side lineage contains useful Rawr behavior
+- **THEN** Rawr admits only that behavior through its own record and acceptance
+- **AND** no stale platform authority or predecessor repository metadata is copied
+- **AND** unrelated Habitat runtime work does not wait for that product transfer
 
-### Requirement: Downstream consumers use released Habitat integration
+### Requirement: Consumers use the native released Habitat integration
 
-A downstream Bun/Nx repository MUST add Habitat through
-`bunx nx add @habitat-ai/cli --no-interactive`. That package's exported
-`./nx-plugin` and shipped `init` generator MUST directly install the exact paired
-`@habitat-ai/sdk` dependency and converge the complete repository foundation in
-that one operation. There is no SDK preseed, custom installer, second preset
-invocation, or manual producer-file copy. Later upgrades MUST use `nx migrate`.
-Habitat distribution MUST remain the existing Nx Release group containing
-exactly `@habitat-ai/sdk` and `@habitat-ai/cli`; no product or internal runtime
-package joins that group. The SDK's installed Habitat pack MUST contain the
-immutable constructible `service@1` definition and the current constructible
-`service@2` acquisition successor, each with one public contract, in-process
-client, router, and private implementation. Service dependencies MUST use public
-clients, resources/providers MUST enter at app composition, and plugin/app
-owners MUST retain transport projection and orchestration. The installed pack
-MUST contain the complete recursively packed composed authority bytes for
-both service versions: each definition manifest, required root `structure.toml`
-anchor, and every focused Grit rule asset nested under its informal authoring
-component directories at preserved relative paths. Those installed bytes MUST
-equal their exact source-authority bytes. Each root `structure.toml` MUST remain
-exactly one ordinary Habitat structure rule and own the complete positive service
-filesystem closure. Every nested service packet MUST remain an ordinary
-schema-version-1 Grit rule with its normal application and focused target; the
-blueprint and instance schemas MUST remain unchanged. At the pre-separation
-checkpoint `service@1` MUST declare zero blueprint relations; module and
-database law MUST remain service-owned authoring organization. The composed
-service authority MUST contain only the positive closed service kind versions.
-Product terms, legacy rule-schema-v2
-metadata, generic `forbids` packets, and superseded service source-policy
-variants MUST be absent. oRPC 2 and Effect 4 MUST be the sole vendor substrate;
-no compatibility kind or legacy construction path may ship.
-The final SDK MUST assemble the
-provider-neutral semantic-ledger contract at
-`@habitat-ai/sdk/resources/semantic-ledger` and its Fluree provider only through
-the optional conditional-import `/fluree` integration; neither source project
-may become another release member.
+A downstream Bun/Nx repository MUST add Habitat with native
+`bunx nx add @habitat-ai/cli --no-interactive`. The CLI Nx plugin/init generator
+installs its exact paired SDK and converges the repository foundation in that
+operation. Later upgrades use `nx migrate`, not manual producer-file copies,
+a custom installer, SDK preseed or a second bootstrap identity.
 
-The initiative has exactly two exact-main functional public checkpoints: the
-task 2.8 pre-separation interface checkpoint and the task 15.6 final runtime
-checkpoint. Each checkpoint publishes only the SDK and CLI, and each
-checkpoint's accepted main commit authorizes only that checkpoint.
+The release group MUST remain only `@habitat-ai/sdk` and `@habitat-ai/cli`.
+Source main's version string does not establish that its runtime faces were
+released. Every publication needs accepted exact-main source, installed artifact
+proof, exact provenance/integrity and a truthful public capability inventory.
+A later optional capability may publish independently; there is no permanent
+two-functional-release ceiling.
 
-An exact-main bounded foundation-continuation release MAY advance the
-implementation inside the first checkpoint when it admits only already
-sequenced foundation corrections or owner transfers and publishes the same
-SDK/CLI pair. Such a release does not create a third functional checkpoint or
-admit a new package, runtime, app/profile selection, mount, or product owner.
-Before source work relies on a continuation release, the Habitat root MUST
-migrate to that exact CLI version and lock its exact paired SDK. Retained
-Habitat-owned instances MAY then select an admitted immutable acquisition
-successor. Instances already classified for deletion or transfer MUST NOT be
-normalized merely to exercise the successor.
+#### Scenario: A consumer upgrades
 
-#### Scenario: Rawr upgrades after Habitat runtime release
+- **WHEN** Rawr, Civ7, Magic or another consumer adopts a released capability
+- **THEN** native migration selects the exact paired interfaces and proves idempotence
+- **AND** that consumer runs its own compatibility and product acceptance without importing Habitat internals
 
-- **WHEN** the Rawr owner-local OpenSpec adopts a released Habitat runtime
-- **THEN** it uses the published CLI Nx plugin and migration path rather than a Habitat workspace or source path
-- **AND** product runtime acceptance runs in Rawr without moving source back into Habitat
+#### Scenario: Service-law adoption does not need the full runtime
 
-#### Scenario: A service consumer installs Habitat law
+- **WHEN** a consumer needs an already released service blueprint
+- **THEN** it may migrate and prove that law without waiting for unrelated runtime or ledger implementation
+- **AND** host-specific constraints such as V8-isolate compatibility remain its own acceptance gate
 
-- **WHEN** Civ7, Rawr, Magic Migration, or another downstream repository runs the required CLI `nx add` flow
-- **THEN** the initializer-installed SDK makes the generator-selected current service version constructible without repository-local generic service law
-- **AND** previously admitted service versions remain independently resolvable for existing exact selections
-- **AND** the consumer retains only product-qualified overlays and proof
+### Requirement: Packaged authority is complete and immutable
+
+The SDK pack MUST carry complete independently resolvable blueprint definitions
+and every referenced asset at preserved relative paths. Installed bytes MUST
+match selected source authority. Every admitted predecessor remains byte-identical;
+a change of law uses a complete successor rather than inheritance or fallback.
+The current service law preserves public contract/client/router and private
+implementation ownership, native oRPC/Effect mechanics and dependency direction.
+
+Positive closure protects owner boundaries and admitted file kinds without a
+permanent exact private-helper inventory. Product vocabulary, obsolete negative
+rule packets and a second public construction model MUST NOT reappear. No private
+runtime package joins the release cohort.
 
 #### Scenario: Public artifacts are admitted before publication
 
-- **WHEN** an exact Habitat-main SDK and CLI candidate is ready for release
-- **THEN** the local installed-package Nx acceptance packs both public tarballs, publishes both exact candidates only to an isolated local registry, and invokes native `nx add @habitat-ai/cli@<candidate-version>` once in a disposable Bun/Nx consumer with neither Habitat product preinstalled before any tag or public-registry mutation
-- **AND** that one operation installs the exact paired SDK, converges the repository foundation, and proves generated current-service construction, cold public imports, Nx rejection of a relative cross-project private-service import, CLI plugin and initializer loading, Oclif manifest behavior, and exact dependency closure
-- **AND** artifact inspection proves the service definition, sole root structure asset, and every focused nested Grit asset is recursively present at its declared path and byte-identical to selected source authority
-- **AND** the root asset remains exactly one ordinary Habitat structure rule owning complete positive filesystem closure, while every nested packet remains an ordinary schema-version-1 Grit rule/application/focused target that registry `@habitat-ai/cli@0.5.2` can project without candidate plugin authority
-- **AND** every installed service definition declares zero blueprint relations
-- **AND** the composed installed authority contains only the positive closed kind and no product vocabulary or legacy service rule packet
-- **AND** any workspace import, missing public face, unpublished dependency, or source/installed divergence blocks publication
+- **WHEN** SDK/CLI candidates are ready
+- **THEN** installed acceptance packs both, publishes only to an isolated local registry and invokes native nx add in a disposable consumer before a public tag/registry mutation
+- **AND** generated service construction, cold imports, native CLI/plugin/init loading, manifest behavior and exact dependency closure pass
+- **AND** all selected and predecessor blueprint assets are present and source-byte-identical
+- **AND** missing assets, private workspace imports or unpublished dependencies block release
 
-#### Scenario: A later Rawr workstream adopts semantic ledger capability
+### Requirement: Optional capabilities have capability-specific gates
 
-- **WHEN** the final Habitat runtime release is installed in Rawr
-- **THEN** the workstream service imports only the released provider-neutral semantic-ledger SDK subpath
-- **AND** the Rawr app MAY select the optional Fluree integration without a workspace import or third Habitat package
-- **AND** the workstream source does not transfer before that release exists
+Semantic-ledger and temporal-inquiry contracts/providers MUST publish only when
+implemented, qualified and accepted through the SDK boundary. They do not gate
+generic runtime publication or unrelated consumers. Ledger-dependent Rawr
+workstream behavior still requires an accepted released ledger interface;
+research and other products wait only for their own needed capabilities.
+Provider neutrality and unrestricted merge MUST NOT be weakened to bypass
+qualification. External database maintenance requires separate explicit authority.
+
+#### Scenario: Rawr adopts a ledger-dependent workstream
+
+- **WHEN** its owner-local record admits workstream behavior requiring ledger operations
+- **THEN** adoption waits for the accepted released provider-neutral ledger face
+- **AND** the app selects a qualified provider through released interfaces without another Habitat package or workspace import
+- **AND** unrelated runtime/service-law adoption proceeds independently
 
 ### Requirement: Marketplace remains an independent content repository
 
-The Marketplace repository MUST remain independent from Habitat and downstream
-product source repositories. It MUST own curated agent-plugin content and its
-content-governance records only. A repository path MAY identify content input,
-but MUST NOT establish executable ancestry, implementation sharing, runtime
-identity, or repository lifecycle authority.
+Marketplace MUST own curated agent-plugin content and content-governance records
+only. A content input path establishes no executable ancestry, runtime identity,
+source sharing or repository lifecycle authority.
 
-#### Scenario: Three repository boundaries are verified
+#### Scenario: Repository boundaries are verified
 
-- **WHEN** Habitat, Rawr, and Marketplace canonical `main` are inspected
-- **THEN** Habitat owns the platform, Rawr owns the downstream product, and Marketplace owns curated agent-plugin content
-- **AND** no source path, ancestry, mirror, or synchronization mechanism transfers authority between them
+- **WHEN** Habitat, Rawr and Marketplace accepted main revisions are inspected
+- **THEN** they own platform, product and curated content respectively
+- **AND** no source mirror, ancestry or synchronization process transfers authority between them

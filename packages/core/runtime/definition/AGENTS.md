@@ -15,12 +15,18 @@
 
 - The sole Nx dependency edge is `runtime-definition -> runtime-schema`; this
   owner never imports the terminal SDK.
-- `runtime-definition@1` remains byte-immutable. The selected complete
-  successor `runtime-definition@2` adds the provider-plan authoring contract
-  without modifying, inheriting from, or falling back to version 1.
+- `runtime-definition@1` and `runtime-definition@2` remain byte-immutable.
+  The selected complete successor `runtime-definition@3` preserves the cold
+  authoring contract while admitting closed owner-local TypeScript helper and
+  proof subdirectories without inheritance or fallback.
 - Definitions may describe apps, services, plugins, resources, providers,
   Effects, and observations, but never start, acquire, mount, supervise, or
   project live read models.
+- Runtime service selections retain one complete service-owned cold export of
+  declaration, native callable contract and typed synchronous constructor.
+  The public service boundary seals it after its implementation exists; the
+  upstream declaration does not import its own router. Named dependency slots
+  remain distinct even when their coarse topology edges coincide.
 - Provider `build(...)` is synchronous and cold: it returns a cold
   `ProviderEffectPlan`, never an acquisition result.
 - The provider build context contains already decoded provider config, lookup
@@ -48,7 +54,7 @@
   reconstruct selection. Source-unavailable means producer-local authoring
   bindings or factory scope is gone, not that implementation code or artifacts
   are unavailable.
-- The flat `src/profile.ts` module owns the cold object-shaped
+- The current `src/profile.ts` module owns the cold object-shaped
   `providerSelection(...)` authoring grammar. The terminal SDK projects that
   helper only through `@habitat-ai/sdk/runtime/profiles`; it does not become a
   second definition owner.
@@ -65,9 +71,11 @@
 - Private assembly interface: `src/index.ts`.
 - Cold app/process/entrypoint authoring and selection owner: `src/app.ts`.
 - Cold provider-selection authoring owner: `src/profile.ts`.
-- Cold provider descriptor owner: flat `src/provider.ts`.
-- Cold provider-plan owner: flat `src/provider-effect-plan.ts`; no nested
-  `src/providers/` directory is admitted.
+- Current cold provider descriptor module: `src/provider.ts`.
+- Current cold provider-plan module: `src/provider-effect-plan.ts`.
+- Private helper and proof decomposition follows the selected version's
+  closed TypeScript grammar; subdirectories do not create another owner or
+  public face. `src/index.ts` remains the assembly entry.
 - The existing `@habitat-ai/sdk/runtime/providers` face and the
   `@habitat-ai/sdk/runtime/providers/effect` face are the only provider
   projections, and the plan accessor stays private.

@@ -2,9 +2,9 @@
 
 ## Purpose
 
-- Derive Habitat's deterministic topology, complete normalized authoring graph,
-  cold lookup tables, and portable runtime-plan artifact from one selected
-  entrypoint and profile.
+- Derive Habitat's deterministic topology, complete normalized selected-process
+  closure, cold lookup tables, and portable runtime-plan artifact from one
+  selected entrypoint and profile.
 
 ## Scope
 
@@ -16,28 +16,33 @@
 
 - Its only direct private dependencies are `runtime-schema` and
   `runtime-definition`; this owner never imports the terminal SDK.
-- Version 2 retains the private topology handoff and owns the synchronous
-  `deriveRuntimeArtifacts(...)` handoff selected by this project.
-- Derivation preserves cold provider definitions, Effect bodies, and web
-  loaders without reading config, decoding values, acquiring resources,
-  executing bodies, loading modules, binding clients, or mounting hosts.
+- The selected complete `runtime-derivation@3` preserves the private topology
+  and synchronous `deriveRuntimeArtifacts(...)` handoffs with closed
+  owner-local TypeScript helper and proof subdirectories. Earlier versions
+  remain immutable and independently resolvable.
+- Derivation preserves exact complete service exports, cold provider definitions,
+  Effect bodies and web loaders without reading config, decoding values,
+  constructing services, acquiring resources, executing bodies, loading modules,
+  binding clients or mounting hosts.
 - Provider acquisition, live execution, compilation, service binding, native
   lowering, and lifecycle behavior remain downstream owners.
 
 ## Behavior
 
-- Derivation validates selected cold identity and complete authoring relations,
-  normalizes them into canonical tuple order and SHA-256 identities, and emits
-  fresh recursively frozen schema data plus frozen cold table snapshots.
+- Derivation alone normalizes the selected transitive process closure before
+  provider coverage, preserving required authored source policy, named dependency
+  assignments, effective lanes and complete instance identity. It emits canonical
+  tuple order and SHA-256 identities, fresh recursively frozen schema data and
+  frozen cold table snapshots without copying referenced executable owners.
 - Effect descriptor refs and web route-module refs remain distinct; only Effect
   refs enter the seven-field portable artifact.
 
 ## Flow
 
-- Cold declarations flow from `runtime-definition` through one topology call
-  into complete derivation; `runtime-schema` validates the data boundaries
-  before compiler, process-runtime, web-adapter, and tooling consumers receive
-  their distinct artifacts.
+- Cold selections flow from `runtime-definition` into complete derivation;
+  `runtime-schema` validates data boundaries. Public graph inspection stays
+  separate from the cohesive executable handoff. Compiler, process-runtime,
+  web-adapter and tooling consumers receive their distinct artifacts.
 
 ## Interfaces
 

@@ -1,0 +1,24 @@
+schemaVersion = 1
+id = "runtime-derivation"
+version = 3
+
+[[rules]]
+id = "runtime_derivation_v3_structure"
+lane = "enforced"
+message = "The runtime-derivation owner must preserve its private project boundary and closed TypeScript source and proof grammar."
+remediate = "Restore the package-less project anchors, sole source entry, and owner-local TypeScript source and tests without adding a nested owner, package, public face, or live-runtime authority."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
