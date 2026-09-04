@@ -55,11 +55,11 @@
 - `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face. It
   exposes exactly three runtime values and twenty-six type-only contracts from
   the private owner, with no second implementation or public error API.
-- `runtime-compiler@1` is transported only as a policy-pack blueprint closure.
+- Runtime compiler definitions are transported only as policy-pack closures.
   The SDK exposes no compiler JavaScript or declaration face and has no
   source/build dependency on the private compiler until terminal composition
   consumes it in task 10.6.
-- `runtime-bootgraph@1` is transported only as a policy-pack blueprint closure.
+- Runtime bootgraph definitions are transported only as policy-pack closures.
   The SDK exposes no bootgraph JavaScript or declaration face and has no
   source/build dependency on the private bootgraph until terminal composition
   consumes it in task 10.6.
@@ -91,12 +91,8 @@
   Node. The vendor command owns native acquisition when a consumer package
   manager has not run dependency install scripts.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
-- `habitat-pack.json` is the closed protocol-1 policy envelope. Its exact
-  sixteen-member sorted set is `app@1`, `package@1`, `plugin@1`,
-  `plugin-nx@1`, `provider@1`,
-  `resource@1`, `resource@2`, `runtime-bootgraph@1`, `runtime-compiler@1`,
-  `runtime-definition@1`, `runtime-definition@2`, `runtime-derivation@1`,
-  `runtime-derivation@2`, `service@1`, `service@2`, and `service@3`. The version-1
+- [habitat-pack.json](habitat-pack.json) is the closed protocol-1 policy
+  envelope and owns its current sorted member inventory. The version-1
   resource and service members preserve their released bytes; each version-2
   member is a complete successor with the same law and structure and narrowed
   Grit acquisition.
@@ -104,16 +100,18 @@
   official Effect-oRPC bootstrap through the terminal SDK for SDK-consuming
   services.
   `runtime-derivation@1` preserves its immutable topology-only closure;
-  `runtime-derivation@2` independently closes the finished derivation owner.
+  `runtime-derivation@2` independently closes the finished derivation owner;
+  selected `runtime-derivation@3` preserves that contract while admitting
+  closed owner-local TypeScript helper and proof subdirectories.
   `runtime-definition@1` preserves the immutable original definition closure;
   `runtime-definition@2` independently closes the provider-plan authoring
-  owner and its behavior proofs.
-  `runtime-bootgraph@1` closes the private lifecycle-ordering structure, but
-  its policy-pack membership is asset carriage rather than an implementation
-  or public-face edge.
-  `runtime-compiler@1` closes the private compiler structure, but its
-  policy-pack membership is asset carriage rather than an implementation or
-  public-face edge.
+  owner and its behavior proofs. Selected `runtime-definition@3` preserves
+  that contract with the same closed helper and proof grammar.
+  The immutable `runtime-bootgraph@1` and `runtime-compiler@1` predecessors
+  remain independently resolvable. Their selected complete version-2
+  successors admit private helper and proof subdirectories. All compiler and
+  bootgraph policy-pack membership is asset carriage rather than an
+  implementation or public-face edge.
   Shipped files are not members merely by being present.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and

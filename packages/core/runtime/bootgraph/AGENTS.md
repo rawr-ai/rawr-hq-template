@@ -15,9 +15,13 @@
 
 - Its sole direct private dependency is `runtime-compiler`; it never imports
   the terminal SDK, runtime definition, or runtime derivation.
+- The selected complete `runtime-bootgraph@2` admits closed owner-local
+  TypeScript helper and proof subdirectories while preserving `src/index.ts`
+  as the assembly entry. Version 1 remains immutable.
 - Ordering accepts only the exact compiler-owned `BootgraphInput` and exposes no
   parallel input schema, compiled-plan carrier, reference table, or observation
-  seed.
+  seed. This is trusted in-memory DTO validation, not a zero-trap hostile-Proxy
+  or prototype-sandbox admission protocol.
 - It performs no config read or decode, provider build, Effect construction or
   execution, acquisition, release, finalizer registration, service binding,
   harness mounting, or observation publication.

@@ -1,236 +1,215 @@
 # Whole-Board Stack Cut Sheet
 
-This cut sheet is the operational companion to [[design]] and [[tasks]]. It
-classifies the complete local Graphite board by semantic ownership before any
-stack is restacked, merged, transferred, or retired.
+This is the current held-source and destination matrix for the runtime
+workstream, not an instruction to clean the whole Graphite board. The
+[classification ledger](classification-ledger.md) accounts for source
+capabilities and acceptance; [deferred capabilities](deferred-capabilities.md)
+preserve D-1 ledger, D-2 inquiry, D-3 later Rawr transfers, and D-4 native
+agent/desktop host integration. Active runtime
+order belongs to [tasks](tasks.md) and [execution queue](execution-queue.md).
+
+The [intact predecessor cut sheet](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/stack-cut-sheet.md)
+preserves the historical board inventory and review/activation receipts. Its
+branch totals, topology snapshot, old bootstrap gate, and accumulated execution
+order are not a current census or authority to mutate another owner's work.
 
 ## Authority
 
-The board contains 61 non-main branches in ten true Graphite roots. Canonical Habitat `main` at
-`7457505fc5dc068c1ff80a06ca78f713ebe3a954` is the semantic ledger. The wide
-`gt ls` view is repository-wide fanout, not one nested implementation stack.
-Branch names, transient restack commits, PR order, and file similarity do not
-decide product ownership.
+Branch names, file similarity, PR order, and transient restack commits do not
+decide semantic ownership. Source references below identify evidence for review;
+current destination contracts and accepted behavior decide what is adopted.
 
-Each stack receives one disposition:
+- **Accepted at destination** records an existing receipt, not permission to
+  discard unreviewed later changes.
+- **Retained destination obligation** names meaningful behavior still to prove.
+- **Held** protects occupied worktrees, other writers' changes, and uncertain
+  source ownership. Obtain an exact owner handoff before any source mutation.
+- **Excluded from adoption** means no accepted sink for the source material in
+  this workstream. It does not mean deletion is authorized.
+- **Retirement candidate** requires current ancestry/PR verification, all unique
+  retained intent accounted for, destination acceptance, and owner release.
+  Normal Graphite cleanup is a separate authorized operation, never a global
+  prune inferred from this ledger.
 
-- **Habitat**: restack onto current `main`, conform to current Habitat law, and
-  merge here.
-- **Rawr**: make the source lineage coherent, transfer it once to the Rawr
-  repository, and retire the Habitat source.
-- **Marketplace**: transfer only curated agent-plugin content or governed
-  content records, then retire the Habitat source.
-- **Retire**: prune merged residue or delete superseded work after its unique
-  accepted intent is accounted for.
-- **Held**: another live owner controls the worktree; coordinate the recorded
-  disposition without mutating that checkout.
+No mixed source branch or commit is a landing unit. No continuing cross-repo
+source synchronization, manual ancestry transplant, or whole-tree byte
+comparison establishes correctness.
 
 ## Consumer Gate
 
-Civ7 has installed Habitat `0.5.2` and selected `app@1`, `package@1`,
-`plugin@1`, `plugin-nx@1`, `provider@1`, and `resource@1`. Its refusal on the
-absent `service@1` member is correct: it neither leaves services ungoverned nor
-authors a local generic substitute. Task 2.8 owns the next versioned Habitat
-handoff and its installed-consumer evidence.
+The accepted published SDK/CLI pair `0.5.15` includes `service@1` and
+`service@2`. Civ7's older missing-service-law refusal was valid for its then
+installed `0.5.2`, but is no longer an upstream service-availability blocker.
+Civ7 still owns exact-version native `nx migrate`, installed behavior, and V8
+proof. Do not infer those receipts from availability of the release.
 
-Habitat itself must also retain registry `@habitat-ai/cli@0.5.2` as the root Nx
-bootstrap while `apps/habitat` remains outside the Bun workspaces. Vendor proof
-with Bun 1.3.14 rejects every candidate source-link: a `file:` snapshot omits
-build output, `link:` is nonportable, and admitting the candidate as a second
-workspace identity produces an invalid duplicate-package-path frozen lock.
-Task 2.8 therefore uses a three-gate publication barrier rather than claiming an
-atomic producer-and-reader deletion on a false main.
+The former root CLI `0.5.2` producer/registry/reader barrier is completed
+historical evidence in the predecessor cut sheet, not a new runtime prerequisite.
+Current release work must still use accepted exact main, isolated installed
+proof, native Nx release ownership, and version/integrity handoffs without
+workspace source links or duplicate public package authority.
 
-The same foundation accepts native oRPC execution authority. A generated
-`service@1` uses `.handler` for synchronous and Promise-returning operations and
-exact `@orpc/experimental-effect@2.0.0-beta.23` implementation-owned `.effect`
-for Effect-backed operations after one service-implementation bootstrap import.
-Exact beta.23 source shows `handlerGen` as the extension's internal underlying
-mechanism; Habitat never imports, calls, or reimplements it. The native bridge
-owns `Effect.runPromiseExit`; Habitat supplies process-owned `effect/context`
-and `effect/wrap` but no custom runner.
+Native service execution retains the accepted official oRPC bridge:
+synchronous/Promise operations use native `.handler`; Effect-backed operations
+use implementation-owned `.effect` through
+`@orpc/experimental-effect@2.0.0-beta.23`, installed once through the SDK.
+The bridge owns request-fiber terminal execution and Promise/Cause reconciliation.
+The process supplies context/wrap, lifetime, policy, and telemetry; no custom
+runner or Habitat-authored `handlerGen` enters the transfer.
 
-Rawr task 2.7 landed independently on `rawr-ai/rawr` canonical `main` at
-`749e344a49e454b075f80914d420488be3f40119`. That checkpoint contains the
-owner-local migration record and Nx consumer scaffold only; no product source
-or unpublished Habitat dependency crossed the repository boundary.
+Rawr's initial scaffold receipt is
+`main@749e344a49e454b075f80914d420488be3f40119`. Its initial six-project
+adoption is recorded at
+`main@a1a4fe7ed051ff405605c82c09ccd73332595383`, PRs 57/59, using exact
+SDK/CLI `0.5.10`. Neither historical checkpoint is a current Rawr inventory or
+proof that held Session Metrics/research/workstream changes are redundant.
+
+D-1 and D-2 receive independent accepted SDK integration releases. The core
+runtime release does not wait for either. A D-3 sink waits only for the released
+capabilities it actually consumes, not for every deferred integration.
+
+D-4 preserves canonical native agent/OpenShell and desktop host contracts for
+separate vendor qualification and integration release. No existing held source
+stack is newly assigned to those hosts. Agent/desktop authoring and executable
+faces remain active task 10.1 work; web-local Effect remains active 14.1/14.2.
 
 ## Stack Dispositions
 
-| Stack | Semantic destination | Disposition | Landing condition |
-|---|---|---|---|
-| `codex/classify-habitat-runtime-inventory` | Habitat | Active retained lineage | Land this whole-board cut and the exact project/capability inventory as one small direct child of `main`. |
-| Proposal object `203c9c686b0c18644218de5583902bcb180544a8` | no direct landing | Preserve as provenance, then retire any source branch | Selectively re-author only immutable `app@1`, complete independently resolvable future `app@2`, finite cold `ProcessCatalog`, process-local launch identity/lifecycle, companion attachment, and sibling isolation into the canonical change. Never cherry-pick the proposal object. |
-| `agent-codex-record-app-v2-runtime-handoff` / proposal object `419d5286bf83a41175a001233de244699c1b72da` | no landing | Reject as a landing unit; preserve SHA provenance and retire the source lineage | It removes immutable `app@1` and selects an unexercised direct official-MCP-SDK implementation. Neither choice enters Habitat. Only the separately re-authored MCP ontology and conditional external-companion task survive. |
-| `codex/correct-app-runtime-authority` | none | Retire merged residue | PR #882 is already on `main`; allow normal Graphite sync to prune the unoccupied branch. |
-| `codex/close-hq-ops-journal-module` | none as a branch | Retire merged residue after the protected local note is accounted for | PR #708 is already on `main`; do not remove its dirty occupied worktree until its owner releases it. |
-| `codex/frame-native-platform-telemetry` through `codex/prove-native-telemetry-receipt` | Habitat | Held while occupied, then adopt through the ledger below and retire the complete predecessor root | The provider-neutral resource/provider implementation lands through one qualified Habitat sink. Host integrations are behavior inputs for fresh runtime-owner acceptance, not branches to merge. The receipt tip has another owner's staged work; do not restack, edit, or partition this lineage before handoff. |
-| `codex/integrate-habitat-frame-lineage` through `codex/project-habitat-temporal-inquiry` | mixed Habitat/Rawr/repository semantics | Held until the runtime provider-plan checkpoint and the path-level sieve below | Admit only generic temporal resource/provider and opt-in Nx behavior after reshaping process acquisition as a cold app-selected provider plan. Remove the `apps/habitat` reexport/public package surface. Rawr rollout discovery transfers only with a proven product owner; repository-local `post-it.md` attestation is deleted. Do not restack or merge the stack as a unit. |
-| `codex/consolidate-research-experiment-sdk` through `codex/reframe-research-experiment-platform` | Rawr | Preserve the accepted service design, transfer once, and retire the obsolete source lineage | This is one two-node Graphite root. Research experimentation is a downstream product capability. The old package-shaped SDK is reference-only source, not an import unit. Re-author the service in Rawr after the canonical TypeBox bridge and runtime-owned provider provisioning are released; do not transfer copied Habitat law, controller code, or stale app changes. |
-| `codex/close-research-experiment-design-review` | Rawr | Held as the accepted design tip, then transfer once and retire | This is a separate Graphite root whose clean worktree is the occupied repository primary. Do not edit, restack, release, or infer source authority from that checkout. Transfer only the reviewed design after the owner hands it off and the released Habitat prerequisites exist. |
-| `codex/session-intelligence-metrics-openspec` through `codex/session-metrics-orchestration-guidance` | Rawr | Restack to the current session service law, transfer once, retire source | Move with `session-intelligence` and `session-tools`; Codex/Claude transcript discovery, indexing, search, and metrics are downstream product behavior, not Habitat substrate. |
-| `fluree-workstream-experiment` through `fluree-ws-port-shape-law` | adoption source; two recorded sinks | Held; do not partition or restack the mixed branches | Apply the exact sink ledger below. Habitat and Rawr each adopt only their path-qualified capability; excluded research remains excluded. Retire the complete source stack only after both adoption sinks land. Temporal inquiry is governed by its separate two-branch stack, not this lineage. |
-| `agent-af-authority-freeze-execution-frame` through `codex/spec-toolbox-reference` | Rawr | Transfer unique current product-governance references, then retire | Main PRs #879 and #880 supersede the branch copies of canonical specs. Move only the unique authority-freeze frame and specification-toolbox reference to Rawr; transfer no stale Habitat authority or runtime implementation. |
+The branch names describe recorded source lineages. Recheck exact heads,
+worktree occupancy, dirty/staged state, and destination status at handoff;
+nothing here asserts that an old board snapshot is current.
 
-There is no current Marketplace stack on this board. Marketplace remains an
-independent content-only repository and receives no executable, runtime,
-telemetry, research, session, or Fluree source from these branches.
+| Source lineage | Semantic destination | Current disposition and retirement condition |
+|---|---|---|
+| `codex/classify-habitat-runtime-inventory` | Historical Habitat classification | Preserve as provenance. Its former role as the active classification child is superseded by this current accounting; no branch action is implied. |
+| Proposal `203c9c686b0c18644218de5583902bcb180544a8` | No direct landing | Preserve immutable app-v1/independent app-v2, finite process catalog, process identity/lifecycle, companion and sibling-isolation intent only through accepted re-authoring. Do not cherry-pick the proposal or delete a source branch without separate ownership/retirement checks. |
+| `agent-codex-record-app-v2-runtime-handoff`, proposal `419d5286bf83a41175a001233de244699c1b72da` | No direct landing | Rejected as a unit because it removes immutable app-v1 and selects unproved direct MCP-SDK realization. Preserve provenance and separately admitted intent. Rejection of the landing is not a worktree deletion instruction. |
+| `codex/correct-app-runtime-authority` | No unadopted branch capability recorded | PR 882 is recorded merged. Retirement candidate only after current ancestry and unoccupied status are checked; normal Graphite cleanup is separately owned. |
+| `codex/close-hq-ops-journal-module` | No branch transfer; protected local note | PR 708 is recorded merged, but the dirty occupied worktree is held until its note and writer ownership are accounted for. Do not remove or release it. |
+| `codex/frame-native-platform-telemetry` through `codex/prove-native-telemetry-receipt` | Habitat telemetry and native runtime acceptance | Held mixed root. Resource/provider and singleton retirement are already recorded accepted; remaining host behavior has named destination obligations below. The receipt tip contains another writer's staged work. No restack, edit, partition, or cleanup before handoff; retire only after every retained destination accepts and the writer releases it. |
+| `codex/integrate-habitat-frame-lineage` through `codex/project-habitat-temporal-inquiry` | D-2 Habitat inquiry, D-3 Rawr session candidates, unclassified repository material | Held mixed root. Adopt only generic capability under the temporal source matrix, not the entire branch. Unclear attestation/session duplication stays held for classification, not deleted. |
+| `codex/consolidate-research-experiment-sdk` through `codex/reframe-research-experiment-platform` | D-3 Rawr research experiment | Preserve accepted service design and unique product intent. The package-shaped predecessor SDK is reference input, not an import unit. Re-author against the released TypeBox/service/provisioning capabilities actually needed; no automatic ledger gate. |
+| `codex/close-research-experiment-design-review` | D-3 Rawr reviewed design | Separate recorded root with a clean but occupied primary worktree. Held until exact owner handoff. Do not edit, restack, release, or infer source authority from that checkout. |
+| `codex/session-intelligence-metrics-openspec` through `codex/session-metrics-orchestration-guidance` | D-3 Rawr session-intelligence/session-tools | Preserve unique transcript discovery/index/search/metrics and orchestration behavior. The initial Rawr transfer already exists; compare current destination before deciding what remains. Historical "restack then transfer all" is not an instruction now. |
+| `fluree-workstream-experiment` through `fluree-ws-port-shape-law` | D-1 Habitat ledger and D-3 Rawr workstream | Held mixed root, not partition/restack units. Retire only after both retained sinks accept and source ownership is released. Temporal inquiry belongs to its separate source lineage. No external server fork is authorized by this row. |
+| `agent-af-authority-freeze-execution-frame` through `codex/spec-toolbox-reference` | D-3 Rawr non-executable governance references | Preserve unique current authority-freeze/toolbox guidance. PRs 879/880 superseded old Habitat canonical copies; do not import stale platform law or runtime implementation. Review-only adoption need not wait for a ledger/runtime release. |
+
+No Marketplace source stack is recorded here. Marketplace remains an independent
+content-only destination and receives no executable, runtime, telemetry,
+research, session, or Fluree source under this plan. Future discovered source is
+classified on its behavior, not forced into this historical inventory.
 
 ## Temporal Inquiry Adoption Ledger
 
-The temporal-inquiry root is mixed at source and runtime-authority boundaries.
-Its branches are evidence for these destination-owned units, not merge units:
+### Temporal Source Disposition
 
-| Source capability | Destination and status | Admission rule |
+| Source capability | Destination / state | Admission or hold rule |
 |---|---|---|
-| Temporal inquiry semantics plus generic Fluree/checkpoint/model/query algorithms | Habitat temporal-inquiry resource/provider candidate; held until runtime provider plans exist | Re-author rather than import the current files. The public contract becomes a `RuntimeResource` whose operations stay in `HabitatEffect`; app/profile input supplies provider config and the cold Fluree plan. App/harness owns process signals. Admit generic algorithms only after removing frame, session, repository, and concrete-provider policy. |
-| Opt-in Nx projection and installed-consumer behavior | Habitat Nx/CLI behavior oracle; needs re-authoring | Attach targets only to the manifest's proven existing `ownerProject` and root, keep mutable targets uncached, and invoke the canonical Habitat CLI/runtime vertical. Retain only init/remove/inert-projection/install observations from the seven-package predecessor acceptance; do not retain its package cohort or public runtime/library faces. |
-| `apps/habitat` temporal-inquiry reexport and public package surface | no sink | Delete it. The selected resource/provider enters through app composition after the canonical runtime owns selection and acquisition. |
-| `session.ts`, `session-resolver.ts`, and their Codex/Claude transcript tests | Rawr session-intelligence candidate; not admitted yet | Compare against the already admitted session-intelligence product at the Rawr owner. Transfer only unique behavior through that owner-local record; otherwise delete it. It never enters the generic resource. |
-| `frame-attestation.ts`, `frame.ts`, frame tests, and frame-linked receipt/policy portions of checkpoint/model/query | no source sink | Delete the repository-specific Working Frame Ledger policy. Recreate only independently accepted generic temporal behavior in the Habitat owner; repository notes are not temporal-inquiry platform policy. |
-| `.codex/agents/fluree-steward.toml`, `apps/habitat/TEMPORAL_INQUIRY_PROVENANCE.md`, stale lifecycle OpenSpec edits, and root release metadata | no source sink | Preserve source identities only in this cut ledger; do not ship the steward, provenance carrier, stale change edits, or predecessor root wiring. Any future repository agent is authored and reviewed under its own Habitat tooling owner. |
+| Bounded inquiry semantics; generic Fluree/checkpoint/model/query/hash and immutable projection/materialization | D-2 neutral temporal-inquiry resource and nested provider | Re-author as non-Promise Habitat Effects with provider-owned config/cold plans and app/runtime-owned signals. Preserve actual temporal/provenance behavior, remove product policy from the adoption set, and qualify the native backend operations used. |
+| Process, lease, lock, and cleanup behavior | D-2 provider and real-substrate conformance | Provider lifecycle is cold until selected acquisition; runtime owns signal/drain/release. No process manager embedded in generic inquiry or host-owned provider acquisition. |
+| Generic Git history | D-2 through released source-inventory | No copied product transcript discovery or parallel Git ownership. |
+| Opt-in Nx discovery, containment, hashing, init/remove, installed behavior | D-2 native CLI/Nx projection | Attach only to the manifest's existing owner project/root, keep mutable targets uncached, remain inert without manifest, and prove first mutation/second no-op. Retain behavior, not the old multi-package publication cohort. |
+| `apps/habitat` temporal reexport/public package surface | Excluded from adoption | Final resource/provider reaches app composition and SDK through current owners. Preserve source evidence; this is no instruction to edit the held root. |
+| `session.ts`, `session-resolver.ts`, Codex/Claude transcript tests | D-3 Rawr session candidate | Compare with current accepted session-intelligence and preserve only unique admitted behavior at that owner. Unresolved duplication remains held; never enter the generic resource. |
+| `frame.ts`, `frame-attestation.ts`, frame tests, frame-linked checkpoint/model/query receipt policy | Held for classification; no admitted Habitat sink | Repository Working Frame Ledger and `post-it.md` policy are not generic inquiry. Preserve the material until an owner classifies retention/duplication or separately authorizes disposal. Independently accepted generic behavior may be re-authored without importing that policy. |
+| `.codex/agents/fluree-steward.toml`, `apps/habitat/TEMPORAL_INQUIRY_PROVENANCE.md`, stale lifecycle OpenSpec/root release metadata | Excluded from this adoption; source held | Do not ship a steward, stale public surface, provenance carrier, or predecessor root wiring. A future repository agent or policy has its own review/owner; exclusion is not deletion authorization. |
 
-Exact temporal source admission is path- and behavior-qualified:
+Exact evidence inputs remain:
 
-- From `602b1207a51c`, rewrite the bounded read/write idea from `contract.ts`;
-  provider-internal guards from `fluree-client.ts` and `sparql.ts`; process,
-  lease, lock, and cleanup behavior from `fluree-process.ts`; generic Git-history
-  algorithms from `history.ts` through the released source-inventory resource;
-  immutable projection/materialization behavior; and only frame-free
-  checkpoint/model/query/hash slices. `definition.ts`, `operation.ts`, `index.ts`,
-  package metadata, and their tests are mixed inputs, never transplant units.
-- From the same commit, `session.ts`, `session-resolver.ts`, and their session
-  tests are Rawr candidates after destination deduplication. `frame.ts`,
-  `frame-attestation.ts`, and their tests have no sink.
-- From `5fcb3257933`, rewrite inert Nx discovery, containment, and input hashing;
-  move idempotent init/remove behavior to the canonical CLI Nx owner; and
-  exclude app reexports, provider-private imports, provenance, release/root
-  metadata, public runtime assertions, and the seven-package predecessor
-  acceptance. The Fluree steward is not admitted by this workstream.
+- `602b1207a51c`: `contract.ts` bounded read/write idea;
+  `fluree-client.ts` / `sparql.ts` provider guards;
+  `fluree-process.ts` process/lease/lock/cleanup; `history.ts` generic Git
+  history; immutable projection/materialization and frame-free
+  checkpoint/model/query/hash. `definition.ts`, `operation.ts`, `index.ts`,
+  package metadata, and tests are mixed source, not transplant units.
+- The same commit's session files/tests remain Rawr candidates; frame and
+  attestation files/tests remain held, not silently discarded.
+- `5fcb3257933`: inert discovery, containment, input hashing, and idempotent
+  native init/remove. App reexports, provider-private imports, copied provenance,
+  root release metadata, public-runtime assertions, and the predecessor package
+  cohort remain outside the adopted generic capability.
+
+D-2's independent accepted integration release and native Nx acceptance are
+specified in [deferred capabilities](deferred-capabilities.md#d-2-temporal-inquiry).
+Do not add D-1 unrestricted merge as a dependency unless the accepted inquiry
+contract actually requires it.
 
 ## Telemetry Adoption Ledger
 
-The telemetry branches form one native Graphite root and therefore receive one
-root disposition above. Its internal semantic split is expressed only as
-destination adoption units:
-
-| Source capability | Destination and status | Admission rule |
+| Source capability | Destination / state | Remaining obligation |
 |---|---|---|
-| Provider-neutral telemetry resource, OpenTelemetry Node provider, vendor admission, and provider conformance through `codex/record-native-telemetry-provider` | Habitat telemetry resource/provider sink; needs adoption | Re-author the path-qualified implementation onto current resource/provider law, remove predecessor app coupling, run the resource/provider behavior targets, and land the fresh destination-owned sink as a small Habitat stack. Do not restack or merge the mixed predecessor root. |
-| oRPC, Inngest, Oclif, correlation, shutdown, delivery/drop, and receipt behavior after `codex/record-native-telemetry-provider` | Fresh Habitat runtime-harness acceptance; source branches retire after adoption | Preserve the behavior as named acceptance obligations in [[classification-ledger#behavioral-acceptance-matrix]]. For oRPC, re-author context/wrap and telemetry around the official `.effect` extension installed once in the service implementation and prove abort, Cause/Promise reconciliation, resource release, and one module realm; do not route service Effects through `ProcessExecutionRuntime`. Do not merge changes to deleted HQ/server/example owners or copy their host wiring. Re-author each obligation beside its qualified app/process/harness owner once that owner exists. |
-| `codex/retire-core-telemetry-singleton` and `codex/record-core-telemetry-retirement` | Habitat core-deletion sink; needs adoption immediately after the qualified provider | Move every surviving reader to the telemetry resource/provider, delete `packages/core/src/telemetry.ts` and its predecessor tests, and replace the Rawr-named retirement rule with qualified owner law. Adopt these exact deletion semantics without merging the obsolete host chain that precedes them. |
-| Staged files at `codex/prove-native-telemetry-receipt` | Held by the current writer | No edit, restack, cleanup, or source admission occurs until the writer returns an exact clean handoff. |
+| Neutral resource, OpenTelemetry Node provider, vendor admission/conformance through `codex/record-native-telemetry-provider` | Accepted at Habitat resource/provider owners | Preserve that implementation and proof; do not repeat "needs adoption." App/profile and native-host selection remain separately proved. |
+| oRPC, Inngest, Oclif, correlation, shutdown, delivery/drop, and receipt behavior after the provider source | Active runtime/process/mounting/observation/harness/CLI owners | Re-author required behavior beside each real owner and co-land the named [behavioral acceptance](classification-ledger.md#behavioral-acceptance-matrix). No obsolete HQ/server/example host wiring or custom oRPC runner. |
+| `codex/retire-core-telemetry-singleton` and `codex/record-core-telemetry-retirement` | Singleton retirement recorded accepted | Preserve exact reader removal and absence of `packages/core/src/telemetry.ts` and its predecessor tests. Do not reinstate Rawr-named retirement law or merge obsolete host history. |
+| Staged files at `codex/prove-native-telemetry-receipt` | Protected writer state | No edit, restack, partition, cleanup, or automatic source admission before an exact handoff. Later unique work must still be classified even when an earlier capability is accepted. |
+
+Provider callback presentation/coarse outcomes are not delivery guarantees.
+Native host settlement, interrupted/continuing work, correlation, drain, flush,
+and release obligations survive at their owners. The later telemetry audit does
+not defer their implementation.
 
 ## Fluree Adoption Ledger
 
-The Fluree Graphite root is mixed at commit granularity, so its existing
-branches are not merge or transfer units. The source remains held until these
-finite sink units settle:
+The source is mixed at commit granularity. Preserve source identity and semantic
+disposition, not an exact source-file count or a presumed authorized fork.
 
-| Source capability | Destination and status | Exact source admission |
+| Source capability / identities | Destination / state | Admission or hold rule |
 |---|---|---|
-| `resources/semantic-ledger/**` provider-neutral contract, Fluree HTTP provider, and provider conformance | Habitat adoption sink; needs adoption | Admit the path-qualified behavior from `1466ded26`, `517e3db01`, `5aef5d458`, `be005ba63`, `d28639ae8`, `b45ffd14d`, `8d6609319`, `a3717cb89`, `d22796dc1`, `7536cf611`, `cc790fd21`, and the provider portion of `77b6c38e8`. Conform it to current resource/provider law before landing. Retain the memory implementation only as an owner-local conformance fixture. |
-| `services/workstream-frame/**` and `plugins/cli/commands/workstream/**` domain behavior | Rawr adoption sink; needs adoption | Admit the path-qualified product behavior from `1466ded26`, `6765c7928`, `517e3db01`, `d28639ae8`, `b45ffd14d`, `a1062c421`, `d22796dc1`, and `cc790fd21`, plus only the final disposition conclusion from `465a2f9ff`. Move the topic to `plugins/cli/topics/workstream`, regenerate project/test metadata, and conform the service to a released Habitat semantic-ledger face and `service@1`. |
-| Root `apps/cli/package.json`, `bun.lock`, `vitest.config.ts`, and mixed repository metadata | excluded | Recreate only destination-owned dependency, graph, and test wiring at each sink; do not adopt these source-root edits. |
-| `c3afa259a`, `0542e0499`, `4b14d1a7b`, `c37b1162e`, `55e81bb5c`, `6f4a6d56e`, `387728bcf`, and `52648b391` | no direct sink | Regenerate any accepted ontology or SHACL assertion through Habitat's existing Semantica owner from current canonical specifications; import no stale generated/project-path output. |
-| `7e464fee0`, `8083fec48`, `e700c1f59`, `d9d257708`, `09f25bffe`, `bf0bfb945`, `73739e2c6`, the non-ledger portion of `465a2f9ff`, `b3ddfc7da`, `a18d6e410`, `83c7fa6ab`, `6c12dd1ce`, `c73a50678`, `a1e160eaa`, the non-provider portion of `77b6c38e8`, `5df41b7c0`, `147b0517a`, `ec9bd1368`, and `56ee3b4e3` | no source sink | Exclude extraction scripts, scenario evidence, temporal scratch, replay, baselines, HTML, upstream issue drafts, and bulk research. An independently accepted assertion may be recreated as an owner-local test. |
-| `3229ee800`, `ac5c054cb`, `35d1f450c`, `b0fc0e8d9`, `5790e864c`, and `85d8e0a37` | no sink | Exclude the complete `.fluree-memory`, voice, replay-defect, and patched-binary history. |
+| `resources/semantic-ledger/**`: `1466ded26`, `517e3db01`, `5aef5d458`, `be005ba63`, `d28639ae8`, `b45ffd14d`, `8d6609319`, `a3717cb89`, `d22796dc1`, `7536cf611`, `cc790fd21`, provider portion of `77b6c38e8` | D-1 Habitat neutral resource/provider/conformance | Retain full ledger promise; re-author against current owner law. Memory remains owner-local proof. Exact frozen source `77b6c38e8701b8ac9292ef5676385a5e6e096f2`, subtree `859b463650e7ad769a56d1b67f328e84584479ef`. |
+| `services/workstream-frame/**`, `plugins/cli/commands/workstream/**`: `1466ded26`, `6765c7928`, `517e3db01`, `d28639ae8`, `b45ffd14d`, `a1062c421`, `d22796dc1`, `cc790fd21`, final disposition conclusion only from `465a2f9ff` | D-3 Rawr workstream service/topic | Re-author under `plugins/cli/topics/workstream`, current Rawr service law, and an accepted released neutral ledger face. Destination owns graph/test metadata. No direct Fluree dependency. |
+| `apps/cli/package.json`, `bun.lock`, `vitest.config.ts`, mixed repository metadata | Excluded from adoption; held source evidence | Recreate only destination-owned dependency/graph/test wiring. No root metadata transplant. |
+| `c3afa259a`, `0542e0499`, `4b14d1a7b`, `c37b1162e`, `55e81bb5c`, `6f4a6d56e`, `387728bcf`, `52648b391` | No direct source sink | Stale generated ontology/SHACL/project-path output is not authority. Any accepted assertion is recreated from current reviewed contracts under the existing Semantica evidence owner, not made a required new pipeline. Source remains preserved. |
+| `7e464fee0`, `8083fec48`, `e700c1f59`, `d9d257708`, `09f25bffe`, `bf0bfb945`, `73739e2c6`, non-ledger `465a2f9ff`, `b3ddfc7da`, `a18d6e410`, `83c7fa6ab`, `6c12dd1ce`, `c73a50678`, `a1e160eaa`, non-provider `77b6c38e8`, `5df41b7c0`, `147b0517a`, `ec9bd1368`, `56ee3b4e3` | No source sink in this workstream | Extraction scripts, scenario evidence, temporal scratch, replay/baselines/HTML, issue drafts, and bulk research are excluded from adoption, not deleted. An independently accepted assertion may become an owner-local test after review. |
+| `3229ee800`, `ac5c054cb`, `35d1f450c`, `b0fc0e8d9`, `5790e864c`, `85d8e0a37` | No source sink in this workstream | Preserve identities of the `.fluree-memory`, voice, replay-defect, and patched-binary history without shipping it. No cleanup of memory, recordings, private state, or another worktree is authorized. |
 
-No sink uses a mixed commit or branch as authority. The listed commits identify
-source behavior for owner review; each destination's landed implementation and
-acceptance become its authority.
+D-1 retains neutral API semantics, unrestricted ancestry/logical-slot merge,
+F1 and both F2 vectors, strict safety/coldness, independent waiters, lost-answer
+recovery, and live substrate conformance. The
+[intact app-runtime source requirement](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/specs/app-runtime-realization/spec.md#requirement-semantic-ledger-authority-is-closed-before-source-activation)
+preserves exact former API spelling and qualification receipts as evidence.
+The [D-1 reactivation requirements](deferred-capabilities.md#d-1-semantic-ledger)
+are active delivery accounting.
+
+Requalify current native vendor options first. An exact reproducible external
+artifact is evidence only after native source and live semantic qualification.
+Nothing in the old option-(b) history proves a contemporaneous user
+authorization for an external organization, fork, publication, or ongoing
+maintenance commitment. Those actions need a separately accepted scope.
+Unresolved D-1 qualification blocks D-1 acceptance, not the useful generic
+runtime or unrelated D-2/D-3 work.
 
 ## Review Record
 
-- The Graphite board census confirmed 61 non-main branches in ten true roots,
-  with this classification branch as the sole child of current `main` in its
-  own stack.
-- Architecture review passed after the two release checkpoints, later Rawr
-  adoption order, SDK resource integrations, and specification-toolbox timing
-  were made explicit.
-- TypeScript review was amended after vendor proof showed that the command
-  producer and surviving-reader cutover cannot share one truthful frozen-lock
-  main. A prior semantic sieve deletes only condemned closures with no retained
-  capability; Gate A leaves the remaining private readers unchanged, Gate B
-  records the fixed SDK/CLI registry release, and Gate C migrates retained
-  readers and deletes the predecessor model.
-- Effect/oRPC review was amended after exact beta.23 source established the
-  official implementation-owned `.effect` bridge as request-fiber terminal
-  owner and `handlerGen` as internal vendor machinery only. Process-owned
-  Context, lifetime, policy, and telemetry now enter through `effect/context`
-  and `effect/wrap`; `ProcessExecutionRuntime` excludes oRPC service Effects.
-- Structural-quality and behavior-first reviews passed after bounded P1s in
-  source-adoption wording, final identities, predecessor Oclif law, executable
-  command/deletion oracles, prepublication `nx add`, and fresh-owner versus
-  preserved behavior were corrected. The final cumulative absence inventory
-  covers every renamed, transferred, dissolved, and deleted predecessor from
-  the 47-project ledger plus condemned commands, readers, and state paths.
-
-No P0 or P1 remains open on this classification stack.
+The predecessor's dated classification/review receipts remain intact in
+quarantine; they are not restated as a current "no findings" claim. Current review
+must check source preservation, unique destination accounting, retained behavior,
+actual dependencies, and protected worktree status. Historical source
+qualification does not replace current vendor or consumer acceptance.
 
 ## Execution Order
 
-1. Land this classification node and obtain architecture, TypeScript,
-   structural-quality, and behavior-first reviews of the cut.
-2. Coordinate the recorded disposition with each occupied lane. Freeze its
-   accepted intent; do not edit another owner's worktree.
-3. Cross the task 2.8 publication barrier in order. **Gate A** produces stable
-   Habitat service/schema faces, selected constructible `service@1`, and the
-   sole public/candidate `HabitatCommand` producer while the root retains
-   registry CLI `0.5.2` and the remaining private predecessor readers remain
-   unchanged. The preceding semantic sieve is retained and no condemned
-   closure is revived. Before any public-registry mutation, run
-   `nx run @habitat-ai/cli:acceptance:oclif-installed-package` so the exact SDK
-   and CLI candidates publish only to an isolated registry and a fresh Bun/Nx
-   consumer exercises the sole `nx add` flow through generated service and
-   installed Oclif paths, including native `.handler` for its ordinary
-   operation. Gate A rejects manual/custom Effect runners; the later server
-   harness proves the official `.effect` extension with a real Effect context.
-   Gate A then lands the accepted producer on exact main.
-   **Gate B** uses the existing fixed Nx Release group from that exact revision
-   to publish and registry-smoke only
-   `@habitat-ai/sdk` and `@habitat-ai/cli`, and records one exact
-   version/commit/integrity/policy-pack/acceptance receipt. **Gate C** begins
-   only from that receipt, replaces the root bootstrap with the exact registry
-   CLI, migrates surviving readers, deletes any condemned reader closure still
-   remaining, and removes `RawrCommand`, `RawrResult`, and every predecessor
-   reader with no shim, alias, fallback, or dual public authority. Publish the
-   receipt to Civ7 and every waiting consumer only after Gate C closes; no
-   consumer authors a local `service@1` substitute.
-4. Restack the Session Metrics lineage onto the current session implementation,
-   import the six admitted Rawr service/topic projects through the finite Nx
-   migration, and land Rawr without a Habitat source dependency. Later
-   research, workstream, and specification-toolbox sources remain outside this
-   initial gate.
-5. Remove the transferred Rawr source and all other product/dead owners from
-   Habitat. Pass exact-main separation before private runtime implementation.
-6. Land the generic telemetry resource/provider and exact core-singleton
-   retirement without merging obsolete host changes.
-7. Build and land the runtime spine one owner at a time. Keep app/process-owned
-   Effect Context, resource lifetime, policy, and telemetry in `effect/context`
-   plus `effect/wrap`; keep selected native bridge execution outside any custom
-   runner. After the provider-plan
-   checkpoint, adopt the path-qualified semantic-ledger and temporal-inquiry
-   resource/provider behavior, assemble their provider-neutral contracts and
-   optional Fluree integrations through the sole SDK package, and remove their
-   product/repository-specific source. Re-author the admitted telemetry host
-   obligations only after their required runtime checkpoints exist.
-8. Release the exact-main final runtime through only `@habitat-ai/sdk` and
-   `@habitat-ai/cli`, including installed-package proof for the semantic-ledger
-   and temporal-inquiry subpaths, then migrate existing consumers through Nx.
-9. In Rawr owner-local changes, adopt the workstream domain against the released
-   semantic-ledger face, re-author the accepted research service against the
-   released runtime, and transfer the unique current specification-toolbox
-   references as non-executable governance guidance. Retire each Habitat source
-   root only after destination acceptance; retire the mixed Fluree root only
-   after both its Habitat and Rawr sinks have landed.
-10. After every
-   destination has accepted its source, record the remaining branch allowlist,
-   release only clean completed worktrees, retire unsubmitted adopted or
-   superseded sources explicitly, then let Graphite prune merged residue in one
-   final cleanup.
+1. Complete the active runtime realignment and cold repairs in the owned
+   worktree. Continue the full runtime owner sequence from the active queue;
+   do not reactivate held external or product lanes implicitly.
+2. Co-land native telemetry and lifecycle behavior at each actual owner.
+   Release the accepted core SDK/CLI runtime with exact-main installed proof
+   and consumer handoff for only the implemented, accepted faces.
+3. Reactivate D-1 and D-2 independently when their contract, owner, qualification,
+   source handoff, and integration release are accepted. Preserve every essential
+   promise or explicitly review a changed promise; do not import old file-count
+   or six-document activation law.
+4. Reactivate each D-3 sink against current Rawr and only its required released
+   capabilities. Record immutable source/destination and acceptance evidence.
+   Reference-only governance review is not executable runtime adoption.
+   Reactivate D-4 native hosts through their canonical contracts and actual
+   vendor/security/lifecycle qualification, without deferring active authoring
+   or adding a blanket core release gate.
+5. After each source's retained destinations are accepted and its owner releases
+   the worktree, propose any needed retirement through normal repository and
+   Graphite ownership. Reverify merged residue and occupancy then. Do not
+   global-prune, partition a mixed occupied root, or delete unclassified work.
 
-No step uses repository-wide byte comparison, manual cross-repository ancestry,
-or a continuing source synchronization relationship. Git and Graphite retain
-ordinary history; the destination repository owns all work after a finite
-transfer.
+Task 15.8 completes a durable handoff, not these deferred adoptions. Native
+OpenSpec closure may proceed when active obligations and this durable accounting
+are satisfied; it neither marks deferred capability delivered nor authorizes
+external source cleanup.

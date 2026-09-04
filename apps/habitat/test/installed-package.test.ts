@@ -103,6 +103,33 @@ const RUNTIME_COMPILER_V1_CLOSURE = [
   "runtime-compiler/skill.md",
   "runtime-compiler/structure.toml",
 ] as const;
+const RUNTIME_POLICY_SUCCESSORS = [
+  { id: "runtime-bootgraph", version: 2 },
+  { id: "runtime-compiler", version: 2 },
+  { id: "runtime-definition", version: 3 },
+  { id: "runtime-derivation", version: 3 },
+] as const;
+// Preserve the previously unpinned closures from main 374149800 before successor selection.
+const IMMUTABLE_RUNTIME_PREDECESSOR_SHA256 = {
+  "runtime-bootgraph/blueprint.toml":
+    "7e460b85464ed04bf8535e11f883afa6793cac12dd111685842f4cebd915b5e1",
+  "runtime-bootgraph/skill.md": "f5cca109372ab247df1b3014c6003538a6f4837ac66bb3f18a1280fdc1612e00",
+  "runtime-bootgraph/structure.toml":
+    "fa01ee1b8f6bc059edb75dfacbf8ff748a06927bdf13bf01a07c225fdf3825cf",
+  "runtime-compiler/blueprint.toml":
+    "2d822d45b11b526b9e232addbdc8d55d365c29231cca46dee0fa328ad173441f",
+  "runtime-compiler/skill.md": "aaee59a527d8825ead3d18c8ebd92609bef52ee46e3ed007686024158b0c74c1",
+  "runtime-compiler/structure.toml":
+    "4a2d735d635defd85c434267a321381f6195ec9f70e5d301d5f1fdc21aa3e1d6",
+  "runtime-definition/versions/2/blueprint.toml":
+    "c40bcebd550f9383216a3d1d986f3d430b2adcd769fe486c936e048a0c4ec1a2",
+  "runtime-definition/versions/2/structure.toml":
+    "88cd2788203fb6b797335163de4e404664e3b45d7e77286c307b494a5ddfda17",
+  "runtime-derivation/versions/2/blueprint.toml":
+    "84febbcd5a95c1b070ddcdc94680723a082c2c0b7459a5322060cf3edfc4d63c",
+  "runtime-derivation/versions/2/structure.toml":
+    "b10b9ff8ef126a8262df217f1a402ebc5475ff77a80370b7454fb8e802e24fbb",
+} as const;
 const RUNTIME_DERIVATION_RUNTIME_EXPORTS = [
   "PortableRuntimePlanArtifactSchema",
   "decodePortableRuntimePlanArtifact",
@@ -448,6 +475,95 @@ describe("installed Habitat products", () => {
 
     await assertInstalledServiceConsumer(nx, fixturePath);
   });
+
+  it.each(
+    RUNTIME_POLICY_SUCCESSORS
+  )("admits closed private decomposition for $id@$version without admitting new owners", async ({
+    id,
+    version,
+  }) => {
+    const fixtureId = `${id}-successor-acceptance`;
+    const relativeRoot = `packages/${fixtureId}`;
+    const fixtureRoot = path.join(consumerRoot, relativeRoot);
+    const habitat = path.join(consumerRoot, "node_modules/.bin/habitat");
+    const ruleId = `${id.replaceAll("-", "_")}_v${version}_structure`;
+    const checkArgs = ["check", "--instance", fixtureId, "--rule", ruleId];
+    const check = async (finding?: { readonly code: string; readonly path?: string }) => {
+      const result = await run(habitat, checkArgs, { cwd: consumerRoot });
+      expect(result, result.stderr || result.stdout).toMatchObject({
+        exitCode: finding === undefined ? 0 : 1,
+        stderr: "",
+      });
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        _tag: "Completed",
+        ok: finding === undefined,
+        applications: [
+          expect.objectContaining({
+            instanceId: fixtureId,
+            ownerProject: `@fixture/${fixtureId}`,
+            ruleId,
+            runner: "habitat",
+            status: finding === undefined ? "pass" : "fail",
+            ...(finding === undefined
+              ? {}
+              : { findings: expect.arrayContaining([expect.objectContaining(finding)]) }),
+          }),
+        ],
+      });
+    };
+
+    await check();
+    const rejectedFiles = [
+      { file: "package.json", code: "unexpected-child" },
+      { file: "src/selection/package.json", code: "unexpected-child" },
+      { file: "src/selection/project.json", code: "unexpected-child" },
+      { file: "test/support/project.json", code: "unexpected-child" },
+      { file: "src/selection/untyped.js", code: "unexpected-child" },
+      { file: "test/support/untyped.js", code: "unexpected-child" },
+      { file: "src/selection/not-a-directory", code: "wrong-root-kind" },
+      { file: "test/support/not-a-directory", code: "wrong-root-kind" },
+    ];
+    for (const { file, code } of rejectedFiles) {
+      const absolutePath = path.join(fixtureRoot, file);
+      await writeFile(absolutePath, "{}\n");
+      try {
+        await check({ code, path: `${relativeRoot}/${file}` });
+      } finally {
+        await rm(absolutePath, { force: true });
+      }
+    }
+
+    const falseModule = path.join(fixtureRoot, "src/selection/not-a-file.ts");
+    await mkdir(falseModule);
+    await writeFile(path.join(falseModule, "nested.ts"), "export {};\n");
+    try {
+      await check({
+        code: "wrong-root-kind",
+        path: `${relativeRoot}/src/selection/not-a-file.ts`,
+      });
+    } finally {
+      await rm(falseModule, { recursive: true, force: true });
+    }
+
+    const requiredEntry = path.join(fixtureRoot, "src/index.ts");
+    const entryBytes = await readFile(requiredEntry);
+    await rm(requiredEntry);
+    try {
+      await check({ code: "missing-required-child", path: `${relativeRoot}/src` });
+    } finally {
+      await writeFile(requiredEntry, entryBytes);
+    }
+
+    const requiredProof = path.join(fixtureRoot, "test/behavior/selection/identity.test.ts");
+    const proofBytes = await readFile(requiredProof);
+    await rm(requiredProof);
+    try {
+      await check({ code: "root-missing", path: `${relativeRoot}/test/**/*.test.ts` });
+    } finally {
+      await writeFile(requiredProof, proofBytes);
+    }
+    await check();
+  }, 180_000);
 
   it("creates the portable Bun repository before activating post-Git hooks", async () => {
     const name = "preset-consumer";
@@ -1128,11 +1244,15 @@ describe("installed Habitat products", () => {
       "resource@1",
       "resource@2",
       "runtime-bootgraph@1",
+      "runtime-bootgraph@2",
       "runtime-compiler@1",
+      "runtime-compiler@2",
       "runtime-definition@1",
       "runtime-definition@2",
+      "runtime-definition@3",
       "runtime-derivation@1",
       "runtime-derivation@2",
+      "runtime-derivation@3",
       "service@1",
       "service@2",
       "service@3",
@@ -1164,8 +1284,12 @@ describe("installed Habitat products", () => {
     });
     expect(nestedStructureFiles).toEqual([
       "resource/versions/2/structure.toml",
+      "runtime-bootgraph/versions/2/structure.toml",
+      "runtime-compiler/versions/2/structure.toml",
       "runtime-definition/versions/2/structure.toml",
+      "runtime-definition/versions/3/structure.toml",
       "runtime-derivation/versions/2/structure.toml",
+      "runtime-derivation/versions/3/structure.toml",
       "service/versions/2/structure.toml",
       "service/versions/3/structure.toml",
     ]);
@@ -1192,6 +1316,7 @@ describe("installed Habitat products", () => {
     }
     for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
       const bootgraphClosure = (await listFiles(path.join(blueprintRoot, "runtime-bootgraph")))
+        .filter((relativePath) => !relativePath.startsWith("versions/"))
         .map((relativePath) => path.posix.join("runtime-bootgraph", relativePath))
         .sort();
       expect(bootgraphClosure, blueprintRoot).toEqual([...RUNTIME_BOOTGRAPH_V1_CLOSURE]);
@@ -1203,6 +1328,7 @@ describe("installed Habitat products", () => {
     }
     for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
       const compilerClosure = (await listFiles(path.join(blueprintRoot, "runtime-compiler")))
+        .filter((relativePath) => !relativePath.startsWith("versions/"))
         .map((relativePath) => path.posix.join("runtime-compiler", relativePath))
         .sort();
       expect(compilerClosure, blueprintRoot).toEqual([...RUNTIME_COMPILER_V1_CLOSURE]);
@@ -1211,6 +1337,23 @@ describe("installed Habitat products", () => {
       expect(await readFile(path.join(installedBlueprintRoot, relativePath)), relativePath).toEqual(
         await readFile(path.join(canonicalBlueprintRoot, relativePath))
       );
+    }
+    for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
+      for (const [relativePath, expectedSha256] of Object.entries(
+        IMMUTABLE_RUNTIME_PREDECESSOR_SHA256
+      )) {
+        expect(await sha256File(path.join(blueprintRoot, relativePath)), relativePath).toBe(
+          expectedSha256
+        );
+      }
+      for (const { id, version } of RUNTIME_POLICY_SUCCESSORS) {
+        const successorRoot = path.join(blueprintRoot, id, "versions", String(version));
+        expect(await listFiles(successorRoot), successorRoot).toEqual([
+          "blueprint.toml",
+          "skill.md",
+          "structure.toml",
+        ]);
+      }
     }
     for (const closure of Object.values(RUNTIME_DEFINITION_CLOSURES)) {
       for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
@@ -1506,9 +1649,19 @@ describe("installed Habitat products", () => {
         version: 1,
       },
       {
+        id: "runtime-bootgraph",
+        path: "dist/blueprints/runtime-bootgraph/versions/2/blueprint.toml",
+        version: 2,
+      },
+      {
         id: "runtime-compiler",
         path: "dist/blueprints/runtime-compiler/blueprint.toml",
         version: 1,
+      },
+      {
+        id: "runtime-compiler",
+        path: "dist/blueprints/runtime-compiler/versions/2/blueprint.toml",
+        version: 2,
       },
       {
         id: "runtime-definition",
@@ -1521,6 +1674,11 @@ describe("installed Habitat products", () => {
         version: 2,
       },
       {
+        id: "runtime-definition",
+        path: "dist/blueprints/runtime-definition/versions/3/blueprint.toml",
+        version: 3,
+      },
+      {
         id: "runtime-derivation",
         path: "dist/blueprints/runtime-derivation/blueprint.toml",
         version: 1,
@@ -1529,6 +1687,11 @@ describe("installed Habitat products", () => {
         id: "runtime-derivation",
         path: "dist/blueprints/runtime-derivation/versions/2/blueprint.toml",
         version: 2,
+      },
+      {
+        id: "runtime-derivation",
+        path: "dist/blueprints/runtime-derivation/versions/3/blueprint.toml",
+        version: 3,
       },
       { id: "service", path: "dist/blueprints/service/blueprint.toml", version: 1 },
       {
@@ -4112,6 +4275,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
     ...runtimeCompilerAcceptanceFiles(),
     ...runtimeDefinitionAcceptanceFiles(),
     ...runtimeDerivationAcceptanceFiles(),
+    ...runtimePolicySuccessorAcceptanceFiles(),
     "tools/hook-check/project.json": `${JSON.stringify(
       {
         name: "@fixture/hook-check",
@@ -4399,6 +4563,63 @@ project = "packages/root-pattern-acceptance"
 
 [selections]
 `;
+}
+
+function runtimePolicySuccessorAcceptanceFiles(): Readonly<Record<string, string>> {
+  return Object.fromEntries(
+    RUNTIME_POLICY_SUCCESSORS.flatMap(({ id, version }) => {
+      const fixtureId = `${id}-successor-acceptance`;
+      const root = `packages/${fixtureId}`;
+      return Object.entries({
+        [`${root}/AGENTS.md`]: `# ${id} Successor Acceptance Fixture\n`,
+        [`${root}/habitat.toml`]: `schemaVersion = 1
+id = "${fixtureId}"
+ownerProject = "@fixture/${fixtureId}"
+blueprint = "${id}"
+blueprintVersion = ${version}
+
+[roots]
+project = "${root}"
+
+[selections]
+`,
+        [`${root}/project.json`]: `${JSON.stringify(
+          {
+            name: `@fixture/${fixtureId}`,
+            projectType: "library",
+            root,
+            sourceRoot: `${root}/src`,
+            tags: ["type:runtime", `role:${id}-acceptance`],
+          },
+          null,
+          2
+        )}\n`,
+        [`${root}/tsconfig.json`]: `${JSON.stringify(
+          {
+            extends: "../../tsconfig.base.json",
+            compilerOptions: { noEmit: true },
+            include: ["src/**/*.ts", "test/**/*.ts"],
+          },
+          null,
+          2
+        )}\n`,
+        [`${root}/tsconfig.test.json`]: `${JSON.stringify(
+          { extends: "./tsconfig.json", include: ["test/**/*.ts"] },
+          null,
+          2
+        )}\n`,
+        [`${root}/tsdown.config.ts`]: 'export default { entry: ["src/index.ts"] };\n',
+        [`${root}/src/index.ts`]: 'export { selectedIdentity } from "./selection/identity";\n',
+        [`${root}/src/selection/identity.ts`]:
+          'export { selectedIdentity } from "./ordering/identity-order";\n',
+        [`${root}/src/selection/ordering/identity-order.ts`]:
+          'export const selectedIdentity = "fixture";\n',
+        [`${root}/test/support/selection-fixture.ts`]: "export {};\n",
+        [`${root}/test/support/selection-fixture.typecheck.ts`]: "export {};\n",
+        [`${root}/test/behavior/selection/identity.test.ts`]: "export {};\n",
+      });
+    })
+  );
 }
 
 function runtimeBootgraphAcceptanceFiles(): Readonly<Record<string, string>> {

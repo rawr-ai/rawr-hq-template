@@ -91,17 +91,15 @@ cannot duplicate, weaken, or replace generic kind law.
 
 ## Current Realization
 
-The accepted protocol-1 SDK pack contains sixteen sorted members: `app@1`,
-`package@1`, `plugin@1`,
-`plugin-nx@1`, `provider@1`, `resource@1`, `resource@2`,
-`runtime-bootgraph@1`, `runtime-compiler@1`, `runtime-definition@1`,
-`runtime-definition@2`, `runtime-derivation@1`, `runtime-derivation@2`,
-`service@1`, `service@2`, and `service@3`. Existing version-1 members remain
+The protocol-1 SDK pack's current sorted member inventory is declared in
+[its manifest](../packages/core/sdk/habitat-pack.json). Existing versions remain
 immutable for exact existing selections. `runtime-definition@1` preserves the
 original cold private owner.
 `runtime-definition@2` independently closes the provider-plan authoring owner
 and its behavior proofs without inheritance, fallback, or cross-version asset
-traversal; neither version creates `app@2`, a live runtime, or a native host.
+traversal. The selected `runtime-definition@3` independently preserves that
+cold contract with closed owner-local TypeScript helper and proof
+subdirectories. None creates `app@2`, a live runtime, or a native host.
 The version-2 resource and service definitions are complete acquisition
 successors with the same semantic law and structure, narrower declared
 `rootPatterns`, and their own recursive package closure and installed-consumer
@@ -111,13 +109,16 @@ gate.
 `runtime-derivation@1` preserves the immutable topology-only predecessor.
 `runtime-derivation@2` independently closes the complete private runtime-
 derivation owner and its behavior proofs; it neither inherits nor traverses
-the version-1 closure.
-`runtime-bootgraph@1` closes the exact private package-less lifecycle-ordering
-structure. Its SDK carriage is policy-asset assembly only: it bundles no
+the version-1 closure. The selected `runtime-derivation@3` preserves those
+contracts with a closed owner-local TypeScript helper and proof grammar.
+`runtime-bootgraph@1` remains the immutable original package-less ordering
+closure; the selected complete `runtime-bootgraph@2` admits private helper and
+proof subdirectories. SDK carriage is policy-asset assembly only: it bundles no
 bootgraph implementation and creates neither an SDK-to-bootgraph source/build
 edge nor a public bootgraph face.
-`runtime-compiler@1` closes the exact private package-less compiler structure.
-Its SDK carriage is policy-asset assembly only: it bundles no compiler
+`runtime-compiler@1` remains the immutable original package-less compiler
+closure; the selected complete `runtime-compiler@2` admits private helper and
+proof subdirectories. SDK carriage is policy-asset assembly only: it bundles no compiler
 implementation and creates neither an SDK-to-compiler source/build edge nor a
 public compiler face.
 `service@3` preserves the complete version-2 service shape and acquisition but
