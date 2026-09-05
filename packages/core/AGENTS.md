@@ -55,6 +55,7 @@
 - [Private Effect substrate owner](runtime/substrate/effect/AGENTS.md)
 - [Private process runtime owner](runtime/process-runtime/AGENTS.md)
 - [Private native harness owner](runtime/harnesses/AGENTS.md)
+- [Private observation owner](runtime/observation/AGENTS.md)
 
 ## Validation
 

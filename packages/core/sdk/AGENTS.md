@@ -65,6 +65,9 @@
   companion contract types, including bounded process access and definition-owned
   launch identity. It exports no live values, private mounting handles, host
   imports, registration singleton, or lifecycle controller.
+- `@habitat-ai/sdk/runtime/observation` exposes only diagnostic, catalog,
+  topology and telemetry contract types. It exports no collector factory,
+  observation port implementation, storage, native sink or control surface.
 - Runtime compiler definitions are transported only as policy-pack closures.
   The SDK exposes no compiler JavaScript or declaration face and has no
   production composition dependency until task 10.6. SDK-owned task 7 integration
@@ -163,7 +166,7 @@
   modifying the canonical authoring source. Exact producer definitions resolve
   as inert duplicates of the package authority; drift at the same identity is
   rejected.
-- The copied and hashed build-input inventory contains fourteen blueprint
+- The copied and hashed build-input inventory contains fifteen blueprint
   directories and the manifest-listed inputs. Compiler, bootgraph, process runtime and Effect substrate
   policy assets do not add production entrypoints. SDK integration tests use
   their real source operations; production startApp composition waits for 10.6.
@@ -187,6 +190,7 @@
   `@habitat-ai/sdk/runtime/providers/effect`.
 - Public complete runtime derivation: `@habitat-ai/sdk/runtime/derivation`.
 - Public type-only companion contract: `@habitat-ai/sdk/runtime/harnesses`.
+- Public type-only read models: `@habitat-ai/sdk/runtime/observation`.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and
   `@habitat-ai/sdk/blueprints/*`.
@@ -207,6 +211,7 @@
 - [[../runtime/substrate/effect/AGENTS|Private Effect provisioning owner]]
 - [[../runtime/process-runtime/AGENTS|Private service binding and execution owner]]
 - [[../runtime/harnesses/AGENTS|Private native harness contract owner]]
+- [[../runtime/observation/AGENTS|Private observation owner]]
 
 ## Validation
 

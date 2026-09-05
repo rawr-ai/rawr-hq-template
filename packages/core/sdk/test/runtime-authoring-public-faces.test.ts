@@ -69,6 +69,7 @@ const expectedRuntimeExports = [
   "./execution",
   "./runtime/derivation",
   "./runtime/harnesses",
+  "./runtime/observation",
   "./runtime/profiles",
   "./runtime/providers",
   "./runtime/providers/effect",
@@ -127,6 +128,7 @@ const expectedPluginExports = [
 describe("runtime authoring public faces", () => {
   test("imports the companion harness contract without live values", async () => {
     expect(Object.keys(await import("../src/runtime/harnesses"))).toEqual([]);
+    expect(Object.keys(await import("../src/runtime/observation"))).toEqual([]);
   });
   test("projects the exact cold tool/background authoring families without native hosts", async () => {
     const agent = await import("../src/plugins/agent");
@@ -274,6 +276,11 @@ describe("runtime authoring public faces", () => {
       types: "./dist/runtime/harnesses/index.d.ts",
       import: "./dist/runtime/harnesses/index.js",
       default: "./dist/runtime/harnesses/index.js",
+    });
+    expect(packageJson.exports["./runtime/observation"]).toEqual({
+      types: "./dist/runtime/observation/index.d.ts",
+      import: "./dist/runtime/observation/index.js",
+      default: "./dist/runtime/observation/index.js",
     });
   });
 

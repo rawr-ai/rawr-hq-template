@@ -30,8 +30,12 @@ full repository CI, installed SDK behavior/types and native adapter-law proof
 pass. PR 1011 also passes required and Linux/Windows installed checks.
 Tasks 10.2-10.4 now pass independent review, full repository CI, the real
 loopback HTTP handoff proof and all nine installed SDK/CLI tests on their child.
-The predecessor stack still awaits native Graphite merge; no candidate is
-claimed merged or released.
+Graphite has merged PRs 1008-1011; exact main
+`57557acfb6a3f94e05195d541c3be1677f121cbe` passes Repository Ratchet 33950917970.
+Handoff PR 1012 remains a submitted child; task 10.5 is independently reviewed
+and locally accepted on its child, including full CI, installed SDK/CLI and
+native law acceptance.
+No package release or consumer acceptance is claimed.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
 It has no live Effect provisioning, process binding, generic harness owner,
@@ -40,7 +44,7 @@ previous target in named-instance mapping, profile coverage, constructor
 handoff, compiler normalization and Proxy admission. The Unicode and DAG work
 defects also existed at that baseline. The current isolated candidate repairs
 those cold-pipeline gaps with composed review, bootgraph and packed SDK checks.
-It is not yet merged or released.
+Those corrections are now merged; they are not yet published as a package release.
 
 Released 0.5.15 provides foundation/service law. Current main's added runtime
 faces have not thereby been published. Installed local candidate proof,
@@ -48,11 +52,11 @@ public release and consumer acceptance remain separate states.
 
 ## Current Boundary
 
-Admit the green predecessor stack through PR 1011 without making its merge
-depend on unfinished mounting or observation. Tasks 10.2-10.4 form a complete,
-independently committable harness-contract and mount-ready handoff story.
-Proceed to task 10.5's non-authorizing observation owner, then complete
-process-local mounting and its terminal SDK composition in 10.6/10.7.
+Task 10.5 has completed the non-authorizing observation owner and real seeded
+catalog/telemetry projection. Tasks 10.2-10.4 are submitted in PR 1012 and remain
+independent of this child. Next: complete process-local mounting and its terminal
+SDK composition in 10.6/10.7. Sweep the merged predecessors once this working
+child is clean, then target only the kept child for restacking.
 The verified binding story uses official oRPC beta.32 native clients and Effect
 beta.101, preserving actual request and stream settlement before resource
 release. No community bridge, replacement interpreter or second service runner

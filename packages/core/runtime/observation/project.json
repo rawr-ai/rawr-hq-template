@@ -1,0 +1,31 @@
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "runtime-observation",
+  "root": "packages/core/runtime/observation",
+  "sourceRoot": "packages/core/runtime/observation/src",
+  "projectType": "library",
+  "tags": ["type:runtime", "capability:habitat", "role:runtime-observation"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bunx tsc -p packages/core/runtime/observation/tsconfig.json --noEmit",
+          "bunx tsc -p packages/core/runtime/observation/tsconfig.test.json --noEmit"
+        ]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "parallelism": false,
+      "options": { "command": "bun test packages/core/runtime/observation/test" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsdown --config packages/core/runtime/observation/tsdown.config.ts"
+      }
+    },
+    "check": { "executor": "nx:noop" }
+  }
+}

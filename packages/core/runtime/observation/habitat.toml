@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-observation"
+ownerProject = "runtime-observation"
+blueprint = "runtime-observation"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/observation"
+
+[selections]

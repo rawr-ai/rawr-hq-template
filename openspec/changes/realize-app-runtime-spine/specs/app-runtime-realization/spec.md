@@ -703,6 +703,21 @@ replace native outcomes or disclose unredacted secrets. Foundational telemetry
 attaches once through runtime/harness ownership with no author-written bootstrap;
 business code may add semantic enrichment without becoming lifecycle owner.
 
+The initial observation-owned seed MUST preserve actual selected topology from
+SDK-adapted compilation data without importing the compiler into observation.
+Unknown port payloads MUST be omitted; supported payloads MUST use fixed safe
+projections. Unobserved acquisition, execution, mounting or finalization MUST
+NOT become successful lifecycle evidence. Detached snapshots and bounded local
+histories MUST retain complete selected topology and report history eviction.
+
+Explicit typed telemetry MUST preserve authored names, phase, boundary and
+finite JSON metadata, with caller-owned semantic redaction. Omitted annotations
+MUST NOT project their values, and product results/errors MUST NOT be appended.
+Malformed metadata or synchronous/asynchronous sink failure MUST NOT prevent
+the callback or replace its exact outcome. Sink records MUST retain full launch
+identity, and span correlation MUST distinguish identical-identity restarts
+without changing the five-field launch identity or creating a global registry.
+
 #### Scenario: Observation fails during startup or stop
 
 - **WHEN** an observation sink fails

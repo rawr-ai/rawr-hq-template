@@ -1,11 +1,12 @@
 # Habitat Runtime Implementation
 
 Status: `active-draft`.
-Branch: `agent-root-habitat-runtime-handoff`, stacked on cold adapters.
+Branch: `agent-root-habitat-runtime-observation`, stacked on the mount-ready handoff.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
 Cold adapters [1011](https://github.com/rawr-ai/rawr-hq-template/pull/1011).
+Harness handoff [1012](https://github.com/rawr-ai/rawr-hq-template/pull/1012).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -60,19 +61,29 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: tasks 10.2-10.4. Add the exact import-safe companion harness
-contract and complete process-owned mount-ready handoff. The harness peer owns
-the new package-less owner and its law; the runtime peer owns preparation and
-non-releasing admission closure; root owns SDK projection, installed/native
-acceptance and integrated proof. The cold peer reviews the composed lifecycle.
-Complete assignment validation and lowering before returning any native mount
-input. Preserve the exact entrypoint identity, required-resource evidence and
-bounded access without carrying raw compiler plans to harnesses. Close new
-executable admission before native stop, but retain cleanup resource access
-until process stop. No production native host, generic mounting controller or
-observation owner is implied by this story. All four predecessor PRs now have
-green required and Linux/Windows installed checks; predecessor admission does
-not acquire a dependency on unfinished mounting or observation work.
+Locally accepted domino: task 10.5. Implement the downstream observation owner, its
+complete diagnostic/catalog/telemetry contracts and actual non-authorizing
+projection. The implementation peer owns the package-less owner and its law;
+the runtime peer owns SDK-composed real provider evidence; root owns public
+type projection, graph/pack/native acceptance and integration. The cold peer
+reviews truthfulness, redaction and failure isolation.
+
+The observation-owned initial seed contains complete selected topology adapted
+by the SDK from real compilation outputs. Known topology is not empty merely
+because execution has not begun; live execution/mount/stop histories remain
+unobserved until actual admitted records arrive. Fixed safe payload projections
+and omission of unsupported payloads precede any future configurable redaction
+or storage system. Use immutable snapshots and bounded process-local histories
+with visible dropped counts, not an unbounded event ledger. Publication and
+telemetry sink failures cannot alter product results or runtime authority.
+
+Handoff PR 1012 is locally accepted and submitted. Graphite's one native merge
+job completed PRs 1008-1011. Exact main
+`57557acfb6a3f94e05195d541c3be1677f121cbe` passed Repository Ratchet 33950917970.
+The single preservation-safe sweep waits for this active child to be clean;
+it is not another per-branch merge loop. The occupied Fluree worktree protects
+its unpublished local head from Graphite 1.8.6 sync; all other held remote/local
+heads match, and no held PR has become closed/merged.
 
 The owner's September 4 continuation delegates scope, execution and stopping
 point, requests perspective-specific standing peer review, and authorizes
@@ -166,6 +177,13 @@ sync; required checks and exact-main receipts remain separate proof.
 `gt upgrade --no-interactive` confirms the installed CLI is current at 1.8.6.
 
 ## Current State
+
+The cold pipeline, bootgraph simplification, native acquisition, service
+binding/execution and cold adapters are now landed through PRs 1008-1011 on
+the exact accepted main above. Graphite automatically updated the submitted
+handoff child's remote base. This is source admission, not a package release
+or consumer acceptance. Earlier candidate receipts below retain their original
+meaning and revision.
 
 Cold pipeline and bootgraph source have passed independent review with no
 remaining P1/P2. Packed SDK/CLI installed acceptance passed all nine tests,
@@ -606,6 +624,33 @@ strict OpenSpec and diff checks pass. Earlier full/installed attempts exposed
 two stale SDK export inventory assertions, both repaired before acceptance.
 The four predecessor PRs are green, not yet merged. Next: native stack admission,
 then the non-authorizing observation projection and process-local mounting.
+
+### Observation Projection
+
+Task 10.5 is locally accepted after independent review with no remaining P1/P2.
+The private owner and type-only SDK face expose a real selected-topology catalog,
+bounded immutable histories and meaningful explicit telemetry. The SDK fixture
+derives its seed through actual compilation, provisioning and mount preparation;
+a real native release defect supplies the admitted finalization record. Phases
+not yet wired remain explicitly unobserved, not invented successful history.
+
+Review removed unnecessary identifier/copy quotas and a blanket Effect-import
+ban. It also repaired two opposite telemetry mistakes: stripping all authored
+metadata made the API useless, while correlating only by process ID or a local
+span counter conflated launches. Records now preserve explicitly authored safe
+data with detached full launch identity and unique span IDs. Unknown provider
+payloads remain closed and redacted; sink failures cannot replace results or
+errors, and application results/errors are never exported automatically.
+
+Verification: full repository CI passes 138 tasks (63 cache hits); all nine
+installed SDK/CLI tests pass (155.77 seconds); uncached product-separation and
+three native owner-law tests pass 11 tests/83 assertions. Observation behavior
+passes 11 tests/101 assertions, the isolated cache test passes 11 assertions,
+and four real SDK composition tests pass. Strict OpenSpec validation and diff
+checks pass. Next: preserve the clean candidate, sweep the four actually merged
+predecessors once, then implement 10.6/10.7's complete process-local mounting
+and terminal SDK startup. These receipts do not claim a package release, native
+host qualification, or collector persistence/query acceptance.
 
 ### Backend Receipt Reuse
 

@@ -50,6 +50,7 @@ const EXPECTED_PROJECT_ROOTS = {
   "runtime-definition": "packages/core/runtime/definition",
   "runtime-derivation": "packages/core/runtime/derivation",
   "runtime-harnesses": "packages/core/runtime/harnesses",
+  "runtime-observation": "packages/core/runtime/observation",
   "runtime-process-runtime": "packages/core/runtime/process-runtime",
   "runtime-schema": "packages/core/runtime/schema",
   "runtime-substrate-effect": "packages/core/runtime/substrate/effect",
@@ -77,6 +78,7 @@ const EXPECTED_SDK_DEPENDENCIES = [
   "runtime-definition",
   "runtime-derivation",
   "runtime-harnesses",
+  "runtime-observation",
   "runtime-process-runtime",
   "runtime-schema",
   "runtime-substrate-effect",
@@ -579,6 +581,12 @@ describe("cumulative product-separation absence", () => {
         .sort()
     ).toEqual(["runtime-compiler", "runtime-definition", "runtime-process-runtime"]);
     expect(
+      (graph.dependencies["runtime-observation"] ?? [])
+        .map(({ target }) => target)
+        .filter((target) => target in graph.nodes)
+        .sort()
+    ).toEqual(["runtime-definition"]);
+    expect(
       (graph.dependencies["runtime-process-runtime"] ?? [])
         .map(({ target }) => target)
         .filter((target) => target in graph.nodes)
@@ -600,6 +608,7 @@ describe("cumulative product-separation absence", () => {
 
     const incomingRuntimeOwners = {
       "runtime-harnesses": ["@habitat-ai/sdk"],
+      "runtime-observation": ["@habitat-ai/sdk"],
       "runtime-process-runtime": ["@habitat-ai/sdk", "runtime-harnesses"],
       "runtime-substrate-effect": ["@habitat-ai/sdk", "runtime-process-runtime"],
       "runtime-definition": [
@@ -609,6 +618,7 @@ describe("cumulative product-separation absence", () => {
         "runtime-compiler",
         "runtime-derivation",
         "runtime-harnesses",
+        "runtime-observation",
         "runtime-process-runtime",
         "runtime-substrate-effect",
       ],

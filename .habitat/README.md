@@ -92,6 +92,9 @@ Its complete v2 adds the narrow adapter import law without changing v1.
 The complete `runtime-harnesses@1` closes the generic package-less native
 contract owner and its import law. The SDK projects only import-safe companion
 types; this member does not qualify a native host or introduce runtime mounting.
+The complete `runtime-observation@1` closes the downstream read-model owner.
+Its law preserves definition-only private dependency direction; the SDK exposes
+only observation contract types, not a collector or runtime controller.
 
 The complete `runtime-substrate-effect@1` member closes the private native
 Effect provisioning owner. Its law carries no public runtime entrypoint.

@@ -97,6 +97,11 @@
       "path": "dist/blueprints/runtime-harnesses/blueprint.toml"
     },
     {
+      "id": "runtime-observation",
+      "version": 1,
+      "path": "dist/blueprints/runtime-observation/blueprint.toml"
+    },
+    {
       "id": "runtime-process-runtime",
       "version": 1,
       "path": "dist/blueprints/runtime-process-runtime/blueprint.toml"
