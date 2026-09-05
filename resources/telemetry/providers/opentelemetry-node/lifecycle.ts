@@ -34,6 +34,8 @@ export interface TelemetryRuntimeLifecycle {
   readonly ownership: GlobalOwnership;
   readonly flushOwners: readonly LifecycleOwner[];
   readonly shutdownOwners: readonly LifecycleOwner[];
+  /** Removes native instrumentation only while its exact global configuration is still owned. */
+  readonly releaseORPC?: () => void;
 }
 
 /** Attempts every flush owner within one absolute monotonic deadline. */
@@ -147,6 +149,11 @@ function resultSnapshot(
 
 /** Synchronously unregisters only this runtime's acquired global slots in reverse order. */
 export function unregisterOwnedGlobals(runtime: TelemetryRuntimeLifecycle): void {
+  try {
+    runtime.releaseORPC?.();
+  } catch {
+    // Instrumentation cleanup must not prevent the remaining owned releases.
+  }
   const releases: readonly [keyof GlobalOwnership, () => void][] = [
     ["logs", () => logs.disable()],
     ["metrics", () => metrics.disable()],

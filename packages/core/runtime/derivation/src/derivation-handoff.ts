@@ -9,6 +9,7 @@ import type {
 import type { RuntimeDerivationResult } from "./derive-runtime-artifacts";
 import type { ExecutionDescriptorRef } from "./execution-descriptor-ref";
 import type { NormalizedAuthoringGraph } from "./normalized-authoring-graph";
+import type { RuntimeServerSource } from "./server-source";
 
 const handoffCarrier = Symbol("habitat.runtime-derivation.handoff");
 
@@ -23,6 +24,7 @@ export interface RuntimeDerivationHandoff {
   readonly services: readonly (readonly [string, ServiceRuntimeExport])[];
   readonly resourceBindings: readonly (readonly [string, string])[];
   readonly resourceReferences: readonly (readonly [string, ResourceRequirement])[];
+  readonly serverSources: readonly (readonly [string, RuntimeServerSource])[];
   readonly executionPolicies: readonly (readonly [ExecutionDescriptorRef, EffectExecutionPolicy])[];
 }
 

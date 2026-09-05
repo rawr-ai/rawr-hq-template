@@ -10,6 +10,7 @@ export type {
   ServerInternalPluginBuilder,
   ServerInternalPluginDefinition,
   ServerInternalPluginInput,
+  ServerPluginContext,
 } from "../../../../runtime/definition/src/plugin";
 export {
   defineServerApiPlugin,

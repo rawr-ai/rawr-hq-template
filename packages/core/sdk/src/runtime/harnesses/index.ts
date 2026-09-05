@@ -24,4 +24,5 @@ export type {
   CliCommandMountRecord,
   DesktopBackgroundMountRecord,
   NativeIntegrationHarness,
+  ServerMountRecord,
 } from "../../app/integrations";

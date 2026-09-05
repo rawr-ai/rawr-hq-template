@@ -35,6 +35,7 @@ export {
   decodePortableRuntimePlanArtifact,
   PortableRuntimePlanArtifactSchema,
 } from "./portable-runtime-plan-artifact";
+export type { RuntimeServerSource } from "./server-source";
 export type { ServiceBindingPlan } from "./service-binding-plan";
 export type { SurfaceRuntimePlan } from "./surface-runtime-plan";
 export type {

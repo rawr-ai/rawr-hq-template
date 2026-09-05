@@ -1,10 +1,12 @@
-import type { AnyRouter } from "@orpc/server";
+import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { AnyRouter, Router } from "@orpc/server";
 
 import type { RuntimeSchema } from "../../schema/src/runtime-schema";
 import type { AppRole } from "./app";
 import type { AsyncStepEffectDescriptor } from "./execution";
+import type { RuntimeResourceMap } from "./provider";
 import type { ResourceRequirement } from "./resource";
-import type { ServiceUses } from "./service";
+import type { ServiceClients, ServiceUses } from "./service";
 
 export interface PluginProjectionInput {
   readonly pluginId: string;
@@ -60,6 +62,13 @@ export function definePlugin<
 }
 
 export type PluginServiceUses = ServiceUses;
+
+/** Native request context contains only this plugin's declared capabilities. */
+export type ServerPluginContext<TServices extends ServiceUses = ServiceUses> = {
+  readonly request: Request;
+  readonly clients: ServiceClients<TServices>;
+  readonly resources: RuntimeResourceMap;
+} & WithEffectContext<never>;
 
 const forbiddenPluginClassificationFields = [
   "id",
@@ -124,7 +133,7 @@ export type ServerApiPluginInput<
 > = LanePluginInput<TCapability, TServices, TResources> & {
   readonly internal?: never;
   readonly routeBase: `/${string}`;
-  readonly api: () => TApi;
+  readonly api: () => TApi & Router<ServerPluginContext<NoInfer<TServices>>>;
 };
 
 export interface ServerApiPluginDefinition<
@@ -147,7 +156,7 @@ export type ServerInternalPluginInput<
   TResources extends readonly ResourceRequirement[] = readonly [],
 > = LanePluginInput<TCapability, TServices, TResources> & {
   readonly routeBase: `/${string}`;
-  readonly internal: () => TRouter;
+  readonly internal: () => TRouter & Router<ServerPluginContext<NoInfer<TServices>>>;
 };
 
 export interface ServerInternalPluginDefinition<

@@ -267,6 +267,28 @@ test("the SDK server Effect face delegates only to the official extension", asyn
   ).toEqual(["packages/core/sdk/src/plugins/server/effect/index.ts"]);
 }, 30_000);
 
+test("native request context type imports do not grant vendor bootstrap authority", async () => {
+  expect(
+    await checkLaw({
+      "erased/packages/core/runtime/definition/src/plugin.ts":
+        'import type { WithEffectContext as Context, EffectWrapOptions } from "@orpc/experimental-effect";',
+      "value/packages/core/runtime/definition/src/plugin.ts":
+        'import { WithEffectContext } from "@orpc/experimental-effect";',
+      "side-effect/packages/core/runtime/definition/src/plugin.ts":
+        'import "@orpc/experimental-effect";',
+      "subpath/packages/core/runtime/definition/src/plugin.ts":
+        'import type { Unknown } from "@orpc/experimental-effect/extensions/effect";',
+      "mixed/packages/core/runtime/definition/src/plugin.ts":
+        'import { type WithEffectContext, handlerGen } from "@orpc/experimental-effect";',
+    })
+  ).toEqual([
+    "mixed/packages/core/runtime/definition/src/plugin.ts",
+    "side-effect/packages/core/runtime/definition/src/plugin.ts",
+    "subpath/packages/core/runtime/definition/src/plugin.ts",
+    "value/packages/core/runtime/definition/src/plugin.ts",
+  ]);
+}, 30_000);
+
 async function checkLaw(files: Readonly<Record<string, string>>): Promise<string[]> {
   const root = await mkdtemp(path.join(tmpdir(), "sdk-server-effect-facade-source-"));
   try {

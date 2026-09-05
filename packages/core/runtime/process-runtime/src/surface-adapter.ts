@@ -1,5 +1,3 @@
-import type { WithEffectContext } from "@orpc/experimental-effect";
-
 import type { CompiledSurfacePlan } from "../../compiler/src/index";
 import type {
   AppRole,
@@ -7,9 +5,11 @@ import type {
   RuntimeResourceMap,
   RuntimeSchema,
 } from "../../definition/src/index";
+import type { RuntimeServerSource } from "../../derivation/src/index";
 import type { ExecutionRegistry } from "./execution-registry";
 import type { ProcessExecutionRuntime } from "./execution-runtime";
 import type { ProcessRuntimeAccess, RoleRuntimeAccess } from "./runtime-access";
+import type { NativeServerRequestAssembly } from "./server-request";
 
 export type BoundServiceBindingMap = Readonly<Record<string, ConstructionBoundServiceClient>>;
 
@@ -47,6 +47,9 @@ export interface SurfaceAdapter<
     readonly resources: RuntimeResourceMap;
     readonly executionRegistry: ExecutionRegistry;
     readonly executionRuntime?: ProcessExecutionRuntime;
-    readonly effectORPCContext?: WithEffectContext<unknown>;
+    readonly nativeServer?: {
+      readonly source: RuntimeServerSource;
+      readonly requests: NativeServerRequestAssembly;
+    };
   }): AdapterLoweringResult<TPayload>;
 }

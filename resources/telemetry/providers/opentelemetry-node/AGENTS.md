@@ -19,8 +19,14 @@
   accounting; and bounded cleanup.
 - Accept explicit provider configuration only. Do not read telemetry
   environment variables or invent localhost endpoints.
-- Do not own process signals, app/profile choice, host instrumentation, product
-  events, backend receipt, Oclif, oRPC, Inngest, EVLog, or Effect context.
+- The enabled global topology also owns the one native oRPC instrumentation
+  configuration under its existing ownership claim. Preserve foreign native
+  configuration and disable only the exact owned binding on release/rollback.
+  This creates no router, host or application selection; cohosted native
+  harnesses never install or disable this global binding independently.
+- Do not own process signals, app/profile choice, host request routing, product
+  events, backend receipt, Oclif, Inngest, EVLog or Effect context. Process-owned
+  Effect decoration uses the existing tracer, never a second provider.
 
 ## Behavior
 

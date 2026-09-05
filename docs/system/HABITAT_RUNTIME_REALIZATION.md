@@ -1012,6 +1012,7 @@ Canonical public import surfaces include:
 | `@habitat-ai/sdk/runtime/schema` | `RuntimeSchema` facade |
 | `@habitat-ai/sdk/runtime/derivation` | Closed complete-derivation face: one derivation operation, exactly three runtime value exports, and the exact finite type-only contract inventory |
 | `@habitat-ai/sdk/runtime/harnesses` | Import-safe companion harness contracts; no live handle, registry, or lifecycle owner |
+| `@habitat-ai/sdk/runtime/harnesses/elysia` | Cold native Elysia descriptor factory and exact configuration/payload contracts, delegated to the private harness owner |
 | `@habitat-ai/sdk/runtime/observation` | Read-only runtime diagnostic, telemetry, topology-record, and catalog facades |
 
 The provider authoring faces have these exact closed inventories:
@@ -7510,7 +7511,8 @@ do not silently supply a competing finalization setting.
 
 An integration resolves an already-selected harness ID against one implemented
 surface adapter. The initial discriminants are `agent/tools`,
-`desktop/background`, and an explicit empty-payload `none` registration.
+`desktop/background`, `cli/commands`, `server/api`, `server/internal`, and an
+explicit empty-payload `none` registration.
 Registrations cannot select processes, roles, providers or new surface plans.
 Before acquisition, refuse duplicate surface/harness pairs, conflicting descriptor
 objects under one ID, uncovered selected surfaces, missing selected harnesses,
@@ -7565,6 +7567,34 @@ alone projects the admitted records.
 ### 21.1 Elysia harness
 
 Placement: `packages/core/runtime/harnesses/elysia`.
+
+The native companion face `@habitat-ai/sdk/runtime/harnesses/elysia` exposes
+`createElysiaHarness` and its exact configuration/payload types. The generic
+`runtime/harnesses` face remains type-only. Factory creation is cold: Elysia
+1.4.30 is an optional peer of the distributing SDK, conditionally imported
+inside the selected native mount. The SDK delegates this factory and defines
+no host-selection enum, registry, native implementation or live-handle accessor.
+
+Configuration explicitly supplies the selected harness ID, hostname and port;
+when public API payloads are selected, it also supplies one document pathname
+and native OpenAPI information metadata. The document contains exactly the
+selected public API projection; internal RPC contributes nothing to it.
+Native oRPC owns default paths, prefixes, schemas and component construction.
+Document-only contract projection must not replace executable routers or alter
+their native paths. Before listening, refuse conflicting actual method/path
+ownership, including the document endpoint; equal routeBase alone is not a
+collision. Internal classification is not authentication or network isolation.
+
+Exact selected `api`/`internal` factory references and their route bases travel
+through the existing private derivation/compiler handoff, keyed by selected
+surface identity. Derivation and compilation do not invoke these factories.
+Live process lowering invokes them and supplies native handlers with
+process-owned request admission, bounded service clients and official Effect
+context/wrap. The harness never rewalks plugin declarations or receives raw
+process resources or the managed runtime. Reusing the same descriptor object
+for API/internal registrations cohosts both payload sets in one native mount;
+distinct descriptors intentionally replicate their selected surfaces rather
+than implicitly partitioning plugins.
 
 Input: `HarnessMountInput<MountReadySurfaceRuntimeRecord<ElysiaRoutePayload>>`
 carrying mounted server API/internal payloads, server harness config, bounded

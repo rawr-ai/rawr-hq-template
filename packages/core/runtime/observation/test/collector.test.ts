@@ -75,6 +75,95 @@ function release(
   };
 }
 
+test("native server procedure outcomes retain selected identity without inventing execution history", () => {
+  const input = seed();
+  const selected: RuntimeObservationSeed = {
+    ...input,
+    roles: ["server"],
+    surfaces: [{ ...input.surfaces[0]!, role: "server", surface: "server/api" }],
+  };
+  const events: RuntimeTelemetryRecord[] = [];
+  const observer = createRuntimeObservation({
+    seed: selected,
+    historyLimit: 2,
+    sink: {
+      publish(record) {
+        events.push(record);
+      },
+    },
+  });
+  const envelope: RuntimeObservationRecord = {
+    kind: "server.procedure.settled",
+    phase: "observation",
+    boundary: "runtime-process-runtime",
+    correlationId: "process",
+    payload: {
+      identity: input.identity,
+      surfacePlanId: "surface",
+      path: ["nested", "read"],
+      outcome: "rejected",
+      nativeEffect: { typedFailure: true, defect: false, interrupted: false },
+      errorCode: "FORBIDDEN",
+      traceId: "1234567890abcdef1234567890abcdef",
+    },
+  };
+  observer.port.publish(envelope);
+  expect(observer.snapshot().diagnostics[0]).toMatchObject({
+    code: "server.procedure.settled",
+    severity: "warning",
+    boundary: "process-runtime",
+  });
+  expect(events[0]?.payload).toMatchObject({ path: ["nested", "read"], errorCode: "FORBIDDEN" });
+  expect(observer.snapshot().executionRecords).toEqual([]);
+  expect(observer.snapshot().lifecycleStatus.execution).toBe("unobserved");
+  let reads = 0;
+  const payload = envelope.payload as Record<string, unknown>;
+  for (const changed of [
+    { ...payload, identity: { ...input.identity, deployment: "foreign" } },
+    { ...payload, surfacePlanId: "unselected" },
+    {
+      ...payload,
+      get output() {
+        reads++;
+        return "secret-output";
+      },
+    },
+    {
+      ...payload,
+      path: [
+        Object.defineProperty({}, "secret", {
+          get() {
+            reads++;
+            return "secret";
+          },
+          enumerable: true,
+        }),
+      ],
+    },
+  ])
+    observer.port.publish({ ...envelope, payload: changed });
+  const snapshot = observer.snapshot();
+  expect(reads).toBe(0);
+  expect(snapshot.diagnostics.map((record) => record.code)).toEqual([
+    "observation.unsupported",
+    "observation.unsupported",
+  ]);
+  expect(snapshot.retention).toEqual({ limit: 2, dropped: 3 });
+  expect(events).toHaveLength(1);
+  expect(JSON.stringify(snapshot)).not.toContain("secret");
+  expect(Object.isFrozen(events[0]?.payload)).toBe(true);
+  const throwing = createRuntimeObservation({
+    seed: selected,
+    sink: {
+      publish() {
+        throw Error("sink");
+      },
+    },
+  });
+  expect(() => throwing.port.publish(envelope)).not.toThrow();
+  expect(throwing.snapshot().diagnostics[0]?.code).toBe("server.procedure.settled");
+});
+
 test("detaches complete selected topology without inventing future lifecycle evidence", () => {
   const input = seed();
   const observer = createRuntimeObservation({ seed: input });

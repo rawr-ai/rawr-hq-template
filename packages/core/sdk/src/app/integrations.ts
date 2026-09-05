@@ -8,7 +8,10 @@ import type {
 import {
   createAgentToolsAdapter,
   createDesktopBackgroundAdapter,
+  createElysiaApiAdapter,
+  createElysiaInternalAdapter,
   createOclifAdapter,
+  type ElysiaRoutePayload,
   type LoweredAgentTool,
   type LoweredCliCommand,
   type LoweredDesktopBackground,
@@ -18,6 +21,7 @@ import {
 
 export type AgentToolMountRecord = MountReadySurfaceRuntimeRecord<readonly LoweredAgentTool[]>;
 export type CliCommandMountRecord = MountReadySurfaceRuntimeRecord<readonly LoweredCliCommand[]>;
+export type ServerMountRecord = MountReadySurfaceRuntimeRecord<ElysiaRoutePayload>;
 export type DesktopBackgroundMountRecord = MountReadySurfaceRuntimeRecord<
   readonly LoweredDesktopBackground[]
 >;
@@ -40,9 +44,15 @@ export type NativeIntegration =
       readonly surface: "desktop/background";
       readonly harness: NativeIntegrationHarness<DesktopBackgroundMountRecord>;
     }
+  | {
+      readonly surface: "server/api" | "server/internal";
+      readonly harness: NativeIntegrationHarness<ServerMountRecord>;
+    }
   | { readonly surface: "none"; readonly harness: NativeIntegrationHarness<never> };
 
-type Payload = readonly (LoweredAgentTool | LoweredDesktopBackground | LoweredCliCommand)[];
+type Payload =
+  | readonly (LoweredAgentTool | LoweredDesktopBackground | LoweredCliCommand)[]
+  | ElysiaRoutePayload;
 type Descriptor = HarnessDescriptor<MountReadySurfaceRuntimeRecord<Payload>>;
 
 /** Resolve the selected IDs before any provider or native host can run. */
@@ -75,7 +85,14 @@ export function resolveIntegrations(
       !harness.roles.some((role: AppRole) => plan.roles.includes(role)) ||
       new Set(harness.roles).size !== harness.roles.length ||
       new Set(harness.surfaces).size !== harness.surfaces.length ||
-      !["agent/tools", "desktop/background", "cli/commands", "none"].includes(surface)
+      ![
+        "agent/tools",
+        "desktop/background",
+        "cli/commands",
+        "server/api",
+        "server/internal",
+        "none",
+      ].includes(surface)
     )
       throw new TypeError("Native integration does not match the selected process.");
     const previous = identities.get(harness.id);
@@ -105,7 +122,13 @@ export function resolveIntegrations(
       continue;
     }
     const role =
-      surface === "agent/tools" ? "agent" : surface === "cli/commands" ? "cli" : "desktop";
+      surface === "agent/tools"
+        ? "agent"
+        : surface === "cli/commands"
+          ? "cli"
+          : surface === "desktop/background"
+            ? "desktop"
+            : "server";
     if (!harness.roles.includes(role) || !harness.surfaces.includes(surface))
       throw new TypeError("Native integration does not support its surface.");
     const matching = plan.surfaces.filter((item) => item.surface === surface && item.role === role);
@@ -115,7 +138,11 @@ export function resolveIntegrations(
         ? createAgentToolsAdapter({ harness: harness.id })
         : surface === "cli/commands"
           ? createOclifAdapter({ harness: harness.id })
-          : createDesktopBackgroundAdapter({ harness: harness.id });
+          : surface === "server/api"
+            ? createElysiaApiAdapter({ harness: harness.id })
+            : surface === "server/internal"
+              ? createElysiaInternalAdapter({ harness: harness.id })
+              : createDesktopBackgroundAdapter({ harness: harness.id });
     for (const item of matching) {
       assignments.push({ surface: item, adapter });
       covered.add(item.surfacePlanId);

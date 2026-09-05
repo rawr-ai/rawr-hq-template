@@ -72,6 +72,7 @@ export async function startApp(
     compilation,
     provisioned,
     descriptorTable: derivation.executionDescriptorTable,
+    observation: observation.port,
   });
   publish("binding.ready", "provisioning");
   const process = await Promise.resolve()

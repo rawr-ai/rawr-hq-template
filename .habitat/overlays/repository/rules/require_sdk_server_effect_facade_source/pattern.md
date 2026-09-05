@@ -8,8 +8,9 @@ The terminal SDK exposes one side-effect-only server Effect bootstrap. That
 facade is exactly one bare static import of the official Effect-oRPC extension
 plus an empty export, and owns no helper, runner, adapter, or alternate
 execution path. The remaining server authoring face and the runtime plugin
-definition must not reach the vendor package, execute Effect directly, or
-import `ManagedRuntime`.
+definition must not load the vendor package, execute Effect directly, or
+import `ManagedRuntime`. Erased named type imports from the native bridge root
+are admitted for request context; they install no extension and own no runner.
 
 Grit owns the authored source closure. TypeScript owns module augmentation and
 the build owns emitted artifact assembly. Behavior proof owns the observable
@@ -82,16 +83,17 @@ or {
       $program <: `import "@orpc/experimental-effect/extensions/effect"; export {};`
     }
   },
-  // Outside the facade, every static or runtime vendor-package reach-through is forbidden.
+  // Outside the facade, vendor loading is forbidden; erased root contract types are inert.
   or {
     import_statement(source=$source),
     export_statement(source=$source) where { $source <: string() },
     `import($source)`,
     `require($source)`
-  } where {
+  } as $reach where {
     require_sdk_server_effect_facade_source_is_guarded_source(),
     not { require_sdk_server_effect_facade_source_is_facade() },
-    require_sdk_server_effect_facade_source_is_vendor_source(source=$source)
+    require_sdk_server_effect_facade_source_is_vendor_source(source=$source),
+    not { $reach <: `import type { $... } from "@orpc/experimental-effect"` }
   },
   // The cold authoring and definition faces must not load the bootstrap facade.
   or {
@@ -179,4 +181,19 @@ export const implementEffect = handlerGen;
 // @filename: packages/core/sdk/src/plugins/server/effect/index.ts
 import "@orpc/experimental-effect/extensions/effect";
 export {};
+```
+
+## Ignores Erased Native Context Types
+
+```typescript
+// @filename: packages/core/runtime/definition/src/plugin.ts
+import type { WithEffectContext } from "@orpc/experimental-effect";
+export type ServerContext = WithEffectContext<never>;
+```
+
+## Matches A Value Import Masquerading As A Contract
+
+```typescript
+// @filename: packages/core/runtime/definition/src/plugin.ts
+import { WithEffectContext } from "@orpc/experimental-effect";
 ```

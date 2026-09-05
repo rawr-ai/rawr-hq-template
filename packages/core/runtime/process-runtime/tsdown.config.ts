@@ -17,9 +17,12 @@ export default defineConfig({
       ],
     },
     onlyImport: [
+      "@effect/opentelemetry",
+      "@opentelemetry/api",
       "@orpc/client",
       "@orpc/contract",
       "@orpc/experimental-effect",
+      "@orpc/openapi",
       "@orpc/server",
       "@orpc/shared",
       "@standard-schema/spec",

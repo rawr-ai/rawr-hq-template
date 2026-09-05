@@ -226,6 +226,19 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
   const providers = tupleIndex(handoff.providers, "provider reference entries");
   const services = tupleIndex(handoff.services, "service reference entries");
   const resourceBindings = tupleIndex(handoff.resourceBindings, "resource binding entries");
+  const serverSources = tupleIndex(handoff.serverSources, "native server source entries");
+  for (const [id, source] of serverSources) {
+    const surface = required(surfaces, id, "native server source surface");
+    if (
+      surface.role !== "server" ||
+      surface.surface !== source.kind ||
+      !["server/api", "server/internal"].includes(source.kind) ||
+      typeof source.routeBase !== "string" ||
+      !source.routeBase.startsWith("/") ||
+      typeof source.createRouter !== "function"
+    )
+      refuse("native server source agreement");
+  }
   sortedUnique(graph.executionDescriptorRefs, executionDescriptorRefTuple, "execution refs");
   sortedUnique(graph.webRouteModuleRefs, (ref) => [ref.ownerId, ref.routeId, ref.path], "web refs");
   sortedUnique(
@@ -693,6 +706,7 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
     providers: handoff.providers,
     services: handoff.services,
     resources: handoff.resourceReferences,
+    serverSources: handoff.serverSources,
   });
   return Object.freeze({ plan, references, observationSeed });
 }
