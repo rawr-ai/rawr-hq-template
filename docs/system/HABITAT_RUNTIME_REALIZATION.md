@@ -3538,40 +3538,53 @@ wildcard-includes Rawr or other downstream topic trees.
 
 File: `plugins/cli/topics/work-items/commands/create.ts`  
 Layer: Rawr reference CLI command Effect authoring  
-Exactness: normative for `defineCommand(...).effect(function*)`, invocation-bound service client creation, and service invocation lane separation; illustrative for command body.
+Exactness: normative for native Oclif Args/Flags authoring, one cold Effect body,
+invocation-bound service clients and service invocation lane separation;
+illustrative for command body and downstream service contract.
 
 ```ts
-import { defineCommand } from "@habitat-ai/sdk/plugins/cli/effect";
-import { cliSchema } from "@habitat-ai/sdk/plugins/cli/schema";
+import { createOclifCommand, type OclifCommandContext } from "@habitat-ai/sdk/plugins/cli/oclif";
+import { Args, Flags } from "@oclif/core";
+import type { services } from "../services";
 
-export const CreateWorkItemArgsSchema = cliSchema.object({
-  title: cliSchema.string({ minLength: 1 }),
-  description: cliSchema.optional(cliSchema.string()),
-});
+const args = { title: Args.string({ required: true }) };
+const flags = { description: Flags.string() };
 
-export const CreateWorkItemCommand = defineCommand({
-  id: "work-items.create",
-  args: CreateWorkItemArgsSchema,
-
-  effect: function* ({ args, clients, invocation }) {
-    const actor = yield* invocation.requireOperator();
-
-    const workItems = clients.workItems.withInvocation({
-      invocation: {
-        traceId: invocation.traceId,
-        actorId: actor.id,
-      },
-    });
-
+export const CreateWorkItemCommand = createOclifCommand({
+  id: "work-items:create",
+  args,
+  flags,
+  effect: function* (context: OclifCommandContext<typeof args, typeof flags, typeof services>) {
+    // This example selects a service with no authored invocation lane.
+    const workItems = context.clients.workItems.withInvocation({ invocation: undefined });
     return yield* workItems.items.create({
-      title: args.title,
-      description: args.description,
+      title: context.args.title,
+      description: context.flags.description,
     });
   },
 });
 ```
 
 CLI commands do not import repositories, mutate databases directly, or acquire providers.
+
+`defineCliTopicPlugin.factory()` declares exact command membership and its shared
+`services` map. The host-neutral `defineCommand({ id, input, source, effect })`
+in `plugins/cli/effect` retains a RuntimeSchema and opaque native source;
+`plugins/cli/schema` provides native TypeBox aliases. The Oclif companion
+`plugins/cli/oclif` specializes that grammar without another parser or command
+body. It preserves native Args/Flags and metadata, admits the native parsed
+envelope, and optionally presents a successful result through the native Command.
+Its Oclif imports are type-only. The CLI distribution owns actual command
+classes, parsing, discovery, dispatch and lifecycle.
+
+Derivation's nonportable `cliCommandSources` inventory retains each full CLI
+execution ref with its exact source object. Native source-bundle construction
+projects that cold inventory; it does not select again or grant callback
+authority. Mounting must reconcile that inventory with the compiled lowered
+callbacks and exact source identity before native dispatch. Source and installed
+materialization may name different module paths through native Config metadata,
+but cannot change membership, substitute class equivalence for identity, or
+mutate process-global loader settings.
 
 ### 12.9 Agent tool plugin
 
@@ -4590,6 +4603,10 @@ export interface RuntimeDerivationResult extends PrivateDerivationHandoff {
   readonly graph: NormalizedAuthoringGraph;
   readonly executionDescriptorTable: ExecutionDescriptorTable;
   readonly webRouteModuleTable: WebRouteModuleTable;
+  readonly cliCommandSources: readonly {
+    readonly ref: Extract<ExecutionDescriptorRef, { readonly boundary: "plugin.cli-command" }>;
+    readonly source: unknown;
+  }[];
   readonly portableArtifact: PortableRuntimePlanArtifact;
 }
 
@@ -4608,6 +4625,8 @@ freezing does not descend into or invoke those referenced values. It is owned
 by derivation and travels with the library-produced result or an owner-private
 projection of it. Public graph inspection and serialization remain available,
 but a reconstructed graph alone cannot authorize executable compilation.
+The cold CLI discovery inventory similarly retains exact native source references
+without serializing them or granting access to live execution callbacks (§12.8).
 
 Equivalent accepted inputs produce equal public data and canonical table
 snapshots independent of authored collection order, except that config-source

@@ -15,11 +15,13 @@ export type {
 } from "../../../../runtime/harnesses/src/index";
 export type {
   LoweredAgentTool,
+  LoweredCliCommand,
   LoweredDesktopBackground,
   MountReadySurfaceRuntimeRecord,
 } from "../../../../runtime/process-runtime/src/index";
 export type {
   AgentToolMountRecord,
+  CliCommandMountRecord,
   DesktopBackgroundMountRecord,
   NativeIntegrationHarness,
 } from "../../app/integrations";

@@ -23,8 +23,8 @@
 - No Rawr command alias or product topic belongs in Habitat.
 - Reserved `web`, `server`, `workflow`, and schedule roots do not become active
   until their generic kind law and first conforming owner co-land.
-- The final generic CLI-topic root and law are task 11.4 work, not task 2.11
-  residue.
+- CLI topics live under `plugins/cli/topics/<topic>` and select the complete
+  `plugin-cli-topic` law. The foundation topic is the first platform owner.
 
 ## Behavior
 

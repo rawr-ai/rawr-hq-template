@@ -1,13 +1,14 @@
 # Habitat Runtime Implementation
 
-Status: `active-draft`.
-Branch: `agent-root-habitat-runtime-mounting`, stacked on observation.
+Status: `active`; Oclif self-host locally accepted, awaiting stack admission.
+Branch: `agent-root-habitat-oclif-self-host`, stacked on accepted mounting.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
 Cold adapters [1011](https://github.com/rawr-ai/rawr-hq-template/pull/1011).
 Harness handoff [1012](https://github.com/rawr-ai/rawr-hq-template/pull/1012).
 Observation [1013](https://github.com/rawr-ai/rawr-hq-template/pull/1013).
+Mounting/startup [1014](https://github.com/rawr-ai/rawr-hq-template/pull/1014).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -62,12 +63,30 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: tasks 10.6/10.7, complete process-local mounting and terminal
-SDK startup. The runtime peer owns mounting, native stop coordination, health
-and its complete owner law. The implementation peer extends observation only
-with actual admitted lifecycle records. Root owns typed per-start native
-integration registration, real SDK composition, native and installed evidence,
-and admission. The cold peer independently reviews the composed contracts.
+Current domino: tasks 11.1-11.5, the complete Habitat Oclif self-host and retained
+Nx-reader cutover. Root owns CLI definition/derivation/adapter wiring, app/topic
+selection and final law; the runtime peer owns native Oclif hosting and built-child
+proof; the implementation peer owns catalog/resource binding and legacy SDK-root
+retirement. The cold peer independently reviews the composed contracts.
+
+Keep native Args/Flags, parsing, command classes, dispatch and external-plugin
+loading. A typed CLI companion creates one SDK command Effect descriptor and
+retains topic-owned native presentation separately from its product result.
+Cold explicit discovery consumes selected public derivation source references;
+live mounting exact-matches them to compiler-selected lowered callbacks. This
+distinguishes static manifest inventory from live authority without a second
+selector or public compiler. Native run, root finally and awaited flush settle
+before stop and native error handling. The Nx reader uses that same bounded
+native path without terminal presentation or process exit, never an escaped client.
+
+The filesystem resource pairs native filesystem capability with its host-compatible
+path semantics. It is not a platform service bag or a separate path lifecycle.
+Git/Grit and filesystem providers capture stateless native capabilities once at
+acquisition; actual operations retain native scoped handle cleanup. Retire SDK
+catalog/provider imports atomically, then bundle those selected private owners
+in the CLI distribution while leaving the public SDK external and singular.
+The catalog's explicit ready-dependency Promise helper remains a permitted
+unmanaged public face; the managed self-host uses only its complete runtime export.
 
 `startApp` consumes the exact entrypoint and requires explicit source inputs,
 finite native integration registrations and `waitForNativeStop` deadline policy.
@@ -704,6 +723,63 @@ Vendor review uses pinned Oclif 4.13.3. Native dispatch/finally/flush/exit and
 static manifest discovery need actual built-child proofs. The catalog's real
 filesystem/path dependency must be supplied explicitly alongside the independent
 source-inventory and rule-evaluation resources, not hidden in service construction.
+
+The first implementation pass exposed a package cycle in putting pure command
+authorship in the CLI distribution while that distribution bundles its selected
+topic. The curated native authoring face instead lives at
+`@habitat-ai/sdk/plugins/cli/oclif`: native Args/Flags types and metadata, one
+Effect body, optional native presentation. It imports Oclif only as types; the
+optional peer does not activate a host. Topics depend on SDK and native Oclif,
+never back on the app that selects them. `@habitat-ai/cli/host` owns the one
+native loader, source bundle and lifecycle, not command authorship.
+
+Cold derivation retains exact CLI native source objects alongside full execution
+refs, outside portable artifacts. The live adapter's compiled refs and sources
+must exactly match native discovery before dispatch. Source mode uses Oclif's
+per-Config `pjson` input to name the source command/finally module; installed mode
+uses its static manifest module. No process-global debug, environment or
+transpilation switch is needed. Both modes keep native vendor plugin loading.
+
+Nx receives a bounded catalog-data reader through the same selected native
+process, not an escaped managed client. The native catalog Promise helper stays
+available for external callers supplying ready dependencies, as canonical
+section 11.8 permits; Habitat's managed command bodies do not use it.
+
+Tasks 11.1-11.5, 11.7 and 11.8 now pass their local acceptance. The CLI bundles
+its selected private topic, catalog and providers, keeps the public SDK in one
+external module realm, and resolves package assets by lazy package self-reference
+rather than bundled chunk depth. Installed acceptance caught and repaired the
+chunk-relative template root and nonportable private workspace dependency
+metadata. Native external-plugin acceptance also forces the candidate SDK
+tarball into the CLI's transitive graph and proves exact module resolution.
+
+The first full gate exposed stale derivation inventories, a misplaced official
+Effect extension bootstrap and a missing provider declaration comment. Repairs
+preserve the existing policy: native oRPC installs the extension only in the
+implementation owner, and derivation openly retains its cold CLI source lane.
+No checks were weakened. The final independent boundary review found no P1/P2.
+
+Final verification: `bun run ci` passes 157 tasks (78 cache hits); all nine
+installed SDK/CLI tests pass (179.11 seconds); the seven native runtime cases and
+two real external-plugin lifecycle tests pass. CLI behavior passes 126 tests;
+uncached cumulative separation and native owner-law acceptance passes 16 tests
+with 144 assertions. All immutable app-version asset checks remain intact.
+The native matrix now asserts actual registry, adapter, mounting and harness
+observations in both local and installed children, without inventing execution
+history. Strict OpenSpec validation and diff checks pass. Task 11.6 remains open:
+existing service generators do not substitute for its two new source creators.
+
+The next generator design loop is bounded by pinned Nx 23.1.1 evidence.
+Its native generator stages a virtual Tree, then flushes paths sequentially;
+a real second-path failure leaves the first path published. Replace the inherited
+multi-file atomicity promise with complete validation before staging, exact-byte
+convergence and no publication on generator refusal or dry-run. A native disk
+flush error remains a failure that may leave a written prefix, never a claimed
+rollback or complete result. Do not add a custom filesystem transaction engine.
+Existing topic ownership and explicit command membership supply registration;
+native build generates Oclif manifests. No new Nx project or direct generated
+manifest edit is required. Apply these refinements with the implementing story,
+not by silently treating the old stronger specification as satisfied.
 
 ### Backend Receipt Reuse
 

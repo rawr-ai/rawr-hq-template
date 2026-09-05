@@ -3,7 +3,7 @@
 ## Purpose
 
 - Ship Habitat's public local runtime as one conventional npm SDK.
-- Bundle the private service, resource, provider, runtime-schema, cold
+- Bundle the retained private telemetry, runtime-schema, cold
   runtime-definition, and complete runtime-derivation owners behind isolated
   public surfaces.
 - Transport the repository's generic Habitat blueprint bytes from the canonical
@@ -16,10 +16,10 @@
 
 ## Boundaries
 
-- The public root exports only `createHabitatClientForWorkspace` and
-  `HabitatClient`.
-- `@habitat-ai/sdk/service` exposes only the type-only canonical five-lane
-  service boundary, its disjoint module-context projection, host-neutral
+- The public root is empty. Authoring and terminal operations live on explicit
+  public subpaths; no workspace client compatibility alias remains.
+- `@habitat-ai/sdk/service` exposes cold complete service authoring and the
+  canonical five-lane service boundary, its disjoint module-context projection, host-neutral
   procedure metadata, analytics and observability middleware, and their
   required capability ports. The projection cannot contain `deps`, `scope`,
   `config`, `invocation`, or `provided`; neither context type binds or executes
@@ -36,6 +36,12 @@
   declarations. `@habitat-ai/sdk/plugins/async/effect` adds only the cold async
   step Effect descriptor builder; neither face imports or materializes a native
   async host.
+- `@habitat-ai/sdk/plugins/cli` exposes cold topic membership and service uses;
+  `plugins/cli/effect` owns command Effect descriptors, and `plugins/cli/schema`
+  projects the native schema authoring vocabulary. `plugins/cli/oclif`
+  provides import-safe native authoring helpers with an optional Oclif type peer.
+  The CLI package, not the SDK, owns native discovery,
+  parsing, dispatch, output draining, and host lifecycle.
 - `@habitat-ai/sdk/plugins/web` exposes only the cold web app projection builder
   and route projection contracts. Route-module loaders remain lazy definition
   data and are excluded from serializable projection facts. This face exposes no
@@ -89,22 +95,18 @@
 - Third-party runtime libraries remain ordinary npm dependencies. Inngest is
   absent from dependency, peer, optional, load, and public facade metadata
   until its runtime-harness owner lands.
-- The SDK owns production Node composition, but no controller, package manager,
-  retained store, compatibility export, or public implementation cohort.
+- CLI app composition selects concrete filesystem, source-inventory, and
+  rule-evaluation providers and the catalog service. Those private packages
+  consume public SDK authoring and are not bundled into the SDK. The retained
+  private telemetry source assembly is unchanged.
 - Blueprint assets are copied only at build time. Do not create a second
   tracked blueprint tree below this package.
 
 ## Behavior
 
-- Each client construction resolves one absolute workspace root over the ready
-  Node provider profile and the SDK's packaged policy envelope.
-- `HABITAT_COMMAND_TIMEOUT_MS` retains the production integer range of 1 through
-  600000 milliseconds and defaults to 600000.
-- Production invokes the published JavaScript command entrypoint from the exact
-  pinned `@getgrit/cli` package directly on POSIX so its vendor-owned Node shebang
-  selects the runtime. Windows invokes the same entrypoint through PATH-resolved
-  Node. The vendor command owns native acquisition when a consumer package
-  manager has not run dependency install scripts.
+- Each terminal start realizes one supplied entrypoint and explicit source
+  inputs. CLI workspace paths, environment interpretation, and native tool
+  configuration belong to the CLI app and its selected resource providers.
 - The TypeBox bridge retains TypeBox 1.3.8 as its sole validation authority.
 - [habitat-pack.json](habitat-pack.json) is the closed protocol-1 policy
   envelope and owns its current sorted member inventory. The version-1
@@ -138,8 +140,7 @@
 
 ## Flow
 
-- `src/index.ts` composes the private service and concrete Node providers into
-  the public workspace-bound client. `src/service/index.ts` owns the generic
+- `src/index.ts` exports nothing. `src/service/index.ts` owns the generic
   service authoring surface; `src/service/procedure-context.ts` owns only the
   readonly boundary-lane and disjoint module-projection types; and
   `src/service/schema.ts` separately assembles the private runtime-schema owner.
@@ -163,13 +164,13 @@
   modifying the canonical authoring source. Exact producer definitions resolve
   as inert duplicates of the package authority; drift at the same identity is
   rejected.
-- The copied and hashed build-input inventory contains sixteen blueprint
-  directories and the manifest-listed inputs. Owner policy assets do not create
+- The copied and hashed build-input inventory contains the exact manifest-listed
+  blueprint directories and inputs. Owner policy assets do not create
   additional public implementation entrypoints.
 
 ## Interfaces
 
-- Public runtime: `@habitat-ai/sdk`.
+- Empty package root: `@habitat-ai/sdk`.
 - Public service authoring substrate: `@habitat-ai/sdk/service`.
 - Public service schema adapter: `@habitat-ai/sdk/service/schema`.
 - Public server plugin authoring: `@habitat-ai/sdk/plugins/server` and the
@@ -177,6 +178,9 @@
 - Public host-neutral async authoring: `@habitat-ai/sdk/plugins/async` and
   `@habitat-ai/sdk/plugins/async/effect`.
 - Public cold web projection authoring: `@habitat-ai/sdk/plugins/web`.
+- Public CLI topic authoring: `@habitat-ai/sdk/plugins/cli`,
+  `@habitat-ai/sdk/plugins/cli/effect`, `@habitat-ai/sdk/plugins/cli/schema`,
+  and `@habitat-ai/sdk/plugins/cli/oclif`.
 - Public cold runtime authoring: `@habitat-ai/sdk/app`,
   `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
   `@habitat-ai/sdk/runtime/*` subpaths.
@@ -195,9 +199,6 @@
 ## Routing
 
 - [[../../AGENTS|Packages router]]
-- [[../../../services/catalog/AGENTS|Private Habitat catalog service authority]]
-- [[../../../resources/rule-evaluation/AGENTS|Private rule-evaluation resource]]
-- [[../../../resources/source-inventory/AGENTS|Private source-inventory resource]]
 - [[../../../resources/telemetry/AGENTS|Private telemetry resource]]
 - [[../runtime/schema/AGENTS|Private runtime-schema owner]]
 - [[../runtime/definition/AGENTS|Private runtime-definition owner]]

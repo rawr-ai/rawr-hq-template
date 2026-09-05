@@ -20,6 +20,10 @@
   applicability, retries, fixes, or evidence state.
 - Use Effect Platform Node directly; do not introduce filesystem, command, or
   platform wrappers.
+- The runtime declaration captures stateless native services once in scoped
+  acquisition and explicitly releases no held lease. Evaluation still owns
+  each temporary catalog and subprocess scope. Import SDK authoring publicly;
+  do not embed a second SDK realm or run a terminal inside provider code.
 
 ## Behavior
 

@@ -20,6 +20,9 @@
   state.
 - Preserve the operator's inherited Git configuration and use Effect Platform
   Node directly without filesystem or command wrappers.
+- The runtime provider captures stateless native services once during scoped
+  acquisition. Release is explicitly a no-op; each observation owns its actual
+  native subprocess scope. Never add a nested terminal or ManagedRuntime.
 
 ## Behavior
 

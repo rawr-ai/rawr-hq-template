@@ -8,6 +8,7 @@
         "^production",
         "typescriptRuntime",
         "{workspaceRoot}/.habitat/blueprints/app/**/*",
+        "{workspaceRoot}/.habitat/blueprints/plugin-cli-topic/**/*",
         "{workspaceRoot}/.habitat/blueprints/package/**/*",
         "{workspaceRoot}/.habitat/blueprints/plugin/**/*",
         "{workspaceRoot}/.habitat/blueprints/plugin-nx/**/*",

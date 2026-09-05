@@ -225,6 +225,7 @@ describe("selected cold executable handoff", () => {
     const handoff = readRuntimeDerivationHandoff(result);
     expect(calls).toEqual({ constructor: 0, procedure: 0, provider: 0, effect: 0, loader: 0 });
     expect(Object.keys(result).sort()).toEqual([
+      "cliCommandSources",
       "executionDescriptorTable",
       "graph",
       "portableArtifact",

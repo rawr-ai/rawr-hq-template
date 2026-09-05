@@ -1,12 +1,14 @@
-import { createHabitatClientForWorkspace, type HabitatClient } from "@habitat-ai/sdk";
+import { resolveCatalogForWorkspace } from "./application.js";
 import { createHabitatNxPlugin } from "./nx/projection.js";
-
-const clientForWorkspace = createHabitatClientForWorkspace satisfies (
-  workspaceRoot: string
-) => Promise<HabitatClient>;
+import { cliPackageRoot } from "./product-version.js";
 
 const plugin = createHabitatNxPlugin({
-  clientForWorkspace,
+  resolveForWorkspace: (workspaceRoot) =>
+    resolveCatalogForWorkspace({
+      appRoot: cliPackageRoot(),
+      workspaceRoot,
+      development: import.meta.url.endsWith(".ts"),
+    }),
   runtimeInputs: [
     // The CLI pins its SDK exactly, so the CLI node and lockfile identify the runtime closure.
     { externalDependencies: ["@habitat-ai/cli"] },

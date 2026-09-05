@@ -9,6 +9,11 @@ faces and ready capabilities, not private process assembly or concrete provider
 implementations. The SDK, runtime and resource/provider owners remain outside
 this source subject; Nx acceptance checks their exact current incoming edges.
 Public provider declarations and provider-neutral resource contracts remain legal.
+The admitted Habitat app's direct runtime profile files may import ordinary
+resource-package provider factory faces. Its app@2 selection is checked alongside
+the exact repository project graph. This repository exception does not admit
+unowned app paths, nested profile helpers, relative implementation imports, or
+private runtime owners.
 
 This parser-visible rule covers literal static imports, reexports, dynamic
 imports and require calls. It does not resolve computed specifiers, arbitrary
@@ -45,7 +50,11 @@ or {
   }
 } where {
   require_process_runtime_access_owner_is_consumer(),
-  require_process_runtime_access_owner_is_private_source(source=$source)
+  require_process_runtime_access_owner_is_private_source(source=$source),
+  not {
+    $filename <: r"^(?:.*/)?apps/habitat/runtime/profiles/[^/]+\.ts$",
+    $source <: r"^[\"']@habitat-ai/resource-[^/\"']+/providers/[^\"']+[\"']$"
+  }
 }
 ```
 

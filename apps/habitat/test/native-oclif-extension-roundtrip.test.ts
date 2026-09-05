@@ -96,6 +96,7 @@ beforeAll(async () => {
 
   const cliTarball = await packPackage(cliRoot, `habitat-ai-cli-${cliVersion}.tgz`);
   const sdkTarball = await packPackage(sdkRoot, `habitat-ai-sdk-${sdkVersion}.tgz`);
+  const sdkTarballSpecifier = `file:${path.relative(consumerRoot, sdkTarball)}`;
   extensionTarball = await packPackage(extensionRoot, "fixture-native-oclif-extension-1.0.0.tgz");
   await writeFile(
     path.join(linkConsumerRoot, "package.json"),
@@ -138,7 +139,11 @@ beforeAll(async () => {
         packageManager: "bun@1.3.14",
         dependencies: {
           "@habitat-ai/cli": `file:${path.relative(consumerRoot, cliTarball)}`,
-          "@habitat-ai/sdk": `file:${path.relative(consumerRoot, sdkTarball)}`,
+          "@habitat-ai/sdk": sdkTarballSpecifier,
+        },
+        // The CLI's published-version dependency must use this candidate, not the registry.
+        overrides: {
+          "@habitat-ai/sdk": sdkTarballSpecifier,
         },
       },
       null,
@@ -192,6 +197,14 @@ describe("installed Habitat native Oclif extension lifecycle", () => {
     expect(cliPackage.oclif?.plugins).toEqual(["@oclif/plugin-help", "@oclif/plugin-plugins"]);
 
     const cliRequire = createRequire(path.join(installedCliRoot, "package.json"));
+    const consumerRequire = createRequire(path.join(consumerRoot, "package.json"));
+    const cliSdkEntrypoint = await realpath(
+      cliRequire.resolve("@habitat-ai/sdk/runtime/derivation")
+    );
+    expect(cliSdkEntrypoint).toBe(
+      await realpath(consumerRequire.resolve("@habitat-ai/sdk/runtime/derivation"))
+    );
+    expect(isWithin(installedSdkRoot, cliSdkEntrypoint)).toBe(true);
     const pluginEntrypoint = cliRequire.resolve("@oclif/plugin-plugins");
     const pluginRoot = await realpath(path.dirname(path.dirname(pluginEntrypoint)));
     expect(isWithin(path.join(consumerRoot, "node_modules"), pluginRoot)).toBe(true);
@@ -236,12 +249,12 @@ describe("installed Habitat native Oclif extension lifecycle", () => {
     ]);
     expect(installed, installed.stderr || installed.stdout).toMatchObject({ exitCode: 0 });
     await expectExtension({ type: "user" });
-    await expectExtensionInvocation();
+    await expectExtensionInvocation("user");
 
     const updated = await runHabitat(["plugins", "update"]);
     expect(updated, updated.stderr || updated.stdout).toMatchObject({ exitCode: 0 });
     await expectExtension({ type: "user" });
-    await expectExtensionInvocation();
+    await expectExtensionInvocation("user");
 
     const uninstalled = await runHabitat(["plugins", "uninstall", extensionName]);
     expect(uninstalled, uninstalled.stderr || uninstalled.stdout).toMatchObject({ exitCode: 0 });
@@ -250,7 +263,7 @@ describe("installed Habitat native Oclif extension lifecycle", () => {
     const linked = await runHabitat(["plugins", "link", linkedExtensionRoot, "--no-install"]);
     expect(linked, linked.stderr || linked.stdout).toMatchObject({ exitCode: 0 });
     await expectExtension({ root: linkedExtensionRoot, type: "link" });
-    await expectExtensionInvocation();
+    await expectExtensionInvocation("link");
 
     const reset = await runHabitat(["plugins", "reset"]);
     expect(reset, reset.stderr || reset.stdout).toMatchObject({ exitCode: 0 });
@@ -289,13 +302,24 @@ async function expectExtension(input: { readonly root?: string; readonly type: "
   ]);
 }
 
-async function expectExtensionInvocation(): Promise<void> {
+async function expectExtensionInvocation(type: "link" | "user"): Promise<void> {
   const invoked = await runHabitat([extensionCommand]);
-  expect(invoked, invoked.stderr || invoked.stdout).toEqual({
+  expect(invoked, invoked.stderr || invoked.stdout).toMatchObject({
     exitCode: 0,
-    stderr: "",
     stdout: "native fixture 1.0.0\n",
   });
+  if (type === "link") {
+    expect(
+      invoked.stderr
+        .replace(/\s*\u203a\s*/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+    ).toBe(
+      `Warning: ${extensionName} is a linked ESM module and cannot be auto-transpiled. Existing compiled source will be used instead.`
+    );
+  } else {
+    expect(invoked.stderr).toBe("");
+  }
 }
 
 async function expectExtensionAbsent(): Promise<void> {

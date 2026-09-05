@@ -1,5 +1,6 @@
 import type {
   AsyncStepEffectDescriptor,
+  CommandDescriptor,
   DesktopBackgroundDescriptor,
   ExecutionDescriptor,
   HabitatEffect,
@@ -41,6 +42,7 @@ export interface AsyncStepDescriptorOccurrence {
 }
 
 type AuthoredExecutionDescriptor =
+  | CommandDescriptor<unknown, unknown, unknown, unknown, never>
   | AsyncStepEffectDescriptor<unknown, unknown, unknown, never>
   | ToolDescriptor<unknown, unknown, unknown, unknown, never>
   | DesktopBackgroundDescriptor<unknown, unknown, unknown, never>;
@@ -194,9 +196,9 @@ function operationalDescriptor(
         ) {
           throw new TypeError("An executable occurrence requires its native boundary context.");
         }
-        if (authored.kind === "agent.tool") {
+        if (authored.kind === "agent.tool" || authored.kind === "cli.command") {
           decoded ??= authored.inputSchema.decode(invocation.input);
-          if (!decoded.success) throw new TypeError("Tool input failed its owning schema.");
+          if (!decoded.success) throw new TypeError("Executable input failed its owning schema.");
         }
         const context = {
           ...invocation.context,
@@ -211,6 +213,13 @@ function operationalDescriptor(
       });
     },
   };
+  if (authored.kind === "cli.command") {
+    return attachExecutionProjection(descriptor, {
+      kind: "cli.command",
+      input: authored.inputSchema,
+      source: authored.source,
+    });
+  }
   if (authored.kind === "agent.tool") {
     return attachExecutionProjection(descriptor, {
       kind: "agent.tool",
@@ -241,6 +250,18 @@ export function deriveAsyncExecutionEntry(
   if (occurrence.descriptor.kind !== "async.step-effect")
     throw new TypeError("Async membership requires an async step descriptor.");
   return deriveExecutionEntry(occurrenceIdentityInput(occurrence), occurrence.descriptor);
+}
+
+export function deriveCommandExecutionEntry(
+  ownerId: string,
+  command: CommandDescriptor<unknown, unknown, unknown, unknown, never>
+): readonly [ExecutionDescriptorRef, ExecutionDescriptor<unknown, unknown, unknown, unknown>] {
+  if (command.kind !== "cli.command")
+    throw new TypeError("Command membership requires a command descriptor.");
+  return deriveExecutionEntry(
+    { boundary: "plugin.cli-command", ownerId, commandId: command.id },
+    command
+  );
 }
 
 export function deriveToolExecutionEntry(

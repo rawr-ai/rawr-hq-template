@@ -1,17 +1,15 @@
 import { defineConfig } from "tsdown";
 
 const privateWorkspacePackages = [
-  "@habitat-ai/resource-rule-evaluation",
-  "@habitat-ai/resource-source-inventory",
   "@habitat-ai/resource-telemetry",
   "@habitat-ai/resource-telemetry/providers/opentelemetry-node",
-  "@habitat-ai/catalog-service",
 ];
 
 const blueprintIds = [
   "app",
   "package",
   "plugin",
+  "plugin-cli-topic",
   "plugin-nx",
   "provider",
   "resource",
@@ -42,6 +40,10 @@ export default defineConfig({
     "plugins/async/index": "src/plugins/async/index.ts",
     "plugins/async/effect/index": "src/plugins/async/effect/index.ts",
     "plugins/web/index": "src/plugins/web/index.ts",
+    "plugins/cli/index": "src/plugins/cli/index.ts",
+    "plugins/cli/effect/index": "src/plugins/cli/effect/index.ts",
+    "plugins/cli/schema/index": "src/plugins/cli/schema/index.ts",
+    "plugins/cli/oclif/index": "src/plugins/cli/oclif/index.ts",
     "plugins/agent/index": "src/plugins/agent/index.ts",
     "plugins/agent/effect/index": "src/plugins/agent/effect/index.ts",
     "plugins/agent/schema/index": "src/plugins/agent/schema/index.ts",
@@ -68,8 +70,7 @@ export default defineConfig({
   deps: {
     alwaysBundle: privateWorkspacePackages,
     onlyImport: [
-      "@effect/platform-node",
-      "@getgrit/cli",
+      "@oclif/core",
       "@opentelemetry/api",
       "@orpc/client",
       "@orpc/contract",
@@ -79,8 +80,6 @@ export default defineConfig({
       "@standard-schema/spec",
       "effect",
       "dotenv",
-      "picomatch",
-      "smol-toml",
       "typebox",
     ],
   },

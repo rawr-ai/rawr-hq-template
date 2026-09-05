@@ -1,8 +1,8 @@
-import { fileURLToPath } from "node:url";
 import { executeHabitat } from "./application.js";
+import { cliPackageRoot } from "./product-version.js";
 
 await executeHabitat({
-  appRoot: fileURLToPath(new URL("..", import.meta.url)),
+  appRoot: cliPackageRoot(),
   development: true,
   workspaceRoot: process.cwd(),
 });

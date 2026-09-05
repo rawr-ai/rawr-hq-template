@@ -21,8 +21,8 @@
 
 ## Boundaries
 
-- `apps/habitat` is the public CLI package boundary, not a downstream product
-  enclosure or application-composition owner.
+- `apps/habitat` is the public CLI package and its explicit self-host composition
+  boundary, not an enclosure for downstream product source.
 - `habitat plugins ...` manages external Oclif extensions.
 - Curated agent-plugin lifecycle has no CLI projection until task 12.1 lands
   its command, manifest, profile, and policy together.

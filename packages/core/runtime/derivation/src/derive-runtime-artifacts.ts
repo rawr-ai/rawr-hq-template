@@ -6,6 +6,7 @@ import type {
   AsyncWorkflowPluginDefinition,
   ProviderSelection as AuthoredProviderSelection,
   ResourceRequirement as AuthoredResourceRequirement,
+  CliTopicPluginDefinition,
   DesktopBackgroundPluginDefinition,
   Entrypoint,
   PluginDefinition,
@@ -16,7 +17,7 @@ import type {
   ServiceRuntimeExport,
   WebAppPluginDefinition,
 } from "../../definition/src/index";
-import { readServiceUse } from "../../definition/src/index";
+import { readExecutionProjection, readServiceUse } from "../../definition/src/index";
 import {
   attachRuntimeDerivationHandoff,
   type RuntimeDerivationHandoffCarrier,
@@ -25,6 +26,7 @@ import {
   type AsyncStepDescriptorOccurrence,
   createExecutionDescriptorTable,
   deriveAsyncExecutionEntry,
+  deriveCommandExecutionEntry,
   deriveDesktopBackgroundExecutionEntry,
   deriveToolExecutionEntry,
   type ExecutionDescriptorTable,
@@ -91,6 +93,11 @@ export interface RuntimeDerivationResult extends RuntimeDerivationHandoffCarrier
   readonly graph: NormalizedAuthoringGraph;
   readonly executionDescriptorTable: ExecutionDescriptorTable;
   readonly webRouteModuleTable: WebRouteModuleTable;
+  /** Cold native discovery inventory, never serialized or executable callback authority. */
+  readonly cliCommandSources: readonly {
+    readonly ref: Extract<ExecutionDescriptorRef, { readonly boundary: "plugin.cli-command" }>;
+    readonly source: unknown;
+  }[];
   readonly portableArtifact: PortableRuntimePlanArtifact;
 }
 
@@ -905,6 +912,12 @@ function isDesktopBackgroundPlugin(
 
 function collectExecutionEntries(state: PluginDerivationState, appId: string): void {
   const plugin = state.definition;
+  if (isCliTopicPlugin(plugin)) {
+    for (const command of plugin.commands) {
+      state.executionEntries.push(deriveCommandExecutionEntry(state.ownerId, command));
+    }
+    return;
+  }
   if (isAgentToolPlugin(plugin)) {
     for (const tool of plugin.tools) {
       state.executionEntries.push(deriveToolExecutionEntry(state.ownerId, tool));
@@ -974,6 +987,10 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
       }
     }
   }
+}
+
+function isCliTopicPlugin(plugin: PluginDefinition): plugin is CliTopicPluginDefinition {
+  return plugin.role === "cli" && plugin.surface === "cli/commands" && "commands" in plugin;
 }
 
 function collectWebEntries(state: PluginDerivationState): void {
@@ -1205,6 +1222,15 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
   const executionDescriptorRefs = Object.freeze(
     executionDescriptorTable.entries().map(([ref]) => copyExecutionRef(ref))
   );
+  const cliCommandSources = Object.freeze(
+    executionDescriptorTable.entries().flatMap(([ref, descriptor]) => {
+      if (ref.boundary !== "plugin.cli-command") return [];
+      const projection = readExecutionProjection(descriptor);
+      if (projection?.kind !== "cli.command")
+        throw new TypeError("CLI command has no native source contribution.");
+      return [Object.freeze({ ref, source: projection.source })];
+    })
+  );
   const webRouteModuleTable = createWebRouteModuleTable(
     pluginStates.flatMap((state) => state.webEntries)
   );
@@ -1323,6 +1349,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       graph,
       executionDescriptorTable,
       webRouteModuleTable,
+      cliCommandSources,
       portableArtifact,
     },
     {

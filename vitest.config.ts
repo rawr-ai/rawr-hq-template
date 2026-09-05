@@ -37,6 +37,18 @@ export default defineConfig({
         extends: true,
         root: r("apps/habitat"),
         test: {
+          name: "habitat-cli-native-runtime-acceptance",
+          environment: "node",
+          fileParallelism: false,
+          hookTimeout: 30_000,
+          include: ["test/oclif/runtime.test.ts"],
+          testTimeout: 15_000,
+        },
+      },
+      {
+        extends: true,
+        root: r("apps/habitat"),
+        test: {
           name: "habitat-cli-native-plugins-acceptance",
           environment: "node",
           fileParallelism: false,

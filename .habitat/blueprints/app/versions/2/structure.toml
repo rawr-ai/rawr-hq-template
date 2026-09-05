@@ -1,0 +1,49 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "app-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = ["habitat.toml", "package.json", "project.json", "src", "tsconfig.json", "*.app.ts", "runtime", "@(cli|server|web|agent|desktop|async|dev).ts"]
+allowed = ["AGENTS.md", "README.md", "bin", "generators", "generators.json", "generators.schema.json", "migrations.json", "preset.schema.json", "oclif.manifest.json", "test", "tsconfig.build.json", "tsdown.config.ts", "@(cli|server|web|agent|desktop|async|dev).ts"]
+
+[[scopes]]
+name = "app-declaration-files"
+rootRole = "project"
+relativePath = "@(*.app|cli|server|web|agent|desktop|async|dev).ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "app-runtime"
+rootRole = "project"
+relativePath = "runtime"
+kind = "directory"
+mode = "closed"
+required = ["processes.ts", "profiles"]
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts"]
+
+[[scopes]]
+name = "app-process-catalog"
+rootRole = "project"
+relativePath = "runtime/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "app-profiles"
+rootRole = "project"
+relativePath = "runtime/profiles"
+kind = "directory"
+mode = "closed"
+required = ["*.ts"]
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts"]
+
+[[scopes]]
+name = "app-profile-files"
+rootRole = "project"
+relativePath = "runtime/profiles/*.ts"
+kind = "file"
+mode = "closed"

@@ -1,4 +1,4 @@
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 import {
   addProjectConfiguration,
@@ -18,7 +18,7 @@ import {
 import { Type } from "typebox";
 import { Validator } from "typebox/schema";
 import { assertHabitatBunConsumer } from "../nx/repository-preset.js";
-import { installedSdkVersion } from "../product-version.js";
+import { cliPackageRoot, installedSdkVersion } from "../product-version.js";
 
 const PACKAGE_NAME_PATTERN = "^(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*$";
 const KEBAB_NAME_PATTERN = "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$";
@@ -140,7 +140,7 @@ export default async function createService(
   }
 
   const tsconfigBasePath = `${"../".repeat(options.directory.split("/").length)}tsconfig.base.json`;
-  const templateRoot = fileURLToPath(new URL("../../generators/service/files", import.meta.url));
+  const templateRoot = join(cliPackageRoot(), "generators/service/files");
   const dependenciesJson = indentJson(
     {
       "@habitat-ai/sdk": installedSdkVersion(),

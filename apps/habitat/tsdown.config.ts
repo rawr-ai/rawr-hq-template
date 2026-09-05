@@ -1,0 +1,51 @@
+import { defineConfig } from "tsdown";
+
+export default defineConfig({
+  entry: {
+    index: "src/index.ts",
+    application: "src/application.ts",
+    command: "src/command.ts",
+    host: "src/host.ts",
+    oclif: "src/oclif.ts",
+    cli: "cli.ts",
+    "habitat.app": "habitat.app.ts",
+    "nx-plugin": "src/nx-plugin.ts",
+    "nx-generators": "src/nx-generators.ts",
+    "generators/init": "src/generators/init.ts",
+    "generators/preset": "src/generators/preset.ts",
+    "generators/remove-hook": "src/generators/remove-hook.ts",
+    "generators/service": "src/generators/service.ts",
+    "migrations/0-5-7-repository-foundation": "src/migrations/0-5-7-repository-foundation.ts",
+  },
+  outDir: "dist",
+  format: "esm",
+  platform: "node",
+  target: "node24.18.1",
+  fixedExtension: false,
+  dts: {
+    resolver: "tsc",
+    entry: ["src/command.ts", "src/host.ts", "src/nx-plugin.ts"],
+  },
+  deps: {
+    neverBundle: [/^@habitat-ai\/sdk(?:\/|$)/, /^nx(?:\/|$)/],
+    dts: { neverBundle: [/^@habitat-ai\/sdk(?:\/|$)/] },
+    alwaysBundle: [
+      /^@habitat-ai\/(?:catalog-service|plugin-foundation|resource-filesystem|resource-rule-evaluation|resource-source-inventory)(?:\/|$)/,
+    ],
+    onlyImport: [
+      "@effect/platform-node",
+      "@getgrit/cli",
+      "@habitat-ai/sdk",
+      "@nx/devkit",
+      "@oclif/core",
+      "@orpc/contract",
+      "@orpc/experimental-effect",
+      "@orpc/server",
+      "effect",
+      "nx",
+      "picomatch",
+      "smol-toml",
+      "typebox",
+    ],
+  },
+});

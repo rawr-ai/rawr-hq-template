@@ -1,7 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"]
+    "types": ["node", "bun-types"]
   },
-  "files": ["index.ts"]
+  "files": ["index.ts", "runtime.ts", "test/runtime.test.ts"]
 }

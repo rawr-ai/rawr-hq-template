@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import type { HabitatClient } from "@habitat-ai/sdk";
+import type { Client } from "@habitat-ai/catalog-service/client";
 import type { CreateNodes, CreateNodesResultArray, TargetConfiguration } from "@nx/devkit";
 
 const HABITAT_CATALOG_PATHS = [
@@ -14,11 +14,7 @@ const DEFAULT_CHECK_TARGET = "check:policy";
 const HABITAT_EXECUTABLE = "habitat";
 const PORTABLE_OWNER_PROJECT = /^[A-Za-z0-9@][A-Za-z0-9@._/+:-]*$/u;
 
-type ResolveCatalogClient = {
-  readonly catalog: Pick<HabitatClient["catalog"], "resolve">;
-};
-
-type ResolveCatalogResult = Awaited<ReturnType<ResolveCatalogClient["catalog"]["resolve"]>>;
+type ResolveCatalogResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
 type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["catalog"];
 type ResolvedApplication = ResolvedCatalog["applications"][number];
 type ResolvedInstance = ResolvedCatalog["instances"][number];
@@ -39,25 +35,25 @@ type ProjectProjection = {
 };
 
 /**
- * Supplies the ready Habitat client for the workspace being projected by Nx.
+ * Resolves data within the app-owned lifecycle for the workspace being projected by Nx.
  *
  * The Habitat app owns this capability because Nx plugin options are serialized
  * configuration and cannot carry a client, provider, or runtime handle.
  */
-export type HabitatClientForWorkspace = (
+export type HabitatCatalogReader = (
   workspaceRoot: string
-) => ResolveCatalogClient | Promise<ResolveCatalogClient>;
+) => ResolveCatalogResult | Promise<ResolveCatalogResult>;
 
 /** App-owned runtime and provider facts required for sound target caching. */
 export type HabitatNxBinding = {
-  readonly clientForWorkspace: HabitatClientForWorkspace;
+  readonly resolveForWorkspace: HabitatCatalogReader;
   readonly runtimeInputs: readonly [TargetInput, ...TargetInput[]];
 };
 
 /**
  * Projects resolved Habitat applications and compatibility rules into native Nx targets.
  *
- * The factory receives the app-owned workspace client and runtime cache facts.
+ * The factory receives the app-owned data reader and runtime cache facts.
  * It does not select providers, discover authority, execute checks, or name
  * projects.
  */
@@ -68,8 +64,7 @@ export function createHabitatNxPlugin(
     HABITAT_AUTHORITY_GLOB,
     async (configFiles, _options, context) => {
       const matchedFiles = [...new Set(configFiles.map(normalizeWorkspacePath))].sort();
-      const client = await binding.clientForWorkspace(context.workspaceRoot);
-      const result = await client.catalog.resolve({});
+      const result = await binding.resolveForWorkspace(context.workspaceRoot);
       if (result._tag === "Rejected") throw rejectedCatalogError(result);
 
       return projectCatalogTargets(matchedFiles, result.catalog, binding.runtimeInputs);

@@ -120,9 +120,13 @@ remain as an alias, fallback, duplicate project, or import source.
 
 Each first-party CLI topic MUST own its command declarations, command bodies,
 and private topic package. An application MUST select topic membership as cold
-data. Derivation and compilation MUST lower exactly that selected membership
-into one topic-neutral private CLI source bundle consumed by the shared Oclif
-loader. The app, loader, public CLI package, adapter, and harness MUST NOT
+data. Derivation MUST retain exactly that selected membership and its native
+source references. One topic-neutral private CLI source bundle projects this
+cold inventory for Oclif's static explicit discovery and packed manifest.
+Live compilation and adapter lowering MUST preserve the same exact selected
+refs; the shared Oclif loader/harness MUST match those lowered callbacks to the
+cold bundle before dispatch. Cold discovery acquires nothing and needs no
+public compiler. The app, loader, public CLI package, adapter, and harness MUST NOT
 re-author command bodies, infer topic membership, scan source directories, or
 load an unselected topic. Private topic packages MUST NOT become public release
 members.
@@ -147,8 +151,9 @@ command implementations or overlay interiors.
 #### Scenario: Habitat compiles a selected command inventory
 
 - **WHEN** the Habitat app selects one or more private CLI topics
-- **THEN** the compiled private source bundle contains exactly the selected
-  topic-owned commands and the shared Oclif loader consumes that bundle without
+- **THEN** the derived private source bundle contains exactly the selected
+  topic-owned commands and live mounting verifies the compiled callbacks against
+  that same inventory; the shared Oclif loader consumes it without
   scanning or reconstructing membership
 - **AND** command bodies remain owned by their topic packages while
   `@habitat-ai/cli` owns only the public host, loader, harness, and native Nx

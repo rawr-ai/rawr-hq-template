@@ -11,9 +11,8 @@
 
 ## Boundaries
 
-- `@habitat-ai/sdk` owns the workspace-bound production client and runtime
-  composition. This app consumes that public client without reaching into its
-  private implementation projects.
+- The app owns explicit plugin, profile, and provider selection. The public SDK
+  realizes the selected entrypoint without exposing its private runtime owners.
 - Oclif owns command discovery, argv parsing, dispatch, help, and the generated
   command manifest. Habitat commands and their Oclif binding live in this app.
 - Oclif's native `@oclif/plugin-plugins` owns external extension state and the
@@ -25,24 +24,27 @@
 
 ## Behavior
 
-- Every activation asks the SDK for a fresh client bound to the caller's
-  workspace.
+- Every activation starts one selected process with workspace-bound source data;
+  its native host awaits command work and owns the explicit stop obligation.
 - Oclif and Nx expose the same SDK semantics through their native host
   contracts.
 
 ## Concepts
 
-- **Composition** belongs to the SDK and selects concrete providers for a ready
-  workspace client.
+- **Composition** belongs to the app; the SDK realizes its exact selected
+  entrypoint. Provider implementations retain acquisition and release ownership.
 - **Projection** translates that client into a host-native command or task
   surface without acquiring domain authority.
 
 ## Flow
 
-- `application.ts` acquires the SDK client and binds it into one Oclif
-  invocation; `src/commands/**` projects the three native commands.
-- `nx-plugin.ts` supplies the same SDK construction seam to `src/nx/**` and
-  exports its native `createNodes` face.
+- `habitat.app.ts` selects the foundation topic; `runtime/processes.ts` and
+  `runtime/profiles/**` declare process and provider selections. `cli.ts`
+  creates the exact entrypoint and starts it through the SDK.
+- `src/application.ts` supplies deployment input and native host mode.
+  The foundation topic owns command projections; the app owns native Oclif
+  lifecycle. The Nx reader uses the same managed execution without escaping a
+  ready client or abandoning process cleanup.
 - `generators.json` exposes the ESM Bun repository preset, post-Git
   initialization, and named-hook removal emitted with the rest of the app. The
   preset creates only the portable Bun/Nx scheduler and source-quality spine;

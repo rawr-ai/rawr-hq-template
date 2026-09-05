@@ -31,6 +31,11 @@ const executionProjection = Symbol("habitat.execution-projection");
 
 export type ExecutionProjection<TInput = unknown> =
   | {
+      readonly kind: "cli.command";
+      readonly input: RuntimeSchema<TInput>;
+      readonly source: unknown;
+    }
+  | {
       readonly kind: "agent.tool";
       readonly input: RuntimeSchema<TInput>;
       readonly description: string;
