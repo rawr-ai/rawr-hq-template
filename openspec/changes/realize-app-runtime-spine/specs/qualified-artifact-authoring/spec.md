@@ -55,7 +55,7 @@ whose schemas, identity types, validation, templates, and domain decisions do
 not dispatch between output kinds. Shared generator mechanics MUST accept only
 an already-verified destination root and qualified relative-path/byte plan
 constructed by one generator. They MAY enforce containment, canonicalize
-qualified paths, compare exact bytes, and execute one atomic exact write plan,
+qualified paths, compare exact bytes, and stage one complete native Nx write plan,
 but MUST NOT accept or validate a raw product identifier, accept an output-kind
 selector, choose a template family, infer an authority, install an output, or
 import one per-kind generator from the other.
@@ -74,8 +74,12 @@ import one per-kind generator from the other.
 `habitat cli command create` MUST project the native command generator
 entrypoint owned by `@habitat-ai/cli`. That generator MUST verify exact Habitat
 repository and owning Nx project identity, accept one safe topic and command
-name, and author one official Habitat command source, behavior test, Nx
-registration, and required Oclif manifest metadata inside that workspace.
+name, and author one official Habitat command source, behavior test, and explicit
+membership in its existing Nx-owned topic. Preserve that Nx project's identity;
+required native Args/Flags and command metadata belong in the authored source.
+The ordinary build and Oclif manifest generator materialize discovery from that
+membership; the source creator MUST NOT hand-edit generated manifest rows or
+create a replacement Nx project.
 Generated output MUST use the one Habitat command contract. The generator MUST
 reject downstream product, Marketplace, and foreign repositories, paths outside
 the verified Habitat root, and any request that would create manifest/project
@@ -117,14 +121,22 @@ call Oclif extension mutation, load generated code, or claim activation.
 ### Requirement: Authoring plans are deterministic, collision-safe, and idempotent
 
 Each generator MUST compute and validate its complete deterministic ordered
-write plan before the first mutation. The verified-write boundary MUST apply the
-plan atomically: exact existing bytes converge without writes, divergent or
-unsafe existing paths reject without mutation, and any planning or application
-failure leaves no planned output or registration change. Results MUST be closed
-to dry-run, read-only convergence, complete authored output, or refusal before
-mutation; a partial-output result or partially published workspace MUST NOT
-exist. Shared execution MUST remain kind-agnostic and MUST NOT install or
-activate output.
+write plan before staging the first change in the native Nx Tree. Exact existing
+bytes converge without writes. Divergent output, stale registration preimages,
+and unsafe existing paths reject before staging. An intentional registration
+update MUST carry its exact inspected preimage rather than overwrite arbitrary
+existing bytes. Planning, validation or generator failure before native flush
+MUST publish no planned source or registration change; native dry-run MUST also
+publish nothing.
+
+Native Nx owns publication. Its filesystem flush is sequential, not a multi-file
+transaction: an I/O failure after publication starts MAY leave a written prefix.
+The operation MUST propagate that failure and MUST NOT claim convergence,
+complete authored output, rollback or zero mutation. No custom filesystem
+transaction engine is required. A successful result identifies only complete
+source/registration output after native publication; a failure never presents a
+partial prefix as an accepted result. Shared mechanics MUST remain kind-agnostic
+and MUST NOT install or activate output.
 
 #### Scenario: Identical creation repeat changes nothing
 
@@ -134,16 +146,17 @@ activate output.
 
 #### Scenario: Partial publication remains truthful
 
-- **WHEN** an application failpoint interrupts a fully staged multi-path plan
-  before atomic publication completes
-- **THEN** the operation refuses with no planned path or registration published
-- **AND** it does not expose a partial result or claim complete output
+- **WHEN** a filesystem change or I/O failure interrupts native flush after the
+  first path of a fully staged multi-path plan was published
+- **THEN** the native operation fails, even if a written prefix remains
+- **AND** it claims neither complete output nor rollback and does not accept
+  that prefix as a successful partial result
 
 #### Scenario: First publication failure remains truthful
 
-- **WHEN** planning, validation, or atomic application fails before output can
-  commit
-- **THEN** the operation refuses with zero output mutation and no written subset
+- **WHEN** planning, validation or generator staging fails before native flush
+- **THEN** the operation fails with no planned output published
+- **AND** native dry-run also leaves source and registration bytes unchanged
 
 ### Requirement: Source authoring cannot install, compose, or synchronize output
 
@@ -157,8 +170,8 @@ changes only and cannot claim runtime availability.
 #### Scenario: Mutation boundaries remain zero
 
 - **WHEN** both generators run with adjacent mutation capabilities trapped
-- **THEN** every trapped counter remains zero and only the exact atomic source
-  and registration write plan may mutate
+- **THEN** every trapped counter remains zero and only the qualified source and
+  registration plan may be published by native Nx
 
 ### Requirement: Legacy scaffold semantics are absent
 

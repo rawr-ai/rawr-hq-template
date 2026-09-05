@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "title": "Create a native Oclif extension",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "maxLength": 196,
+      "description": "Extension identifier, used in habitat-extension-<id> and <id>:hello."
+    },
+    "destination": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Explicit portable destination relative to the supplied tree root."
+    }
+  },
+  "required": ["id", "destination"],
+  "additionalProperties": false
+}

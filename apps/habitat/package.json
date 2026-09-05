@@ -62,6 +62,7 @@
     "acceptance:oclif-installed-package": "vitest run --project habitat-cli-installed-package-acceptance",
     "acceptance:oclif-native-plugins": "vitest run --project habitat-cli-native-plugins-acceptance",
     "acceptance:oclif-native-runtime": "vitest run --project habitat-cli-native-runtime-acceptance",
+    "acceptance:generators-installed-package": "vitest run --project habitat-cli-installed-package-acceptance --testNamePattern \"adopts the packed CLI\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p test/tsconfig.json --noEmit",
     "test": "vitest run --project habitat-cli"
@@ -81,14 +82,14 @@
     "nx": "23.1.1",
     "picomatch": "4.0.4",
     "smol-toml": "1.7.0",
-    "typebox": "1.3.8"
+    "typebox": "1.3.8",
+    "typescript": "5.9.3"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",
     "bun-types": "1.3.14",
     "oclif": "4.23.29",
     "tsdown": "0.22.14",
-    "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   },
   "oclif": {
@@ -156,6 +157,13 @@
         "cache": false,
         "dependsOn": [
           "build",
+          "manifest"
+        ],
+        "outputs": []
+      },
+      "acceptance:generators-installed-package": {
+        "cache": false,
+        "dependsOn": [
           "manifest"
         ],
         "outputs": []

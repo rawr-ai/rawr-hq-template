@@ -15,6 +15,8 @@ export default defineConfig({
     "generators/preset": "src/generators/preset.ts",
     "generators/remove-hook": "src/generators/remove-hook.ts",
     "generators/service": "src/generators/service.ts",
+    "generators/cli-command": "src/generators/cli-command.ts",
+    "generators/cli-extension": "src/generators/cli-extension.ts",
     "migrations/0-5-7-repository-foundation": "src/migrations/0-5-7-repository-foundation.ts",
   },
   outDir: "dist",
@@ -46,6 +48,7 @@ export default defineConfig({
       "picomatch",
       "smol-toml",
       "typebox",
+      "typescript",
     ],
   },
 });

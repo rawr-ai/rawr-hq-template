@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "title": "Create an official Habitat CLI command",
+  "description": "Updates an existing Habitat topic with explicit command membership and statically readable SDK command IDs. Unresolved authoring forms are left untouched, not executed.",
+  "type": "object",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "Existing Habitat topic name."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$",
+      "description": "New command name."
+    }
+  },
+  "required": ["topic", "name"],
+  "additionalProperties": false
+}

@@ -23,6 +23,7 @@ import {
   nativeRuntimeScenarios,
   verifyNativeRuntimeScenario,
 } from "./support/oclif-runtime-matrix.js";
+import { assertInstalledQualifiedGenerators } from "./support/qualified-generator-matrix.js";
 
 type CommandResult = Readonly<{
   exitCode: number;
@@ -502,6 +503,12 @@ describe("installed Habitat products", () => {
     );
 
     await assertInstalledServiceConsumer(nx, fixturePath);
+    await assertInstalledQualifiedGenerators({
+      acceptanceRoot,
+      consumerRoot,
+      version: installVersion,
+      run,
+    });
   }, 360_000);
 
   it.each(
