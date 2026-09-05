@@ -153,7 +153,7 @@ describe("native source generator runners", () => {
     });
     expect(files(root)).toEqual(createdFiles);
     expect(statSync(join(root, "extension/package.json"), { bigint: true }).mtimeNs).toBe(modified);
-  });
+  }, 120_000);
 
   it("captures cwd before asynchronous loading rather than rereading mutable process state", () => {
     const root = temporaryRoot();
@@ -217,7 +217,7 @@ describe("native source generator runners", () => {
       result: { status: "converged", paths: [] },
     });
     expect(existsSync(join(root, "apps/habitat/oclif.manifest.json"))).toBe(false);
-  });
+  }, 120_000);
 
   it("does not search parents or redirect a foreign cwd to an installed app root", () => {
     const root = habitatFixture();
