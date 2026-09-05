@@ -1,4 +1,9 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
+import type {
+  RuntimeHarnessStatus,
+  RuntimeMountFinalizationRecord,
+  RuntimeStartupRecord,
+} from "./lifecycle";
 import type { RuntimeDiagnostic } from "./telemetry";
 
 const id = Type.String({ minLength: 1 });
@@ -74,7 +79,7 @@ export interface RuntimeTopologyRecord {
   readonly processId: string;
   readonly profileId: string;
 }
-export interface RuntimeFinalizationRecord {
+export interface RuntimeProviderReleaseFailureRecord {
   readonly kind: "provider.release.failed";
   readonly selectionId: string;
   readonly providerId: string;
@@ -82,6 +87,9 @@ export interface RuntimeFinalizationRecord {
   readonly defect: boolean;
   readonly interrupted: boolean;
 }
+export type RuntimeFinalizationRecord =
+  | RuntimeProviderReleaseFailureRecord
+  | RuntimeMountFinalizationRecord;
 export interface RuntimeCatalog {
   readonly processIdentity: {
     readonly id: string;
@@ -102,24 +110,31 @@ export interface RuntimeCatalog {
   readonly workflowDispatchers: RuntimeObservationSeed["workflowDispatchers"];
   readonly executionPlans: RuntimeObservationSeed["executionPlans"];
   readonly executionRegistry: RuntimeObservationSeed["executionRegistry"] & {
-    readonly status: "unobserved";
+    readonly status: "unobserved" | "ready";
   };
   readonly surfaces: RuntimeObservationSeed["surfaces"];
-  readonly harnesses: RuntimeObservationSeed["harnesses"];
+  readonly harnesses: readonly RuntimeHarnessStatus[];
+  readonly finalization: {
+    readonly deadline: number | null;
+    readonly pendingNativeStop: readonly string[];
+    readonly deadlineExceeded: boolean;
+  };
   readonly lifecycleTimestamps: {
     readonly observedAt: number;
     readonly lastRecordAt: number | null;
   };
   readonly lifecycleStatus: {
     readonly topology: "selected";
-    readonly provisioning: "unobserved";
+    readonly provisioning: "unobserved" | "ready";
+    readonly binding: "unobserved" | "ready";
+    readonly adapters: "unobserved" | "ready";
     readonly execution: "unobserved";
-    readonly mounting: "unobserved";
-    readonly finalization: "unobserved" | "failure-observed";
+    readonly mounting: "unobserved" | "mounted" | "failed";
+    readonly finalization: "unobserved" | "failure-observed" | "draining" | "settled";
   };
   readonly diagnostics: readonly RuntimeDiagnostic[];
   readonly topologyRecords: readonly RuntimeTopologyRecord[];
-  readonly startupRecords: readonly never[];
+  readonly startupRecords: readonly RuntimeStartupRecord[];
   readonly executionRecords: readonly never[];
   readonly finalizationRecords: readonly RuntimeFinalizationRecord[];
   readonly retention: { readonly limit: number; readonly dropped: number };

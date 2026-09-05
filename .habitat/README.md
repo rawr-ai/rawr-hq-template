@@ -93,6 +93,9 @@ The complete `runtime-harnesses@1` closes the generic package-less native
 contract owner and its import law. The SDK projects only import-safe companion
 types; this member does not qualify a native host or introduce runtime mounting.
 The complete `runtime-observation@1` closes the downstream read-model owner.
+The complete `runtime-mounting@1` closes process-local native startup and
+finalization. Its only private edges are definition, process runtime and generic
+harness contracts; terminal SDK composition adapts observation independently.
 Its law preserves definition-only private dependency direction; the SDK exposes
 only observation contract types, not a collector or runtime controller.
 

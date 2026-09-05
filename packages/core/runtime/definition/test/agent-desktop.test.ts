@@ -86,6 +86,53 @@ test("unannotated leaf contexts expose no undeclared service clients", () => {
   expect(desktop.backgrounds[0]).toBe(background);
 });
 
+test("inline plugin generators infer their context without losing native channels", () => {
+  const agent = defineAgentToolPlugin.factory()({
+    capability: "inline",
+    services: {},
+    tools: [
+      defineTool({
+        id: "inline",
+        description: "Inline context",
+        input: toolSchema.object({ title: toolSchema.string() }),
+        effect: function* (context) {
+          const title: string = context.input.title;
+          void title;
+          // @ts-expect-error Inline authoring does not invent service clients.
+          context.clients.undeclared;
+          return yield* requiredNativeProgram;
+        },
+      }),
+    ],
+  })();
+  const desktop = defineDesktopBackgroundPlugin.factory()({
+    capability: "inline",
+    services: {},
+    backgrounds: [
+      defineDesktopBackground({
+        id: "inline",
+        cadence: "1 seconds",
+        effect: function* (context) {
+          void context.resources;
+          // @ts-expect-error Inline backgrounds do not invent service clients.
+          context.clients.undeclared;
+          return yield* requiredNativeProgram;
+        },
+      }),
+    ],
+  })();
+  type Equal<A, B> =
+    (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+  type ToolChannels<T> =
+    T extends ToolDescriptor<infer _I, infer A, infer E, infer R, infer _C> ? [A, E, R] : never;
+  type BackgroundChannels<T> =
+    T extends DesktopBackgroundDescriptor<infer A, infer E, infer R, infer _C> ? [A, E, R] : never;
+  type Expected = [number, { readonly _tag: "NativeFailure" }, { readonly nativeDependency: true }];
+  const tool: Equal<ToolChannels<(typeof agent.tools)[0]>, Expected> = true;
+  const background: Equal<BackgroundChannels<(typeof desktop.backgrounds)[0]>, Expected> = true;
+  expect([tool, background]).toEqual([true, true]);
+});
+
 test("agent and desktop declarations are cold and retain native schema and executable identities", () => {
   let runs = 0;
   const input = toolSchema.object({

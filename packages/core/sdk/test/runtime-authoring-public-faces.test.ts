@@ -197,6 +197,7 @@ describe("runtime authoring public faces", () => {
       "defineEntrypoint",
       "defineProcessCatalog",
       "runtimeLaunchIdentity",
+      "startApp",
     ]);
     expect(Object.keys(effect).sort()).toEqual(["Effect", "TaggedError"]);
     expect(Object.keys(effectContext)).toEqual([]);
@@ -225,7 +226,7 @@ describe("runtime authoring public faces", () => {
     ]);
 
     for (const face of [app, effect, execution, profiles, providers, resources, runtimeSchema]) {
-      expect(face).not.toHaveProperty("startApp");
+      if (face !== app) expect(face).not.toHaveProperty("startApp");
       expect(face).not.toHaveProperty("ProviderEffectPlan");
       expect(face).not.toHaveProperty("providerFx");
       expect(face).not.toHaveProperty("build");

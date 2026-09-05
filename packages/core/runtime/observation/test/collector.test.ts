@@ -103,6 +103,7 @@ test("detaches complete selected topology without inventing future lifecycle evi
       "startupRecords",
       "executionRecords",
       "finalizationRecords",
+      "finalization",
       "retention",
     ].sort()
   );
@@ -116,6 +117,116 @@ test("detaches complete selected topology without inventing future lifecycle evi
   Object.assign(input.identity, { process: "changed" });
   expect(observer.snapshot().processIdentity.id).toBe("process");
   expect(observer.snapshot() === snapshot).toBe(false);
+});
+
+test("actual startup, accepted mounts, health and drain settlement produce bounded read models", () => {
+  const input = seed();
+  const observer = createRuntimeObservation({ seed: input });
+  const publish = (kind: string, payload: Record<string, unknown> = {}) =>
+    observer.port.publish({
+      phase:
+        kind === "provisioning.ready" || kind === "binding.ready" ? "provisioning" : "mounting",
+      boundary: ["provisioning.ready", "binding.ready", "adapters.ready"].includes(kind)
+        ? "sdk.startApp"
+        : "runtime-mounting",
+      correlationId: input.identity.process,
+      kind,
+      payload: { identity: input.identity, ...payload },
+    });
+  expect(observer.snapshot().harnesses[0]?.readiness).toBe("unknown");
+  publish("provisioning.ready");
+  publish("binding.ready");
+  publish("adapters.ready");
+  expect(observer.snapshot().lifecycleStatus.provisioning).toBe("ready");
+  expect(observer.snapshot().executionRegistry.status).toBe("ready");
+  expect(observer.snapshot().lifecycleStatus.execution).toBe("unobserved");
+  publish("harness.mounted", { harnessId: "host", roles: ["cli"], surfacePlanIds: ["surface"] });
+  expect(observer.snapshot().lifecycleStatus.mounting).toBe("unobserved");
+  publish("process.started");
+  expect(observer.snapshot().lifecycleStatus.mounting).toBe("mounted");
+  publish("harness.health", {
+    harnessId: "host",
+    kind: "readiness",
+    status: "not-applicable",
+    findings: [],
+  });
+  expect(observer.snapshot().harnesses[0]?.readiness).toBe("not-applicable");
+  publish("harness.health", {
+    harnessId: "host",
+    kind: "liveness",
+    status: "passing",
+    findings: [{ code: "native.alive", severity: "info" }],
+  });
+  expect(observer.snapshot().harnesses[0]?.liveness).toBe("passing");
+  publish("process.finalization.started", { deadline: 1000, pendingNativeStop: ["host"] });
+  expect(observer.snapshot().lifecycleStatus.finalization).toBe("draining");
+  expect(observer.snapshot().harnesses[0]?.readiness).toBe("failing");
+  expect(observer.snapshot().harnesses[0]?.liveness).toBe("unknown");
+  publish("process.finalization.deadline", { deadline: 1000, pendingNativeStop: ["host"] });
+  expect(observer.snapshot().finalization).toEqual({
+    deadline: 1000,
+    pendingNativeStop: ["host"],
+    deadlineExceeded: true,
+  });
+  publish("harness.stop.settled", { harnessId: "host", outcome: "rejected" });
+  expect(observer.snapshot().harnesses[0]?.stopStatus).toBe("rejected");
+  expect(observer.snapshot().finalization.pendingNativeStop).toEqual([]);
+  observer.port.publish(release());
+  publish("process.finalization.settled", { deadlineExceeded: true });
+  const snapshot = observer.snapshot();
+  expect(snapshot.lifecycleStatus.finalization).toBe("settled");
+  expect(snapshot.providers[0]?.releaseStatus).toBe("failed");
+  expect(snapshot.executionRecords).toEqual([]);
+  expect(snapshot.startupRecords.map((record) => record.kind)).toContain("process.started");
+  expect(snapshot.finalizationRecords.map((record) => record.kind)).toContain(
+    "harness.stop.settled"
+  );
+  expect(snapshot.diagnostics.some((record) => record.code === "observation.unsupported")).toBe(
+    false
+  );
+});
+
+test("failed partial mount and foreign or secret-bearing lifecycle evidence cannot fabricate readiness", () => {
+  const input = { ...seed(), harnesses: [{ harnessId: "host" }, { harnessId: "second" }] };
+  const observer = createRuntimeObservation({ seed: input, historyLimit: 3 });
+  const publish = (kind: string, payload: Record<string, unknown>) =>
+    observer.port.publish({
+      phase: "mounting",
+      boundary: "runtime-mounting",
+      correlationId: "process",
+      kind,
+      payload: { identity: input.identity, ...payload },
+    });
+  publish("harness.health", {
+    harnessId: "host",
+    kind: "readiness",
+    status: "passing",
+    findings: [],
+  });
+  expect(observer.snapshot().harnesses[0]?.readiness).toBe("unknown");
+  publish("harness.mounted", { harnessId: "host", roles: ["cli"], surfacePlanIds: ["surface"] });
+  publish("harness.mount.failed", { harnessId: "second" });
+  publish("process.started", {});
+  expect(observer.snapshot().lifecycleStatus.mounting).toBe("failed");
+  expect(observer.snapshot().harnesses[1]?.mountStatus).toBe("failed");
+  publish("harness.health", {
+    harnessId: "host",
+    kind: "readiness",
+    status: "passing",
+    findings: [{ code: "bad", severity: "info", message: "secret-message" }],
+  });
+  publish("harness.health", {
+    harnessId: "host",
+    kind: "readiness",
+    status: "passing",
+    findings: [],
+    identity: { ...input.identity, deployment: "foreign" },
+  });
+  const snapshot = observer.snapshot();
+  expect(snapshot.harnesses[0]?.readiness).toBe("unknown");
+  expect(snapshot.retention.dropped).toBe(3);
+  expect(JSON.stringify(snapshot)).not.toContain("secret-message");
+  expect(snapshot.startupRecords.some((record) => record.kind === "process.started")).toBe(false);
 });
 
 test("projects overlapping native release failure flags without inferring completion", () => {

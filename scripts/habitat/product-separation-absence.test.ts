@@ -51,6 +51,7 @@ const EXPECTED_PROJECT_ROOTS = {
   "runtime-derivation": "packages/core/runtime/derivation",
   "runtime-harnesses": "packages/core/runtime/harnesses",
   "runtime-observation": "packages/core/runtime/observation",
+  "runtime-mounting": "packages/core/runtime/mounting",
   "runtime-process-runtime": "packages/core/runtime/process-runtime",
   "runtime-schema": "packages/core/runtime/schema",
   "runtime-substrate-effect": "packages/core/runtime/substrate/effect",
@@ -78,6 +79,7 @@ const EXPECTED_SDK_DEPENDENCIES = [
   "runtime-definition",
   "runtime-derivation",
   "runtime-harnesses",
+  "runtime-mounting",
   "runtime-observation",
   "runtime-process-runtime",
   "runtime-schema",
@@ -587,6 +589,12 @@ describe("cumulative product-separation absence", () => {
         .sort()
     ).toEqual(["runtime-definition"]);
     expect(
+      (graph.dependencies["runtime-mounting"] ?? [])
+        .map(({ target }) => target)
+        .filter((target) => target in graph.nodes)
+        .sort()
+    ).toEqual(["runtime-definition", "runtime-harnesses", "runtime-process-runtime"]);
+    expect(
       (graph.dependencies["runtime-process-runtime"] ?? [])
         .map(({ target }) => target)
         .filter((target) => target in graph.nodes)
@@ -607,9 +615,10 @@ describe("cumulative product-separation absence", () => {
     ).toEqual(EXPECTED_SDK_DEPENDENTS);
 
     const incomingRuntimeOwners = {
-      "runtime-harnesses": ["@habitat-ai/sdk"],
+      "runtime-harnesses": ["@habitat-ai/sdk", "runtime-mounting"],
+      "runtime-mounting": ["@habitat-ai/sdk"],
       "runtime-observation": ["@habitat-ai/sdk"],
-      "runtime-process-runtime": ["@habitat-ai/sdk", "runtime-harnesses"],
+      "runtime-process-runtime": ["@habitat-ai/sdk", "runtime-harnesses", "runtime-mounting"],
       "runtime-substrate-effect": ["@habitat-ai/sdk", "runtime-process-runtime"],
       "runtime-definition": [
         "@habitat-ai/resource-telemetry",
@@ -618,6 +627,7 @@ describe("cumulative product-separation absence", () => {
         "runtime-compiler",
         "runtime-derivation",
         "runtime-harnesses",
+        "runtime-mounting",
         "runtime-observation",
         "runtime-process-runtime",
         "runtime-substrate-effect",

@@ -8,9 +8,14 @@ export {
   createProcessRuntime,
   type ProcessRuntime,
 } from "./create-process-runtime";
-export type { CompiledExecutableBoundary, ExecutionRegistry } from "./execution-registry";
+export {
+  type CompiledExecutableBoundary,
+  createExecutionRegistry,
+  type ExecutionRegistry,
+} from "./execution-registry";
 export type { ProcessExecutionRuntime } from "./execution-runtime";
 export {
+  createMountPreparation,
   type MountReadyProcess,
   type MountReadyProcessHandoff,
   MountReadySurfaceMetadataSchema,

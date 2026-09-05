@@ -56,6 +56,7 @@
 - [Private process runtime owner](runtime/process-runtime/AGENTS.md)
 - [Private native harness owner](runtime/harnesses/AGENTS.md)
 - [Private observation owner](runtime/observation/AGENTS.md)
+- [Private mounting owner](runtime/mounting/AGENTS.md)
 
 ## Validation
 

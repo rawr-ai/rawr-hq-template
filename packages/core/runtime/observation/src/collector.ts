@@ -9,6 +9,12 @@ import {
 } from "./catalog";
 import { detached, fields } from "./data";
 import {
+  createLifecycleProjection,
+  type RuntimeLifecycleRecord,
+  type RuntimeStartupRecord,
+  readLifecycleRecord,
+} from "./lifecycle";
+import {
   createTelemetry,
   type RuntimeDiagnostic,
   type RuntimeTelemetry,
@@ -49,11 +55,58 @@ export function createRuntimeObservation(input: {
     throw new TypeError("Observation provider selections must be unique.");
   const failed = new Set<string>();
   const telemetry = createTelemetry(seed.identity, input.sink);
+  const lifecycle = createLifecycleProjection(seed);
   const observedAt = Date.now();
   let lastRecordAt: number | null = null;
   let sequence = 0;
   let dropped = 0;
-  const history: { diagnostic: RuntimeDiagnostic; finalization?: RuntimeFinalizationRecord }[] = [];
+  const history: {
+    diagnostic: RuntimeDiagnostic;
+    finalization?: RuntimeFinalizationRecord;
+    startup?: RuntimeStartupRecord;
+  }[] = [];
+
+  function appendLifecycle(record: RuntimeLifecycleRecord): void {
+    lastRecordAt = Date.now();
+    const isFinalization =
+      record.kind.startsWith("process.finalization.") || record.kind === "harness.stop.settled";
+    const failure =
+      record.kind === "harness.mount.failed" ||
+      (record.kind === "harness.stop.settled" && record.outcome === "rejected");
+    const diagnostic: RuntimeDiagnostic = {
+      id: `observation:${++sequence}`,
+      severity: failure ? "error" : "info",
+      phase: isFinalization
+        ? "observation"
+        : record.kind === "provisioning.ready" || record.kind === "binding.ready"
+          ? "provisioning"
+          : "mounting",
+      recordKind: isFinalization ? "finalization" : "status",
+      boundary:
+        record.kind === "provisioning.ready" ||
+        record.kind === "binding.ready" ||
+        record.kind === "adapters.ready"
+          ? "sdk"
+          : "runtime-mounting",
+      code: record.kind,
+      message: "An admitted runtime lifecycle observation was recorded.",
+      redaction: "safe",
+      payload: record,
+    };
+    if (
+      record.kind === "harness.stop.settled" ||
+      record.kind === "process.finalization.started" ||
+      record.kind === "process.finalization.deadline" ||
+      record.kind === "process.finalization.settled"
+    )
+      history.push({ diagnostic, finalization: record });
+    else history.push({ diagnostic, startup: record });
+    if (history.length > limit) {
+      history.shift();
+      dropped++;
+    }
+    telemetry.event(record.kind, record);
+  }
 
   function append(payload?: ReleaseFailure): void {
     lastRecordAt = Date.now();
@@ -72,7 +125,7 @@ export function createRuntimeObservation(input: {
         : {
             id: `observation:${++sequence}`,
             severity: "error",
-            phase: "provisioning",
+            phase: "observation",
             recordKind: "finalization",
             boundary: "provider",
             code: "provider.release.failed",
@@ -96,6 +149,13 @@ export function createRuntimeObservation(input: {
     publish(record: RuntimeObservationRecord): void {
       try {
         const envelope = fields(record, ["phase", "boundary", "kind", "correlationId", "payload"]);
+        if (envelope !== undefined) {
+          const lifecycleRecord = readLifecycleRecord(envelope, seed);
+          if (lifecycleRecord !== undefined && lifecycle.accept(lifecycleRecord)) {
+            appendLifecycle(lifecycleRecord);
+            return;
+          }
+        }
         if (
           envelope?.phase === "provisioning" &&
           envelope.boundary === "provider.release" &&
@@ -128,6 +188,7 @@ export function createRuntimeObservation(input: {
     port,
     telemetry,
     snapshot(): RuntimeCatalog {
+      const state = lifecycle.snapshot();
       return detached({
         processIdentity: {
           id: seed.identity.process,
@@ -150,16 +211,22 @@ export function createRuntimeObservation(input: {
         serviceAttachments: seed.serviceAttachments,
         workflowDispatchers: seed.workflowDispatchers,
         executionPlans: seed.executionPlans,
-        executionRegistry: { ...seed.executionRegistry, status: "unobserved" as const },
+        executionRegistry: { ...seed.executionRegistry, status: state.binding },
         surfaces: seed.surfaces,
-        harnesses: seed.harnesses,
+        harnesses: state.harnesses,
+        finalization: state.detail,
         lifecycleTimestamps: { observedAt, lastRecordAt },
         lifecycleStatus: {
           topology: "selected" as const,
-          provisioning: "unobserved" as const,
+          provisioning: state.provisioning,
+          binding: state.binding,
+          adapters: state.adapters,
           execution: "unobserved" as const,
-          mounting: "unobserved" as const,
-          finalization: failed.size === 0 ? ("unobserved" as const) : ("failure-observed" as const),
+          mounting: state.mounting,
+          finalization:
+            state.finalization === "unobserved" && failed.size > 0
+              ? ("failure-observed" as const)
+              : state.finalization,
         },
         diagnostics: history.map((item) => item.diagnostic),
         topologyRecords: [
@@ -169,7 +236,9 @@ export function createRuntimeObservation(input: {
             profileId: seed.profileId,
           },
         ],
-        startupRecords: [],
+        startupRecords: history.flatMap((item) =>
+          item.startup === undefined ? [] : [item.startup]
+        ),
         executionRecords: [],
         finalizationRecords: history.flatMap((item) =>
           item.finalization === undefined ? [] : [item.finalization]

@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-mounting"
+ownerProject = "runtime-mounting"
+blueprint = "runtime-mounting"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/mounting"
+
+[selections]

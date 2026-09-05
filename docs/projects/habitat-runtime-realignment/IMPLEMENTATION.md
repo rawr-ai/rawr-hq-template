@@ -1,12 +1,13 @@
 # Habitat Runtime Implementation
 
 Status: `active-draft`.
-Branch: `agent-root-habitat-runtime-observation`, stacked on the mount-ready handoff.
+Branch: `agent-root-habitat-runtime-mounting`, stacked on observation.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
 Cold adapters [1011](https://github.com/rawr-ai/rawr-hq-template/pull/1011).
 Harness handoff [1012](https://github.com/rawr-ai/rawr-hq-template/pull/1012).
+Observation [1013](https://github.com/rawr-ai/rawr-hq-template/pull/1013).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -61,12 +62,28 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Locally accepted domino: task 10.5. Implement the downstream observation owner, its
-complete diagnostic/catalog/telemetry contracts and actual non-authorizing
-projection. The implementation peer owns the package-less owner and its law;
-the runtime peer owns SDK-composed real provider evidence; root owns public
-type projection, graph/pack/native acceptance and integration. The cold peer
-reviews truthfulness, redaction and failure isolation.
+Current domino: tasks 10.6/10.7, complete process-local mounting and terminal
+SDK startup. The runtime peer owns mounting, native stop coordination, health
+and its complete owner law. The implementation peer extends observation only
+with actual admitted lifecycle records. Root owns typed per-start native
+integration registration, real SDK composition, native and installed evidence,
+and admission. The cold peer independently reviews the composed contracts.
+
+`startApp` consumes the exact entrypoint and requires explicit source inputs,
+finite native integration registrations and `waitForNativeStop` deadline policy.
+Registrations resolve already-selected harness IDs; they cannot add roles or
+reselect a process. Only currently implemented surface adapters are admitted.
+Validate all registration coverage before acquisition. Keep lowered record types
+public through the type-only harness face, not compiler plans or adapters.
+
+Start success means native mounts completed, not fabricated passing health.
+Required resource evidence gates mounting; optional distinct health probes run
+only on explicit queries. All selected harness contributions remain unknown
+until valid evidence, with explicit not-applicable neutral. Native stop owns
+settlement of its probes and report producers too. One process-local stop closes
+admission synchronously, waits for reverse-order native settlement, then stops
+the process. Its deadline reports pending native work without releasing resources
+or resolving early. No whole-app controller, force-stop policy or health poller.
 
 The observation-owned initial seed contains complete selected topology adapted
 by the SDK from real compilation outputs. Known topology is not empty merely
@@ -80,10 +97,11 @@ telemetry sink failures cannot alter product results or runtime authority.
 Handoff PR 1012 is locally accepted and submitted. Graphite's one native merge
 job completed PRs 1008-1011. Exact main
 `57557acfb6a3f94e05195d541c3be1677f121cbe` passed Repository Ratchet 33950917970.
-The single preservation-safe sweep waits for this active child to be clean;
-it is not another per-branch merge loop. The occupied Fluree worktree protects
-its unpublished local head from Graphite 1.8.6 sync; all other held remote/local
-heads match, and no held PR has become closed/merged.
+The single `gt sync --force --no-restack --no-interactive` sweep has removed all
+four consumed branches, followed by a targeted observation-child restack. The
+restack produced an identical tree. Graphite skipped occupied held worktrees;
+their heads and telemetry's eight staged files are preserved. Observation is
+submitted as PR 1013; no release or native-host qualification is implied.
 
 The owner's September 4 continuation delegates scope, execution and stopping
 point, requests perspective-specific standing peer review, and authorizes
@@ -652,6 +670,41 @@ predecessors once, then implement 10.6/10.7's complete process-local mounting
 and terminal SDK startup. These receipts do not claim a package release, native
 host qualification, or collector persistence/query acceptance.
 
+### Process-Local Mounting And Terminal Startup
+
+Tasks 10.6/10.7 complete real terminal SDK composition, exact per-start native
+registration, private mounting custody, distinct health and single-flight
+finalization. Actual startup, native mount, health and stop publications extend
+the observation read models; unobserved execution history stays unobserved.
+The public handle controls only its own selected process. A deadline reports
+pending native cleanup and never disposes resources early.
+
+Independent review repaired two P2s: a throwing optional native health getter
+could escape custody of a valid stop handle, and finalization diagnostics used
+the wrong phase. Startup readiness refusal now also closes its acquired process.
+Real loopback HTTP/file-lease regressions prove held requests, reverse cleanup,
+original-error preservation, distinct same-selection restarts and no premature
+release. Mixed agent/tool and desktop/background registrations reuse one native
+descriptor in one mount. Inline authoring retains callback context inference.
+
+Full repository CI passes 143 tasks (81 cache hits). All nine installed SDK/CLI
+tests pass (157.17 seconds), including two real process leases through only
+packed public SDK imports. The first full gate exposed missing transitive
+external declarations and a cross-owner fixture mixing source and bundled
+nominal types; the repair preserves one private declaration origin rather than
+adding casts, private graph edges or public runtime factories. These are local
+acceptance receipts, not package release or production-host qualification.
+Uncached product-separation and four native owner laws pass 12 tests with
+94 assertions. Strict OpenSpec validation and diff checks also pass; the final
+independent review has no remaining P1/P2.
+
+The next complete story is Habitat's Oclif self-host, co-landing 11.1-11.5 so
+commands and Nx readers leave the old module-global acquisition path together.
+Vendor review uses pinned Oclif 4.13.3. Native dispatch/finally/flush/exit and
+static manifest discovery need actual built-child proofs. The catalog's real
+filesystem/path dependency must be supplied explicitly alongside the independent
+source-inventory and rule-evaluation resources, not hidden in service construction.
+
 ### Backend Receipt Reuse
 
 Read-only discovery found a running Podman machine `orpc-efficacy-085`, cached
@@ -761,11 +814,8 @@ to invent another runner. Related SDK layer/harness drafts remain contextual,
 not wholesale architecture replacements.
 
 Read this record, the current OpenSpec queue and the selected owner's authority.
-Finish the binding/execution gate and the repaired current-owner access law,
-then submit its complete story above the green acquisition predecessor. Request
-one native stack merge when the complete stack is green and perform the
-owner-authorized one-pass sweep only after actual merge. Continue through
-adapter lowering, real tool/background authoring, harness contracts and live
-mounting/observation under task 10. Use the SDK authorship inputs and native
-contracts at each actual boundary, not as a new broad planning phase. Consumer
-repositories and held source remain outside this implementation authorization.
+Admit each complete verified story through Graphite. Request one native stack
+merge when its candidates are green and sweep consumed branches only after
+actual merge. Continue from generic mounting into the complete Oclif self-host,
+using the SDK authorship inputs and native contracts at each actual boundary.
+Consumer repositories and held source remain outside this authorization.
