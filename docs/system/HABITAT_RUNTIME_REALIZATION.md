@@ -1785,9 +1785,12 @@ indexes the derived operational `EffectExecutionDescriptor` values fixed by
 `AsyncStepEffectDescriptor` as the table value.
 
 The closed five-variant ref and table API applies only where the corresponding
-lane carrier and membership make a descriptor reachable. For admitted CLI,
-web-local, agent, or desktop non-async descriptors, complete derivation preserves
-the reachable operational descriptor exactly by reference. It emits no ref or
+lane carrier and membership make a descriptor reachable. Tool and desktop
+background leaves, like async steps, have no plugin owner until selected;
+derivation lowers each occurrence to one frozen operational descriptor and
+preserves that descriptor exactly through its table and the registry. Already
+operational admitted CLI/web-local descriptors retain their exact reference.
+It emits no ref or
 table entry from an unadmitted carrier, and the vocabulary alone does not prove
 lane support. Every descriptor remains cold.
 Derivation also emits descriptor refs; the complete-derivation public contracts
@@ -3576,41 +3579,40 @@ Agent plugins live under `plugins/agent/channels/*`, `plugins/agent/shell/*`, an
 
 File: `plugins/agent/tools/work-items/src/tools.ts`  
 Layer: agent tool Effect authoring  
-Exactness: normative for `defineTool(...).effect(function*)`, invocation-bound service client creation, and service invocation lane separation; illustrative for tool body.
+Exactness: normative for object-form `defineTool({ effect })`, typed input/context,
+invocation-bound service clients and service invocation separation; illustrative
+for the service contract and body.
 
 ```ts
-import { defineTool } from "@habitat-ai/sdk/plugins/agent/effect";
+import { defineTool, type ToolExecutionContext } from "@habitat-ai/sdk/plugins/agent/effect";
 import { toolSchema } from "@habitat-ai/sdk/plugins/agent/schema";
+import type { Static } from "typebox";
+import { services } from "./services";
 
-export const CreateWorkItemToolInputSchema = toolSchema.object({
-  title: toolSchema.string({ minLength: 1 }),
-  description: toolSchema.optional(toolSchema.string()),
+export const ReadWorkItemToolInputSchema = toolSchema.object({
+  id: toolSchema.string({ minLength: 1 }),
 });
 
-export const CreateWorkItemTool = defineTool({
-  id: "work-items.create",
-  description: "Create a work item through the work-items service.",
-  input: CreateWorkItemToolInputSchema,
-
-  effect: function* ({ input, clients, shell }) {
-    const actor = yield* shell.requireTrustedOperator();
-
-    const workItems = clients.workItems.withInvocation({
-      invocation: {
-        traceId: shell.traceId,
-        actorId: actor.id,
-      },
-    });
-
-    return yield* workItems.items.create({
-      title: input.title,
-      description: input.description,
-    });
+export const ReadWorkItemTool = defineTool({
+  id: "work-items.read",
+  description: "Read a work item through the selected service.",
+  input: ReadWorkItemToolInputSchema,
+  effect: function* ({ input, clients }: ToolExecutionContext<Static<typeof ReadWorkItemToolInputSchema>, typeof services>) {
+    // This illustrative read service declares no invocation lane.
+    const workItems = clients.workItems.withInvocation({ invocation: undefined });
+    return yield* workItems.items.get({ id: input.id });
   },
 });
 ```
 
 Agent/OpenShell governance is a reserved boundary with locked integration hooks. Agent plugins do not acquire providers, do not expose unredacted runtime internals, and do not become a second business execution plane.
+
+The enclosing `defineAgentToolPlugin.factory()` declares the shared `services`
+map, `resourceRequirements` and explicit `tools` membership once. Detached leaf
+contexts reference that map's type; they do not redeclare capability membership.
+`toolSchema` aliases native TypeBox constructors. `defineTool` creates its one
+`RuntimeSchema`; operational execution decodes raw input once per invocation,
+including retries. Host governance is not a fabricated `shell` capability.
 
 ### 12.10 Desktop background plugin
 
@@ -3618,36 +3620,30 @@ Desktop plugins live under `plugins/desktop/menubar/*`, `plugins/desktop/windows
 
 File: `plugins/desktop/background/disk-status/src/background.ts`  
 Layer: desktop background Effect authoring  
-Exactness: normative for process-local pubsub and process-local desktop background execution; illustrative for disk-status body.
+Exactness: normative for object-form cold background authoring, declared ready
+resource lookup and process-local execution; illustrative for resource operations.
 
 ```ts
-import { defineDesktopBackground } from "@habitat-ai/sdk/plugins/desktop/effect";
+import { defineDesktopBackground, type DesktopBackgroundExecutionContext } from "@habitat-ai/sdk/plugins/desktop/effect";
+import { diskStatusRequirement } from "./resources";
 
 export const DiskStatusBackground = defineDesktopBackground({
   id: "disk-status.refresh",
   cadence: "60 seconds",
 
-  effect: function* ({ resources, host }) {
-    const filesystem = yield* resources.require(FileSystemResource);
-    const pubsubHub = yield* resources.require(ProcessPubSubHubResource);
-
-    const usage = yield* filesystem.diskUsageSummary();
-
-    const diskStatusTopic = yield* pubsubHub.topic<typeof usage>({
-      id: "desktop.disk-status",
-      replay: "latest",
-    });
-
-    yield* diskStatusTopic.publish(usage);
-
-    yield* host.setMenubarBadge({
-      text: usage.percentUsed > 90 ? "!" : "",
-    });
+  effect: function* ({ resources }: DesktopBackgroundExecutionContext<{}>) {
+    const diskStatus = resources.get(diskStatusRequirement);
+    return yield* diskStatus.read();
   },
 });
 ```
 
 Desktop background loops are process-local. They do not become durable async schedules. If status must survive restart or trigger durable work, it is routed to `async`.
+
+`defineDesktopBackgroundPlugin.factory()` owns explicit `backgrounds` membership
+and the exact resource requirements. Cadence is cold metadata until a qualified
+native host implements scheduling. Neither a menubar host nor a timer is
+implicitly created by authoring or adapter lowering.
 
 ### 12.11 Web app projection contract
 
@@ -5290,8 +5286,9 @@ mounts Effect-backed executable surfaces must receive the matching table before
 The table's population is derived only from admitted definition-owned lane
 carriers and membership reachable through `deriveRuntimeArtifacts(...)`.
 The closed five-variant ref vocabulary does not create membership. Admitted
-non-async operational descriptors are preserved exactly by reference; async-step
-occurrences are lowered as specified below. No unadmitted lane contributes refs
+already-operational CLI/web-local descriptors are preserved exactly by reference;
+async-step, tool and background occurrences are lowered as specified here.
+No unadmitted lane contributes refs
 or entries.
 
 For every cold `AsyncStepEffectDescriptor` occurrence under an authored
@@ -5321,6 +5318,17 @@ identity cannot collapse those entries. The table preserves the derived
 operational descriptor for an async ref, never the authoring
 `AsyncStepEffectDescriptor`. Derivation invokes neither `run(...)` nor the
 authored `effect` function.
+
+Tool/background occurrences follow the same owner-qualified lowering law, using
+their exact `toolId` or `backgroundId`. One private, non-portable projection on
+the operational descriptor retains the tool's schema/description or background
+cadence for downstream lowering. No additional registry or portable field is
+created. Tool `run` returns a cold program with invocation-local decode state;
+it decodes raw input once, then evaluates the authored body with decoded input,
+bounded clients/resources and process-owned telemetry/execution. Native retries
+reuse that decoded value, not a decoder shared between invocations. Background
+execution uses the same context without tool input. Neither leaf duplicates the
+enclosing plugin's service or resource declarations.
 
 Complete-derivation acceptance must exercise `deriveRuntimeArtifacts(...)` from admitted
 definition-owned declarations and membership. Arbitrary property or
@@ -7266,6 +7274,7 @@ export interface SurfaceAdapter<
     processAccess: ProcessRuntimeAccess;
     roleAccess: RoleRuntimeAccess;
     serviceBindings: BoundServiceBindingMap;
+    resources: RuntimeResourceMap;
     executionRegistry: ExecutionRegistry;
     executionRuntime?: ProcessExecutionRuntime;
     effectORPCContext?: WithEffectContext<unknown>;
@@ -7281,6 +7290,14 @@ export interface AdapterLoweringResult<TPayload> {
 ```
 
 Adapter identity does not classify public/internal projection status. Topology plus builder does that before adapter lowering.
+
+Process lowering admits the exact selected compiled surface before calling an
+adapter. Its named clients and resource map contain only that plugin's declared
+capabilities, including the distinction between absent optional requirements and
+foreign references. Adapters resolve projection metadata from the exact registry
+descriptor, not by rereading authored trees. A tool callback passes raw input to
+process execution; it does not decode a second time. The process constructs one
+cold descriptor program per invocation before applying native execution policy.
 
 Surface adapters are the only runtime layer that translates compiled surface plans into harness-facing native payloads. Harnesses consume mount-ready surface runtime records or adapter-lowered payloads. Harnesses never consume raw authoring declarations, normalized authoring graphs, or compiler plans directly.
 

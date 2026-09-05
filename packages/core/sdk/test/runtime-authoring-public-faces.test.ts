@@ -111,14 +111,54 @@ const expectedDerivationRuntimeExports = [
 ] as const;
 
 const expectedPluginExports = [
+  "./plugins/agent",
+  "./plugins/agent/effect",
+  "./plugins/agent/schema",
   "./plugins/async",
   "./plugins/async/effect",
+  "./plugins/desktop",
+  "./plugins/desktop/effect",
   "./plugins/server",
   "./plugins/server/effect",
   "./plugins/web",
 ];
 
 describe("runtime authoring public faces", () => {
+  test("projects the exact cold tool/background authoring families without native hosts", async () => {
+    const agent = await import("../src/plugins/agent");
+    const agentEffect = await import("../src/plugins/agent/effect");
+    const agentSchema = await import("../src/plugins/agent/schema");
+    const desktop = await import("../src/plugins/desktop");
+    const desktopEffect = await import("../src/plugins/desktop/effect");
+    const definitions = await import("../../runtime/definition/src/index");
+    const { Type } = await import("typebox");
+    expect(Object.keys(agent).sort()).toEqual(["defineAgentToolPlugin", "useService"]);
+    expect(Object.keys(agentEffect)).toEqual(["defineTool"]);
+    expect(Object.keys(agentSchema)).toEqual(["toolSchema"]);
+    expect(Object.keys(desktop).sort()).toEqual(["defineDesktopBackgroundPlugin", "useService"]);
+    expect(Object.keys(desktopEffect)).toEqual(["defineDesktopBackground"]);
+    expect(agent.defineAgentToolPlugin).toBe(definitions.defineAgentToolPlugin);
+    expect(agentEffect.defineTool).toBe(definitions.defineTool);
+    expect(desktop.defineDesktopBackgroundPlugin).toBe(definitions.defineDesktopBackgroundPlugin);
+    expect(desktopEffect.defineDesktopBackground).toBe(definitions.defineDesktopBackground);
+    expect(agentSchema.toolSchema.object).toBe(Type.Object);
+    expect(agentSchema.toolSchema.string).toBe(Type.String);
+    expect(agentSchema.toolSchema.optional).toBe(Type.Optional);
+    for (const face of [agent, agentEffect, agentSchema, desktop, desktopEffect]) {
+      for (const excluded of [
+        "Effect",
+        "ManagedRuntime",
+        "runPromise",
+        "startApp",
+        "host",
+        "shell",
+        "mount",
+        "adapter",
+        "attachExecutionProjection",
+      ])
+        expect(face).not.toHaveProperty(excluded);
+    }
+  });
   test("cold-imports only the admitted runtime authoring operations", async () => {
     const [
       app,

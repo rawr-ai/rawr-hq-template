@@ -2,7 +2,7 @@ import { Clock, Effect, Tracer } from "effect";
 import { ReadonlyObject, type Static, Type } from "typebox";
 import { Check } from "typebox/value";
 
-import type { RuntimeCompilationResult } from "../../compiler/src/index";
+import type { CompiledSurfacePlan, RuntimeCompilationResult } from "../../compiler/src/index";
 import type {
   BoundaryTelemetry,
   EffectExecutionExit,
@@ -19,7 +19,12 @@ import {
   type ExecutionRegistry,
   readCompiledExecutableBoundary,
 } from "./execution-registry";
-import { type InvocationTracker, invocationContinuationContext } from "./invocation-tracker";
+import {
+  type Continuation,
+  type InvocationTracker,
+  invocationContinuationContext,
+} from "./invocation-tracker";
+import type { createSurfaceCapabilities } from "./surface-capabilities";
 
 export const ExecutionTraceParentSchema = ReadonlyObject(
   Type.Object(
@@ -72,8 +77,15 @@ export function createProcessExecutionRuntime(input: {
   readonly provisioned: ProvisionedProcess;
   readonly registry: ExecutionRegistry;
   readonly admission: InvocationTracker;
+  readonly surfaceCapabilities: (
+    surface: CompiledSurfacePlan,
+    continuation: Continuation
+  ) => ReturnType<typeof createSurfaceCapabilities>;
 }): ProcessExecutionRuntime {
-  function prepare<I, A, E, C>(request: ProcessExecutionInput<I, A, E, C>) {
+  function prepare<I, A, E, C>(
+    request: ProcessExecutionInput<I, A, E, C>,
+    continuation: Continuation
+  ) {
     const boundary = readCompiledExecutableBoundary(input.registry, request.boundary);
     const invocation = request.invocation;
     const surface = input.compilation.plan.surfaces.find(
@@ -99,7 +111,10 @@ export function createProcessExecutionRuntime(input: {
       const span = yield* Effect.orDie(Effect.currentSpan);
       const context: ProcedureExecutionContext<I, C> = {
         input: invocation.input,
-        context: invocation.context,
+        context: (boundary.ref.boundary === "plugin.agent-tool" ||
+        boundary.ref.boundary === "plugin.desktop-background"
+          ? { ...invocation.context, ...input.surfaceCapabilities(surface, continuation) }
+          : invocation.context) as C,
         execution: Object.freeze({
           appId: identity.app,
           processId: identity.process,
@@ -115,15 +130,11 @@ export function createProcessExecutionRuntime(input: {
         }),
         telemetry,
       };
-      return yield* applyExecutionPolicy(
-        Effect.suspend(() => {
-          const body = boundary.descriptor.run(context);
-          if (!Effect.isEffect(body))
-            throw new TypeError("Execution descriptor returned a non-Effect value.");
-          return body;
-        }),
-        boundary.plan.policy
-      );
+      // One invocation constructs one cold program; native policy may evaluate it repeatedly.
+      const body = boundary.descriptor.run(context);
+      if (!Effect.isEffect(body))
+        throw new TypeError("Execution descriptor returned a non-Effect value.");
+      return yield* applyExecutionPolicy(body, boundary.plan.policy);
     }).pipe(
       Effect.withSpan("runtime.execution", {
         attributes: {
@@ -144,7 +155,7 @@ export function createProcessExecutionRuntime(input: {
     execute(request) {
       return input.admission.run((lease) =>
         input.provisioned.managedRuntime.run(
-          Effect.provideContext(prepare(request), invocationContinuationContext(lease)),
+          Effect.provideContext(prepare(request, lease), invocationContinuationContext(lease)),
           { signal: request.invocation.signal }
         )
       );
@@ -152,7 +163,7 @@ export function createProcessExecutionRuntime(input: {
     executeExit(request) {
       return input.admission.runExit((lease) =>
         input.provisioned.managedRuntime.runExit(
-          Effect.provideContext(prepare(request), invocationContinuationContext(lease)),
+          Effect.provideContext(prepare(request, lease), invocationContinuationContext(lease)),
           { signal: request.invocation.signal }
         )
       );

@@ -1,0 +1,41 @@
+schemaVersion = 1
+id = "runtime-process-runtime"
+version = 2
+
+[[rules]]
+id = "runtime_process_runtime_v2_adapter_imports"
+lane = "enforced"
+message = "Surface adapters delegate execution and cannot import raw Effect."
+remediate = "Use the process-owned execution runtime from deferred payload callbacks; keep raw Effect in its execution owner."
+
+[rules.runner]
+name = "grit"
+pattern = "runtime_process_runtime_v2_adapter_imports.md"
+patternName = "runtime_process_runtime_v2_adapter_imports"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/adapters/**/*.ts", "src/surface-adapter.ts"] }]
+
+[[rules]]
+id = "runtime_process_runtime_v2_structure"
+lane = "enforced"
+message = "The runtime-process-runtime owner must preserve its private project boundary and closed TypeScript source and proof grammar."
+remediate = "Restore the package-less project anchors, sole source entry, and owner-local TypeScript source and tests without adding a nested owner, package, public face, or provider acquisition and harness mounting authority."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

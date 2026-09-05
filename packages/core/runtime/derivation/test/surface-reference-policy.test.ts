@@ -69,3 +69,27 @@ test("closed ref vocabulary alone does not admit executable lane membership", ()
     ).toThrow(TypeError);
   }
 });
+
+test("requires exact agent tool and desktop background role/surface relations", () => {
+  const tool = { ...base, boundary: "plugin.agent-tool" as const, toolId: "tool" };
+  const background = {
+    ...base,
+    boundary: "plugin.desktop-background" as const,
+    backgroundId: "background",
+  };
+  expect(() =>
+    assertSurfaceReferenceRelation({ role: "agent", surface: "agent/tools" }, tool)
+  ).not.toThrow();
+  expect(() =>
+    assertSurfaceReferenceRelation({ role: "desktop", surface: "desktop/background" }, background)
+  ).not.toThrow();
+  for (const ref of [tool, background]) {
+    for (const surface of [
+      { role: "agent" as const, surface: "desktop/background" },
+      { role: "desktop" as const, surface: "agent/tools" },
+      { role: "server" as const, surface: "server/api" },
+    ]) {
+      expect(() => assertSurfaceReferenceRelation(surface, ref)).toThrow(TypeError);
+    }
+  }
+});

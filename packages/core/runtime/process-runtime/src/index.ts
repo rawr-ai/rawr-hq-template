@@ -1,3 +1,8 @@
+export { createAgentToolsAdapter, type LoweredAgentTool } from "./adapters/agent-tools";
+export {
+  createDesktopBackgroundAdapter,
+  type LoweredDesktopBackground,
+} from "./adapters/desktop-background";
 export {
   type CreateProcessRuntimeInput,
   createProcessRuntime,
@@ -12,3 +17,10 @@ export type {
   RuntimeAccess,
   SurfaceRuntimeAccess,
 } from "./runtime-access";
+export type {
+  AdapterFinding,
+  AdapterLoweringResult,
+  AdapterObservation,
+  BoundServiceBindingMap,
+  SurfaceAdapter,
+} from "./surface-adapter";

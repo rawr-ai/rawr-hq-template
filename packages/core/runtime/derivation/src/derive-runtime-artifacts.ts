@@ -1,10 +1,12 @@
 import type {
+  AgentToolPluginDefinition,
   AppRole,
   AsyncConsumerPluginDefinition,
   AsyncSchedulePluginDefinition,
   AsyncWorkflowPluginDefinition,
   ProviderSelection as AuthoredProviderSelection,
   ResourceRequirement as AuthoredResourceRequirement,
+  DesktopBackgroundPluginDefinition,
   Entrypoint,
   PluginDefinition,
   RuntimeProvider,
@@ -23,6 +25,8 @@ import {
   type AsyncStepDescriptorOccurrence,
   createExecutionDescriptorTable,
   deriveAsyncExecutionEntry,
+  deriveDesktopBackgroundExecutionEntry,
+  deriveToolExecutionEntry,
   type ExecutionDescriptorTable,
 } from "./derive-execution-descriptor-table";
 import type { ExecutionDescriptorRef } from "./execution-descriptor-ref";
@@ -887,8 +891,32 @@ function isWebPlugin(plugin: PluginDefinition): plugin is WebAppPluginDefinition
   return plugin.role === "web" && plugin.surface === "web/app" && "routes" in plugin;
 }
 
-function collectAsyncEntries(state: PluginDerivationState, appId: string): void {
+function isAgentToolPlugin(plugin: PluginDefinition): plugin is AgentToolPluginDefinition {
+  return plugin.role === "agent" && plugin.surface === "agent/tools" && "tools" in plugin;
+}
+
+function isDesktopBackgroundPlugin(
+  plugin: PluginDefinition
+): plugin is DesktopBackgroundPluginDefinition {
+  return (
+    plugin.role === "desktop" && plugin.surface === "desktop/background" && "backgrounds" in plugin
+  );
+}
+
+function collectExecutionEntries(state: PluginDerivationState, appId: string): void {
   const plugin = state.definition;
+  if (isAgentToolPlugin(plugin)) {
+    for (const tool of plugin.tools) {
+      state.executionEntries.push(deriveToolExecutionEntry(state.ownerId, tool));
+    }
+    return;
+  }
+  if (isDesktopBackgroundPlugin(plugin)) {
+    for (const background of plugin.backgrounds) {
+      state.executionEntries.push(deriveDesktopBackgroundExecutionEntry(state.ownerId, background));
+    }
+    return;
+  }
   const add = (occurrence: AsyncStepDescriptorOccurrence) => {
     state.executionEntries.push(deriveAsyncExecutionEntry(occurrence));
   };
@@ -1148,7 +1176,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       state.resourceRequirementIds.push(requirement.requirementId);
       resourceReferences.set(requirement.requirementId, authored);
     }
-    collectAsyncEntries(state, entrypoint.app.id);
+    collectExecutionEntries(state, entrypoint.app.id);
     collectWebEntries(state);
     pluginStates.push(state);
   }

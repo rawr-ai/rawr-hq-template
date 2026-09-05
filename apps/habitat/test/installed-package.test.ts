@@ -73,6 +73,11 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/plugins/async",
     "@habitat-ai/sdk/plugins/async/effect",
     "@habitat-ai/sdk/plugins/web",
+    "@habitat-ai/sdk/plugins/agent",
+    "@habitat-ai/sdk/plugins/agent/effect",
+    "@habitat-ai/sdk/plugins/agent/schema",
+    "@habitat-ai/sdk/plugins/desktop",
+    "@habitat-ai/sdk/plugins/desktop/effect",
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
     "@habitat-ai/sdk/runtime/providers/effect",
@@ -1081,6 +1086,7 @@ describe("installed Habitat products", () => {
     }
     await assertInstalledWebProjection(generatedServiceRoot);
     await assertInstalledRuntimeDerivation(generatedServiceRoot);
+    await assertInstalledToolBackgroundTypes(generatedServiceRoot);
     await assertInstalledProviderAuthoring(generatedServiceRoot);
 
     const coldCliEntrypoint = path.join(consumerRoot, "cold-habitat-cli.mjs");
@@ -1124,6 +1130,19 @@ describe("installed Habitat products", () => {
         'const sdk = await import("@habitat-ai/sdk");',
         'const asyncPlugins = await import("@habitat-ai/sdk/plugins/async");',
         'const asyncEffect = await import("@habitat-ai/sdk/plugins/async/effect");',
+        'const agent = await import("@habitat-ai/sdk/plugins/agent");',
+        'const agentEffect = await import("@habitat-ai/sdk/plugins/agent/effect");',
+        'const agentSchema = await import("@habitat-ai/sdk/plugins/agent/schema");',
+        'const desktop = await import("@habitat-ai/sdk/plugins/desktop");',
+        'const desktopEffect = await import("@habitat-ai/sdk/plugins/desktop/effect");',
+        'const { Type } = await import("typebox");',
+        'if (agentSchema.toolSchema.object !== Type.Object) throw new Error("Tool schema lost native identity");',
+        'const tool = agentEffect.defineTool({ id: "cold", description: "cold installed tool", input: agentSchema.toolSchema.object({ id: agentSchema.toolSchema.string() }), effect: () => { throw new Error("Cold tool executed"); } });',
+        'const background = desktopEffect.defineDesktopBackground({ id: "cold", cadence: "60 seconds", effect: () => { throw new Error("Cold background executed"); } });',
+        'const toolPlugin = agent.defineAgentToolPlugin.factory()({ capability: "installed-tools", services: {}, tools: [tool] })();',
+        'const backgroundPlugin = desktop.defineDesktopBackgroundPlugin.factory()({ capability: "installed-background", services: {}, backgrounds: [background] })();',
+        'if (toolPlugin.tools[0] !== tool || backgroundPlugin.backgrounds[0] !== background) throw new Error("Cold membership lost identity");',
+        'if (!tool.inputSchema.decode({ id: "ok" }).success || tool.inputSchema.decode({ id: 1 }).success) throw new Error("Installed tool schema failed");',
         'const derivation = await import("@habitat-ai/sdk/runtime/derivation");',
         'const resources = await import("@habitat-ai/sdk/runtime/resources");',
         'const providers = await import("@habitat-ai/sdk/runtime/providers");',
@@ -1265,6 +1284,7 @@ describe("installed Habitat products", () => {
       "runtime-derivation@2",
       "runtime-derivation@3",
       "runtime-process-runtime@1",
+      "runtime-process-runtime@2",
       "runtime-substrate-effect@1",
       "service@1",
       "service@2",
@@ -1304,6 +1324,7 @@ describe("installed Habitat products", () => {
       "runtime-definition/versions/3/structure.toml",
       "runtime-derivation/versions/2/structure.toml",
       "runtime-derivation/versions/3/structure.toml",
+      "runtime-process-runtime/versions/2/structure.toml",
       "service/versions/2/structure.toml",
       "service/versions/3/structure.toml",
     ]);
@@ -1716,6 +1737,11 @@ describe("installed Habitat products", () => {
         id: "runtime-process-runtime",
         path: "dist/blueprints/runtime-process-runtime/blueprint.toml",
         version: 1,
+      },
+      {
+        id: "runtime-process-runtime",
+        path: "dist/blueprints/runtime-process-runtime/versions/2/blueprint.toml",
+        version: 2,
       },
       {
         id: "runtime-substrate-effect",
@@ -2701,6 +2727,54 @@ function inspectTypeScriptModuleExports(declarationPath: string): {
     runtime: runtime.sort(),
     types: types.sort(),
   };
+}
+
+async function assertInstalledToolBackgroundTypes(callerRoot: string): Promise<void> {
+  const file = path.join(callerRoot, "installed-projection-types.ts");
+  try {
+    await writeFile(
+      file,
+      [
+        'import { defineAgentToolPlugin } from "@habitat-ai/sdk/plugins/agent";',
+        'import { defineTool, type ToolDescriptor } from "@habitat-ai/sdk/plugins/agent/effect";',
+        'import { toolSchema } from "@habitat-ai/sdk/plugins/agent/schema";',
+        'import { defineDesktopBackgroundPlugin } from "@habitat-ai/sdk/plugins/desktop";',
+        'import { defineDesktopBackground, type DesktopBackgroundDescriptor } from "@habitat-ai/sdk/plugins/desktop/effect";',
+        'const tool = defineTool({ id: "installed", description: "Typed installed tool", input: toolSchema.object({ id: toolSchema.string() }), effect: function* (context) {',
+        "  const id: string = context.input.id;",
+        "  // @ts-expect-error Unannotated context grants no undeclared clients.",
+        "  context.clients.notDeclared;",
+        "  return id;",
+        "} });",
+        'const background = defineDesktopBackground({ id: "installed", cadence: "60 seconds", effect: function* () { return 1; } });',
+        'defineAgentToolPlugin.factory()({ capability: "installed", services: {}, tools: [tool] });',
+        'defineDesktopBackgroundPlugin.factory()({ capability: "installed", services: {}, backgrounds: [background] });',
+        "type ToolChannels<T> = T extends ToolDescriptor<infer I, infer A, infer E, infer R, infer _C> ? [I, A, E, R] : never;",
+        "type BackgroundChannels<T> = T extends DesktopBackgroundDescriptor<infer A, infer E, infer R, infer _C> ? [A, E, R] : never;",
+        "type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;",
+        "const toolTypes: Equal<ToolChannels<typeof tool>, [{ id: string }, string, never, never]> = true;",
+        "const backgroundTypes: Equal<BackgroundChannels<typeof background>, [number, never, never]> = true;",
+        "void [toolTypes, backgroundTypes];",
+      ].join("\n")
+    );
+    const program = ts.createProgram({
+      rootNames: [file],
+      options: {
+        module: ts.ModuleKind.NodeNext,
+        moduleResolution: ts.ModuleResolutionKind.NodeNext,
+        target: ts.ScriptTarget.ES2022,
+        strict: true,
+        skipLibCheck: true,
+        noEmit: true,
+      },
+    });
+    const diagnostics = ts
+      .getPreEmitDiagnostics(program)
+      .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
+    expect(diagnostics).toEqual([]);
+  } finally {
+    await rm(file, { force: true });
+  }
 }
 
 async function assertInstalledRuntimeDerivation(callerRoot: string): Promise<void> {

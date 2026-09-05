@@ -97,6 +97,11 @@
       "path": "dist/blueprints/runtime-process-runtime/blueprint.toml"
     },
     {
+      "id": "runtime-process-runtime",
+      "version": 2,
+      "path": "dist/blueprints/runtime-process-runtime/versions/2/blueprint.toml"
+    },
+    {
       "id": "runtime-substrate-effect",
       "version": 1,
       "path": "dist/blueprints/runtime-substrate-effect/blueprint.toml"

@@ -219,6 +219,12 @@ export interface ServiceUse<
 
 export type ServiceUses = Readonly<Record<string, ServiceUse>>;
 
+export type ServiceClients<TUses extends ServiceUses> = {
+  readonly [TKey in keyof TUses]: TUses[TKey] extends ServiceUse<unknown, infer TService>
+    ? ReturnType<TService["construct"]>
+    : never;
+};
+
 export type ServiceContractOf<TUse> = TUse extends ServiceUse<infer TContract> ? TContract : never;
 
 const bindingKeys = new Set(["scope", "config", "dependencies"]);

@@ -1,10 +1,13 @@
 import type {
   AsyncStepEffectDescriptor,
+  DesktopBackgroundDescriptor,
   ExecutionDescriptor,
   HabitatEffect,
   ProcedureExecutionContext,
+  ToolDescriptor,
 } from "../../definition/src/index";
-import { Effect, isHabitatEffect } from "../../definition/src/index";
+import { attachExecutionProjection, Effect, isHabitatEffect } from "../../definition/src/index";
+import type { RuntimeSchemaResult } from "../../schema/src/runtime-schema";
 import {
   assertExecutionDescriptorRefOwnData,
   type ExecutionDescriptorIdentityInput,
@@ -36,6 +39,11 @@ export interface AsyncStepDescriptorOccurrence {
   readonly owner: AsyncOccurrenceOwner;
   readonly descriptor: AsyncStepEffectDescriptor<unknown, unknown, unknown, never>;
 }
+
+type AuthoredExecutionDescriptor =
+  | AsyncStepEffectDescriptor<unknown, unknown, unknown, never>
+  | ToolDescriptor<unknown, unknown, unknown, unknown, never>
+  | DesktopBackgroundDescriptor<unknown, unknown, unknown, never>;
 
 function compareStrings(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
@@ -159,23 +167,6 @@ function refFromIdentity(
   identity: ExecutionDescriptorIdentityInput,
   executionId: string
 ): ExecutionDescriptorRef {
-  if (identity.boundary !== "plugin.async-step") {
-    throw new TypeError("Task 4.8 derives only async-step execution occurrences.");
-  }
-  if ("workflowId" in identity) {
-    return Object.freeze({
-      kind: "execution.descriptor-ref",
-      executionId,
-      ...identity,
-    });
-  }
-  if ("scheduleId" in identity) {
-    return Object.freeze({
-      kind: "execution.descriptor-ref",
-      executionId,
-      ...identity,
-    });
-  }
   return Object.freeze({
     kind: "execution.descriptor-ref",
     executionId,
@@ -183,41 +174,94 @@ function refFromIdentity(
   });
 }
 
-export function deriveAsyncExecutionEntry(
-  occurrence: AsyncStepDescriptorOccurrence
-): readonly [ExecutionDescriptorRef, ExecutionDescriptor<unknown, unknown, unknown, unknown>] {
-  const identity = occurrenceIdentityInput(occurrence);
-  const executionId = executionDescriptorId(identity);
-  const ref = refFromIdentity(identity, executionId);
-  const authored = occurrence.descriptor;
-  const descriptor: ExecutionDescriptor<unknown, unknown, unknown, unknown> = Object.freeze({
+function operationalDescriptor(
+  ref: ExecutionDescriptorRef,
+  authored: AuthoredExecutionDescriptor
+): ExecutionDescriptor<unknown, unknown, unknown, unknown> {
+  const descriptor: ExecutionDescriptor<unknown, unknown, unknown, unknown> = {
     kind: "execution.effect",
-    executionId,
-    boundary: "plugin.async-step",
+    executionId: ref.executionId,
+    boundary: ref.boundary,
     policy: authored.policy,
     run(invocation: ProcedureExecutionContext<unknown, unknown>) {
+      // One cold program is retried per invocation; its input is decoded only on first execution.
+      let decoded: RuntimeSchemaResult<unknown> | undefined;
       return Effect.gen(function* () {
         if (
           typeof invocation.context !== "object" ||
           invocation.context === null ||
           Array.isArray(invocation.context)
         ) {
-          throw new TypeError("An async step requires its native boundary context.");
+          throw new TypeError("An executable occurrence requires its native boundary context.");
+        }
+        if (authored.kind === "agent.tool") {
+          decoded ??= authored.inputSchema.decode(invocation.input);
+          if (!decoded.success) throw new TypeError("Tool input failed its owning schema.");
         }
         const context = {
           ...invocation.context,
+          ...(decoded?.success ? { input: decoded.value } : {}),
           telemetry: invocation.telemetry,
           execution: invocation.execution,
         };
         const program: unknown = Reflect.apply(authored.effect, undefined, [context]);
         if (isHabitatEffect(program)) return yield* program;
         if (isHabitatEffectGenerator(program)) return yield* Effect.gen(() => program);
-        throw new TypeError("An async step must return a HabitatEffect or Effect generator.");
+        throw new TypeError("An executable occurrence must return a HabitatEffect or generator.");
       });
     },
-  });
+  };
+  if (authored.kind === "agent.tool") {
+    return attachExecutionProjection(descriptor, {
+      kind: "agent.tool",
+      input: authored.inputSchema,
+      description: authored.description,
+    });
+  }
+  if (authored.kind === "desktop.background") {
+    return attachExecutionProjection(descriptor, {
+      kind: "desktop.background",
+      cadence: authored.cadence,
+    });
+  }
+  return Object.freeze(descriptor);
+}
 
-  return Object.freeze([ref, descriptor]);
+function deriveExecutionEntry(
+  identity: ExecutionDescriptorIdentityInput,
+  authored: AuthoredExecutionDescriptor
+): readonly [ExecutionDescriptorRef, ExecutionDescriptor<unknown, unknown, unknown, unknown>] {
+  const ref = refFromIdentity(identity, executionDescriptorId(identity));
+  return Object.freeze([ref, operationalDescriptor(ref, authored)]);
+}
+
+export function deriveAsyncExecutionEntry(
+  occurrence: AsyncStepDescriptorOccurrence
+): readonly [ExecutionDescriptorRef, ExecutionDescriptor<unknown, unknown, unknown, unknown>] {
+  if (occurrence.descriptor.kind !== "async.step-effect")
+    throw new TypeError("Async membership requires an async step descriptor.");
+  return deriveExecutionEntry(occurrenceIdentityInput(occurrence), occurrence.descriptor);
+}
+
+export function deriveToolExecutionEntry(
+  ownerId: string,
+  tool: ToolDescriptor<unknown, unknown, unknown, unknown, never>
+): readonly [ExecutionDescriptorRef, ExecutionDescriptor<unknown, unknown, unknown, unknown>] {
+  if (tool.kind !== "agent.tool")
+    throw new TypeError("Tool membership requires a tool descriptor.");
+  return deriveExecutionEntry({ boundary: "plugin.agent-tool", ownerId, toolId: tool.id }, tool);
+}
+
+export function deriveDesktopBackgroundExecutionEntry(
+  ownerId: string,
+  background: DesktopBackgroundDescriptor<unknown, unknown, unknown, never>
+): readonly [ExecutionDescriptorRef, ExecutionDescriptor<unknown, unknown, unknown, unknown>] {
+  if (background.kind !== "desktop.background")
+    throw new TypeError("Background membership requires a desktop background descriptor.");
+  return deriveExecutionEntry(
+    { boundary: "plugin.desktop-background", ownerId, backgroundId: background.id },
+    background
+  );
 }
 
 export function createExecutionDescriptorTable(

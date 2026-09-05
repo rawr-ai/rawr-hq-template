@@ -86,6 +86,31 @@
       "import": "./dist/plugins/web/index.js",
       "default": "./dist/plugins/web/index.js"
     },
+    "./plugins/agent": {
+      "types": "./dist/plugins/agent/index.d.ts",
+      "import": "./dist/plugins/agent/index.js",
+      "default": "./dist/plugins/agent/index.js"
+    },
+    "./plugins/agent/effect": {
+      "types": "./dist/plugins/agent/effect/index.d.ts",
+      "import": "./dist/plugins/agent/effect/index.js",
+      "default": "./dist/plugins/agent/effect/index.js"
+    },
+    "./plugins/agent/schema": {
+      "types": "./dist/plugins/agent/schema/index.d.ts",
+      "import": "./dist/plugins/agent/schema/index.js",
+      "default": "./dist/plugins/agent/schema/index.js"
+    },
+    "./plugins/desktop": {
+      "types": "./dist/plugins/desktop/index.d.ts",
+      "import": "./dist/plugins/desktop/index.js",
+      "default": "./dist/plugins/desktop/index.js"
+    },
+    "./plugins/desktop/effect": {
+      "types": "./dist/plugins/desktop/effect/index.d.ts",
+      "import": "./dist/plugins/desktop/effect/index.js",
+      "default": "./dist/plugins/desktop/effect/index.js"
+    },
     "./runtime/resources": {
       "types": "./dist/runtime/resources/index.d.ts",
       "import": "./dist/runtime/resources/index.js",
