@@ -8,7 +8,14 @@ export {
   createElysiaInternalAdapter,
   type ElysiaRoutePayload,
 } from "./adapters/elysia";
+export {
+  createInngestConsumerAdapter,
+  createInngestScheduleAdapter,
+  createInngestWorkflowAdapter,
+} from "./adapters/inngest";
 export { createOclifAdapter, type LoweredCliCommand } from "./adapters/oclif";
+export { materializeInngestFunctions, readInngestFunctionBundle } from "./async-function-bundle";
+export type { InngestMountPayload } from "./async-payload";
 export {
   type CreateProcessRuntimeInput,
   createProcessRuntime,

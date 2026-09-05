@@ -3246,10 +3246,11 @@ binding identity. Complete
 inheritance, schema-presence, diamond-convergence, and refusal law is fixed in
 §§11.3 and 15.6.
 
-Server, CLI, agent, and similar request contexts receive construction-bound
-clients when the author must call `.withInvocation(...)`; async step contexts
-receive invocation-bound clients after the step bridge has applied invocation
-identity.
+Server, CLI, agent, async step, and similar managed contexts receive
+construction-bound clients. The author calls `.withInvocation(...)` with each
+service's own invocation input before invoking its Effect procedures. Async
+execution identity and decoded event data are not service invocation data: the
+step bridge supplies neither an implicit mapping nor an authorization decision.
 
 File: `plugins/server/api/work-items/src/plugin.ts`  
 Layer: public server API plugin authoring  
@@ -3465,39 +3466,68 @@ export const createPlugin = defineAsyncWorkflowPlugin.factory()({
 });
 ```
 
-Async step-local Effect execution must be mounted through the Inngest step boundary. Step-local executable bodies are declared as cold descriptors at module scope; the native workflow `run` function only invokes selected descriptors through the step bridge.
+Async step-local Effect execution must be mounted through the Inngest step
+boundary. Step-local executable bodies are declared as cold descriptors at
+module scope. Every workflow, schedule, and consumer explicitly authors its
+native `run(ctx)` callback; its `steps` array declares permitted descriptor
+membership, not execution order. The callback may use native orchestration
+tools and invokes Habitat-managed bodies only through the step bridge.
 
 File: `plugins/async/workflows/work-items-sync/src/workflows/sync-work-item.ts`  
 Layer: async step-local Effect execution  
-Exactness: normative for Inngest durability and Effect local execution split; illustrative for helper spelling and workflow payload names.
+Exactness: normative for the authoring fields, descriptor membership, and
+Inngest durability/Effect local execution split; illustrative for domain
+service imports and workflow payload names.
 
 ```ts
 import {
+  type AsyncStepExecutionContext,
   defineAsyncStepEffect,
   stepEffect,
 } from "@habitat-ai/sdk/plugins/async/effect";
+import { defineWorkflow } from "@habitat-ai/sdk/plugins/async";
+import { RuntimeSchema } from "@habitat-ai/sdk/runtime/schema";
+import { Type, type Static } from "typebox";
+import { runtimeService as WorkItemsService } from "@rawr/services/work-items";
+
+const SyncInput = Type.Object({
+  itemId: Type.String(),
+  requestedBy: Type.String(),
+});
+type SyncStepContext = AsyncStepExecutionContext<
+  Static<typeof SyncInput>,
+  {
+    workItems: ReturnType<typeof WorkItemsService.construct>;
+  }
+>;
 
 export const SyncWorkItemStep = defineAsyncStepEffect({
   id: "sync-work-item",
+  policy: {},
 
-  effect: function* ({ event, clients }) {
-    const item = yield* clients.workItems.items.get({
-      id: event.data.itemId,
+  effect: function* ({ event, clients }: SyncStepContext) {
+    // This example selects a service with no authored invocation lane.
+    const workItems = clients.workItems.withInvocation({ invocation: undefined });
+    const item = yield* workItems.items.get({
+      id: event.itemId,
     });
 
     if (item.status === "done") {
       return { skipped: true as const };
     }
 
-    return yield* clients.workItems.items.sync({
-      id: event.data.itemId,
-      requestedBy: event.data.requestedBy,
+    return yield* workItems.items.sync({
+      id: event.itemId,
+      requestedBy: event.requestedBy,
     });
   },
 });
 
 export const WorkItemsSyncWorkflow = defineWorkflow({
   id: "work-items.sync",
+  eventName: "work-items/sync.requested",
+  inputSchema: RuntimeSchema.fromTypeBox(SyncInput),
+  steps: [SyncWorkItemStep],
 
   async run(ctx) {
     return await stepEffect(ctx).run(SyncWorkItemStep);
@@ -3505,7 +3535,10 @@ export const WorkItemsSyncWorkflow = defineWorkflow({
 });
 ```
 
-The outer async function is native host interop. The step bridge lowers
+The outer async function is native host interop: `ctx.event.data` is decoded
+once per native `run` callback/re-entry, while the step-local `event` is that decoded
+payload itself. The outer context has no Habitat clients, resources, or runtime
+bag. The step bridge lowers
 `stepEffect(ctx).run(SyncWorkItemStep)` to native
 `step.run(SyncWorkItemStep.id, callback)`, and that callback delegates the
 pre-derived descriptor to `ProcessExecutionRuntime`. The step-local body is
@@ -3519,7 +3552,11 @@ step. The plugin owns workflow projection, its services own domain meaning, and
 Inngest owns durability, retries, replay, schedules, workflow history, and
 durable workflow execution semantics.
 
-Schedules and consumers keep the same async ownership law. Cron strings and event names identify triggers only. Any read event data must have a schema-backed payload contract.
+Schedules and consumers keep the same async ownership law. Cron strings and
+event names identify native triggers; function IDs identify native functions,
+not an automatic event namespace. The same event may fan out to multiple
+matching native functions. Any read workflow or consumer event data must have
+a schema-backed payload contract.
 
 ### 12.8 CLI topic plugin
 
@@ -7064,7 +7101,8 @@ Trusted same-process application callers executing through the Habitat runtime u
 
 ### 19.1 `WorkflowDispatcher`
 
-Dispatcher bridges workflows.
+Dispatcher admits selected workflow events; it does not target one exclusive
+native function.
 
 `WorkflowDispatcher` is a live runtime integration artifact materialized by the process runtime from selected workflow definitions plus the provisioned process async client.
 
@@ -7074,6 +7112,14 @@ provisioning. Server API and server internal projections may wrap event
 admission for caller-facing surfaces. Workflow plugins do not expose
 caller-facing product APIs.
 
+This live dispatcher and its server admission relation remain the separate
+obligation in [task 13.7](../../openspec/changes/realize-app-runtime-spine/tasks.md).
+Native async authoring and Serve/Connect qualification do not implement or
+retire it. Workflow `eventName` is an explicitly authored native event trigger;
+the runtime MUST NOT derive an event namespace from a function ID or claim
+exclusive delivery. Sending that event may fan out to every matching native
+function. The dispatcher must preserve that native admission meaning.
+
 File: `packages/core/runtime/process-runtime/src/workflow-dispatcher.ts`  
 Layer: live runtime dispatcher integration  
 Exactness: normative for producer/consumer boundary and live materialization role; illustrative for method names.
@@ -7081,7 +7127,7 @@ Exactness: normative for producer/consumer boundary and live materialization rol
 ```ts
 export interface WorkflowDispatcher {
   send<TPayload>(
-    workflow: WorkflowDefinition<TPayload>,
+    workflow: AsyncWorkflowDefinition<string, TPayload>,
     payload: TPayload,
     options?: WorkflowDispatchOptions,
   ): Promise<WorkflowDispatchResult>;
@@ -7116,7 +7162,7 @@ Layer: async lowering sequence
 Exactness: normative for producer/consumer order.
 
 ```text
-WorkflowDefinition / ScheduleDefinition / ConsumerDefinition
+AsyncWorkflowDefinition / AsyncScheduleDefinition / AsyncConsumerDefinition
   -> runtime-derived async surface plan exposed through the SDK
   -> runtime compiled async surface plan
   -> async SurfaceAdapter
@@ -7124,7 +7170,31 @@ WorkflowDefinition / ScheduleDefinition / ConsumerDefinition
   -> Inngest harness
 ```
 
-Ordinary async plugin authoring returns app-owned workflow, schedule, or consumer definitions expressed through Habitat's grammar. It does not manually acquire the Inngest client, call runtime access directly to construct native functions, or construct the harness-facing bundle.
+Ordinary async plugin authoring returns app-owned workflow, schedule, or
+consumer definitions expressed through Habitat's grammar. Every declaration
+retains its exact authored `run(ctx)` callback and explicit `steps` membership.
+Workflows require `eventName` and `inputSchema`; consumers require `eventName`
+and `eventSchema`; schedules require `cron` and retain native scheduled-event
+data. Membership neither sequences steps nor requires the callback to execute
+every member.
+
+The selected private derivation/compiler handoff preserves declaration kind,
+ID, trigger, schema, exact `run` reference, native options, and each exact step
+descriptor paired with its existing precompiled `ExecutionDescriptorRef`
+occurrence. These are nonportable references keyed by selected surface, not a
+public registry. No phase executes or parses `run` for discovery, and mounting
+does not rediscover app/plugin declarations. Ordinary authoring does not
+acquire the Inngest client, call runtime access to construct native functions,
+or construct the harness-facing bundle.
+
+Optional `options` projects native `InngestFunction.Options`, including
+checkpointing, retries, concurrency, `cancelOn`, middleware, and `onFailure`.
+It cannot replace the declaration's `id`, generated `triggers`, or `run`.
+Definition authoring snapshots only the top-level own-data option record;
+nested native values, instances, and callbacks retain exact references without
+being traversed, invoked, or frozen. Function-level and client-level middleware
+are admitted within the same standard-JSON-preserving result contract.
+`onFailure` keeps native failure context and receives no Habitat step bridge.
 
 ### 19.3 `FunctionBundle`
 
@@ -7138,26 +7208,24 @@ separate named consumer and process-runtime materialization, not part of this
 factory's materialization. `FunctionBundle` is not public authoring, service
 API, product invocation contract, or a parallel metadata source.
 
-File: `packages/core/runtime/harnesses/inngest/src/function-bundle.ts`  
+File: `packages/core/runtime/process-runtime/src/async-function-bundle.ts`  
 Layer: async harness-facing lowered registration factory  
 Exactness: normative for private factory role, same-client materialization, and
 absence of dispatcher metadata; illustrative for native function types and
 factory spelling.
 
 ```ts
+import type { Inngest, InngestFunction } from "inngest";
+
 export interface FunctionBundle {
   readonly kind: "harness.inngest.function-bundle";
   readonly appId: string;
   readonly processId: string;
-  readonly runtimePayloadSchemas: readonly RuntimeSchema[];
-  readonly findings: readonly AdapterFinding[];
-  readonly observations: readonly AdapterObservation[];
+  readonly functionIds: readonly string[];
 
   materialize(input: {
-    client: InngestNativeClient;
-    executionRegistry: ExecutionRegistry;
-    processExecutionRuntime: ProcessExecutionRuntime;
-  }): readonly InngestNativeFunction[];
+    readonly client: Inngest;
+  }): readonly InngestFunction.Any[];
 }
 ```
 
@@ -7166,6 +7234,12 @@ adapter lowering during mounting. The harness passes its already provisioned
 client to `materialize(...)`; the factory MUST NOT construct or capture a
 second client.
 
+The public mount payload is a vendor-free opaque carrier. A private accessor
+admits only the exact process-owned bundle and gives the harness bounded
+materialization and native-work drain capabilities, not the execution registry,
+managed runtime, service clients, or raw resource values. Those authorities
+remain captured by the process-owned lowering.
+
 It does not classify projection status, own workflow semantics, expose product
 APIs, carry a live `WorkflowDispatcher`, or carry a `dispatcherDescriptor`.
 No `dispatcherDescriptor` field may return without a named consumer and an
@@ -7173,96 +7247,86 @@ accepted owner edge.
 
 ### 19.4 Async step-local Effect facade
 
-Async step-local Effect execution must be mounted through the Inngest step boundary.
+Async step-local Effect execution must be mounted through the Inngest step
+boundary. `AsyncRunContext<TEvent, TSteps>` refines native
+`GetFunctionInput<Inngest>` only at `event.data` and adds one private,
+invocation-bound step capability. Native orchestration fields, tools, and
+logger remain native. The owning workflow/consumer schema decodes event data
+once before each authored `run` callback/re-entry, never in `stepEffect` or once per
+local Effect retry. Decode failure refuses before `run`.
+
+The outer context MUST NOT contain Habitat service clients, resources,
+telemetry/execution bags, or a managed runtime. `AsyncStepBridgeInput` names the
+opaque private capability carried by that context, not an author-constructible
+bag. Spreading, copying, or retaining a context does not create a new invocation
+authority. Only an actual native step callback receives
+`AsyncStepExecutionContext`: the decoded payload as `event`, construction-bound
+service clients, the selected plugin's bounded `RuntimeResourceMap`, boundary
+telemetry, and execution identity. The body supplies each service's invocation
+input through `withInvocation(...)` to obtain its Effect-facing procedures;
+the step bridge never infers domain invocation or authorization from the event
+or execution identity.
 
 File: `packages/core/sdk/src/plugins/async/effect/index.ts`  
 Layer: async step-local Effect facade  
 Exactness: normative for step-local ownership and Promise boundary; illustrative for exact generic spelling.
 
 ```ts
-export interface AsyncStepEffectFacade {
-  run<TOutput, TError, TRequirements>(
-    descriptor: AsyncStepEffectDescriptor<TOutput, TError, TRequirements>,
-  ): Promise<TOutput>;
+import type { Jsonify } from "inngest/types";
+
+type StepMembership = readonly AsyncStepEffectDescriptor<
+  unknown, unknown, unknown, never
+>[];
+
+type StepJsonOutput<TOutput> =
+  Jsonify<Awaited<TOutput extends void ? null : TOutput>>;
+
+export type AsyncStepResult<TDescriptor extends StepMembership[number]> =
+  TDescriptor extends AsyncStepEffectDescriptor<infer TOutput, unknown, unknown, never>
+    ? StepJsonOutput<TOutput>
+    : never;
+
+export interface AsyncStepEffectFacade<TSteps extends StepMembership> {
+  run<TDescriptor extends TSteps[number]>(
+    descriptor: TDescriptor,
+  ): Promise<AsyncStepResult<TDescriptor>>;
 }
 
-export interface AsyncStepEffectDescriptor<
-  TOutput,
-  TError,
-  TRequirements,
-  TServiceUses extends ServiceUses = ServiceUses,
-> {
-  readonly kind: "async.step-effect";
-  readonly id: string;
-  readonly effect: (
-    ctx: AsyncStepExecutionContext<TServiceUses>,
-  ) =>
-    | Generator<unknown, TOutput, unknown>
-    | HabitatEffect<TOutput, TError, TRequirements>;
-}
-
-export interface AsyncStepBridgeInput<
-  TServiceUses extends ServiceUses = ServiceUses,
-> {
-  readonly step: InngestStepApi;
-  readonly event: AsyncEventContext;
-  readonly clients: InvocationBoundEffectServiceClients<TServiceUses>;
-  readonly resources: RuntimeResourceAccess;
-  readonly telemetry: BoundaryTelemetry;
-  readonly execution: EffectBoundaryContext;
-}
-
-export interface AsyncStepExecutionContext<
-  TServiceUses extends ServiceUses = ServiceUses,
-> {
-  readonly event: AsyncEventContext;
-  readonly clients: InvocationBoundEffectServiceClients<TServiceUses>;
-  readonly resources: RuntimeResourceAccess;
-  readonly telemetry: BoundaryTelemetry;
-  readonly execution: EffectBoundaryContext;
-}
-
-export function defineAsyncStepEffect<
-  TOutput,
-  TError,
-  TRequirements,
-  TServiceUses extends ServiceUses = ServiceUses,
->(input: {
-  readonly id: string;
-  readonly effect: AsyncStepEffectDescriptor<
-    TOutput,
-    TError,
-    TRequirements,
-    TServiceUses
-  >["effect"];
-}): AsyncStepEffectDescriptor<TOutput, TError, TRequirements, TServiceUses>;
-
-export function stepEffect<TServiceUses extends ServiceUses>(
-  input: AsyncStepBridgeInput<TServiceUses>,
-): AsyncStepEffectFacade;
+export function stepEffect<TSteps extends StepMembership>(
+  context: AsyncStepBridgeInput<TSteps>,
+): AsyncStepEffectFacade<TSteps>;
 ```
 
 Complete runtime derivation derives async step Effect descriptor refs and their
 non-portable table from `defineAsyncStepEffect(...)`; their public contracts
 are exposed at `@habitat-ai/sdk/runtime/derivation`.
-`stepEffect(input).run(descriptor)` binds a pre-derived descriptor to the native
-step invocation. `stepEffect(...)` does not accept inline executable bodies and
-does not make descriptor discovery depend on executing workflow `run(...)` or
-parsing workflow source code.
+`stepEffect(ctx).run(descriptor)` accepts only the declaration's `steps[number]`
+membership and resolves its exact object reference to the already-selected
+occurrence. Literal step IDs preserve useful static membership rejection; an
+equal-shaped or same-named different object still refuses at runtime.
+`stepEffect(...)` accepts no inline executable body and never discovers,
+executes, or parses workflow source.
+
+The returned Promise has native standard-JSON step-result semantics, including
+`void` to `null`, `Date` to string, and native optional-property behavior.
+The public `Jsonify` type from `inngest/types` expresses that contract; Habitat
+adds neither a serializer nor a product/output codec. Arbitrary
+profile-selected output-transform middleware is outside this fixed cohort;
+ordinary JSON-preserving native middleware is permitted at either placement.
 
 The materialized native function implements that call through the exact step
 boundary:
 
-File: `packages/core/runtime/harnesses/inngest/src/materialize-function-bundle.ts`  
+File: `packages/core/runtime/process-runtime/src/async-function-bundle.ts`  
 Layer: private native Inngest step bridge  
-Exactness: normative for `step.run(...)` delegating a pre-derived descriptor to
-`ProcessExecutionRuntime`; illustrative for helper names.
+Exactness: normative for `step.run(...)` delegating the exact precompiled
+boundary to process-owned execution; illustrative for private variable names.
 
 ```ts
 return step.run(descriptor.id, () =>
-  processExecutionRuntime.execute({
-    boundary: executionRegistry.get(executionDescriptorRef(descriptor)),
-    invocation: buildAsyncStepExecutionContext(nativeInvocation, descriptor),
+  processExecutionRuntime.executeWithin(parentContinuation, {
+    boundary,
+    invocation: { input: event.data, context: { event: event.data } },
   })
 );
 ```
@@ -7273,9 +7337,11 @@ schedules, event history, workflow run identity, and durable async semantics.
 Replay re-enters the native function and its `step.run(...)` registration; it
 never resumes a retained Effect fiber. A completed memoized step returns native
 memoized state without invoking the callback or `ProcessExecutionRuntime`; a
-failed or otherwise un-memoized attempt invokes the callback anew. Native
-cancellation is observable between
-steps. The bridge does not synthesize an `AbortSignal` or claim interruption of
+failed or otherwise un-memoized attempt invokes the callback anew. The outer
+authored Promise may suspend for replay and is not a process-local drain unit;
+native request attempts and actually active managed callbacks own that lifetime
+as specified in §21.2. Native cancellation is observable between steps. The
+bridge does not synthesize an `AbortSignal` or claim interruption of
 an already-running step callback unless the selected native API supplies and
 proves that signal.
 
@@ -7613,24 +7679,27 @@ Boundary rule: Elysia owns HTTP host lifecycle and request routing. It does not 
 
 Placement: `packages/core/runtime/harnesses/inngest`.
 
-The future harness selects native `inngest@4.18.0`. This specification does not
-land the dependency; the harness implementation task must add and prove that
-exact version at its owner. `effect-inngest` is rejected. Habitat integrates the
-native client, function, step, Serve, and Connect APIs directly behind its
-runtime boundaries.
+The harness selects native `inngest@4.18.0` as an exact optional SDK peer and
+conditionally loads it at selected mounting, not cold authoring/import.
+`effect-inngest` is rejected. Habitat integrates the native client, function,
+step, Serve, and Connect APIs directly behind its runtime boundaries. The local
+acceptance cohort is SDK 4.18.0, Bun 1.3.14, and disposable Dev Server 1.44.0;
+it establishes no Cloud or production-deployment guarantee. Serve and Connect
+qualification use separate native Inngest app IDs, never simultaneous
+registration of one native app through both transports.
 
-Input: `HarnessMountInput<FunctionBundle>` carrying the private registration
-factory, launch identity, async roles, required-resource readiness, bounded
-process access, and report sink, plus the selected and provisioned native
+Input: `HarnessMountInput<MountReadySurfaceRuntimeRecord<InngestMountPayload>>`
+carrying the opaque process-owned bundle, launch identity, async roles,
+required-resource readiness, bounded process access, and report sink, plus the
+selected and provisioned native
 Inngest client and async harness mode. The harness materializes the factory with
 exactly the client supplied to that selected Serve or Connect harness. It does
 not construct a second registration client. `WorkflowDispatcher` is a separate
 named consumer and process-runtime materialization.
 
 Output: Connect worker or Serve-mode runtime ingress, native Inngest functions,
-native async handles used by runtime dispatcher integration, and one
-`NativeHarnessHandle` plus truthful `HarnessHealthReport` values. The harness
-does not produce or own `WorkflowDispatcher`.
+and one `NativeHarnessHandle` plus truthful `HarnessHealthReport` values. The
+harness does not produce or own `WorkflowDispatcher`.
 
 **Step execution.** Each materialized native step calls exactly
 `step.run(id, () => ProcessExecutionRuntime...)`; the callback delegates its
@@ -7639,29 +7708,45 @@ Promise. Replay re-enters the native function and `step.run(...)` registration;
 it does not resume an Effect fiber. A completed memoized step returns native
 memoized state without invoking the callback or `ProcessExecutionRuntime`; a
 failed or otherwise un-memoized attempt invokes the callback anew.
-Cancellation is observed between steps. No
+Cancellation is observed between steps; native run cancellation can leave an
+active callback running and later callback history may still arrive. No
 adapter-created `AbortSignal` is admitted for an in-flight step callback unless
 the selected native API supplies and proves one.
 
+**Native request lifetime.** One exact cohost materialization scope prepends a
+native client `Middleware` class that recognizes only its own exact native
+function objects. Its `wrapRequest` owns the finite native request attempt
+through the native middleware chain; its per-request instance carries the
+private continuation into the authored callback through
+`transformFunctionInput`. The tracker MUST NOT await the outer authored `run`
+Promise as a drain unit: native
+fresh-step/replay suspension may leave that Promise unsettled. Actual managed
+step execution retains descendant leases. Native `onFailure` must validate the
+same request witness; the native engine awaits that callback without adding
+Habitat capabilities to its context. This is invocation lifetime accounting,
+not callback inspection or durable state.
+
 **Serve lifecycle.** The Habitat-owned HTTP host admits the Promise returned by
 the native Serve handler into an owner-local active set before returning it to
-the server. Stop first closes new HTTP admission, then waits for every admitted
-handler Promise to settle, and only then permits process resources and the one
-managed runtime to dispose. Handler settlement is a local drain fact, not a
-universal claim that every event, checkpoint, or workflow result has been
-delivered.
+the server; `wrapRequest` inherits that original request's admission. Stop
+closes new root admission synchronously, settles the native host, then drains
+admitted handlers, native request attempts, and active managed step work before
+process resources and the one managed runtime dispose. An already-admitted
+request retains its valid descendants while new requests refuse. Handler
+settlement is a local drain fact, not a universal claim that every event,
+checkpoint, or workflow result has been delivered.
 
 **Connect lifecycle.** Habitat constructs native Connect with
-`handleShutdownSignals: []`; runtime mounting remains the sole signal and
-cross-owner shutdown coordinator. Exact 4.18 source leaves one callback path
-outside native close proof: `RequestProcessor.handleExtendLeaseAck` deletes the
-request from `requestLeases` when renewal is denied while explicitly allowing
-the user callback to continue; `ConnectionCore.close` and `reconcileLoop` gate
-on `requestLeases`; `waitForInProgress` exists, but
-`SameThreadStrategy.close` does not call it. The owner-local callback tracker is
-therefore required around every materialized native callback. Runtime mounting
-owns one outer single-flight stop, invokes and awaits native `close()` exactly
-once, then waits for that owner tracker to reach zero before provider release.
+`handleShutdownSignals: []` and preserves the native default worker-thread
+mode; runtime mounting remains the sole signal and cross-owner shutdown
+coordinator. Native lease bookkeeping alone does not prove callback completion,
+including callbacks allowed to continue after denied lease renewal. The same
+finite native request scope and active managed-step leases remain authoritative
+after native close. Runtime mounting owns one outer single-flight stop, closes
+new root admission synchronously, invokes and awaits native `close()` exactly
+once, then drains that scope before provider release. After native settlement
+and scoped drain, cleanup removes only the exact middleware class installed by
+that materialization, preserving unrelated native middleware.
 Native Connect close or flush is transport lifecycle behavior; it never proves
 delivery or callback completion. Reports preserve only evidence-backed
 `presented`, `confirmed`, `dropped`, or `unknown` truth.
@@ -8354,7 +8439,7 @@ Process runtime
 
 Surface adapter
   lowers server API compiled plan while preserving the native oRPC procedure
-  supplies invocation context with request and invocation-bound clients at call time
+  supplies request context with construction-bound clients; the handler explicitly creates each service invocation view
 
 Elysia harness
   mounts public routes and selected publication artifacts
@@ -8664,21 +8749,25 @@ async plugin authoring does not construct it, manually acquire native async
 clients, or bypass adapter lowering. The harness materializes it with its one
 provisioned native client; the bundle carries no `dispatcherDescriptor`.
 
-Event names, cron strings, and function ids identify triggers only. Any read event data must have a schema-backed payload contract.
+Event names and cron strings identify native triggers; function IDs identify
+functions, not an implicit event namespace or exclusive destination. Workflow
+and consumer event data is schema-backed. Every async declaration authors
+`run(ctx)` and explicit step membership; §19.4 defines the native outer context,
+exact descriptor bridge, and standard-JSON result contract.
 
 Effect local retry, timeout, process queue, process pubsub, process cache, schedule, fiber, stream, and concurrency primitives do not become durable async ownership.
 
-The future harness uses native `inngest@4.18.0`; `effect-inngest` is forbidden.
+The harness uses native `inngest@4.18.0`; `effect-inngest` is forbidden.
 Native step replay re-enters the function and `step.run(...)` registration,
 not an Effect fiber. A completed memoized step returns native memoized state
 without invoking `ProcessExecutionRuntime`; a failed or otherwise un-memoized
-attempt invokes the callback anew. Cancellation is between steps unless a
-native signal is proved. Serve tracks
-admitted handler Promises. Connect uses `handleShutdownSignals: []`, the
-mounting-owned outer single-flight close, and the separately required
-owner-local callback tracker for callbacks that outlive denied lease renewal.
-Mounting awaits native close once and then callback-tracker zero before release.
-Native close or flush proves neither callback completion nor delivery.
+attempt invokes the callback anew. Cancellation does not interrupt an active
+step unless a native signal is separately proved. §21.2 owns Serve handler
+admission, finite native `wrapRequest` lifetime, active managed-step leases, and
+Connect's native default-worker/signal ownership. The outer authored Promise
+may suspend for replay and MUST NOT become a drain unit. Native close plus
+scoped drain precedes provider release; close or flush alone proves neither
+callback completion nor delivery. Local Dev Server evidence is not Cloud proof.
 
 ### 25.7 Harness/framework
 
@@ -8834,7 +8923,7 @@ Gate families are:
 | Registry gates | Effect descriptor table is present; full structural ref lookup returns the exact matching operational descriptor or throws `TypeError`; frozen readonly tuple snapshots use canonical ref order; every Effect ref resolves to one descriptor and one compiled plan; descriptor and plan identities match before invocation; full structural web ref lookup returns the exact preserved loader or throws `TypeError`; frozen web-entry snapshots use `(ownerId, routeId, path)`; web refs never enter `ExecutionRegistry` |
 | Fixture/plan gates | selected identity agreement; process-scoped coverage and inert provider supersets; explicit required-source policy; deduplicated topology with complete named bindings; equal/divergent diamonds and bounded DAG work; deterministic identities/data; distinct Effect/web refs; portable decoder checks; cohesive compiler input with exact complete service references, structural/relation/lowering refusal, and no re-derivation; trusted-data bootgraph shape, dependency order, reverse release, duplicate/dangling/cycle refusal and input non-mutation; no declared executable work in cold phases; real constructor handoff, invocation separation, rollback, and finalization |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
-| Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
+| Inngest harness gates | exact native `inngest@4.18.0`, Bun 1.3.14, Dev Server 1.44.0 local cohort; no `effect-inngest` or Cloud claim; same client for registration and selected host, separate native app IDs for Serve/Connect qualification; explicit run/trigger/membership and standard-JSON results; native replay skips memoized callbacks; no synthetic step `AbortSignal`; Serve handler admission, finite native request/managed-step drain, default-worker Connect with `handleShutdownSignals: []` and single-flight close; no outer authored-Promise drain or delivery inference |
 | Provider separation gates | exact provider face inventories; `ProviderFx<TValue, TError> = HabitatEffect<TValue, TError, never>`; required synchronous build and release; exact build context and resource-map type optionality; definition-owned cold construction with no callback invocation, exact public plan/boundary enumerability, recursive fresh-container freeze, opaque body identity, and private accessor witness rejection; substrate-owned concrete requirement-reference map behavior, real beta.101 `Effect.acquireRelease(acquire, release)` construction/use with native-default acquisition masking and immediate post-success finalizer registration; explicit authored interruption retains native meaning and leaves partial/unreturned work provider-owned; sync-throw/rejection typed mapping, typed failure without registration, and build/forgery/Effect defect classification; finalization cleanup recovery/observation, unexpected release-defect continuation, rollback, reverse order, inert repeated disposal/release, and runtime close; derivation/compiler zero-build proof; bootgraph carries no plan or body; no Promise-valued acquisition result, raw runtime-authority export, public plan accessor, or runner |
 | Private dependency-boundary gates | exact §4 graph only; no private owner imports SDK; no upstream owner imports observation-owned projection types; runtime mounting alone starts, invokes and stops harnesses, and coordinates cross-owner finalization; runtime observation alone projects observation read models |
 
@@ -9015,7 +9104,7 @@ the substrate before that provider is claimed to work in a started process.
 | `ServiceBindingCache` | Process runtime | `packages/core/runtime/process-runtime` | Process runtime | `bindService(...)` | Mounting/invocation | Owner-local cache-collision findings | Cache key gate |
 | `WorkflowDispatcher` | Process runtime | `packages/core/runtime/process-runtime` | Process runtime | Server API/internal projections | Mounting/invocation | Owner-local dispatcher findings | Dispatcher materialization gate |
 | `SurfaceAdapter` | `runtime-process-runtime` | `packages/core/runtime/process-runtime` | Process runtime | Runtime mounting handoff, then selected harness | Mounting | Owner-local adapter findings/observations | Adapter lowering gate |
-| `FunctionBundle` | Async adapter/harness boundary | `packages/core/runtime/harnesses/inngest` | Async surface adapter | Inngest harness | Mounting | Owner-local async-lowering findings | Function bundle gate |
+| `FunctionBundle` | Async adapter/harness boundary | `packages/core/runtime/process-runtime/src/async-function-bundle.ts` | Process-owned async lowering | Inngest harness | Mounting | Owner-local async-lowering findings | Function bundle gate |
 | `RuntimeMounting` | `runtime-mounting` | `packages/core/runtime/mounting` | SDK terminal delegation | Selected harnesses and process-runtime stop handle | Mounting/finalization | Owner-local lifecycle findings and definition-owned observation records | Start/finalization ownership gate |
 | `HarnessDescriptor` / `HarnessMountInput` | Selected harness owner | `packages/core/runtime/harnesses/*`; Oclif: `apps/habitat/src/harness/oclif` | Runtime/harness implementation | Runtime mounting | Mounting/finalization | Owner-local harness findings | Harness mount gate |
 | `NativeHarnessHandle` / `HarnessHealthReport` | Selected harness owner | `packages/core/runtime/harnesses/*`; Oclif: `apps/habitat/src/harness/oclif` | Successful harness mount and probes | Runtime mounting | Mounting/finalization | Idempotent stop and truthful process-local health reports | Native handle gate |

@@ -24,6 +24,9 @@ import {
   type HabitatTimeoutError,
   providerFx,
   providerSelection,
+  type ResourceRequirement,
+  type RuntimeResource,
+  type RuntimeResourceMap,
   requireResource,
 } from "../../runtime/definition/src/index";
 import { deriveRuntimeArtifacts } from "../../runtime/derivation/src/index";
@@ -33,7 +36,7 @@ import { provisionProcess } from "../../runtime/substrate/effect/src/index";
 type StepContext = AsyncStepExecutionContext<
   { readonly eventId: string },
   Readonly<Record<string, never>>,
-  { readonly fd: number },
+  RuntimeResourceMap,
   BoundaryTelemetry,
   EffectBoundaryContext
 >;
@@ -52,7 +55,12 @@ function failed<A, E>(exit: Exit.Exit<A, E>): Cause.Cause<E> {
 }
 
 async function start<A, E>(
-  effect: (context: StepContext) => Effect.Effect<A, E>,
+  effect: (
+    context: StepContext,
+    leaseRequirement: ResourceRequirement<
+      RuntimeResource<"execution.lease", { readonly fd: number }>
+    >
+  ) => Effect.Effect<A, E>,
   policy: EffectExecutionPolicy = {}
 ) {
   const root = await mkdtemp(join(tmpdir(), "habitat-execution-"));
@@ -64,6 +72,7 @@ async function start<A, E>(
     title: "Execution lease",
     purpose: "Real native execution lifetime proof",
   });
+  const leaseRequirement = requireResource({ resource: lease, reason: "Execution lifetime" });
   const provider = defineRuntimeProvider({
     id: "execution.lease.provider",
     title: "Execution lease provider",
@@ -93,14 +102,21 @@ async function start<A, E>(
     policy,
     effect(context: StepContext) {
       calls.body++;
-      return effect(context);
+      return effect(context, leaseRequirement);
     },
   });
   const plugin = defineAsyncSchedulePlugin.factory()({
     capability: "execution-jobs",
     services: {},
-    resourceRequirements: [requireResource({ resource: lease, reason: "Execution lifetime" })],
-    schedules: [defineSchedule({ id: "hourly", cron: "0 * * * *", steps: [step] })],
+    resourceRequirements: [leaseRequirement],
+    schedules: [
+      defineSchedule({
+        id: "hourly",
+        cron: "0 * * * *",
+        steps: [step],
+        run: () => undefined,
+      }),
+    ],
   })();
   const app = defineApp({ id: "execution.app", plugins: [plugin] });
   const profile = defineRuntimeProfile({
@@ -153,7 +169,14 @@ async function start<A, E>(
     const context: StepContext = {
       event: { eventId: "event-one" },
       clients: {},
-      resources: runtime.access.process.resource(lease),
+      resources: {
+        has() {
+          throw new Error("Caller resources must not replace runtime resources.");
+        },
+        get() {
+          throw new Error("Caller resources must not replace runtime resources.");
+        },
+      },
       telemetry: callerTelemetry,
       execution: {
         appId: "caller-supplied",
@@ -174,6 +197,7 @@ async function start<A, E>(
       boundary,
       invocation: { input: undefined, context, requestId: "request-one" },
       context,
+      resource: runtime.access.process.resource(lease),
       calls,
       events,
       leasePath,
@@ -190,7 +214,7 @@ async function start<A, E>(
 }
 
 test("executes a real derived async boundary with native parent trace and runtime-owned context", async () => {
-  const fixture = await start((context) =>
+  const fixture = await start((context, leaseRequirement) =>
     Effect.gen(function* () {
       const span = yield* Effect.orDie(Effect.currentSpan);
       yield* context.telemetry.event("work.entered", { eventId: context.event.eventId });
@@ -201,6 +225,8 @@ test("executes a real derived async boundary with native parent trace and runtim
         execution: context.execution,
         event: context.event,
         resources: context.resources,
+        hasResource: context.resources.has(leaseRequirement),
+        resource: context.resources.get(leaseRequirement),
       };
     })
   );
@@ -234,7 +260,9 @@ test("executes a real derived async boundary with native parent trace and runtim
     expect(result.child.traceId).toBe(parent.traceId);
     expect(Option.getOrThrow(result.child.parent).spanId).toBe(result.span.spanId);
     expect(result.event).toBe(fixture.context.event);
-    expect(result.resources).toBe(fixture.context.resources);
+    expect(result.resources).not.toBe(fixture.context.resources);
+    expect(result.hasResource).toBe(true);
+    expect(result.resource).toBe(fixture.resource);
     expect(fixture.context.execution.traceId).toBe("caller-supplied");
     expect(fixture.calls).toMatchObject({ body: 1, callerTelemetry: 0, acquire: 1, release: 0 });
   } finally {

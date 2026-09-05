@@ -1,6 +1,9 @@
 import { type Static, Type } from "typebox";
 import { Check } from "typebox/value";
-import type { RuntimeObservationPort, RuntimeObservationRecord } from "../../definition/src/index";
+import type {
+  RuntimeObservationPort,
+  RuntimeObservationRecord,
+} from "../../definition/src/observation";
 import {
   type RuntimeCatalog,
   type RuntimeFinalizationRecord,

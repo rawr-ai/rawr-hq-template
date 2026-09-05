@@ -6,10 +6,12 @@ import {
   CompiledExecutionPlanSchema,
   type CompiledExecutionRegistryInput,
   CompiledExecutionRegistryInputSchema,
-} from "../../compiler/src/index";
-import type { EffectExecutionPolicy, ExecutionDescriptor } from "../../definition/src/index";
+} from "../../compiler/src/compiled-process-plan";
+import type { EffectExecutionPolicy, ExecutionDescriptor } from "../../definition/src/execution";
+import type { ExecutionDescriptorTable } from "../../derivation/src/derive-execution-descriptor-table";
+import type { ExecutionDescriptorRef } from "../../derivation/src/execution-descriptor-ref";
 import { ExecutionDescriptorRefSchema } from "../../derivation/src/execution-descriptor-ref";
-import type { ExecutionDescriptorRef, ExecutionDescriptorTable } from "../../derivation/src/index";
+import type { Continuation } from "./invocation-tracker";
 
 const boundaryWitness: unique symbol = Symbol("compiled.executable-boundary");
 
@@ -29,7 +31,7 @@ export interface CreateExecutionRegistryInput {
   readonly registryInput: CompiledExecutionRegistryInput;
   readonly executionPlans: readonly CompiledExecutionPlan[];
   readonly descriptorTable: ExecutionDescriptorTable;
-  readonly assertOpen: () => void;
+  readonly assertOpen: (continuation?: Continuation) => void;
 }
 
 function refuse(reason: string): never {
@@ -88,9 +90,12 @@ function assertDescriptor(
 class Registry {
   readonly kind = "execution.registry";
   readonly #boundaries: ReadonlyMap<string, ErasedBoundary>;
-  readonly #assertOpen: () => void;
+  readonly #assertOpen: (continuation?: Continuation) => void;
 
-  constructor(boundaries: ReadonlyMap<string, ErasedBoundary>, assertOpen: () => void) {
+  constructor(
+    boundaries: ReadonlyMap<string, ErasedBoundary>,
+    assertOpen: (continuation?: Continuation) => void
+  ) {
     this.#boundaries = boundaries;
     this.#assertOpen = assertOpen;
     Object.freeze(this);
@@ -112,12 +117,13 @@ class Registry {
 
   static admit<TInput, TSuccess, TError, TContext>(
     registry: Registry,
-    boundary: CompiledExecutableBoundary<TInput, TSuccess, TError, TContext>
+    boundary: CompiledExecutableBoundary<TInput, TSuccess, TError, TContext>,
+    continuation?: Continuation
   ): CompiledExecutableBoundary<TInput, TSuccess, TError, TContext> {
     if (typeof registry !== "object" || registry === null || !(#boundaries in registry)) {
       refuse("requires its original process registry");
     }
-    registry.#assertOpen();
+    registry.#assertOpen(continuation);
     if (
       !isRecord(boundary) ||
       !isRecord(boundary.ref) ||
@@ -209,7 +215,8 @@ export function createExecutionRegistry(input: CreateExecutionRegistryInput): Ex
 /** Private invocation admission rejects copied, foreign, and stale executable boundaries. */
 export function readCompiledExecutableBoundary<TInput, TSuccess, TError, TContext>(
   registry: ExecutionRegistry,
-  boundary: CompiledExecutableBoundary<TInput, TSuccess, TError, TContext>
+  boundary: CompiledExecutableBoundary<TInput, TSuccess, TError, TContext>,
+  continuation?: Continuation
 ): CompiledExecutableBoundary<TInput, TSuccess, TError, TContext> {
-  return Registry.admit(registry, boundary);
+  return Registry.admit(registry, boundary, continuation);
 }

@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; native Elysia/oRPC server locally qualified, admission in progress.
-Branch: `agent-root-habitat-native-server`, continuing the merged authoring commands.
+Status: `active`; native async locally qualified, awaiting remote admission; server admitted.
+Branch: `agent-root-habitat-native-async`, based on the admitted server.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -12,6 +12,7 @@ Mounting/startup [1014](https://github.com/rawr-ai/rawr-hq-template/pull/1014).
 Oclif self-host [1015](https://github.com/rawr-ai/rawr-hq-template/pull/1015).
 Qualified generators [1016](https://github.com/rawr-ai/rawr-hq-template/pull/1016).
 Installed authoring [1017](https://github.com/rawr-ai/rawr-hq-template/pull/1017).
+Native server [1018](https://github.com/rawr-ai/rawr-hq-template/pull/1018).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -66,7 +67,58 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: tasks 13.1/13.2 together, complete native Elysia/oRPC server
+Current domino: tasks 13.3/13.4 together, complete native Inngest Serve/Connect
+qualification, followed by task 13.5's independently built same-app children.
+The cold peer owns async authoring and selected source preservation; the runtime
+peer owns native callback/step execution and host lifecycle. Root owns terminal
+SDK, policy, packaging, complete native acceptance and design disposition.
+
+Native SDK 4.18.0, Bun 1.3.14 and disposable Dev Server 1.44.0 are the qualified
+local probe cohort. Keep actual native orchestration and predeclared step
+membership distinct: preserve the authored outer `run(ctx)`, never execute or
+parse it for discovery, and never infer sequence from the membership array.
+Workflows explicitly author `eventName`; native event fan-out is allowed and
+does not promise exclusive workflow targeting. Standard native JSON step
+results, including void-to-null and Date-to-string, use Inngest's own `Jsonify`
+type rather than type-fest or another serializer. JSON-preserving middleware
+is admitted; profile-selected output codecs cannot change static author types
+without a later explicit result-codec contract.
+
+Outer context retains native orchestration tools and schema-decoded event data,
+plus a private invocation-bound bridge. It receives no service/resource/runtime
+bag. Exact declared descriptors lower once through the existing private source
+handoff. Only an actual `step.run` callback enters process execution and receives
+its bounded capabilities. Reuse existing process invocation leases to preserve
+already-admitted sequential steps through shutdown; no synthetic async signal.
+
+Review resolved an inherited service-lane contradiction: the old async example
+promised invocation-bound service clients without any authored source or mapping
+for their service-owned invocation schemas. Two selected services can require
+unrelated actor, tenant, or audit inputs; neither execution identity nor event
+data can supply those implicitly. Async step bodies therefore use the same
+construction-bound clients and explicit `withInvocation(...)` as other managed
+contexts. This removes an unsupported special case rather than adding a new
+mapper API. The private native step capability remains invocation-bound, and
+service validation and descendant lifetime ownership remain unchanged.
+
+Harness config names an existing process resource and optional instance; mount
+resolves the exact native client and supplies it to both registration and the
+selected native host. The conformance fixture authors its real client provider
+through existing SDK contracts; a new generic production provider is not needed
+merely to prove this host boundary. Serve owns its listener and admitted handler
+Promises. Connect keeps the native worker-thread default, pins that mode in its
+acceptance, and disables native process signal handlers. Native close and
+callback drain precede provider release; neither implies event delivery. Do not
+register the same native app simultaneously through Serve and Connect.
+
+The real probe already distinguishes Serve checkpoint modes and native history
+query shapes. Completed steps are memoized; failed attempts re-enter. Native
+run cancellation changes run status while an active callback continues, and late
+callback history may still arrive. Those facts qualify local behavior, not
+Cloud, delivery, process resumption or synthetic cancellation. The complete
+Habitat fixture must reproduce these guarantees through the actual owners.
+
+The accepted server packet: tasks 13.1/13.2 together, complete native Elysia/oRPC server
 qualification, including the owning native telemetry gate. Root owns terminal
 SDK assembly, authority/law, packaging and composed acceptance; the runtime
 peer owns selected cold server references and process-owned native request
@@ -538,7 +590,7 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
-Finish native server admission, then qualify the complete Inngest Serve/Connect
+Qualify the complete Inngest Serve/Connect
 story in tasks 13.3-13.5. Preserve the accepted execution and mounting owners;
 do not infer async orchestration order from declared step membership. Retain the
 actual outer callback and triggers through the selected private handoff.
@@ -964,6 +1016,66 @@ four tests/21 assertions; strict OpenSpec validation passed. The strengthened
 composed fixture additionally checks request-signal identity and native defect
 response sanitization. These are local candidate receipts, not release or
 remaining async/same-app child acceptance.
+
+PR 1018 is merged at `37e22198954abd32745029ed68e9ea74c345f3d3`.
+Candidate `896437a741ea0177d795b216bd17a7b9af3ef1c2` passed required CI,
+Linux installed acceptance and an unchanged Windows rerun (23m35s). The first
+Windows job hit its 25-minute deadline without an assertion failure; no
+unproven runtime fix or timeout increase was made. Graphite completed the merge,
+and one force/no-restack/noninteractive sync swept the consumed server branch.
+The active async work and held unrelated worktrees were preserved. Exact-main
+required run `33967485217` also passed on that merged SHA.
+
+### Native Async Review Loop
+
+The complete native fixture now passes Serve and Connect, each with telemetry
+enabled and disabled, using Inngest 4.18.0 and Dev Server 1.44.0 without
+containers. Both checkpoint modes prove actual failed-step retry, memoized
+completed steps, native history, decoded outer data and native Date/void result
+serialization. Three selected async surfaces share one native host. Gated
+ordinary work, a schema-rejected function's native onFailure handler and a
+natively cancelled run all retain resources until actual callbacks settle;
+cancellation does not interrupt an already active Effect body. Real OTLP receipt
+contains native Inngest spans with managed Effect descendants. These are
+composed source-fixture receipts, not installed children or Cloud qualification.
+
+Native source review rejected tracking the authored orchestration Promise:
+ordinary replay discovery can leave it suspended after the request has ended.
+One exact cohost now uses native finite `wrapRequest` ownership, inherits an
+already admitted Serve request and retains actual managed step descendants.
+The owned middleware is scoped to exact functions and removed only after native
+stop and callback drain. It covers normal native middleware and onFailure
+without a second client, runtime or telemetry provider. A subsequent native
+fixture pass also exercises function-level middleware that copies its context;
+the private admission witness survives ordinary native composition. Required
+lifecycle events are asserted present before their ordering is compared.
+
+Packaging review found a separate real defect: aggregate declaration imports
+made unrelated app/derivation consumers resolve the optional Inngest peer.
+The repair narrows imports to existing owner leaves and separates the opaque
+compilation reference contract from native source accessors, preserving exact
+typed native references privately and the genuine official oRPC Effect
+augmentation. The strict installed no-host consumer first reproduced all three
+missing-Inngest declaration errors, then passed after repair; neither error
+suppression nor making Inngest mandatory was used.
+Private DTS bundling had also duplicated nominal witnesses between an assembly
+barrel and the emitted leaf now consumed directly. Private declarations now
+re-export their emitted leaves, preserving one identity without changing JS
+bundling or the terminal SDK's public bundling. Process typecheck passes that
+repair. The immutable mounting-law successor admits the definition-owned
+observation leaf while continuing to reject the live observation owner; the
+original basename-only rule confused those distinct owners.
+All nine installed-package tests pass (206.50 seconds). Independent declaration
+closure review found no Inngest/Elysia dependency in app, generic harness,
+derivation or service faces, no missing relative targets across all 48 emitted
+declaration files, and intact native async authoring types and Effect bootstrap.
+The first complete repository pass qualified all 164 tasks (29 cache hits);
+the final pass after the last extensionless bootgraph-barrel repair also passes
+all 164 tasks (87 cache hits, 3m24s). Native
+function-middleware copying, lifecycle event presence and explicit service
+invocation/schema validation now have discriminating proofs. Remote admission
+remains open; built children, WorkflowDispatcher and Cloud/backend qualification
+are not implied by these receipts.
 
 ### Backend Receipt Reuse
 

@@ -1,6 +1,9 @@
 import { Check } from "typebox/value";
 
-import type { RuntimeProvider, ServiceRuntimeExport } from "../../definition/src/index";
+import type { RuntimeProvider } from "../../definition/src/provider";
+import type { ServiceRuntimeExport } from "../../definition/src/service";
+import { readRuntimeDerivationHandoff } from "../../derivation/src/derivation-handoff";
+import type { RuntimeDerivationResult } from "../../derivation/src/derive-runtime-artifacts";
 import {
   executionDescriptorIdentityInput,
   executionDescriptorRefTuple,
@@ -16,15 +19,12 @@ import {
   workflowDispatcherId,
 } from "../../derivation/src/identity-policy";
 import {
-  type RuntimeDerivationResult,
-  readRuntimeDerivationHandoff,
-} from "../../derivation/src/index";
-import {
   NormalizedAuthoringGraphRuntimeSchema,
   type ResourceRequirement,
 } from "../../derivation/src/normalized-authoring-graph";
 import type { ServiceBindingPlan } from "../../derivation/src/service-binding-plan";
 import { assertSurfaceReferenceRelation } from "../../derivation/src/surface-reference-policy";
+import type { RuntimeCompilationReferenceTable } from "./compilation-reference-contract";
 import {
   type CompilationObservationSeed,
   CompilationObservationSeedSchema,
@@ -35,10 +35,7 @@ import {
   type ProviderDependencyEdge,
   type ProviderDependencyNode,
 } from "./compiled-process-plan";
-import {
-  createRuntimeCompilationReferenceTable,
-  type RuntimeCompilationReferenceTable,
-} from "./runtime-compilation-reference-table";
+import { createRuntimeCompilationReferenceTable } from "./runtime-compilation-reference-table";
 
 export interface RuntimeCompilationInput {
   readonly derivation: RuntimeDerivationResult;
@@ -253,6 +250,97 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
   const executionPolicies = new Map(
     handoff.executionPolicies.map(([ref, policy]) => [canonicalJson(ref), policy])
   );
+  const asyncSources = tupleIndex(handoff.asyncSources, "native async source entries");
+  same(
+    [...asyncSources.keys()],
+    [...surfaces.values()]
+      .filter(
+        (surface) =>
+          surface.role === "async" &&
+          ["async/workflow", "async/schedule", "async/consumer"].includes(surface.surface)
+      )
+      .map((surface) => surface.surfacePlanId),
+    "complete native async source references"
+  );
+  for (const [id, source] of asyncSources) {
+    const surface = required(surfaces, id, "native async source surface");
+    if (
+      surface.role !== "async" ||
+      surface.surface !== source.kind ||
+      !["async/workflow", "async/schedule", "async/consumer"].includes(source.kind) ||
+      !Object.isFrozen(source) ||
+      !Object.isFrozen(source.declarations)
+    )
+      refuse("native async source agreement");
+    const declarations = new Set<string>();
+    const sourceRefs = new Set<string>();
+    for (const declaration of source.declarations) {
+      if (
+        source.kind.replace("/", ".") !== declaration.kind ||
+        typeof declaration.id !== "string" ||
+        typeof declaration.run !== "function" ||
+        declarations.has(declaration.id) ||
+        !Object.isFrozen(declaration) ||
+        !Object.isFrozen(declaration.descriptorReferences)
+      )
+        refuse("native async declaration agreement");
+      declarations.add(declaration.id);
+      if (declaration.options !== undefined) {
+        if (!Object.isFrozen(declaration.options)) refuse("cold native async options");
+        for (const key of ["id", "triggers", "run"] as const) {
+          if (Object.hasOwn(declaration.options, key)) refuse("fixed native async declaration");
+        }
+        if (
+          declaration.options.onFailure !== undefined &&
+          typeof declaration.options.onFailure !== "function"
+        )
+          refuse("native async failure callback");
+      }
+      if (declaration.kind === "async.schedule") {
+        if (typeof declaration.cron !== "string") refuse("native async schedule trigger");
+      } else {
+        const schema =
+          declaration.kind === "async.workflow" ? declaration.inputSchema : declaration.eventSchema;
+        if (
+          typeof declaration.eventName !== "string" ||
+          schema?.kind !== "runtime.schema" ||
+          typeof schema.decode !== "function"
+        )
+          refuse("native async event trigger and schema");
+      }
+      const descriptors = new Set<object>();
+      for (const [descriptor, ref] of declaration.descriptorReferences) {
+        const refKey = canonicalJson(ref);
+        required(executionRefs, refKey, "native async occurrence reference");
+        const matchesDeclaration =
+          declaration.kind === "async.workflow"
+            ? "workflowId" in ref && ref.workflowId === declaration.id
+            : declaration.kind === "async.schedule"
+              ? "scheduleId" in ref && ref.scheduleId === declaration.id
+              : "consumerId" in ref && ref.consumerId === declaration.id;
+        if (
+          ref.boundary !== "plugin.async-step" ||
+          ref.ownerId !== surface.pluginOwnerId ||
+          !matchesDeclaration ||
+          descriptor.kind !== "async.step-effect" ||
+          descriptor.id !== ref.stepId ||
+          typeof descriptor.effect !== "function" ||
+          !Object.isFrozen(descriptor) ||
+          descriptor.policy !== executionPolicies.get(refKey) ||
+          descriptors.has(descriptor) ||
+          sourceRefs.has(refKey)
+        )
+          refuse("native async descriptor membership agreement");
+        descriptors.add(descriptor);
+        sourceRefs.add(refKey);
+      }
+    }
+    same(
+      [...sourceRefs].sort(compare),
+      surface.executionDescriptorRefs.map(canonicalJson).sort(compare),
+      "complete native async occurrence references"
+    );
+  }
   same([...providers.keys()], [...selections.keys()], "complete provider references");
   same([...services.keys()], [...bindings.keys()], "complete service references");
   same(
@@ -707,6 +795,7 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
     services: handoff.services,
     resources: handoff.resourceReferences,
     serverSources: handoff.serverSources,
+    asyncSources: handoff.asyncSources,
   });
   return Object.freeze({ plan, references, observationSeed });
 }

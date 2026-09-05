@@ -47,3 +47,27 @@ test("native Elysia successor admits vendor glue without acquiring other runtime
     },
   });
 }, 60_000);
+
+test("native async successor admits Inngest glue without crossing lifecycle ownership", async () => {
+  await assertNativeRuntimeImportLaw({
+    owner: "runtime-harnesses",
+    version: 3,
+    rule: "runtime_harnesses_v3_imports",
+    allowed: {
+      "owner/src/index.ts":
+        'export type { RuntimeLaunchIdentity } from "../../definition/src/index";',
+      "owner/elysia/index.ts": 'export const mount = async () => import("elysia");',
+      "owner/inngest/index.ts":
+        'import type { Inngest } from "inngest"; import { readInngestFunctionBundle } from "../../process-runtime/src/index"; export const mount = async () => { await import("inngest/bun"); await import("inngest/connect"); };',
+      "owner/test/fixture.test.ts": 'import { startApp } from "@habitat-ai/sdk/app";',
+    },
+    forbidden: {
+      "owner/inngest/sdk.ts": 'import { startApp } from "@habitat-ai/sdk/app";',
+      "owner/inngest/mounting.ts": 'export * from "../../mounting/src/index";',
+      "owner/inngest/substrate.ts": 'void import("../../substrate/effect/src/index");',
+      "owner/inngest/observation.ts": 'require("../../observation/src/index");',
+      "owner/inngest/provider.ts":
+        'import { acquire } from "resources/telemetry/providers/native";',
+    },
+  });
+}, 60_000);

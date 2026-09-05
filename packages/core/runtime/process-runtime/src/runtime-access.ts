@@ -1,9 +1,10 @@
-import type { RuntimeCompilationResult } from "../../compiler/src/index";
-import type { AppRole, RuntimeResource, RuntimeResourceValue } from "../../definition/src/index";
+import type { RuntimeCompilationResult } from "../../compiler/src/compile-runtime-plan";
+import type { AppRole } from "../../definition/src/app";
+import type { RuntimeResource, RuntimeResourceValue } from "../../definition/src/resource";
 import {
   type ProvisionedProcess,
   readProvisionedProcessHandoff,
-} from "../../substrate/effect/src/index";
+} from "../../substrate/effect/src/provisioned-process";
 
 interface ResourceAccess {
   resource<R extends RuntimeResource>(

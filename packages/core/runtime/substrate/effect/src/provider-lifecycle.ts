@@ -1,13 +1,11 @@
 import { Cause, Context, Effect, Layer } from "effect";
 
 import type { BootResourceKey } from "../../../bootgraph/src/index";
-import {
-  Effect as HabitatEffect,
-  type ResourceRequirement,
-  type RuntimeObservationPort,
-  type RuntimeProvider,
-  readProviderEffectPlan,
-} from "../../../definition/src/index";
+import { Effect as HabitatEffect } from "../../../definition/src/effect";
+import type { RuntimeObservationPort } from "../../../definition/src/observation";
+import type { RuntimeProvider } from "../../../definition/src/provider";
+import { readProviderEffectPlan } from "../../../definition/src/provider-effect-plan";
+import type { ResourceRequirement } from "../../../definition/src/resource";
 import { applyExecutionPolicy } from "./execution-policy";
 import { createResourceMap } from "./resource-map";
 

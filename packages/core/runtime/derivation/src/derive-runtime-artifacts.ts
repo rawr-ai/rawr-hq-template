@@ -1,27 +1,29 @@
+import type { AgentToolPluginDefinition } from "../../definition/src/agent";
+import type { AppRole, Entrypoint } from "../../definition/src/app";
 import type {
-  AgentToolPluginDefinition,
-  AppRole,
   AsyncConsumerPluginDefinition,
   AsyncSchedulePluginDefinition,
   AsyncWorkflowPluginDefinition,
-  ProviderSelection as AuthoredProviderSelection,
+} from "../../definition/src/async-plugin";
+import type { CliTopicPluginDefinition } from "../../definition/src/cli";
+import type { DesktopBackgroundPluginDefinition } from "../../definition/src/desktop";
+import { readExecutionProjection } from "../../definition/src/execution";
+import type { PluginDefinition, WebAppPluginDefinition } from "../../definition/src/plugin";
+import type { ProviderSelection as AuthoredProviderSelection } from "../../definition/src/profile";
+import type { RuntimeProvider } from "../../definition/src/provider";
+import type {
   ResourceRequirement as AuthoredResourceRequirement,
-  CliTopicPluginDefinition,
-  DesktopBackgroundPluginDefinition,
-  Entrypoint,
-  PluginDefinition,
-  RuntimeProvider,
   RuntimeResource,
-  ServiceDefinition,
-  ServiceDependencyDeclaration,
-  ServiceRuntimeExport,
-  WebAppPluginDefinition,
-} from "../../definition/src/index";
-import { readExecutionProjection, readServiceUse } from "../../definition/src/index";
+} from "../../definition/src/resource";
 import {
-  attachRuntimeDerivationHandoff,
-  type RuntimeDerivationHandoffCarrier,
-} from "./derivation-handoff";
+  readServiceUse,
+  type ServiceDefinition,
+  type ServiceDependencyDeclaration,
+  type ServiceRuntimeExport,
+} from "../../definition/src/service";
+import type { RuntimeAsyncDescriptorReference, RuntimeAsyncSource } from "./async-source";
+import type { RuntimeDerivationHandoffCarrier } from "./derivation-carrier";
+import { attachRuntimeDerivationHandoff } from "./derivation-handoff";
 import {
   type AsyncStepDescriptorOccurrence,
   createExecutionDescriptorTable,
@@ -129,6 +131,7 @@ interface PluginDerivationState {
   readonly resourceRequirementIds: string[];
   readonly executionEntries: ReturnType<typeof deriveAsyncExecutionEntry>[];
   readonly webEntries: WebRouteModuleTableEntry[];
+  asyncSource?: RuntimeAsyncSource;
   workflowDispatcher?: WorkflowDispatcherDescriptor;
 }
 
@@ -931,8 +934,12 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
     }
     return;
   }
-  const add = (occurrence: AsyncStepDescriptorOccurrence) => {
-    state.executionEntries.push(deriveAsyncExecutionEntry(occurrence));
+  const add = (occurrence: AsyncStepDescriptorOccurrence): RuntimeAsyncDescriptorReference => {
+    const entry = deriveAsyncExecutionEntry(occurrence);
+    state.executionEntries.push(entry);
+    if (entry[0].boundary !== "plugin.async-step")
+      throw new TypeError("An async source requires its own step occurrence reference.");
+    return Object.freeze([occurrence.descriptor, entry[0]]);
   };
 
   if (isAsyncWorkflowPlugin(plugin)) {
@@ -940,11 +947,26 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
       plugin.workflows.map((workflow) => workflow.id),
       "workflow id"
     );
-    for (const workflow of plugin.workflows) {
-      for (const descriptor of workflow.steps) {
-        add({ ownerId: state.ownerId, owner: { workflowId: workflow.id }, descriptor });
-      }
-    }
+    state.asyncSource = Object.freeze({
+      kind: "async/workflow",
+      declarations: Object.freeze(
+        plugin.workflows.map((workflow) =>
+          Object.freeze({
+            kind: workflow.kind,
+            id: workflow.id,
+            eventName: workflow.eventName,
+            inputSchema: workflow.inputSchema,
+            run: workflow.run,
+            ...(workflow.options === undefined ? {} : { options: workflow.options }),
+            descriptorReferences: Object.freeze(
+              workflow.steps.map((descriptor) =>
+                add({ ownerId: state.ownerId, owner: { workflowId: workflow.id }, descriptor })
+              )
+            ),
+          })
+        )
+      ),
+    });
     const descriptorId = workflowDispatcherId({
       appId,
       pluginOwnerId: state.ownerId,
@@ -970,11 +992,25 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
       plugin.schedules.map((schedule) => schedule.id),
       "schedule id"
     );
-    for (const schedule of plugin.schedules) {
-      for (const descriptor of schedule.steps) {
-        add({ ownerId: state.ownerId, owner: { scheduleId: schedule.id }, descriptor });
-      }
-    }
+    state.asyncSource = Object.freeze({
+      kind: "async/schedule",
+      declarations: Object.freeze(
+        plugin.schedules.map((schedule) =>
+          Object.freeze({
+            kind: schedule.kind,
+            id: schedule.id,
+            cron: schedule.cron,
+            run: schedule.run,
+            ...(schedule.options === undefined ? {} : { options: schedule.options }),
+            descriptorReferences: Object.freeze(
+              schedule.steps.map((descriptor) =>
+                add({ ownerId: state.ownerId, owner: { scheduleId: schedule.id }, descriptor })
+              )
+            ),
+          })
+        )
+      ),
+    });
     return;
   }
   if (isAsyncConsumerPlugin(plugin)) {
@@ -982,11 +1018,26 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
       plugin.consumers.map((consumer) => consumer.id),
       "consumer id"
     );
-    for (const consumer of plugin.consumers) {
-      for (const descriptor of consumer.steps) {
-        add({ ownerId: state.ownerId, owner: { consumerId: consumer.id }, descriptor });
-      }
-    }
+    state.asyncSource = Object.freeze({
+      kind: "async/consumer",
+      declarations: Object.freeze(
+        plugin.consumers.map((consumer) =>
+          Object.freeze({
+            kind: consumer.kind,
+            id: consumer.id,
+            eventName: consumer.eventName,
+            eventSchema: consumer.eventSchema,
+            run: consumer.run,
+            ...(consumer.options === undefined ? {} : { options: consumer.options }),
+            descriptorReferences: Object.freeze(
+              consumer.steps.map((descriptor) =>
+                add({ ownerId: state.ownerId, owner: { consumerId: consumer.id }, descriptor })
+              )
+            ),
+          })
+        )
+      ),
+    });
   }
 }
 
@@ -1259,6 +1310,20 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       })
       .sort(([left], [right]) => compareStrings(left, right))
   );
+  const asyncSources = Object.freeze(
+    pluginStates
+      .flatMap((state) => {
+        if (state.asyncSource === undefined) return [];
+        const id = surfacePlanId({
+          pluginOwnerId: state.ownerId,
+          role: state.definition.role,
+          surface: state.definition.surface,
+          capability: state.definition.capability,
+        });
+        return [Object.freeze([id, state.asyncSource] as const)];
+      })
+      .sort(([left], [right]) => compareStrings(left, right))
+  );
   const workflowDispatcherDescriptors = Object.freeze(
     pluginStates
       .flatMap((state) =>
@@ -1400,6 +1465,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
           .map(([id, requirement]) => Object.freeze([id, requirement] as const))
       ),
       serverSources,
+      asyncSources,
       executionPolicies: Object.freeze(
         executionDescriptorTable
           .entries()

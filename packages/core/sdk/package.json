@@ -141,6 +141,11 @@
       "import": "./dist/runtime/harnesses/elysia.js",
       "default": "./dist/runtime/harnesses/elysia.js"
     },
+    "./runtime/harnesses/inngest": {
+      "types": "./dist/runtime/harnesses/inngest.d.ts",
+      "import": "./dist/runtime/harnesses/inngest.js",
+      "default": "./dist/runtime/harnesses/inngest.js"
+    },
     "./runtime/observation": {
       "types": "./dist/runtime/observation/index.d.ts",
       "import": "./dist/runtime/observation/index.js",
@@ -215,13 +220,17 @@
   },
   "peerDependencies": {
     "@oclif/core": "^4.13.3",
-    "elysia": "1.4.30"
+    "elysia": "1.4.30",
+    "inngest": "4.18.0"
   },
   "peerDependenciesMeta": {
     "@oclif/core": {
       "optional": true
     },
     "elysia": {
+      "optional": true
+    },
+    "inngest": {
       "optional": true
     }
   },

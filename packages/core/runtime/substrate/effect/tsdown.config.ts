@@ -15,6 +15,7 @@ export default defineConfig({
     neverBundle: true,
     dts: {
       neverBundle: [
+        /^\.\//,
         /^\.\.\/\.\.\/\.\.\/(?:definition|compiler|bootgraph)\/src(?:\/|$)/,
         /^(?![A-Za-z]:)[^./\\\0]/,
       ],

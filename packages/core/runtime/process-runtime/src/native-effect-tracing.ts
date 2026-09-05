@@ -1,17 +1,18 @@
 import * as OtelTracer from "@effect/opentelemetry/OtelTracer";
 import { context, isSpanContextValid, trace } from "@opentelemetry/api";
-import { Effect } from "effect";
+import { Effect, type Tracer } from "effect";
 
-/** Reuse the configured native provider and active oRPC parent without owning another runtime. */
+/** Reuse the configured native provider and active native parent without another runtime. */
 export function withNativeEffectTracing<A, E, R>(
   program: Effect.Effect<A, E, R>,
   name: string,
-  attributes: Readonly<Record<string, string>>
+  attributes: Readonly<Record<string, string>>,
+  explicitParent?: Tracer.AnySpan
 ): Effect.Effect<A, E, R> {
   const parent = trace.getSpan(context.active())?.spanContext();
-  const spanned = Effect.withSpan(program, name, { attributes });
+  const spanned = Effect.withSpan(program, name, { attributes, parent: explicitParent });
   const continued =
-    parent !== undefined && isSpanContextValid(parent)
+    explicitParent === undefined && parent !== undefined && isSpanContextValid(parent)
       ? OtelTracer.withSpanContext(spanned, parent)
       : spanned;
   return Effect.flatMap(

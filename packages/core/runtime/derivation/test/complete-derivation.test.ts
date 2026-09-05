@@ -196,13 +196,17 @@ function makeFixture(options: FixtureOptions = {}) {
   });
   const firstWorkflow = defineWorkflow({
     id: "alpha",
+    eventName: "alpha",
     inputSchema: LaneSchema,
     steps: [authoredStep] as const,
+    run: () => undefined,
   });
   const secondWorkflow = defineWorkflow({
     id: "zeta",
+    eventName: "zeta",
     inputSchema: LaneSchema,
     steps: [authoredStep] as const,
+    run: () => undefined,
   });
   const asyncPlugin = defineAsyncWorkflowPlugin.factory()({
     capability: "jobs",
@@ -618,8 +622,10 @@ describe("complete runtime derivation", () => {
       workflows: [
         defineWorkflow({
           id: "workflow",
+          eventName: "fixture.event",
           inputSchema: LaneSchema,
           steps: [direct, generated] as const,
+          run: () => undefined,
         }),
       ] as const,
     })();
@@ -627,7 +633,12 @@ describe("complete runtime derivation", () => {
       capability: "lazy-schedule",
       services: {},
       schedules: [
-        defineSchedule({ id: "schedule", cron: "* * * * *", steps: [direct] as const }),
+        defineSchedule({
+          id: "schedule",
+          cron: "* * * * *",
+          steps: [direct] as const,
+          run: () => undefined,
+        }),
       ] as const,
     })();
     const consumerPlugin = defineAsyncConsumerPlugin.factory()({
@@ -639,6 +650,7 @@ describe("complete runtime derivation", () => {
           eventName: "fixture.event",
           eventSchema: LaneSchema,
           steps: [generated] as const,
+          run: () => undefined,
         }),
       ] as const,
     })();

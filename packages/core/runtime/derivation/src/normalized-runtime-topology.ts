@@ -1,12 +1,12 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import type {
-  Entrypoint,
-  ServiceDefinition,
-  ServiceDependencyDeclaration,
-  ServiceRuntimeExport,
-} from "../../definition/src/index";
-import { readServiceUse } from "../../definition/src/index";
+import type { Entrypoint } from "../../definition/src/app";
+import {
+  readServiceUse,
+  type ServiceDefinition,
+  type ServiceDependencyDeclaration,
+  type ServiceRuntimeExport,
+} from "../../definition/src/service";
 import { RuntimeSchema } from "../../schema/src/index";
 
 const closed = { additionalProperties: false } as const;

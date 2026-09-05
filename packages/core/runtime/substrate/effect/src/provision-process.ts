@@ -2,13 +2,11 @@ import { Context } from "effect";
 import { Check } from "typebox/value";
 
 import type { Bootgraph } from "../../../bootgraph/src/index";
-import type { RuntimeCompilationResult } from "../../../compiler/src/index";
-import type {
-  AppRole,
-  ResourceRequirement,
-  RuntimeObservationPort,
-  RuntimeResourceMap,
-} from "../../../definition/src/index";
+import type { RuntimeCompilationResult } from "../../../compiler/src/compile-runtime-plan";
+import type { AppRole } from "../../../definition/src/app";
+import type { RuntimeObservationPort } from "../../../definition/src/observation";
+import type { RuntimeResourceMap } from "../../../definition/src/provider";
+import type { ResourceRequirement } from "../../../definition/src/resource";
 import { admitProvisioning } from "./admission";
 import { preflightConfig, type RuntimeSourceInput } from "./config";
 import { createManagedRuntimeHandle } from "./managed-runtime-handle";

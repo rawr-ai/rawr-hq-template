@@ -1,4 +1,4 @@
-import type { MountReadyProcess } from "../../process-runtime/src/index";
+import type { MountReadyProcess } from "../../process-runtime/src/mount-ready-process";
 import type { StartedHarness } from "./started-harness";
 
 export interface NativeStopPolicy {

@@ -1,10 +1,9 @@
 import { ReadonlyObject, type Static, Type } from "typebox";
 
-import {
-  CompiledProcessPlanSchema,
-  type RuntimeCompilationResult,
-} from "../../../compiler/src/index";
-import type { AppRole, RuntimeResourceMap } from "../../../definition/src/index";
+import type { RuntimeCompilationResult } from "../../../compiler/src/compile-runtime-plan";
+import { CompiledProcessPlanSchema } from "../../../compiler/src/compiled-process-plan";
+import type { AppRole } from "../../../definition/src/app";
+import type { RuntimeResourceMap } from "../../../definition/src/provider";
 import type { PreflightConfig } from "./config";
 import type { ManagedRuntimeHandle } from "./managed-runtime-handle";
 import type { ProvisionedResourceValues } from "./provider-lifecycle";

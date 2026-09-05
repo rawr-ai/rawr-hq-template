@@ -23,6 +23,92 @@ async function microtasks() {
   for (let i = 0; i < 10; i++) await Promise.resolve();
 }
 
+test("native groups close only their roots and drain their inherited descendants", async () => {
+  const tracker = createInvocationTracker();
+  const first = tracker.group();
+  const sibling = tracker.group();
+  const releaseParent = gate();
+  const releaseChild = gate();
+  const releaseSibling = gate();
+  const childEntered = gate();
+  let child: Promise<void> | undefined;
+  const parent = first.run(async (own) => {
+    await releaseParent.promise;
+    child = tracker.run(async () => {
+      childEntered.resolve();
+      await releaseChild.promise;
+    }, own);
+  });
+  const unrelated = sibling.run(async () => releaseSibling.promise);
+  const draining = first.closeAndDrain();
+  expect(first.closeAndDrain()).toBe(draining);
+  await expect(first.run(async () => "closed root")).rejects.toThrow(TypeError);
+  expect(await sibling.run(async () => "other native owner")).toBe("other native owner");
+  const all = tracker.closeAndDrain();
+  let drained = false;
+  void draining.then(() => {
+    drained = true;
+  });
+  try {
+    releaseParent.resolve();
+    await childEntered.promise;
+    await parent;
+    await microtasks();
+    expect(drained).toBe(false);
+    releaseChild.resolve();
+    await child;
+    await draining;
+    expect(drained).toBe(true);
+    let allDrained = false;
+    void all.then(() => {
+      allDrained = true;
+    });
+    await microtasks();
+    expect(allDrained).toBe(false);
+  } finally {
+    releaseParent.resolve();
+    releaseChild.resolve();
+    releaseSibling.resolve();
+    await Promise.all([parent, unrelated, all]);
+  }
+});
+
+test("native group drain retains a returned stream's cleanup and its live continuation", async () => {
+  const tracker = createInvocationTracker();
+  const group = tracker.group();
+  const cleanup = gate();
+  const cleanupEntered = gate();
+  let parent: Continuation | undefined;
+  const stream = await group.run(async (own) => {
+    parent = own;
+    return new ReadableStream({
+      async cancel() {
+        cleanupEntered.resolve();
+        await cleanup.promise;
+      },
+    });
+  });
+  const draining = group.closeAndDrain();
+  let drained = false;
+  void draining.then(() => {
+    drained = true;
+  });
+  const cancelling = stream.cancel();
+  try {
+    await cleanupEntered.promise;
+    await microtasks();
+    expect(drained).toBe(false);
+    expect(await tracker.run(async () => "descendant", parent)).toBe("descendant");
+    cleanup.resolve();
+    await cancelling;
+    await draining;
+    expect(() => tracker.assertAdmission(parent)).toThrow(TypeError);
+  } finally {
+    cleanup.resolve();
+    await tracker.closeAndDrain();
+  }
+});
+
 test("native fiber continuation admits nested work during drain without admitting new roots", async () => {
   const tracker = createInvocationTracker();
   const entered = gate();

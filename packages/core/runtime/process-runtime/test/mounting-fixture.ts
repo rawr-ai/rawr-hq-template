@@ -1,4 +1,4 @@
-import { compileRuntimePlan } from "../../compiler/src/index";
+import { compileRuntimePlan } from "../../compiler/src/compile-runtime-plan";
 import {
   defineAgentToolPlugin,
   defineApp,

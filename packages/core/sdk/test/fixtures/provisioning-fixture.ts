@@ -9,6 +9,7 @@ import { compileRuntimePlan } from "../../../runtime/compiler/src/index";
 import {
   type AppRole,
   defineApp,
+  defineAsyncWorkflowPlugin,
   defineEntrypoint,
   definePlugin,
   defineProcessCatalog,
@@ -236,17 +237,14 @@ export function produceProvisioningFixture(
       : [serverRequirement],
     project: () => ({ kind: "plugin.projection", facts: {} }),
   });
-  const asyncPlugin = definePlugin({
-    id: "async",
-    role: "async",
-    surface: "async/workflow",
+  const asyncPlugin = defineAsyncWorkflowPlugin.factory()({
     capability: "lease",
     services: {},
     resourceRequirements: options.asyncConfig
       ? [asyncRequirement, configuredAsyncRequirement]
       : [asyncRequirement],
-    project: () => ({ kind: "plugin.projection", facts: {} }),
-  });
+    workflows: [],
+  })();
   const app = defineApp({ id: "provisioning", plugins: [server, asyncPlugin] });
   const profile = defineRuntimeProfile({
     id: "profile",

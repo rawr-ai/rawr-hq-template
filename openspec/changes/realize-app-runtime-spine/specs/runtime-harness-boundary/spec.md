@@ -389,6 +389,10 @@ qualification obligations remain separately owned and unretired.
 
 The Inngest harness MUST use native `inngest@4.18.0` and MUST NOT use
 `effect-inngest`. It MUST keep Serve and Connect as explicit native modes.
+The local acceptance cohort MUST use Bun 1.3.14 and disposable Dev Server
+1.44.0, with separate native Inngest app IDs for Serve and Connect. One native
+app MUST NOT be registered concurrently through both transports. Local
+evidence MUST NOT claim Cloud or production-deployment qualification.
 Private `FunctionBundle` registration factories MUST receive the same native
 client as the selected harness; no public `dispatcherDescriptor` is admitted
 without a named consumer. Adapter-lowered functions MUST execute plugin-owned
@@ -401,17 +405,27 @@ or `ProcessExecutionRuntime`; a failed or otherwise un-memoized attempt MUST
 invoke the callback anew. Cancellation MUST NOT be represented as interruption
 of an already active step, and Habitat MUST NOT inject a synthetic signal.
 
+One exact cohost materialization scope MUST prepend a native client
+`Middleware` class matching only its exact native function objects. Native
+`wrapRequest` MUST track each finite request attempt through the native
+middleware chain; its per-request instance MUST carry the private continuation
+through `transformFunctionInput`. The tracker MUST NOT await the outer authored
+`run` Promise, which may suspend indefinitely for native replay. Actual managed
+step executions MUST retain descendant leases. `onFailure` MUST validate the
+same native request witness and remain awaited by the native engine, without
+Habitat capabilities in its native context.
+
 In Serve mode the owning harness MUST track every admitted native handler
-Promise and MUST wait for those Promises before process release. In Connect mode
-the native client MUST be constructed with `handleShutdownSignals: []`. The
-owner-local callback tracker MUST remain: exact 4.18 source shows
-`RequestProcessor.handleExtendLeaseAck` deleting a request from
-`requestLeases` when renewal is denied while explicitly allowing the user
-callback to continue; `ConnectionCore.close` and `reconcileLoop` gate on
-`requestLeases`; `waitForInProgress` exists, but `SameThreadStrategy.close`
-does not call it. Runtime mounting MUST own one outer process-local
-single-flight stop, invoke and await native `close()` exactly once, then wait
-for owner callback-tracker zero before provider release. Native close/flush
+Promise, and native request scopes MUST inherit the original request admission.
+In Connect mode native Connect MUST use `handleShutdownSignals: []` and
+retain native default-worker behavior. Native lease bookkeeping MUST NOT
+replace owner-local request/step lifetime accounting when a callback outlives
+denied renewal. Runtime mounting MUST own one outer process-local single-flight
+stop, close new root admission synchronously, invoke and await native `close()`
+exactly once, then drain finite native requests and active managed steps before
+provider release. Valid descendants of already-admitted work remain admitted.
+Cleanup MUST remove only the exact middleware class installed by the settled
+materialization scope, preserving unrelated native middleware. Native close/flush
 settlement MUST NOT prove callback completion or confirmed delivery;
 observation MUST use only evidenced `presented`, `confirmed`, `dropped`, or
 `unknown` outcomes.
@@ -439,19 +453,31 @@ observation MUST use only evidenced `presented`, `confirmed`, `dropped`, or
 - **AND** cancellation does not interrupt the active step and Habitat injects
   no synthetic signal
 
-#### Scenario: Serve process drains admitted functions
+#### Scenario: Serve checkpoint modes retain the native result contract
+
+- **WHEN** acceptance executes the same authored workflow with native default/enabled checkpointing and with `checkpointing: false`
+- **THEN** native retry and memoization preserve the standard-JSON step result contract
+- **AND** acceptance does not invent one uniform native history-query result shape across checkpoint modes
+
+#### Scenario: Serve process drains admitted native requests
 
 - **WHEN** Serve has admitted one or more handler Promises and stop begins
 - **THEN** the Serve owner rejects later intake and waits for every admitted
-  Promise before process release
+  handler, finite native request attempt, and active managed step before process release
 - **AND** registration factories and the selected harness use the same native
   client
+
+#### Scenario: An outer callback suspends at a fresh native step
+
+- **WHEN** native execution leaves the outer authored Promise pending for replay after settling its finite request attempt
+- **THEN** that outer Promise does not keep process drain pending or authorize a new native request
+- **AND** actually active managed steps and native awaited `onFailure` work remain protected until settlement
 
 #### Scenario: Connect process shuts down
 
 - **WHEN** runtime stops an Inngest Connect harness
 - **THEN** runtime mounting invokes and awaits the native client's `close()`
-  once, then the owner waits for callback-tracker zero
+  once, then the owner waits for finite native request and managed-step drain
 - **AND** no second signal owner or provider-release path runs, and flush
   settlement is not claimed as confirmed delivery
 
@@ -463,7 +489,7 @@ observation MUST use only evidenced `presented`, `confirmed`, `dropped`, or
   listeners and native `close()` runs exactly once through the outer
   process-local single-flight stop
 - **AND** provider release begins only after `close()` settles and the owner
-  callback-tracker count reaches zero
+  scope and its managed-step descendants settle
 
 #### Scenario: Connect reports a flush outcome
 

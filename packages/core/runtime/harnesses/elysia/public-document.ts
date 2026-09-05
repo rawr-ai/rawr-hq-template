@@ -8,10 +8,8 @@ import {
 import { walkProcedureContractsAsync } from "@orpc/server";
 import { mergeHttpPath, pathToHttpPath } from "@orpc/shared";
 import { routesOverlap } from "rou3";
-import type {
-  ElysiaRoutePayload,
-  MountReadySurfaceRuntimeRecord,
-} from "../../process-runtime/src/index";
+import type { ElysiaRoutePayload } from "../../process-runtime/src/adapters/elysia";
+import type { MountReadySurfaceRuntimeRecord } from "../../process-runtime/src/mount-ready-process";
 import type { ElysiaHarnessConfig } from "./index";
 
 /** Generate once from native document-only contracts, never merge generated documents. */

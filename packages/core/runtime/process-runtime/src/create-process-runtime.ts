@@ -1,21 +1,25 @@
+import { type RuntimeCompilationResult } from "../../compiler/src/compile-runtime-plan";
 import {
   type CompiledServiceBindingPlan,
   type CompiledSurfacePlan,
-  type RuntimeCompilationResult,
+} from "../../compiler/src/compiled-process-plan";
+import {
+  readRuntimeCompilationAsyncSources,
   readRuntimeCompilationServerSources,
-} from "../../compiler/src/index";
+} from "../../compiler/src/runtime-compilation-reference-table";
+import type { RuntimeObservationPort } from "../../definition/src/observation";
 import type {
   ConstructionBoundServiceClient,
-  RuntimeObservationPort,
   ServiceConstructorInput,
   ServiceDefinition,
   ServiceRuntimeExport,
-} from "../../definition/src/index";
-import type { ExecutionDescriptorTable } from "../../derivation/src/index";
+} from "../../definition/src/service";
+import type { ExecutionDescriptorTable } from "../../derivation/src/derive-execution-descriptor-table";
 import {
   type ProvisionedProcess,
   readProvisionedProcessHandoff,
-} from "../../substrate/effect/src/index";
+} from "../../substrate/effect/src/provisioned-process";
+import { createInngestFunctionBundle } from "./async-function-bundle";
 import { createExecutionRegistry, type ExecutionRegistry } from "./execution-registry";
 import { createProcessExecutionRuntime, type ProcessExecutionRuntime } from "./execution-runtime";
 import { createInvocationTracker } from "./invocation-tracker";
@@ -76,12 +80,14 @@ export async function createProcessRuntime(
   try {
     const { plan, references } = input.compilation;
     const serverSources = new Map(readRuntimeCompilationServerSources(references));
+    const asyncSources = new Map(readRuntimeCompilationAsyncSources(references));
     const registry = createExecutionRegistry({
       processId: plan.identity.process,
       registryInput: plan.executionRegistryInput,
       executionPlans: plan.executionPlans,
       descriptorTable: input.descriptorTable,
-      assertOpen: admission.assertOpen,
+      assertOpen: (continuation) =>
+        admission.assertAdmission(continuation ?? admission.captureContinuation()),
     });
     const bindings = new Map(plan.serviceBindings.map((binding) => [binding.bindingId, binding]));
     const requirements = new Map(
@@ -182,7 +188,7 @@ export async function createProcessRuntime(
     const bound = new Map(
       plan.serviceBindings.map((binding) => [binding.bindingId, construct(binding)])
     );
-    const execution = createProcessExecutionRuntime({
+    const executionAssembly = createProcessExecutionRuntime({
       ...input,
       registry,
       admission,
@@ -196,6 +202,7 @@ export async function createProcessRuntime(
           continuation,
         }),
     });
+    const execution = executionAssembly.runtime;
     const access = createRuntimeAccess(input.compilation, input.provisioned, () => {
       // Native stop may still need ready values after executable admission closes.
       if (stopping !== undefined) throw new TypeError("Process resource access is closed.");
@@ -224,6 +231,7 @@ export async function createProcessRuntime(
         admission,
       });
       const serverSource = serverSources.get(surface.surfacePlanId);
+      const asyncSource = asyncSources.get(surface.surfacePlanId);
       return adapter.lower({
         plan: surface,
         processAccess: access.process,
@@ -232,6 +240,21 @@ export async function createProcessRuntime(
         resources: capabilities.resources,
         executionRegistry: registry,
         executionRuntime: execution,
+        ...(asyncSource === undefined
+          ? {}
+          : {
+              nativeAsync: {
+                bundle: () =>
+                  createInngestFunctionBundle({
+                    appId: plan.identity.app,
+                    processId: plan.identity.process,
+                    source: asyncSource,
+                    registry,
+                    admission,
+                    execution: executionAssembly,
+                  }),
+              },
+            }),
         ...(serverSource === undefined
           ? {}
           : {

@@ -1,6 +1,7 @@
-import type { CompiledSurfacePlan } from "../../../compiler/src/index";
-import { type RuntimeSchema, readExecutionProjection } from "../../../definition/src/index";
-import type { ExecutionDescriptorRef } from "../../../derivation/src/index";
+import type { CompiledSurfacePlan } from "../../../compiler/src/compiled-process-plan";
+import { readExecutionProjection } from "../../../definition/src/execution";
+import { type RuntimeSchema } from "../../../definition/src/schema";
+import type { ExecutionDescriptorRef } from "../../../derivation/src/execution-descriptor-ref";
 import type { SurfaceAdapter } from "../surface-adapter";
 import type { NativeInvocationOptions } from "./agent-tools";
 

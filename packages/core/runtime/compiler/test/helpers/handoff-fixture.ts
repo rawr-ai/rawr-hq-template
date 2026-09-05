@@ -233,7 +233,13 @@ export function produceHandoff(
       return Effect.succeed("done");
     },
   });
-  const workflow = defineWorkflow({ id: "workflow", inputSchema: countedSchema, steps: [step] });
+  const workflow = defineWorkflow({
+    id: "workflow",
+    eventName: "fixture/workflow",
+    inputSchema: countedSchema,
+    steps: [step],
+    run: () => undefined,
+  });
   const jobs = defineAsyncWorkflowPlugin.factory()({
     capability: "jobs",
     services: {},

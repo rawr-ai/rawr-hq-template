@@ -1,7 +1,7 @@
 import { createEffectClient } from "@orpc/experimental-effect";
 import { Context } from "effect";
 
-import type { ServiceClientAssembly } from "../../definition/src/index";
+import type { ServiceClientAssembly } from "../../definition/src/service";
 import { type InvocationTracker, invocationContinuationContext } from "./invocation-tracker";
 import { withNativeEffectTracing } from "./native-effect-tracing";
 

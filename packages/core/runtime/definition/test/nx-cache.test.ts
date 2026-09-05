@@ -122,6 +122,7 @@ async function createFixture(): Promise<string> {
       "bun-types",
       "nx",
       "tsdown",
+      "inngest",
       "typebox",
       "typescript",
     ]) {

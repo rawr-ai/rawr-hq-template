@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Own import-safe native harness contracts, the selected native Elysia host,
+Own import-safe native harness contracts, selected native Elysia and Inngest hosts,
 bounded owner-local health evidence and idempotent stop mechanics.
 
 ## Scope
@@ -29,6 +29,13 @@ Applies to this private package-less `runtime-harnesses` Nx owner.
   own providers/instrumentation globals. The original Request and signal reach
   native oRPC unchanged. Native stop(false) settles before process release;
   unawaited vendor onStop hooks own no asynchronous cleanup here.
+- Native Inngest resolves the already provisioned native client and consumes
+  private process-lowered function bundles. Serve and Connect own transport,
+  not a second Effect runtime, provider, dispatcher, or replay interpreter.
+  Functions use exact native IDs and explicit event/cron triggers. Native
+  request settlement differs from authored orchestration Promise settlement:
+  replay discovery may leave that Promise suspended. Qualification must cover
+  finite native middleware/request lifetime and actually executing step bodies.
 - `createOwnerStop` shares one native owner's operation; it does not coordinate
   other owners. A no-op owner still supplies explicit stop; any no-op health
   evidence is not-applicable, never fabricated passing readiness.
@@ -36,6 +43,8 @@ Applies to this private package-less `runtime-harnesses` Nx owner.
 ## Validation
 
 Run owner TypeScript, behavior and isolated cache proofs. The separately named
-server acceptance target executes the terminal SDK's composed Bun fixture;
+server and async acceptance targets execute the terminal SDK's composed Bun fixtures;
 that assembly test creates no native-owner source dependency back into SDK.
-Generic contract tests alone do not qualify the real host or telemetry path.
+The async fixture uses the pinned local native Dev Server, not simulated Inngest
+protocol requests. Neither local receipt qualifies Cloud, collector persistence,
+or ClickHouse queryability. Generic contract tests alone do not qualify these paths.

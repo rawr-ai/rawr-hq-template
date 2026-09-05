@@ -6,7 +6,7 @@ import {
   BootgraphInputSchema,
   type ProviderDependencyEdge,
   type ProviderDependencyNode,
-} from "../../compiler/src";
+} from "../../compiler/src/compiled-process-plan";
 import { type BootResourceKey, BootResourceKeySchema } from "./boot-resource-key";
 import { type BootResourceModule, BootResourceModuleSchema } from "./boot-resource-module";
 

@@ -6,8 +6,9 @@ import {
   CompiledProcessPlanSchema,
   type CompiledSurfacePlan,
   CompiledSurfacePlanSchema,
-} from "../../compiler/src/index";
-import type { RuntimeLaunchIdentity, RuntimeSchema } from "../../definition/src/index";
+} from "../../compiler/src/compiled-process-plan";
+import type { RuntimeLaunchIdentity } from "../../definition/src/app";
+import type { RuntimeSchema } from "../../definition/src/schema";
 import type { ProcessRuntimeAccess } from "./runtime-access";
 import type {
   AdapterFinding,

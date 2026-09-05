@@ -112,6 +112,7 @@ async function createFixture(): Promise<string> {
       "dotenv",
       "nx",
       "tsdown",
+      "inngest",
       "typebox",
       "typescript",
     ]) {

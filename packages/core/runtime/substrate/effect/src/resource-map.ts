@@ -1,9 +1,9 @@
+import type { RuntimeResourceMap } from "../../../definition/src/provider";
 import type {
   ResourceRequirement,
   RuntimeResource,
-  RuntimeResourceMap,
   RuntimeResourceValue,
-} from "../../../definition/src/index";
+} from "../../../definition/src/resource";
 
 /** Capability lookup is reference-based; normalized identities are joined before assembly. */
 export function createResourceMap(
