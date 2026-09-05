@@ -1,7 +1,8 @@
 import { execFileSync, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, symlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, readFile, realpath, symlink, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { RuntimeCatalog } from "@habitat-ai/sdk/runtime/observation";
 import { expect } from "vitest";
@@ -12,12 +13,23 @@ export async function buildNativeRuntimeFixture(input: {
   readonly workspaceRoot: string;
   readonly outputRoot: string;
   readonly hostImport: string;
-  readonly nodeModules?: string;
+  readonly dependencyPackageJson: string;
 }): Promise<void> {
   const sourceRoot = join(input.outputRoot, ".build-src");
   await mkdir(sourceRoot, { recursive: true });
-  if (input.nodeModules !== undefined) {
-    await symlink(input.nodeModules, join(input.outputRoot, "node_modules"), "junction");
+  const dependencyRequire = createRequire(input.dependencyPackageJson);
+  const fixtureRequire = createRequire(join(input.outputRoot, "package.json"));
+  const dependencies = ["@habitat-ai/sdk", "@oclif/core", "effect"];
+  if (input.hostImport.startsWith("@habitat-ai/cli/")) dependencies.push("@habitat-ai/cli");
+  for (const name of dependencies) {
+    // Resolve the actual package cohort, not a guessed Bun/Node installation layout.
+    const packageJson = dependencyRequire.resolve(`${name}/package.json`);
+    const target = join(input.outputRoot, "node_modules", name);
+    await mkdir(dirname(target), { recursive: true });
+    await symlink(dirname(packageJson), target, "junction");
+    expect(await realpath(fixtureRequire.resolve(`${name}/package.json`))).toBe(
+      await realpath(packageJson)
+    );
   }
   for (const name of ["app.ts", "run.ts"]) {
     const source = await readFile(join(sources, name), "utf8");

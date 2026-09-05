@@ -133,6 +133,11 @@
           "manifest"
         ]
       },
+      "check:test": {
+        "dependsOn": [
+          "build"
+        ]
+      },
       "acceptance:oclif-installed-package": {
         "cache": false,
         "dependsOn": [

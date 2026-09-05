@@ -952,7 +952,7 @@ describe("installed Habitat products", () => {
       workspaceRoot,
       outputRoot: nativeRuntimeRoot,
       hostImport: "@habitat-ai/cli/host",
-      nodeModules: path.resolve(resolvedInstalledCliRoot, "../.."),
+      dependencyPackageJson: path.join(resolvedInstalledCliRoot, "package.json"),
     });
     for (const [index, scenario] of nativeRuntimeScenarios.entries()) {
       if (process.platform === "win32" && "signal" in scenario) continue;

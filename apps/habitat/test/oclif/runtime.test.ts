@@ -1,7 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { afterAll, beforeAll, describe, it } from "vitest";
 import {
   buildNativeRuntimeFixture,
@@ -17,8 +17,8 @@ beforeAll(async () => {
   await buildNativeRuntimeFixture({
     workspaceRoot: workspace,
     outputRoot: built,
-    hostImport: join(workspace, "apps/habitat/dist/host.js"),
-    nodeModules: join(workspace, "node_modules"),
+    hostImport: pathToFileURL(join(workspace, "apps/habitat/dist/host.js")).href,
+    dependencyPackageJson: join(workspace, "package.json"),
   });
 }, 30_000);
 
