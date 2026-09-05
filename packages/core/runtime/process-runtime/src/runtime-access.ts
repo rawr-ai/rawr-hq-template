@@ -4,7 +4,6 @@ import {
   type ProvisionedProcess,
   readProvisionedProcessHandoff,
 } from "../../substrate/effect/src/index";
-import type { InvocationTracker } from "./invocation-tracker";
 
 interface ResourceAccess {
   resource<R extends RuntimeResource>(
@@ -51,7 +50,7 @@ export interface RuntimeAccess {
 export function createRuntimeAccess(
   compilation: RuntimeCompilationResult,
   provisioned: ProvisionedProcess,
-  admission: InvocationTracker
+  assertAvailable: () => void
 ): RuntimeAccess {
   const { values } = readProvisionedProcessHandoff(provisioned);
   const { plan } = compilation;
@@ -63,7 +62,7 @@ export function createRuntimeAccess(
         : resource.role === undefined || resource.role === role
     );
     function lookup<R extends RuntimeResource>(resource: R, instance?: string) {
-      admission.assertOpen();
+      assertAvailable();
       const matches = candidates.filter(
         (candidate) =>
           candidate.resource.resourceId === resource.id && candidate.resource.instance === instance
@@ -117,7 +116,7 @@ export function createRuntimeAccess(
       selectedSurfaces,
       ...access(role),
       forSurface(input: RoleSurfaceIdentity): SurfaceRuntimeAccess {
-        admission.assertOpen();
+        assertAvailable();
         if (
           !selectedSurfaces.some(
             (selected) =>

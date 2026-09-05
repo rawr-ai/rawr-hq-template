@@ -1,0 +1,15 @@
+export type {
+  AppRole,
+  HarnessDescriptor,
+  HarnessFinding,
+  HarnessHealthKind,
+  HarnessHealthReport,
+  HarnessHealthStatus,
+  HarnessMountInput,
+  HarnessReportSink,
+  NativeHarnessHandle,
+  ProcessRuntimeAccess,
+  RequiredResourceReadiness,
+  RequiredResourceReadinessRecord,
+  RuntimeLaunchIdentity,
+} from "../../../../runtime/harnesses/src/index";

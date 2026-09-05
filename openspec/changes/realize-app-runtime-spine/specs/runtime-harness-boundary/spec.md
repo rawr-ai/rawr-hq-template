@@ -20,6 +20,17 @@ identity, descriptor id, `readiness` or `liveness` kind, truthful
 findings. Missing, negative, rejected, timed-out, mismatched, or unknown
 evidence MUST NOT become passing readiness.
 
+Successful acquisition proves resource availability only. A selected provider
+with explicit `health.required: true` MUST contribute failing required-resource
+readiness with `provider.health.unknown` until an admitted probe/evidence
+contract exists, including when it covers only optional requirements. Harness
+reports MUST NOT promote that missing evidence to readiness.
+
+A failed native mount MUST settle cleanup of its partial native state before
+rejecting. A rejected native stop MUST likewise mean that native work and
+cleanup have settled, not merely that a first error occurred while cleanup
+continues. These guarantees remain owned by each native realization.
+
 `runtime-mounting` MUST invoke the harness and, only after mount succeeds,
 create the private `StartedHarness` wrapper from descriptor identity, native
 handle, accepted findings, launch identity, and mount metadata. A harness MUST
@@ -92,6 +103,15 @@ invocation MUST own only its launch identity, lease, ManagedRuntime, resources,
 native handles, readiness/liveness, and stop. `runtime-harnesses` MUST NOT create
 `StartedHarness`, coordinate another owner's lifecycle, or observe, restart,
 stop, or release a sibling process.
+
+On entering finalization, mounting MUST synchronously close new executable
+admission through the private process handoff before awaiting native stops.
+This operation MUST NOT return a drain promise, release resources or construct
+another lifecycle controller. Process/role ready-resource access remains
+available to native cleanup until ordinary process stop begins; admitted
+invocations retain their existing continuation leases. Mounting invokes process
+stop only after native stops settle, and process stop awaits its own drain
+before disposal.
 
 Finalization MUST be single-flight with the closed states `running`,
 `draining(deadline, pendingNativeStop)`, and `settled`. The currently admitted

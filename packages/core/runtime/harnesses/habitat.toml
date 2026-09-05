@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-harnesses"
+ownerProject = "runtime-harnesses"
+blueprint = "runtime-harnesses"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/harnesses"
+
+[selections]

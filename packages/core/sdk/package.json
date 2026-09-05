@@ -111,6 +111,11 @@
       "import": "./dist/plugins/desktop/effect/index.js",
       "default": "./dist/plugins/desktop/effect/index.js"
     },
+    "./runtime/harnesses": {
+      "types": "./dist/runtime/harnesses/index.d.ts",
+      "import": "./dist/runtime/harnesses/index.js",
+      "default": "./dist/runtime/harnesses/index.js"
+    },
     "./runtime/resources": {
       "types": "./dist/runtime/resources/index.d.ts",
       "import": "./dist/runtime/resources/index.js",

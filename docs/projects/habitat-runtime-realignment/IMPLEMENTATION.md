@@ -1,10 +1,11 @@
 # Habitat Runtime Implementation
 
 Status: `active-draft`.
-Branch: `agent-root-habitat-runtime-adapters`, stacked on native binding/execution.
+Branch: `agent-root-habitat-runtime-handoff`, stacked on cold adapters.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
+Cold adapters [1011](https://github.com/rawr-ai/rawr-hq-template/pull/1011).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -59,17 +60,19 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: task 10.1. Add cold surface lowering within the existing process
-owner and actual tools/background authoring, not native hosts or timers. The
-definition peer owns typed leaf/plugin declarations, the runtime peer owns
-occurrence lowering, root owns bounded capability assembly and adapters, and
-the cold-contract peer challenges integrated semantics and native policy proof.
-Use the same descriptor table and registry; one private projection on each
-operational descriptor carries the schema or cadence required by its adapter.
-The plugin declares clients/resources once. Each admitted invocation decodes
-tool input once before native retry evaluates its authored body. Lowering never
-executes or mounts. SDK installed/cold-import proof and the scoped adapter law
-co-land; generic harnesses and native-host qualification remain next boundaries.
+Current domino: tasks 10.2-10.4. Add the exact import-safe companion harness
+contract and complete process-owned mount-ready handoff. The harness peer owns
+the new package-less owner and its law; the runtime peer owns preparation and
+non-releasing admission closure; root owns SDK projection, installed/native
+acceptance and integrated proof. The cold peer reviews the composed lifecycle.
+Complete assignment validation and lowering before returning any native mount
+input. Preserve the exact entrypoint identity, required-resource evidence and
+bounded access without carrying raw compiler plans to harnesses. Close new
+executable admission before native stop, but retain cleanup resource access
+until process stop. No production native host, generic mounting controller or
+observation owner is implied by this story. All four predecessor PRs now have
+green required and Linux/Windows installed checks; predecessor admission does
+not acquire a dependency on unfinished mounting or observation work.
 
 The owner's September 4 continuation delegates scope, execution and stopping
 point, requests perspective-specific standing peer review, and authorizes
@@ -570,6 +573,39 @@ installed attempt exposed a missing v2 closure inventory expectation, now fixed.
 Remote tip admission and exact-main verification remain required before merge
 or release claims. Next: admit this complete stack, then generic native-harness
 contracts, mount-ready handoff and mounting/observation, without resuming products.
+
+### Harness Contract And Mount-Ready Handoff
+
+Tasks 10.2-10.4 are implemented and independently reviewed with no remaining
+P1/P2. The new private harness owner supplies the exact type-only public
+companion contract, owner-local stop and health admission, complete v1 law,
+and isolated cache restoration/invalidation proof. The process owner completes
+all selected assignment validation and lowering before emitting frozen
+mount-ready records with exact identity, bounded access and one stop handle.
+No compiler/provider producer locals or private native handles enter the public
+contract. This is not production host or generic mounting acceptance.
+
+The real SDK loopback HTTP fixture mounts a lowered tool and holds an admitted
+request across shutdown. Closing admission is synchronous and non-releasing;
+new invocations refuse, the admitted request completes, native cleanup reads
+its still-live file resource, and resource release follows native settlement.
+The fixture owns its HTTP host only; it is not the future Elysia qualification.
+
+Review repaired two further P2s: an earlier lowering callback could retarget a
+later mutable adapter after preflight, and acquisition alone could falsely
+pass explicitly required provider health. Preparation now snapshots assignment
+identity and refuses drift before invocation. Explicit required health remains
+unknown/failing without a probe contract, including selected optional coverage;
+unused profile providers stay inert. No probe engine was added.
+
+Final proof: full repository CI passes 133 tasks (82 cache hits), process
+handoff tests pass 46 tests/320 assertions, and all nine installed SDK/CLI
+tests pass (155.17 seconds), including cold public imports and an independently
+typed companion. Native product-separation and adapter/harness law proof pass;
+strict OpenSpec and diff checks pass. Earlier full/installed attempts exposed
+two stale SDK export inventory assertions, both repaired before acceptance.
+The four predecessor PRs are green, not yet merged. Next: native stack admission,
+then the non-authorizing observation projection and process-local mounting.
 
 ### Backend Receipt Reuse
 

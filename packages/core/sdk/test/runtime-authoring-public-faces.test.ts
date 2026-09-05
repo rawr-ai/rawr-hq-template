@@ -68,6 +68,7 @@ const expectedRuntimeExports = [
   "./effect/wrap",
   "./execution",
   "./runtime/derivation",
+  "./runtime/harnesses",
   "./runtime/profiles",
   "./runtime/providers",
   "./runtime/providers/effect",
@@ -124,6 +125,9 @@ const expectedPluginExports = [
 ];
 
 describe("runtime authoring public faces", () => {
+  test("imports the companion harness contract without live values", async () => {
+    expect(Object.keys(await import("../src/runtime/harnesses"))).toEqual([]);
+  });
   test("projects the exact cold tool/background authoring families without native hosts", async () => {
     const agent = await import("../src/plugins/agent");
     const agentEffect = await import("../src/plugins/agent/effect");
@@ -266,7 +270,11 @@ describe("runtime authoring public faces", () => {
       import: "./dist/runtime/providers/effect/index.js",
       default: "./dist/runtime/providers/effect/index.js",
     });
-    expect(packageJson.exports).not.toHaveProperty("./runtime/harnesses");
+    expect(packageJson.exports["./runtime/harnesses"]).toEqual({
+      types: "./dist/runtime/harnesses/index.d.ts",
+      import: "./dist/runtime/harnesses/index.js",
+      default: "./dist/runtime/harnesses/index.js",
+    });
   });
 
   test("projects native context and wrap slots with inert execution contracts", () => {

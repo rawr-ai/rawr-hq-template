@@ -16,7 +16,7 @@
       ],
       "outputs": [],
       "options": {
-        "command": "bun test scripts/habitat/product-separation-absence.test.ts scripts/habitat/runtime-adapter-law.test.ts"
+        "command": "bun test scripts/habitat/product-separation-absence.test.ts scripts/habitat/runtime-adapter-law.test.ts scripts/habitat/runtime-harness-law.test.ts"
       }
     },
     "check:policy": {

@@ -6834,6 +6834,23 @@ records. It represents no native mount and carries no `StartedHarness` handle.
 
 Runtime mounting invokes harnesses only after this handoff succeeds. On shutdown it stops collected harnesses in reverse mount order, then invokes the process-runtime stop handle. That handle releases process-runtime state and delegates provisioned role/process release and managed-runtime disposal to the substrate. Runtime mounting is the only cross-owner finalization owner; runtime observation remains read-only.
 
+The private preparation input receives the already-frozen launch identity from
+the accepted entrypoint. Process runtime checks its five fields against the
+compiled selection and preserves that exact object in the handoff; it does not
+reconstruct identity or introduce another public selection input. All selected
+surface/adapter assignments are validated before lowering, and every lowering
+completes before any native mount. Stable surface-plan and binding ids cross
+the boundary, not producer-local compiler or authoring declarations.
+
+The handoff also supplies a non-releasing `closeAdmission()` operation. Mounting
+calls it synchronously on entering finalization so a pending native stop cannot
+admit new executable roots. It closes the existing process invocation tracker;
+it does not dispose the managed runtime or create another lifecycle controller.
+Ready process/role resource access remains available for native cleanup until
+the ordinary process `stop()` begins. Already-admitted invocation continuations
+retain their existing cleanup leases. Only process `stop()` drains those leases
+and disposes process resources, after mounting has awaited native stops.
+
 ### 18.3 `ExecutionRegistry`
 
 The registry matches execution.
@@ -7445,6 +7462,20 @@ and an evidence-backed `status` and `findings`. `unknown`, missing, rejected,
 timed-out, or mismatched evidence never becomes passing readiness. Required
 resource readiness is a read-only input produced before mount; a harness may
 not mutate it or use its report sink to promote a failed required resource.
+
+Successful acquisition proves resource availability, not a separately required
+health check. Until a provider health probe and its evidence contract are
+admitted, a selected provider with `health.required: true` contributes
+`provider.health.unknown` and failing required-resource readiness. This also
+applies when that selected provider covers only optional requirements. Do not
+invent probe support, infer passing health from acquisition, or let later
+harness reports promote this missing evidence.
+
+A rejected native `stop()` still means that native work and cleanup have
+settled; it must not reject at the first error while leaving cleanup running.
+A failed `mount()` cleans up its own partially created native state before
+rejecting, because mounting receives handles only for successful mounts.
+These are native-owner obligations, not a generic force-stop or rollback engine.
 
 `HarnessMountInput`, `NativeHarnessHandle`, `HarnessHealthReport`,
 `HarnessReportSink`, and the supporting interface types are import-safe public
