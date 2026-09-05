@@ -12,6 +12,9 @@
   scope.
 - This resource owns only the provider-neutral contract and its provider
   family.
+- `runtime.ts` is a private source-assembly identity, typechecked here and
+  consumed directly by runtime integration. It is not a native package export
+  or part of the existing distributable build.
 
 ## Boundaries
 

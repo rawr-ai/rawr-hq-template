@@ -1,0 +1,24 @@
+schemaVersion = 1
+id = "runtime-substrate-effect"
+version = 1
+
+[[rules]]
+id = "runtime_substrate_effect_v1_structure"
+lane = "enforced"
+message = "The runtime-substrate-effect owner must preserve its private project boundary and closed TypeScript source and proof grammar."
+remediate = "Restore the package-less project anchors, sole source entry, and owner-local TypeScript source and tests without adding a nested owner, package, public face, or downstream binding and mounting authority."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

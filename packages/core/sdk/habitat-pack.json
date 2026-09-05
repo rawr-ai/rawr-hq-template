@@ -37,6 +37,11 @@
       "path": "dist/blueprints/resource/versions/2/blueprint.toml"
     },
     {
+      "id": "resource",
+      "version": 3,
+      "path": "dist/blueprints/resource/versions/3/blueprint.toml"
+    },
+    {
       "id": "runtime-bootgraph",
       "version": 1,
       "path": "dist/blueprints/runtime-bootgraph/blueprint.toml"
@@ -85,6 +90,11 @@
       "id": "runtime-derivation",
       "version": 3,
       "path": "dist/blueprints/runtime-derivation/versions/3/blueprint.toml"
+    },
+    {
+      "id": "runtime-substrate-effect",
+      "version": 1,
+      "path": "dist/blueprints/runtime-substrate-effect/blueprint.toml"
     },
     {
       "id": "service",

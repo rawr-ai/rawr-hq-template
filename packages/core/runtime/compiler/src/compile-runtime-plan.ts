@@ -689,6 +689,7 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
   const references = createRuntimeCompilationReferenceTable({
     providers: handoff.providers,
     services: handoff.services,
+    resources: handoff.resourceReferences,
   });
   return Object.freeze({ plan, references, observationSeed });
 }

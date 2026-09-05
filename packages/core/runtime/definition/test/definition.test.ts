@@ -41,10 +41,10 @@ import {
   defineWebAppPlugin,
   defineWorkflow,
   Effect,
+  isHabitatEffect,
   providerFx,
   providerSelection,
   RuntimeObservationRecordSchema,
-  readHabitatEffectOperation,
   readServiceUse,
   requireResource,
   resourceDep,
@@ -1000,7 +1000,7 @@ describe("runtime definition", () => {
 
     expect(channelsMatch).toBe(true);
     expect(runCalls).toBe(1);
-    expect(readHabitatEffectOperation(effect).kind).toBe("try-promise");
+    expect(isHabitatEffect(effect)).toBe(true);
     expect(Object.isFrozen(descriptor)).toBe(true);
     expect(Object.isFrozen(descriptor.policy)).toBe(true);
 
@@ -1091,7 +1091,7 @@ describe("runtime definition", () => {
       enumerable: true,
       writable: false,
     });
-    expect(yielded.next().value).toHaveProperty("kind", "habitat.effect");
+    expect(isHabitatEffect(yielded.next().value)).toBe(true);
     expect(yielded.next(42)).toEqual({ done: true, value: 42 });
 
     if (false) {
@@ -1145,8 +1145,7 @@ describe("runtime definition", () => {
 
     expect(channelsMatch).toBe(true);
     expect(bodyRuns).toBe(0);
-    expect(readHabitatEffectOperation(program)).toMatchObject({ kind: "gen" });
-    expect(Object.isFrozen(program)).toBe(true);
+    expect(isHabitatEffect(program)).toBe(true);
   });
 
   test("unions recovery requirements while keeping catchTag and orElse cold", () => {
@@ -1216,16 +1215,8 @@ describe("runtime definition", () => {
     expect(fallbackChannelsMatch).toBe(true);
     expect(catchRuns).toBe(0);
     expect(fallbackRuns).toBe(0);
-    expect(readHabitatEffectOperation(caught)).toMatchObject({
-      kind: "transform",
-      transform: "catch-tag",
-      source,
-    });
-    expect(readHabitatEffectOperation(recovered)).toMatchObject({
-      kind: "transform",
-      transform: "or-else",
-      source,
-    });
+    expect(isHabitatEffect(caught)).toBe(true);
+    expect(isHabitatEffect(recovered)).toBe(true);
 
     if (false) {
       // @ts-expect-error catchTag accepts only a tag in the source error channel.
@@ -1302,19 +1293,10 @@ describe("runtime definition", () => {
       HabitatEffectChannels<typeof exhaustive>,
       readonly [string | number | boolean | Date, never, SourceRequirement]
     > = true;
-    const operation = readHabitatEffectOperation(recovered);
-
     expect(partialChannelsMatch).toBe(true);
     expect(exhaustiveChannelsMatch).toBe(true);
     expect(handlerRuns).toBe(0);
-    expect(operation).toMatchObject({
-      kind: "transform",
-      transform: "catch-tags",
-      source,
-    });
-    if (operation.kind === "transform") {
-      expect(Object.isFrozen(operation.input)).toBe(true);
-    }
+    expect(isHabitatEffect(recovered)).toBe(true);
   });
 
   test("publishes one bounded TypeBox observation record schema", () => {

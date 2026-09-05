@@ -402,7 +402,8 @@ export function makeOtlpHttpConfiguration(config: {
   const headers = Object.freeze({ ...config.headers, "Content-Type": JSON_CONTENT_TYPE });
   return Object.freeze({
     url: absoluteHttpUrl(config.url),
-    headers: async () => headers,
+    // The native transport adds User-Agent; each send needs its own mutable copy.
+    headers: async () => ({ ...headers }),
     timeoutMillis: config.timeoutMilliseconds,
     concurrencyLimit: DEFAULT_OTLP_CONCURRENCY_LIMIT,
     compression: CompressionAlgorithm.NONE,

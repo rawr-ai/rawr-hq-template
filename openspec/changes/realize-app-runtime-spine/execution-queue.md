@@ -14,8 +14,14 @@ The [implementation record](../../../docs/projects/habitat-runtime-realignment/I
 holds the current frame, team, findings and proof. **0.1: correct the cold
 semantic pipeline** and **0.2: simplify trusted boot admission** are implemented,
 independently reviewed and locally accepted, including full repository CI and
-installed SDK/CLI acceptance. Graphite admission is the current gate; **7.1-7.5:
-native acquisition** follows it.
+installed SDK/CLI acceptance. Cold predecessor PR 1008 also passed required CI
+and Linux/Windows installed acceptance. Its child now implements **7.1-7.5:
+native acquisition**, including native Effect values, selected preflight,
+rollback, independent file leases and the qualified telemetry provider through
+real compilation/provisioning. Independent reviews, full repository CI and all
+nine macOS installed tests pass, including the optional root-helper law refusal.
+Task 7 is locally accepted; Graphite and remote admission remain in progress.
+Neither candidate is claimed merged or released.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
 It has no live Effect provisioning, process binding, generic harness owner,
@@ -30,20 +36,21 @@ Released 0.5.15 provides foundation/service law. Current main's added runtime
 faces have not thereby been published. Installed local candidate proof,
 public release and consumer acceptance remain separate states.
 
-## First Container
+## Current Boundary
 
-Scope: definition, derivation, compiler and necessary terminal SDK consumers
-under their current selected policy. Outcome: one real cold selected service/
-provider plan retains complete executable references and named instances without
-running anything. Prove swapped dependency assignment, equal/divergent diamonds,
-process-specific coverage, required source policy, deterministic identity and
-bounded DAG work. Keep public graph inspection. A follow-on bootgraph container
-retains ordering correctness while retiring the private hostile-object protocol.
+Complete native acquisition admission, then bind and execute real services over
+its ready resources. Native Effect values replace the former custom program
+algebra without exposing runtime authority. Qualified telemetry preserves its
+native lease and finalization deadline; source assembly does not yet expose a
+public provider or installed process runtime.
 
-Do not start by restoring the ledger stash, acquiring a provider, building a
-service registry, editing a consumer, re-running a broad design survey or treating
-historical file-count restrictions as an authority conflict. Exact API/helper
-spelling within the settled semantic contract is implementation-owner judgment.
+The next binding story uses the coherently qualified official oRPC beta.32
+family and its native Effect client, retaining Effect beta.101. Process-owned
+request admission and actual settlement tracking must prevent resource release
+while a cancelled native request still finalizes. Do not add the community
+bridge alongside the official runner, restore held source, edit a consumer or
+reopen a broad survey. Exact API/helper spelling remains implementation-owner
+judgment, with independent review of the real contract.
 
 ## Dependency Order
 

@@ -150,11 +150,12 @@ helper and proof grammar. Every predecessor remains byte-immutable.
 Each selected definition exposes only its required `project` anchor.
 Source-specific structure scopes carry blueprint-owned `src/**` relative
 paths; a caller-authored `source` binding is rejected as an unknown root role.
-The SDK build copies and hashes exactly eleven blueprint directories through
-fourteen build inputs, including the asset-only `runtime-bootgraph` and
-`runtime-compiler` directories.
+The SDK build copies and hashes twelve blueprint directories through the manifest-listed
+build inputs, including the private `runtime-substrate-effect@1` provisioning
+law. SDK integration tests consume compiler, bootgraph and substrate source;
+their test-source edges do not add production entrypoints or public APIs.
 
-`resource@1` and `resource@2` include the provider-neutral Effect failure law
+`resource@1`, `resource@2`, and `resource@3` include the provider-neutral Effect failure law
 promoted from the Magic Migration evidence at commit
 `8f40bdff34dde18680352a9b91ce7b953c385942`. Only its generic Grit semantics
 ship. `resource@1` and `service@1` preserve their `habitat-cli-v0.5.13`

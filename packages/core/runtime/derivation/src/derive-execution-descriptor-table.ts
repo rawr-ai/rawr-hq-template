@@ -3,7 +3,7 @@ import type {
   ExecutionDescriptor,
   HabitatEffect,
 } from "../../definition/src/index";
-import { Effect } from "../../definition/src/index";
+import { Effect, isHabitatEffect } from "../../definition/src/index";
 import {
   assertExecutionDescriptorRefOwnData,
   type ExecutionDescriptorIdentityInput,
@@ -112,17 +112,6 @@ function copyRef(ref: ExecutionDescriptorRef): ExecutionDescriptorRef {
         backgroundId: ref.backgroundId,
       });
   }
-}
-
-function isHabitatEffect(value: unknown): value is HabitatEffect<unknown, unknown, unknown> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "kind" in value &&
-    value.kind === "habitat.effect" &&
-    Symbol.iterator in value &&
-    typeof value[Symbol.iterator] === "function"
-  );
 }
 
 function isHabitatEffectGenerator(

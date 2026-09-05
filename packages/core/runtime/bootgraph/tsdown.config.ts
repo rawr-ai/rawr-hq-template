@@ -20,6 +20,7 @@ export default defineConfig({
       "@orpc/contract",
       "@orpc/server",
       "@standard-schema/spec",
+      "effect",
       "node:crypto",
       "typebox",
     ],

@@ -26,5 +26,11 @@ composition.
 The law is package-native and product-neutral. Consumer paths and plugin, app,
 Nx, or tool overlays do not cross the resource boundary.
 
+`resource@3` is a complete successor preserving that required shell and provider
+family while admitting optional lowercase-kebab TypeScript definition/helper
+files at the resource root. Its source rule acquires root `*.ts` and the same
+provider subtree. The optional files remain provider-neutral; this does not
+admit arbitrary helper directories or move resource identity into a provider.
+
 See [[skill|Resource Capability Frame]], [[../provider/README|Provider]], and
 [[../../AUTHORITY|the repository-local authority boundary]].

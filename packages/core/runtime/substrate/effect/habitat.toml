@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-substrate-effect"
+ownerProject = "runtime-substrate-effect"
+blueprint = "runtime-substrate-effect"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/substrate/effect"
+
+[selections]

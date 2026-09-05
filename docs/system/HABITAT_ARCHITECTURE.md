@@ -969,10 +969,12 @@ are not repeated here.
 
 There is no `@habitat-ai/sdk/runtime/compiler` surface or public compiler
 export. The compiler remains a private package-less runtime owner. The real
-terminal SDK `startApp(...)` composition source must establish its
-direct edge only when it actually imports and calls the private compiler;
+terminal SDK `startApp(...)` production composition source must establish its
+direct production edge only when it actually imports and calls the private compiler;
 metadata, an implicit dependency, runtime-mounting ownership, or transitive
-process-runtime reachability is not a substitute.
+process-runtime reachability is not a substitute. SDK-owned provisioning
+integration tests may establish real test-source compiler, bootgraph and substrate
+edges earlier; these are verification dependencies, not production composition.
 
 `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face, and
 `deriveRuntimeArtifacts(...)` is its sole derivation operation. The SDK root
@@ -2311,7 +2313,7 @@ admission and a particular introspection primitive are not architecture law.
 The private package-less `runtime-bootgraph` owner has the sole direct edge
 `runtime-bootgraph -> runtime-compiler`. Blueprint asset carriage through the
 SDK policy pack is not an implementation edge or public face. The terminal SDK
-adds `@habitat-ai/sdk -> runtime-bootgraph` only when its real
+adds the production `@habitat-ai/sdk -> runtime-bootgraph` edge only when its real
 `startApp(...)` composition imports and calls the operation; an inert import,
 publication metadata, or `implicitDependencies` cannot establish that edge.
 

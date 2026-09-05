@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { Effect as NativeEffect } from "effect";
 
 import type {
   HabitatEffect,
@@ -7,7 +8,7 @@ import type {
   ProviderFx,
   ProviderRelease,
 } from "../src/index";
-import { providerFx, readHabitatEffectOperation, readProviderEffectPlan } from "../src/index";
+import { isHabitatEffect, providerFx, readProviderEffectPlan } from "../src/index";
 
 type TypesEqual<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2
@@ -216,7 +217,7 @@ function expectRecursivelyFrozenPublicData(value: unknown): void {
 }
 
 describe("provider Effect plans", () => {
-  test("exposes an exact frozen facade that delegates cold Effect construction", () => {
+  test("exposes an exact frozen facade that delegates cold native Effect construction", async () => {
     let attemptCalls = 0;
     let recoveryCalls = 0;
     const value = { id: "cold-value" } as const;
@@ -233,14 +234,14 @@ describe("provider Effect plans", () => {
     const attempted = providerFx.tryPromise({ try: attempt, catch: recover });
 
     expectFrozenEnumerableDataProperties(providerFx, ["succeed", "tryPromise", "acquireRelease"]);
-    expect(readHabitatEffectOperation(success)).toEqual({ kind: "succeed", value });
-    const operation = readHabitatEffectOperation(attempted);
-    expect(operation.kind).toBe("try-promise");
-    if (operation.kind !== "try-promise") throw new TypeError("Expected a cold try-promise.");
-    expect(operation.attempt).toBe(attempt);
-    expect(operation.recover).toBe(recover);
+    expect(isHabitatEffect(success)).toBe(true);
+    expect(isHabitatEffect(attempted)).toBe(true);
     expect(attempted).not.toBeInstanceOf(Promise);
     expect(attemptCalls).toBe(0);
+    expect(recoveryCalls).toBe(0);
+    expect(await NativeEffect.runPromise(success)).toBe(value);
+    expect(await NativeEffect.runPromise(attempted)).toBe(value);
+    expect(attemptCalls).toBe(1);
     expect(recoveryCalls).toBe(0);
   });
 
