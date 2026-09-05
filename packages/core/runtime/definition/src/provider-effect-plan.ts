@@ -12,7 +12,7 @@ const providerEffectPlanRegistry = new WeakMap<object, object>();
 
 interface ProviderEffectPlanWitness<TValue, TAcquireError> {
   readonly acquire: ProviderAcquire<TValue, TAcquireError>;
-  readonly release: ProviderRelease<TValue>;
+  release(value: TValue): ProviderFx<void, never>;
 }
 
 export interface ProviderEffectPlan<TValue, TAcquireError = never> {

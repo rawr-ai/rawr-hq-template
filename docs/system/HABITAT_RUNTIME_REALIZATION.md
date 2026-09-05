@@ -118,6 +118,10 @@ while using Habitat-defined authoring surfaces and Habitat-managed runtime
 bridges.
 
 Effect-backed oRPC operations follow the native vendor boundary instead.
+All of these lanes compose the same cold native Effect values. Habitat's
+curated facade restricts authoring operations, not the program representation.
+The descriptor/registry handoff and provider-plan witness govern when and by
+whom a program may run; no second Effect algebra or interpreter is required.
 Authors use native `.handler(...)` for synchronous and Promise-returning
 operations and the official `.effect(...)` extension for Effect-backed
 operations. The implementation owner installs that extension once in the same
@@ -480,7 +484,7 @@ A resource is a runtime capability contract. It declares the identity, value sha
 
 A provider is a runtime capability implementation plan. It implements a resource contract through provider-local config, native client construction, acquisition, release, health, refresh, dependency requirements, telemetry, and diagnostics. It returns `ProviderEffectPlan` through `providerFx` and remains cold until provisioning. It does not select itself, redefine resource identity, own domain authority, compose app membership, or construct a local managed runtime.
 
-The SDK is the public authoring and start facade. It re-exports import-safe contracts implemented by `runtime-definition`, supplies type-level inference, exposes delegating hooks backed by `runtime-process-runtime`, exposes observation read facades backed by `runtime-observation`, and exposes the terminal operation backed by `runtime-mounting`. The SDK does not implement cold definitions, derivation, raw Effect lowering, runtime adapter lowering, live start coordination, observation projection, resource acquisition, provider execution, managed-runtime construction, service binding, harness mounting, `HabitatEffect` execution, or domain/projection/app meaning. No private runtime owner imports the SDK facade.
+The SDK is the public authoring and start facade. It re-exports import-safe contracts implemented by `runtime-definition`, supplies type-level inference, exposes delegating hooks backed by `runtime-process-runtime`, exposes observation read facades backed by `runtime-observation`, and exposes the terminal operation backed by `runtime-mounting`. The SDK does not implement cold definitions, derivation, native Effect policy mechanics, runtime adapter lowering, live start coordination, observation projection, resource acquisition, provider execution, managed-runtime construction, service binding, harness mounting, `HabitatEffect` execution, or domain/projection/app meaning. No private runtime owner imports the SDK facade.
 
 The private `runtime-derivation` owner is the derivation boundary. Its
 foundational handoff is one `NormalizedRuntimeTopology`: an exact immutable
@@ -518,7 +522,7 @@ membership, or import or publish through `RuntimeObservationPort`.
 
 Bootgraph is the lifecycle ordering boundary. It consumes only compiler-owned provider/resource identity and dependency input and emits deterministic acquisition order, rollback order, and reverse release metadata. It owns ordering and dedupe, not execution: it does not consume `ProviderEffectPlan`, acquire or release providers, execute rollback, register live finalizers, assemble process/role resource contexts, or produce `ProvisionedProcess`.
 
-The Effect provisioning/execution kernel is the process-local execution substrate. It owns exactly one process `ManagedRuntime`, one `Layer.effectContext(...)` provider-lifecycle adapter, raw Effect lowering for non-oRPC descriptor lanes, scoped acquisition/release/rollback mechanics, process-local coordination primitives, interruption, timeout, retry mechanics, and `HabitatEffect` execution under runtime-owned policy. After config preflight, it consumes compiler-owned resource identity data and exact cold provider references plus bootgraph order/rollback metadata, calls each selected provider's `build(...)`, and executes the returned plan in bootgraph order. Provisioning forces the lazy managed runtime's `context()` before it becomes the sole producer of `ProvisionedProcess`. It does not create a second root `Scope` or managed runtime, execute Effect-backed oRPC operations, import the SDK or observation-owned projection types, or own service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics, or public authoring grammar.
+The Effect provisioning/execution kernel is the process-local execution substrate. It owns exactly one process `ManagedRuntime`, one `Layer.effectContext(...)` provider-lifecycle adapter, native Effect policy application for non-oRPC descriptor lanes, scoped acquisition/release/rollback mechanics, process-local coordination primitives, interruption, timeout, retry mechanics, and `HabitatEffect` execution under runtime-owned policy. After config preflight, it consumes compiler-owned resource identity data and exact cold provider references plus bootgraph order/rollback metadata, calls each selected provider's `build(...)`, and executes the returned plan in bootgraph order. Provisioning forces the lazy managed runtime's `context()` before it becomes the sole producer of `ProvisionedProcess`. It does not create a second root `Scope` or managed runtime, execute Effect-backed oRPC operations, import the SDK or observation-owned projection types, or own service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics, or public authoring grammar.
 
 The process runtime is the live process assembly boundary. It combines compiled
 named recipes, exact complete service-export references, distinct nonportable
@@ -530,7 +534,7 @@ and process-owned stop. It does not invoke harnesses, collect `StartedHarness`,
 project observation-owned types, coordinate cross-owner shutdown, or own
 service/domain/plugin/app/provider/native-host meaning.
 
-The execution registry is the executable-boundary matching boundary. It pairs each compiled execution plan with exactly one matching Effect execution descriptor before adapter invocation. It owns execution identity matching, descriptor/plan boundary agreement, duplicate/missing executable detection, and lookup of matched executable boundaries for adapters. It does not execute `HabitatEffect`, lower Effect, own execution policy, create descriptors, compile plans, or contain business logic.
+The execution registry is the executable-boundary matching boundary. It pairs each compiled execution plan with exactly one matching Effect execution descriptor before adapter invocation. It owns execution identity matching, descriptor/plan boundary agreement, duplicate/missing executable detection, and lookup of matched executable boundaries for adapters. It does not execute `HabitatEffect`, own execution policy, create descriptors, compile plans, or contain business logic.
 
 The process execution runtime is the invocation execution boundary for non-oRPC
 descriptor lanes. It receives a matched executable boundary plus an explicit
@@ -562,7 +566,7 @@ access; it mounts them into a native host such as Elysia, Inngest, OCLIF, web,
 agent/OpenShell, or desktop and returns a `NativeHarnessHandle`. It owns native
 host lifecycle after Habitat lowering. It does not create `StartedHarness`,
 consume normalized authoring graphs or compile plans, acquire providers, bind
-services, lower `HabitatEffect`, import observation-owned projection types, own
+services, execute `HabitatEffect`, import observation-owned projection types, own
 service/plugin/app meaning, or create managed runtimes.
 
 Runtime mounting is the downstream live lifecycle boundary. It implements
@@ -636,15 +640,15 @@ Capabilities name projections.
 | Runtime schema | TypeBox/Standard Schema adaptation and canonical boundary validation mechanics | Semantic schema ownership, domain policy, derivation, acquisition, execution, mounting |
 | Runtime definition | Cold `HabitatEffect`, execution-policy, app/profile/entrypoint, service, plugin, resource, provider, execution-descriptor, observation-record, and observation-port contracts | Live start coordination, derivation, acquisition, execution, mounting, service/plugin/app meaning |
 | Runtime derivation | Foundational `NormalizedRuntimeTopology`; complete `NormalizedAuthoringGraph`; normalized provider, service-binding, surface, and workflow artifacts; Effect refs/table; distinct web route-module refs/table; exact-field portable plan artifact | Resource acquisition, provider execution, managed runtime construction, harness mounting, service/plugin/app meaning, web-loader execution, deployment placement policy |
-| SDK facade | Public re-exports of definition-owned authoring contracts, type inference, delegating runtime hooks, observation read facades, and the mounting-backed start terminal | Private definition/derivation implementation, raw Effect lowering, runtime adapter lowering, observation projection, resource acquisition, provider execution, managed runtime construction, harness mounting, service/plugin/app meaning |
+| SDK facade | Public re-exports of definition-owned authoring contracts, type inference, delegating runtime hooks, observation read facades, and the mounting-backed start terminal | Private definition/derivation implementation, native Effect policy mechanics, runtime adapter lowering, observation projection, resource acquisition, provider execution, managed runtime construction, harness mounting, service/plugin/app meaning |
 | Runtime compiler | Private lowering of a cohesive selected derivation handoff into a process plan, exact provider/complete-service reference table, and separate inert observation seed; consumed-relation and lowering validation | Public compiler surface, second authoring normalizer, compiler finding/diagnostic result, observation-port use, config resolution, provider build/acquisition, live binding/execution/mounting, app mutation |
 | Bootgraph | Lifecycle identity, dependency ordering, dedupe, acquisition/release order, and rollback metadata | Provider-plan consumption or execution, acquisition, release, live rollback, finalizer registration, `ProvisionedProcess`, service/app/plugin/native-host authority |
-| Effect kernel | Single process managed runtime, raw Effect lowering, provider plan execution, process-local coordination, acquisition/release/rollback, interruption, timeout, retry, `HabitatEffect` execution under runtime-owned bridges, sole production of `ProvisionedProcess` | Service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics |
+| Effect kernel | Single process managed runtime, native Effect policy application, provider plan execution, process-local coordination, acquisition/release/rollback, interruption, timeout, retry, `HabitatEffect` execution under runtime-owned bridges, sole production of `ProvisionedProcess` | Service domain authority, plugin projection, app selection, provider selection, durable async, native host semantics |
 | Process runtime | Runtime access scoping, service binding, binding cache, invocation-bound client views, workflow dispatcher materialization, execution registry and `EffectRuntimeAccess` assembly, plugin projection, runtime adapter lowering, mount-ready records, owner-local findings, process-runtime stop handle | Harness invocation, `StartedHarness` collection, topology projection, cross-owner shutdown, service/public API/app/provider/durable-workflow authority |
-| Execution registry | Matching compiled execution plans to Effect descriptors, identity/boundary agreement, executable boundary lookup | `HabitatEffect` execution, Effect lowering, plan compilation, descriptor construction, business logic |
+| Execution registry | Matching compiled execution plans to Effect descriptors, identity/boundary agreement, executable boundary lookup | `HabitatEffect` execution, plan compilation, descriptor construction, business logic |
 | Process execution runtime | Invocation-time execution through `EffectRuntimeAccess`, bridge resolution, policy application, result/exit mapping for non-oRPC descriptor lanes | oRPC Effect execution, service binding, provider acquisition, harness mounting, app selection, plugin projection, domain authority |
 | Surface adapters | Lowering compiled surface plans to host payloads, resolving executable boundaries through registry, producing native callbacks | Business logic, `HabitatEffect` execution, managed runtime construction, provider acquisition, raw authoring consumption |
-| Harnesses | Native host mounting and native lifecycle after adapter lowering, `HarnessMountInput`, `NativeHarnessHandle`, owner-local reports and idempotent stop | `StartedHarness` creation, normalized-authoring-graph consumption, runtime compilation, provider acquisition, topology projection, service domain authority, `HabitatEffect` lowering, managed runtime construction |
+| Harnesses | Native host mounting and native lifecycle after adapter lowering, `HarnessMountInput`, `NativeHarnessHandle`, owner-local reports and idempotent stop | `StartedHarness` creation, normalized-authoring-graph consumption, runtime compilation, provider acquisition, topology projection, service domain authority, `HabitatEffect` execution, managed runtime construction |
 | Runtime mounting | Live `startApp(...)` coordination, harness invocation, private `StartedHarness` creation/collection, reverse-order native-handle stop, and cross-owner finalization | Observation projection, composition authority, provider acquisition, service binding, adapter lowering, native host interiors |
 | Runtime observation | Definition-port implementation and non-authorizing projection of diagnostics, telemetry, topology records, catalog views, and finalization records | Live start, harness invocation or stop, cross-owner finalization, composition authority, acquisition, binding, adapter lowering |
 
@@ -775,7 +779,10 @@ registry identity or release membership. `schema`, `definition`, and
 private runtime owner imports the terminal public SDK facade. The SDK exposes
 only the public families below, so the build graph remains acyclic while
 consumers install one package. Neither compiler nor bootgraph has a public
-SDK facade. Only real terminal SDK `startApp(...)` composition source may add
+SDK facade. Real SDK-owned provisioning integration tests may establish direct
+test-source dependencies on compiler, bootgraph and substrate before production
+composition. These verification edges do not expose or bundle a public runtime.
+Only real terminal SDK `startApp(...)` production composition source may add
 `@habitat-ai/sdk -> runtime-compiler` and
 `@habitat-ai/sdk -> runtime-bootgraph` when it actually imports and calls
 `compileRuntimePlan(...)` and `orderBootgraph(...)`; runtime mounting,
@@ -968,8 +975,8 @@ packages/core/sdk/src/
 Files in this tree are public facade modules, author-facing re-exports, or
 SDK-internal delegating hooks. A facade re-exports the contract implemented by
 its private runtime owner; a delegating hook calls that owner without
-reimplementing definition, derivation, raw Effect lowering, or runtime adapter
-lowering inside the SDK.
+reimplementing definition, derivation, native Effect policy mechanics, or
+runtime adapter lowering inside the SDK.
 
 The execution registry is a process-runtime-owned live artifact and lives in `packages/core/runtime/process-runtime/execution-registry.ts`. `runtime-derivation` owns Effect descriptor refs and their non-portable table plus the distinct web route-module refs and their non-portable table. The complete-derivation contracts are exposed from `@habitat-ai/sdk/runtime/derivation`; the SDK does not import runtime compiler types into public SDK authoring surfaces. A web route-module loader never enters the Effect descriptor table or `ExecutionRegistry`.
 
@@ -1017,8 +1024,8 @@ The provider authoring faces have these exact closed inventories:
   and only the types `ProviderAcquire`, `ProviderEffectPlan`, `ProviderFx`,
   `ProviderFxFacade`, and `ProviderRelease`.
 
-Neither face exports raw Effect, `Exit`, `Scope`, `Layer`, `ManagedRuntime`,
-`ProviderScope`, a plan accessor or witness, a Promise-valued acquisition
+Neither face exports the native Effect namespace, `Exit`, `Scope`, `Layer`,
+`ManagedRuntime`, `ProviderScope`, a plan accessor or witness, a Promise-valued acquisition
 result, a terminal runner, or an alternate plan constructor. Section 13.4 owns
 the exact contracts and private-carrier mechanics behind these inventories.
 
@@ -1147,10 +1154,17 @@ import { defineRuntimeProvider } from "@habitat-ai/sdk/runtime/providers";
 import { providerFx } from "@habitat-ai/sdk/runtime/providers/effect";
 ```
 
-Provider implementations use `providerFx` for acquisition/release plans. They may use the curated `@habitat-ai/sdk/effect` facade for returned resource value operations. They must not import raw `effect`, `@effect/*`, or construct `ManagedRuntime`.
+Provider implementations use `providerFx` for acquisition/release plans and
+the curated `@habitat-ai/sdk/effect` facade for ordinary returned operations.
+Platform-owned native provider integrations may compose their pinned native
+Effect implementation values without a terminal or translation wrapper. This
+does not authorize ordinary authoring to import the entire runtime API, nor
+any provider to construct `ManagedRuntime`, Scope or an independent execution
+terminal. The platform's terminal SDK may compose its internal cold definition
+and schema owners directly; platform-owned resources/providers must not import
+that SDK back and create a dependency cycle.
 
-Raw Effect runtime construction and generic descriptor lowering are allowed
-only in:
+Raw Effect runtime construction is allowed only in:
 
 File: `specification://runtime-realization/raw-effect-import-allowlist.txt`  
 Layer: import law  
@@ -1186,7 +1200,8 @@ implementation owner, not once per operation leaf.
 
 No service, plugin, resource, provider, app, or entrypoint creates or receives
 its own `ManagedRuntime`. `runtime-substrate-effect` owns
-`ManagedRuntimeHandle` and raw Effect lowering for non-oRPC descriptor lanes.
+`ManagedRuntimeHandle` and native Effect policy application for non-oRPC
+descriptor lanes.
 `runtime-process-runtime` owns `EffectRuntimeAccess` and non-oRPC runtime adapter
 lowering. The application/process instead owns the Effect Context and scoped
 resources supplied to the official oRPC `.effect(...)` bridge through native
@@ -1332,50 +1347,39 @@ delegation is vendor-internal mechanics only.
 
 `HabitatEffect` is the author-facing execution value type. It represents a lazy effectful program without exposing raw Effect runtime ownership.
 
-`runtime-definition` owns the cold `HabitatEffect` value, curated `Effect` authoring contract, tagged-error helper contract, and execution-policy descriptors. The SDK re-exports those public authoring facades. They are not raw Effect and export no runtime authority.
+`runtime-definition` owns the curated `Effect` authoring contract, the
+`HabitatEffect` type alias, tagged-error helper contract and execution-policy
+descriptors. `HabitatEffect<A, E, R>` is the pinned native `Effect<A, E, R>`
+value, not a second AST, branded wrapper, serialized representation or custom
+generator interpreter. The SDK re-exports only the curated facade, not the
+native runtime namespace. Native program values are already lazy and grant no
+runtime-construction authority. Do not copy, recursively inspect, freeze or
+mutate vendor program values to add a Habitat marker.
 
 `HabitatEffect` is generator-yield-compatible. Generator-native
 `.effect(function*)` bodies in non-oRPC lanes produce cold definition-owned
 descriptors; yielded `HabitatEffect` values remain cold until
-`runtime-substrate-effect` performs raw Effect lowering. Authors may use
+the selected native execution owner executes them. Authors may use
 `yield*` with `HabitatEffect` values inside those sanctioned bodies and helper
 functions. The public type must preserve success, failure, and requirement
 inference through the non-oRPC descriptor body. Native oRPC `.effect(...)` is a
-different vendor method that delegates internally to the official bridge and
-consumes native Effect, not `HabitatEffect`.
+different vendor method that delegates internally to the official bridge. It
+consumes the same native values, with no descriptor or Habitat terminal added.
+Managed service clients and native resource operations therefore compose
+directly in either sanctioned generator lane.
 
 File: `packages/core/runtime/definition/src/effect/habitat-effect.ts`  
 Layer: private runtime-definition cold Effect contract re-exported by `@habitat-ai/sdk/effect`  
-Exactness: normative for public import path, public names, yieldability contract, inference preservation, and forbidden raw runtime construction; illustrative for exact generic spelling, overloads, and iterator implementation.
+Exactness: normative for public import path, public names, yieldability contract, inference preservation, and forbidden raw runtime construction; illustrative for exact generic spelling and overloads.
 
 ```ts
-export interface HabitatEffect<
-  TSuccess,
-  TError = never,
-  TRequirements = never,
-> extends HabitatYieldable<TSuccess, TError, TRequirements> {
-  readonly kind: "habitat.effect";
-  readonly __success?: TSuccess;
-  readonly __error?: TError;
-  readonly __requirements?: TRequirements;
-}
+import type { Effect as NativeEffect } from "effect";
 
-export interface HabitatYieldable<
+export type HabitatEffect<
   TSuccess,
   TError = never,
   TRequirements = never,
-> {
-  [Symbol.iterator](): HabitatEffectYieldIterator<TSuccess, TError, TRequirements>;
-}
-
-export interface HabitatEffectYieldIterator<
-  TSuccess,
-  TError = never,
-  TRequirements = never,
-> extends Generator<unknown, TSuccess, unknown> {
-  readonly __error?: TError;
-  readonly __requirements?: TRequirements;
-}
+> = NativeEffect.Effect<TSuccess, TError, TRequirements>;
 
 export const Effect: HabitatEffectFacade = createHabitatEffectFacade();
 
@@ -1384,23 +1388,21 @@ export interface HabitatEffectFacade {
 
   fail<E>(error: E): HabitatEffect<never, E>;
 
-  gen<TSuccess, TError = never, TRequirements = never>(
-    body: () => Generator<unknown, TSuccess, unknown>,
-  ): HabitatEffect<TSuccess, TError, TRequirements>;
+  gen: typeof NativeEffect.gen;
 
   tryPromise<TSuccess, TError>(input: {
     try: () => Promise<TSuccess> | TSuccess;
     catch: (cause: unknown) => TError;
   }): HabitatEffect<TSuccess, TError>;
 
-  all<T extends Record<string, HabitatEffect<any, any, any>>>(
+  all<T extends Record<string, HabitatEffect<any, any, any>>, TDiscard extends boolean = false>(
     effects: T,
     options?: {
       concurrency?: number | "unbounded";
-      discard?: boolean;
+      discard?: TDiscard;
     },
   ): HabitatEffect<
-    HabitatEffectSuccessRecord<T>,
+    TDiscard extends true ? void : HabitatEffectSuccessRecord<T>,
     HabitatEffectErrorUnion<T>,
     HabitatEffectRequirementUnion<T>
   >;
@@ -1521,28 +1523,21 @@ export interface HabitatConcurrencyPolicy {
 }
 ```
 
-Internal lowering remains non-public.
+There is no `lowerHabitatEffect` interpreter or compatibility function.
+The substrate applies declared execution policy to native values and owns
+their managed execution where that boundary is Habitat-owned. Duration/retry
+adapters and exact-own-key record collection belong to the curated facade;
+they delegate to pinned native combinators. Provider plans retain their
+separate private nominal witness because that witness, unlike a duplicate
+program representation, carries a real acquisition/release ownership contract.
 
-File: `packages/core/runtime/substrate/effect/src/lower-habitat-effect.ts`  
-Layer: private runtime-substrate-effect raw Effect lowering  
-Exactness: normative for confinement to the Effect-substrate owner
-and non-public status; illustrative for the filename and raw
-Effect API spelling.
-
-```ts
-import { Effect as RawEffect } from "effect";
-
-import type { HabitatEffect } from "../../../definition/src/effect/habitat-effect";
-
-export function lowerHabitatEffect<TSuccess, TError, TRequirements>(
-  effect: HabitatEffect<TSuccess, TError, TRequirements>,
-): RawEffect.Effect<TSuccess, TError, TRequirements> {
-  return internalHabitatEffectLowering.lower(effect);
-}
-```
-
-This function is not exported from public SDK surfaces. The SDK does not lower
-raw Effect, and no private runtime owner imports the SDK to reach it.
+Native `acquireRelease` masking protects default acquisition until successful
+value registration, including a late successful signal-less Promise when a
+surrounding policy timeout expires. Explicit authored interruption retains
+native meaning: it can prevent a value from reaching finalizer registration.
+Cleanup of partial or unreturned acquisition remains provider-owned. Habitat
+does not rewrite authored interruption regions, cancel signal-less foreign
+work, add a hidden child fiber or promise universal cleanup of unreturned values.
 
 ### 9.2 Execution descriptors
 
@@ -2043,7 +2038,7 @@ plugin.desktop-background:
 provider.acquire:
   retry: provider policy / transient only
   timeout: provider policy
-  interruption: complete-before-stop
+  interruption: native-default masking; explicit authored interruption retains native meaning
   detachedFibers: runtime-owned-only
 
 provider.release:
@@ -2054,6 +2049,20 @@ provider.release:
 ```
 
 No retries are hidden by default. Timeouts are boundary defaults, not hidden business retries. Detached fibers are forbidden in ordinary authoring. Effect interruption is cooperative and runtime-owned. Async durable retries belong to Inngest unless explicitly modeled as transient step-local Effect retry.
+
+When applying native policy, omitted retry `times` means zero retries; a
+supplied count is a finite nonnegative integer. Fixed or exponential backoff requires an
+explicit nonnegative delay. A policy timeout bounds the complete retrying
+operation. For provider acquisition, it wraps the one native `acquireRelease`
+adapter so a late successful default-masked acquisition registers and runs its
+release before startup fails. Explicit authored interruption is preserved and
+can prevent an acquired value from reaching finalizer registration, as described
+in section 9.1. The signal-less `tryPromise` callback is not promised
+foreign-operation cancellation. As with native Effect,
+a provider remains responsible for partial resources that its own acquisition
+body creates but never successfully returns. Release callbacks are invoked
+inside the deferred native finalizer, with unexpected defects observed without
+preventing earlier providers from releasing.
 
 ## 10. App and entrypoint authoring contract
 
@@ -4012,13 +4021,15 @@ Release is required, receives only the acquired value, and returns
 `ProviderFx<void, never>`. A provider with no cleanup authors an explicit no-op
 release such as `() => providerFx.succeed(undefined)`. Expected cleanup failure
 must be recovered and observed inside that infallible release Effect; the
-substrate still continues reverse release after a release defect. Vendor
-`Effect`, `Exit`, `Scope`, `Layer`, `ManagedRuntime`, finalizer registration,
-rollback, and reverse-release mechanics stay substrate-only. The substrate
-constructs and uses the real `effect@4.0.0-beta.101`
-`Effect.acquireRelease(acquire, release)` adapter; acquisition and immediate
-post-success finalizer registration of that same release are one indivisible
-operation. It owns typed-failure and defect classification. Finalization
+substrate still continues reverse release after a release defect. Raw runtime
+construction, finalizer registration, rollback, and reverse-release mechanics
+stay substrate-only. Native program values remain composable as specified in
+section 9.1. The substrate constructs and uses the real `effect@4.0.0-beta.101`
+`Effect.acquireRelease(acquire, release)` adapter; native default masking keeps
+acquisition and immediate post-success finalizer registration of that same
+release indivisible. Explicit authored interruption retains native meaning and
+leaves partial or unreturned work provider-owned. The substrate owns typed-failure
+and defect classification. Finalization
 executes the registered release without reconstructing or re-lowering that
 adapter and proves expected-cleanup recovery and observation, continuation
 after an unexpected release defect, rollback, reverse order, inert repeated
@@ -5771,8 +5782,8 @@ bounds the phase but does not duplicate these mechanics.
 `packages/core/runtime/compiler`. Its exact direct private dependencies are
 `runtime-definition` and `runtime-derivation`, and no other private dependency
 is admitted. There is no public SDK compiler face. Terminal SDK
-`startApp(...)` composition source must establish its direct
-`@habitat-ai/sdk -> runtime-compiler` edge
+`startApp(...)` production composition source must establish its direct
+`@habitat-ai/sdk -> runtime-compiler` production edge
 only when it actually imports and calls `compileRuntimePlan(...)`; publication
 metadata, `implicitDependencies`, a speculative facade file, runtime-mounting
 ownership, or transitive process-runtime reachability is not an edge.
@@ -6530,8 +6541,7 @@ Exactness: normative placement and responsibilities; illustrative for file names
 packages/core/runtime/substrate/effect/
   src/
     managed-runtime-handle.ts
-    lower-habitat-effect.ts
-    provider-effect-lowering.ts
+    execution-policy.ts
     provider-lifecycle-layer.ts
     provision-process.ts
     rollback.ts
@@ -6546,8 +6556,8 @@ packages/core/runtime/substrate/effect/
 
 Bootgraph owns lifecycle identity, deterministic ordering, dedupe, and rollback/release-order metadata only.
 
-Effect substrate owns raw Effect lowering, the one provider-lifecycle layer
-adapter, scoped acquisition, release, failed-startup rollback, layer-scoped
+Effect substrate owns native Effect policy application, the one provider-lifecycle
+layer adapter, scoped acquisition, release, failed-startup rollback, layer-scoped
 finalizers, runtime ownership, process/role resource Context assembly,
 process-local coordination, structured runtime execution, typed local failure,
 interruption, retry, timeout, and finalization mechanics inside runtime
@@ -6577,10 +6587,11 @@ exact declared-reference lookup, structurally copied-requirement misses, and
 the specified `has(...)`/`get(...)` outcomes. It also proves synchronous throws
 and Promise rejections from `tryPromise` map through the author mapper to typed
 acquire error, and constructs and uses the real beta.101
-`Effect.acquireRelease(acquire, release)` adapter so acquisition and immediate
-post-success finalizer registration of that same release remain indivisible. A
-typed acquire failure registers no release, and thrown `build(...)`,
-forged-plan, and Effect-defect paths remain defects. Finalization does not
+`Effect.acquireRelease(acquire, release)` adapter with native-default acquisition
+masking and immediate post-success finalizer registration. Explicit authored
+interruption retains native meaning; partial or unreturned work remains
+provider-owned. A typed acquire failure registers no release, and thrown
+`build(...)`, forged-plan, and Effect-defect paths remain defects. Finalization does not
 construct or re-lower the adapter; it executes and proves expected-cleanup
 recovery and observation, continuation after an unexpected release defect,
 rollback, reverse order, inert repeated disposal/release, and runtime close.
@@ -6802,7 +6813,7 @@ Adapters do not independently pair plans and descriptors. They resolve executabl
 The execution runtime runs non-oRPC descriptor invocations.
 
 Runtime invocation of non-oRPC Effect descriptors is centralized. Harnesses and
-adapters do not independently lower or run `HabitatEffect`. This owner never
+adapters do not independently execute `HabitatEffect`. This owner never
 executes an Effect-backed oRPC operation; the official `.effect(...)` bridge
 does.
 
@@ -7206,7 +7217,7 @@ Adapters preserve native oRPC procedures and application/process effect/context 
 Adapters never wrap an oRPC Effect in ProcessExecutionRuntime or another runner.
 Adapters do not execute descriptors during lowering.
 Adapters do not construct raw Effect runtimes.
-Adapters do not import raw Effect; raw Effect lowering belongs only to runtime-substrate-effect.
+Adapters do not import raw Effect; non-oRPC program execution is delegated through ProcessExecutionRuntime.
 Adapters do not contain application business/capability execution logic.
 ```
 
@@ -7878,6 +7889,18 @@ Provider-specific refresh strategy, retry policy, and refresh mechanics remain
 reserved details, but they cannot change this initial precedence and refusal
 contract.
 
+The first substrate implementation selects explicit launcher-supplied absolute
+app-root resolution and snapshots of environment, memory and test sources.
+Files are strict UTF-8 JSON top-level objects with literal keys; dotenv files
+use the shared pinned `dotenv` parser after whole-source syntax admission.
+Multiline quoted values, comments, duplicate-key last assignment, literal dotted
+keys and native value escaping are preserved; interpolation is not added.
+Malformed bytes, incomplete assignments and unterminated quotes refuse even
+with zero selected refs. Parser-private temporary names avoid JavaScript
+prototype-key loss without restricting authored keys or changing parsed values.
+These loader details satisfy the section 23.5 implementation trigger; they do
+not alter source precedence or the owning schema's decoded value semantics.
+
 Verification follows that physical boundary. Derivation proves normalized
 source defaults, preservation of authored order, expansion of every config ref,
 and zero source I/O or schema decode. The substrate owns the pre-acquisition
@@ -8523,7 +8546,7 @@ Executable descriptor bodies must not close over runtime-bound clients, request 
 
 An entrypoint must not manually run `HabitatEffect`, construct `EffectRuntimeAccess`, construct `ManagedRuntime`, call raw Effect runtime APIs, or manually mount service/plugin execution.
 
-A harness must not lower `HabitatEffect`, construct `EffectRuntimeAccess`, import raw Effect, consume raw authoring declarations, consume normalized authoring graphs, or consume compiler plans directly.
+A harness must not execute `HabitatEffect`, construct `EffectRuntimeAccess`, import raw Effect, consume raw authoring declarations, consume normalized authoring graphs, or consume compiler plans directly.
 
 The global `fx` authoring spelling is noncanonical. Non-oRPC descriptor
 authoring imports `Effect`, `TaggedError`, and `HabitatEffect` from
@@ -8575,7 +8598,7 @@ Gate families are:
 | Fixture/plan gates | selected identity agreement; process-scoped coverage and inert provider supersets; explicit required-source policy; deduplicated topology with complete named bindings; equal/divergent diamonds and bounded DAG work; deterministic identities/data; distinct Effect/web refs; portable decoder checks; cohesive compiler input with exact complete service references, structural/relation/lowering refusal, and no re-derivation; trusted-data bootgraph shape, dependency order, reverse release, duplicate/dangling/cycle refusal and input non-mutation; no declared executable work in cold phases; real constructor handoff, invocation separation, rollback, and finalization |
 | Execution terminal gates | native `.handler(...)` for sync/Promise oRPC; official `.effect(...)` for Effect-backed oRPC; no direct `handlerGen` authoring; no oRPC `ProcessExecutionRuntime`/manual/custom runner; no inline async step executable body hidden inside workflow invocation; native `step.run(...)` delegates pre-derived step execution to `ProcessExecutionRuntime` |
 | Inngest harness gates | exact native `inngest@4.18.0` when the harness lands; no `effect-inngest`; same client for registration and selected Serve/Connect harness; replay re-enters function and `step.run` registration, completed memoized steps skip the callback/runtime, and failed or un-memoized attempts invoke it anew; no synthetic step `AbortSignal`; Serve admitted-Promise drain; Connect `handleShutdownSignals: []`, mounting-owned single-flight close, and separate owner-callback drain; close/flush is not universal delivery confirmation |
-| Provider separation gates | exact provider face inventories; `ProviderFx<TValue, TError> = HabitatEffect<TValue, TError, never>`; required synchronous build and release; exact build context and resource-map type optionality; definition-owned cold construction with no callback invocation, exact public plan/boundary enumerability, recursive fresh-container freeze, opaque body identity, and private accessor witness rejection; substrate-owned concrete requirement-reference map behavior, real beta.101 `Effect.acquireRelease(acquire, release)` construction/use with indivisible acquisition and immediate post-success finalizer registration, sync-throw/rejection typed mapping, typed failure without registration, and build/forgery/Effect defect classification; finalization cleanup recovery/observation, unexpected release-defect continuation, rollback, reverse order, inert repeated disposal/release, and runtime close; derivation/compiler zero-build proof; bootgraph carries no plan or body; no Promise result, raw Effect/runtime primitive, public plan accessor, or runner |
+| Provider separation gates | exact provider face inventories; `ProviderFx<TValue, TError> = HabitatEffect<TValue, TError, never>`; required synchronous build and release; exact build context and resource-map type optionality; definition-owned cold construction with no callback invocation, exact public plan/boundary enumerability, recursive fresh-container freeze, opaque body identity, and private accessor witness rejection; substrate-owned concrete requirement-reference map behavior, real beta.101 `Effect.acquireRelease(acquire, release)` construction/use with native-default acquisition masking and immediate post-success finalizer registration; explicit authored interruption retains native meaning and leaves partial/unreturned work provider-owned; sync-throw/rejection typed mapping, typed failure without registration, and build/forgery/Effect defect classification; finalization cleanup recovery/observation, unexpected release-defect continuation, rollback, reverse order, inert repeated disposal/release, and runtime close; derivation/compiler zero-build proof; bootgraph carries no plan or body; no Promise-valued acquisition result, raw runtime-authority export, public plan accessor, or runner |
 | Private dependency-boundary gates | exact §4 graph only; no private owner imports SDK; no upstream owner imports observation-owned projection types; runtime mounting alone starts, invokes and stops harnesses, and coordinates cross-owner finalization; runtime observation alone projects observation read models |
 
 ## 26. Load-bearing foundation and flexible extension matrix
@@ -8686,12 +8709,14 @@ provider-build calls; compiler proof also excludes plan bodies from its
 handoff. Runtime behavior is not proved by source-string or AST assertions.
 
 `RuntimeSchema` is the provider-config schema facade; no operational
-plan/map/context schema is created. `runtime-substrate-effect` owns raw Effect
-activation, single managed-runtime construction, config preflight, private
+plan/map/context schema is created. `runtime-substrate-effect` owns native Effect
+execution, single managed-runtime construction, config preflight, private
 concrete frozen map assembly and lookup, and construction and use of the real
 `effect@4.0.0-beta.101` `Effect.acquireRelease(acquire, release)` adapter.
-Acquisition and immediate post-success registration of the same finalizer are
-indivisible. The substrate proves synchronous-throw/rejection mapping, no
+Native default masking keeps acquisition and immediate post-success registration
+of the same finalizer indivisible. Explicit authored interruption retains native
+meaning and leaves partial/unreturned work provider-owned. The substrate proves
+synchronous-throw/rejection mapping, no
 registration on typed acquire failure, and build/forged-plan/Effect-defect
 classification.
 
@@ -8715,8 +8740,8 @@ the substrate before that provider is claimed to work in a started process.
 | `RuntimeProvider` | Nested provider; cold contract owned by `runtime-definition` | Direct public face under `resources/<capability>/providers/<provider>`; contract in flat `packages/core/runtime/definition/src/provider.ts` | Nested provider `defineRuntimeProvider(...)` call with required synchronous build | Runtime derivation/compiler preserve the cold reference without build; substrate alone supplies the exact context and calls build | Definition through provisioning | Derivation-owned selection coverage plus owner-local provider dependency/config findings; build throw is a provisioning defect | Unknown/unknown interface erasure defaults, helper-only undefined/never inference, required build, exact context, and zero-early-build gate |
 | `RuntimeResourceMap` | Type contract: `runtime-definition`; private concrete assembly: `runtime-substrate-effect` | Type in flat `packages/core/runtime/definition/src/provider.ts`; no public constructor or definition-owned factory | Runtime definition type contract; substrate-owned private frozen instance | `ProviderBuildContext` during provisioning | Definition contract; live use only in provisioning | Optional miss returns `undefined`; required miss throws built-in `TypeError`; no finding API | Definition overload/optionality proof and substrate exact-reference/copy-miss/has/get behavior gate |
 | `ProviderSelection` | App/runtime profile, normalized by runtime derivation | `providers` field in `apps/<app>/runtime/profiles/*`; normalized contract in `packages/core/runtime/derivation` | Generic SDK `providerSelection({ resource, provider, config, lifetime?, role?, instance? })`, then complete derivation | Runtime compiler | Selection/compilation | A selected optional requirement without coverage is the sole finding; required selected coverage or config-iff violations are `TypeError` | Selected closure, inert provider supersets, exact normalized selection and config-ref iff-schema gate |
-| `ProviderEffectPlan` | `runtime-definition` operational interior, selectively re-exported by SDK; not a kind/project/package | `packages/core/runtime/definition/src/provider-effect-plan.ts` | Selected provider's synchronous `build(...)` during provisioning after config preflight and dependency readiness | Future `runtime-substrate-effect` through the private witness; never derivation, compiler, bootgraph, catalog, or SDK accessor | Definition contract; live use only in provisioning | Typed acquire error only from the acquire Effect; build/forgery/Effect defects remain defects; release is typed infallible and observes expected cleanup failure internally | Definition nominal type/cold construction/enumerability/body-identity/witness-accessor gate; substrate acquireRelease/indivisible-acquisition-registration/failure-classification gate; finalization cleanup/defect-continuation/rollback/reverse-order/inert-repeated-disposal-release/runtime-close gate |
-| `HabitatEffect` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/effect/habitat-effect.ts` | Definition-owned curated `Effect` facade | Execution descriptors, resource values, substrate raw Effect lowering through process-runtime execution | Definition through invocation | Raw import, yieldability, and owner-local execution findings | `habitat-effect.execution` gate |
+| `ProviderEffectPlan` | `runtime-definition` operational interior, selectively re-exported by SDK; not a kind/project/package | `packages/core/runtime/definition/src/provider-effect-plan.ts` | Selected provider's synchronous `build(...)` during provisioning after config preflight and dependency readiness | Future `runtime-substrate-effect` through the private witness; never derivation, compiler, bootgraph, catalog, or SDK accessor | Definition contract; live use only in provisioning | Typed acquire error only from the acquire Effect; build/forgery/Effect defects remain defects; release is typed infallible and observes expected cleanup failure internally | Definition nominal type/cold construction/enumerability/body-identity/witness-accessor gate; substrate native acquireRelease/default-masking/explicit-interruption/registration/failure-classification gate; finalization cleanup/defect-continuation/rollback/reverse-order/inert-repeated-disposal-release/runtime-close gate |
+| `HabitatEffect` | `runtime-definition`, re-exported by SDK | `packages/core/runtime/definition/src/effect/habitat-effect.ts` | Definition-owned curated `Effect` facade | Execution descriptors, resource values, and the selected native execution bridge | Definition through invocation | Raw runtime-authority import, yieldability, and owner-local execution findings | `habitat-effect.execution` gate |
 | `EffectExecutionDescriptor` | `runtime-definition`, exposed by SDK | `packages/core/runtime/definition/src/execution/descriptor.ts` | Cold `.effect(...)` terminal bodies through the SDK facade; complete derivation lowers each `AsyncStepEffectDescriptor` occurrence into a frozen operational value | Runtime compiler/process execution runtime | Derivation through invocation | Owner-local Effect descriptor findings | Effect descriptor gate |
 | `ExecutionDescriptorRef` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation from admitted lane carriers and membership | Runtime compiler / execution registry | Derivation/compilation/mounting | Invalid, duplicate, absent, or descriptor-mismatched ref is `TypeError` | Closed five-variant API; every emitted variant requires admitted lane carriers and membership |
 | `ExecutionDescriptorTable` | `runtime-derivation`, complete-derivation contract at `@habitat-ai/sdk/runtime/derivation` | `packages/core/runtime/derivation` | Complete runtime derivation; async occurrences are lowered, admitted non-async operational descriptors preserved by reference | Process runtime / execution registry | Derivation/mounting | Full-ref `get` returns the matching operational descriptor or throws `TypeError`; frozen tuple snapshots only | Exact non-portable table gate through the public derivation operation, never direct test injection |
@@ -8848,7 +8873,7 @@ runtime derivation
   exposes type inference and delegating runtime hooks
   assembles only admitted public faces and later owns real terminal composition
   has no public compiler face; a compiler source/build edge requires actual terminal composition
-  owns no cold runtime contract, raw Effect lowering, or runtime adapter lowering
+  owns no cold runtime contract, native Effect policy mechanics, or runtime adapter lowering
   is never imported by a private runtime owner
 
 runtime compiler
@@ -8886,7 +8911,7 @@ Effect provisioning/execution kernel
   calls selected cold providers' build only after config preflight and dependency readiness
   executes returned provider effect plans in bootgraph order and returns resource Context
   forces managedRuntime.context before mounting
-  owns raw Effect and ProviderEffectPlan lowering
+  owns native Effect policy application and ProviderEffectPlan lowering
   receives already-validated provider config and secrets
   lowers ProviderEffectPlan into scoped acquisition/release
   executes provider/resource acquisition, release, and rollback

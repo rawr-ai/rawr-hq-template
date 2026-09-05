@@ -116,6 +116,10 @@ closure; the selected complete `runtime-bootgraph@2` admits private helper and
 proof subdirectories. SDK carriage is policy-asset assembly only: it bundles no
 bootgraph implementation and creates neither an SDK-to-bootgraph source/build
 edge nor a public bootgraph face.
+`runtime-substrate-effect@1` closes the private native Effect provisioning
+owner and its owner-local TypeScript proof grammar. Its package carriage does
+not create a public runtime API.
+
 `runtime-compiler@1` remains the immutable original package-less compiler
 closure; the selected complete `runtime-compiler@2` admits private helper and
 proof subdirectories. SDK carriage is policy-asset assembly only: it bundles no compiler

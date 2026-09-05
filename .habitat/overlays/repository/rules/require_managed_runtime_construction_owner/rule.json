@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "id": "require_managed_runtime_construction_owner",
+  "title": "Require ManagedRuntime Construction Ownership",
+  "placement": { "niche": "repository", "blueprint": "_self", "category": "boundary" },
+  "operation": { "kind": "check" },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "native ManagedRuntime construction outside the process Effect substrate",
+  "why": "One substrate owns process runtime construction; downstream code consumes its handle instead of creating competing scope owners.",
+  "remediate": "Move native ManagedRuntime construction into runtime-substrate-effect and consume the existing process handle. Keep native mechanics probes in owner-local tests.",
+  "message": "ManagedRuntime construction belongs to runtime-substrate-effect.",
+  "pathCoverage": [
+    {
+      "kind": "exact-path",
+      "patterns": [
+        "packages/**/*.ts",
+        "apps/**/*.ts",
+        "services/**/*.ts",
+        "plugins/**/*.ts",
+        "resources/**/*.ts",
+        "tools/**/*.ts",
+        "scripts/**/*.ts"
+      ]
+    }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/overlays/repository/rules/require_managed_runtime_construction_owner/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/overlays/repository/rules/require_managed_runtime_construction_owner/pattern.md"
+    },
+    "patternName": "require_managed_runtime_construction_owner",
+    "acquisition": { "kind": "check", "roots": ["."] }
+  }
+}

@@ -8,6 +8,9 @@
 ## Scope
 
 - Applies to `resources/telemetry/providers/opentelemetry-node/**`.
+- `runtime.ts` is the private source-assembly provider adapter. It shares the
+  canonical definition owner with its consuming runtime, not a separately
+  bundled plan-witness realm, and does not change the native package entry.
 
 ## Boundaries
 
@@ -27,6 +30,9 @@
   behavior.
 - Release uses the caller's one monotonic deadline, attempts owned stages in
   reverse order, and shares one completion across repeated calls.
+- The runtime adapter receives an explicit deadline callback from composition
+  and samples it once at finalization, never at acquisition. The capability
+  stays provider-neutral; the original native lease remains provider-owned.
 
 ## Routing
 

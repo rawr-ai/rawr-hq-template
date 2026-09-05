@@ -33,6 +33,9 @@
   of declared dependency resources, and the definition-owned
   `RuntimeObservationPort`. It carries no lifecycle `Scope` or telemetry
   client.
+- The curated `HabitatEffect` value is native Effect, not a separate AST or
+  interpreter. Cold value construction is distinct from runtime ownership;
+  native service/resource values compose without an interoperability wrapper.
 - A provider plan uses curated `HabitatEffect` values and requires an
   infallible release. Its construction witness and accessor remain private.
 - Definition, provider, and SDK authoring never starts or acquires a resource,

@@ -1,9 +1,18 @@
-import type { RuntimeProvider, ServiceRuntimeExport } from "../../definition/src/index";
+import type {
+  ResourceRequirement,
+  RuntimeProvider,
+  ServiceRuntimeExport,
+} from "../../definition/src/index";
 import type { ProviderSelection } from "../../derivation/src/normalized-authoring-graph";
 import type { ServiceBindingPlan } from "../../derivation/src/service-binding-plan";
 
+const resourceReferenceCarrier = Symbol("habitat.compilation.resource-references");
+
+type ResourceReferenceEntries = readonly (readonly [string, ResourceRequirement])[];
+
 export interface RuntimeCompilationReferenceTable {
   readonly kind: "runtime.compilation-reference-table";
+  readonly [resourceReferenceCarrier]: ResourceReferenceEntries;
 
   getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider;
   getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceRuntimeExport;
@@ -19,6 +28,7 @@ function compareStrings(left: string, right: string): number {
 export function createRuntimeCompilationReferenceTable(input: {
   readonly providers: readonly (readonly [ProviderSelection["selectionId"], RuntimeProvider])[];
   readonly services: readonly (readonly [ServiceBindingPlan["bindingId"], ServiceRuntimeExport])[];
+  readonly resources: ResourceReferenceEntries;
 }): RuntimeCompilationReferenceTable {
   const providers = new Map<ProviderSelection["selectionId"], RuntimeProvider>();
   const services = new Map<ServiceBindingPlan["bindingId"], ServiceRuntimeExport>();
@@ -43,8 +53,11 @@ export function createRuntimeCompilationReferenceTable(input: {
       .map(([bindingId, service]) => Object.freeze([bindingId, service] as const))
   );
 
-  return Object.freeze({
+  const table = {
     kind: "runtime.compilation-reference-table" as const,
+    [resourceReferenceCarrier]: Object.freeze(
+      input.resources.map(([id, requirement]) => Object.freeze([id, requirement] as const))
+    ),
     getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider {
       const provider = providers.get(selectionId);
       if (provider === undefined) throw new TypeError("Provider reference is absent.");
@@ -57,5 +70,17 @@ export function createRuntimeCompilationReferenceTable(input: {
     },
     providerEntries: () => providerSnapshot,
     serviceEntries: () => serviceSnapshot,
-  });
+  };
+  Object.defineProperty(table, resourceReferenceCarrier, { enumerable: false });
+  return Object.freeze(table);
+}
+
+/** Exact authored requirements are private capabilities, not inspection-table fields. */
+export function readRuntimeCompilationResourceReferences(
+  table: RuntimeCompilationReferenceTable
+): ResourceReferenceEntries {
+  const entries = table[resourceReferenceCarrier];
+  if (entries === undefined)
+    throw new TypeError("Compilation lost its resource-reference handoff.");
+  return entries;
 }

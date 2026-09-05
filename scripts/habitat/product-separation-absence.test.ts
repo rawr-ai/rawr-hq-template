@@ -50,6 +50,7 @@ const EXPECTED_PROJECT_ROOTS = {
   "runtime-definition": "packages/core/runtime/definition",
   "runtime-derivation": "packages/core/runtime/derivation",
   "runtime-schema": "packages/core/runtime/schema",
+  "runtime-substrate-effect": "packages/core/runtime/substrate/effect",
   "workstream-plugin-pack": "tools/workstream-plugin-pack",
   "@habitat-ai/resource-content-workspace": "resources/content-workspace",
   "@habitat-ai/resource-versioned-content": "resources/versioned-content",
@@ -68,9 +69,13 @@ const EXPECTED_SDK_DEPENDENCIES = [
   "@habitat-ai/resource-rule-evaluation",
   "@habitat-ai/resource-source-inventory",
   "@habitat-ai/resource-telemetry",
+  "provider-telemetry-opentelemetry-node",
+  "runtime-bootgraph",
+  "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",
   "runtime-schema",
+  "runtime-substrate-effect",
 ] as const;
 
 const EXPECTED_SDK_DEPENDENTS = [
@@ -454,6 +459,12 @@ describe("cumulative product-separation absence", () => {
         ),
       ].sort()
     ).toEqual(EXPECTED_SDK_DEPENDENCIES);
+    expect(
+      (graph.dependencies["runtime-substrate-effect"] ?? [])
+        .map(({ target }) => target)
+        .filter((target) => target in graph.nodes)
+        .sort()
+    ).toEqual(["runtime-bootgraph", "runtime-compiler", "runtime-definition"]);
     expect(
       Object.entries(graph.dependencies)
         .filter(([, dependencies]) =>

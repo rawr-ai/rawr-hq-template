@@ -49,7 +49,7 @@
   the four provider/build/resource-map types. The separate
   `@habitat-ai/sdk/runtime/providers/effect` face exposes only `providerFx` and
   the five provider-plan types. Neither provider face exports the private plan
-  witness/accessor, raw Effect/runtime primitives, a runner, or an alternate
+  witness/accessor, the raw Effect namespace or runtime authority, a runner, or an alternate
   constructor. These faces expose no `startApp`, managed runtime, native
   harness, or observation read model.
 - `@habitat-ai/sdk/runtime/derivation` is the sole public derivation face. It
@@ -57,12 +57,17 @@
   the private owner, with no second implementation or public error API.
 - Runtime compiler definitions are transported only as policy-pack closures.
   The SDK exposes no compiler JavaScript or declaration face and has no
-  source/build dependency on the private compiler until terminal composition
-  consumes it in task 10.6.
+  production composition dependency until task 10.6. SDK-owned task 7 integration
+  tests may import and call it, establishing real test-source Nx/build edges.
 - Runtime bootgraph definitions are transported only as policy-pack closures.
   The SDK exposes no bootgraph JavaScript or declaration face and has no
-  source/build dependency on the private bootgraph until terminal composition
-  consumes it in task 10.6.
+  production composition dependency until task 10.6. SDK-owned task 7 integration
+  tests may import and call it and the Effect substrate. Those test-source edges
+  do not expose a public lifecycle API or put provisioning in a production bundle.
+- Qualified telemetry provisioning tests consume the resource/provider-owned
+  private runtime identity and adapter as source. Keep their definition witness
+  in the same runtime assembly; do not bundle a second copy into the legacy
+  private resource package or claim a new public telemetry provider export.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -148,10 +153,10 @@
   modifying the canonical authoring source. Exact producer definitions resolve
   as inert duplicates of the package authority; drift at the same identity is
   rejected.
-- The copied and hashed build-input inventory contains exactly eleven blueprint
-  directories and fourteen total inputs. `runtime-compiler` and
-  `runtime-bootgraph` contribute assets only and do not enter the SDK entry
-  graph or bundled private implementation set.
+- The copied and hashed build-input inventory contains twelve blueprint
+  directories and the manifest-listed inputs. Compiler, bootgraph and Effect substrate
+  policy assets do not add production entrypoints. SDK integration tests use
+  their real source operations; production startApp composition waits for 10.6.
 
 ## Interfaces
 

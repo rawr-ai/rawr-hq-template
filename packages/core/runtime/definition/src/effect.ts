@@ -1,4 +1,4 @@
-const habitatEffectOperation = Symbol("habitat.effect.operation");
+import { Effect as NativeEffect, Schedule } from "effect";
 
 export type HabitatDurationInput = number | `${number} ${"ms" | "seconds" | "minutes"}`;
 
@@ -23,73 +23,22 @@ export interface HabitatConcurrencyPolicy {
 
 export type HabitatTelemetryAttributes = Readonly<Record<string, string | number | boolean | null>>;
 
-export interface HabitatEffectYieldIterator<TSuccess, TError = never, TRequirements = never>
-  extends Generator<HabitatEffect<TSuccess, TError, TRequirements>, TSuccess, TSuccess> {
-  readonly __error?: TError;
-  readonly __requirements?: TRequirements;
-}
+export type HabitatEffect<TSuccess, TError = never, TRequirements = never> = NativeEffect.Effect<
+  TSuccess,
+  TError,
+  TRequirements
+>;
 
-export interface HabitatEffect<TSuccess, TError = never, TRequirements = never> {
-  readonly kind: "habitat.effect";
-  readonly __success?: TSuccess;
-  readonly __error?: TError;
-  readonly __requirements?: TRequirements;
-  [Symbol.iterator](): HabitatEffectYieldIterator<TSuccess, TError, TRequirements>;
-  readonly [habitatEffectOperation]: HabitatEffectOperation;
-}
+export type HabitatEffectYieldIterator<
+  TSuccess,
+  TError = never,
+  TRequirements = never,
+> = NativeEffect.EffectIterator<HabitatEffect<TSuccess, TError, TRequirements>>;
 
-export type HabitatEffectOperation =
-  | { readonly kind: "succeed"; readonly value: unknown }
-  | { readonly kind: "fail"; readonly error: unknown }
-  | {
-      readonly kind: "gen";
-      readonly body: () => Generator<unknown, unknown, unknown>;
-    }
-  | {
-      readonly kind: "try-promise";
-      readonly attempt: () => Promise<unknown> | unknown;
-      readonly recover: (cause: unknown) => unknown;
-    }
-  | {
-      readonly kind: "all";
-      readonly effects: Readonly<Record<string, HabitatEffect<unknown, unknown, unknown>>>;
-      readonly concurrency?: number | "unbounded";
-      readonly discard?: boolean;
-    }
-  | {
-      readonly kind: "transform";
-      readonly transform:
-        | "timeout"
-        | "retry"
-        | "map-error"
-        | "catch-tag"
-        | "catch-tags"
-        | "or-else"
-        | "match"
-        | "span"
-        | "interruptible";
-      readonly source: HabitatEffect<unknown, unknown, unknown>;
-      readonly input?: unknown;
-    };
-
-function makeEffect<TSuccess, TError = never, TRequirements = never>(
-  operation: HabitatEffectOperation
-): HabitatEffect<TSuccess, TError, TRequirements> {
-  const effect = {
-    kind: "habitat.effect" as const,
-    [habitatEffectOperation]: operation,
-    *[Symbol.iterator](): HabitatEffectYieldIterator<TSuccess, TError, TRequirements> {
-      return yield effect;
-    },
-  };
-  return Object.freeze(effect);
-}
-
-export function readHabitatEffectOperation(
-  effect: HabitatEffect<unknown, unknown, unknown>
-): HabitatEffectOperation {
-  return effect[habitatEffectOperation];
-}
+/** Private owners admit the vendor value without wrapping or inspecting its program. */
+export const isHabitatEffect: (
+  value: unknown
+) => value is HabitatEffect<unknown, unknown, unknown> = NativeEffect.isEffect;
 
 type HabitatEffectSuccess<T> =
   T extends HabitatEffect<infer TSuccess, unknown, unknown> ? TSuccess : never;
@@ -127,6 +76,14 @@ type HabitatCatchTagsRequirements<THandlers> = HabitatEffectRequirements<
   HabitatCatchTagsHandlerEffect<THandlers[keyof THandlers]>
 >;
 
+type HabitatHandledTags<THandlers> = {
+  [TTag in keyof THandlers]-?: THandlers[TTag] extends (
+    error: never
+  ) => HabitatEffect<unknown, unknown, unknown>
+    ? TTag
+    : never;
+}[keyof THandlers];
+
 export type HabitatEffectSuccessRecord<
   TEffects extends Readonly<Record<string, HabitatEffect<unknown, unknown, unknown>>>,
 > = { readonly [TKey in keyof TEffects]: HabitatEffectSuccess<TEffects[TKey]> };
@@ -153,14 +110,17 @@ export interface HabitatEffectFacade {
     readonly try: () => Promise<TSuccess> | TSuccess;
     readonly catch: (cause: unknown) => TError;
   }): HabitatEffect<TSuccess, TError>;
-  all<const TEffects extends Readonly<Record<string, HabitatEffect<unknown, unknown, unknown>>>>(
+  all<
+    const TEffects extends Readonly<Record<string, HabitatEffect<unknown, unknown, unknown>>>,
+    const TDiscard extends boolean = false,
+  >(
     effects: TEffects,
     options?: {
       readonly concurrency?: number | "unbounded";
-      readonly discard?: boolean;
+      readonly discard?: TDiscard;
     }
   ): HabitatEffect<
-    HabitatEffectSuccessRecord<TEffects>,
+    TDiscard extends true ? void : HabitatEffectSuccessRecord<TEffects>,
     HabitatEffectErrorUnion<TEffects>,
     HabitatEffectRequirementUnion<TEffects>
   >;
@@ -207,7 +167,8 @@ export interface HabitatEffectFacade {
     handlers: THandlers
   ): HabitatEffect<
     TSuccess | HabitatCatchTagsSuccess<THandlers>,
-    Exclude<TError, { readonly _tag: keyof THandlers }> | HabitatCatchTagsError<THandlers>,
+    | Exclude<TError, { readonly _tag: HabitatHandledTags<THandlers> }>
+    | HabitatCatchTagsError<THandlers>,
     TRequirements | HabitatCatchTagsRequirements<THandlers>
   >;
   orElse<TSuccess, TError, TNextSuccess, TNextError, TRequirements, TNextRequirements>(
@@ -231,62 +192,147 @@ export interface HabitatEffectFacade {
   ): HabitatEffect<TSuccess, TError, TRequirements>;
 }
 
-const transform = <TSuccess, TError, TRequirements>(
-  source: HabitatEffect<unknown, unknown, unknown>,
-  name: Extract<HabitatEffectOperation, { kind: "transform" }>["transform"],
-  input?: unknown
-) =>
-  makeEffect<TSuccess, TError, TRequirements>({
-    kind: "transform",
-    transform: name,
-    source,
-    input,
+function milliseconds(value: HabitatDurationInput): number {
+  let amount: number;
+  if (typeof value === "number") {
+    amount = value;
+  } else {
+    const suffix = [" ms", " seconds", " minutes"].find((unit) => value.endsWith(unit));
+    if (suffix === undefined) throw new TypeError("Invalid Habitat duration.");
+    const quantity = value.slice(0, -suffix.length);
+    const multiplier = suffix === " minutes" ? 60_000 : suffix === " seconds" ? 1_000 : 1;
+    if (quantity.trim().length === 0) throw new TypeError("Invalid Habitat duration.");
+    amount = Number(quantity) * multiplier;
+  }
+  if (!Number.isFinite(amount) || amount < 0) throw new TypeError("Invalid Habitat duration.");
+  return amount;
+}
+
+function timeout<A, E, R>(
+  effect: HabitatEffect<A, E, R>,
+  duration: HabitatDurationInput
+): HabitatEffect<A, E | HabitatTimeoutError, R> {
+  return NativeEffect.suspend(() => {
+    const error: HabitatTimeoutError = Object.freeze({ _tag: "HabitatTimeoutError", duration });
+    return NativeEffect.timeoutOrElse(effect, {
+      duration: milliseconds(duration),
+      orElse: () => NativeEffect.fail(error),
+    });
   });
+}
+
+function retry<A, E, R>(
+  effect: HabitatEffect<A, E, R>,
+  input: HabitatRetryPolicy
+): HabitatEffect<A, E, R> {
+  const policy = { ...input };
+  return NativeEffect.suspend(() => {
+    const times = policy.times === undefined ? 0 : policy.times;
+    if (!Number.isFinite(times) || !Number.isInteger(times) || times < 0) {
+      throw new TypeError("Retry times must be a finite nonnegative integer.");
+    }
+    if (
+      policy.backoff !== undefined &&
+      policy.backoff !== "none" &&
+      policy.backoff !== "fixed" &&
+      policy.backoff !== "exponential"
+    ) {
+      throw new TypeError("Invalid Habitat retry backoff.");
+    }
+    if (
+      (policy.backoff === "fixed" || policy.backoff === "exponential") &&
+      policy.delay === undefined
+    ) {
+      throw new TypeError("A delayed retry policy must declare its delay.");
+    }
+    const delay = policy.delay === undefined ? 0 : milliseconds(policy.delay);
+    const schedule =
+      policy.backoff === "exponential"
+        ? Schedule.exponential(delay)
+        : Schedule.spaced(policy.backoff === "none" ? 0 : delay);
+    return NativeEffect.retry(effect, { times, schedule });
+  });
+}
+
+function all<
+  const TEffects extends Readonly<Record<string, HabitatEffect<unknown, unknown, unknown>>>,
+  const TDiscard extends boolean = false,
+>(
+  effects: TEffects,
+  options?: { readonly concurrency?: number | "unbounded"; readonly discard?: TDiscard }
+): HabitatEffect<
+  TDiscard extends true ? void : HabitatEffectSuccessRecord<TEffects>,
+  HabitatEffectErrorUnion<TEffects>,
+  HabitatEffectRequirementUnion<TEffects>
+>;
+function all(
+  effects: Readonly<Record<string, HabitatEffect<unknown, unknown, unknown>>>,
+  options?: { readonly concurrency?: number | "unbounded"; readonly discard?: boolean }
+): HabitatEffect<Readonly<Record<string, unknown>> | void, unknown, unknown> {
+  const concurrency = options?.concurrency;
+  const discard = options?.discard;
+  const entries = Object.entries(effects).map(([key, effect]) =>
+    NativeEffect.map(effect, (value): readonly [string, unknown] => [key, value])
+  );
+  return NativeEffect.suspend<Readonly<Record<string, unknown>> | void, unknown, unknown>(() => {
+    if (
+      concurrency !== undefined &&
+      concurrency !== "unbounded" &&
+      (!Number.isFinite(concurrency) || !Number.isInteger(concurrency) || concurrency < 1)
+    ) {
+      throw new TypeError("Concurrency must be a positive integer or unbounded.");
+    }
+    if (discard) return NativeEffect.all(entries, { concurrency, discard: true });
+    // Native record collection assigns into {}, losing an own __proto__ result key.
+    return NativeEffect.map(NativeEffect.all(entries, { concurrency }), Object.fromEntries);
+  });
+}
+
+function catchTags<
+  TSuccess,
+  TError,
+  TRequirements,
+  const THandlers extends HabitatCatchTagsHandlers<TError> & {
+    readonly [TTag in Exclude<keyof THandlers, HabitatEffectErrorTag<TError>>]: never;
+  },
+>(
+  effect: HabitatEffect<TSuccess, TError, TRequirements>,
+  handlers: THandlers
+): HabitatEffect<
+  TSuccess | HabitatCatchTagsSuccess<THandlers>,
+  | Exclude<TError, { readonly _tag: HabitatHandledTags<THandlers> }>
+  | HabitatCatchTagsError<THandlers>,
+  TRequirements | HabitatCatchTagsRequirements<THandlers>
+>;
+function catchTags(
+  effect: HabitatEffect<unknown, unknown, unknown>,
+  handlers: Readonly<
+    Record<string, ((error: never) => HabitatEffect<unknown, unknown, unknown>) | undefined>
+  >
+): HabitatEffect<unknown, unknown, unknown> {
+  const present = Object.fromEntries(
+    Object.entries(handlers).filter(([, handler]) => handler !== undefined)
+  );
+  return NativeEffect.catchTags(effect, present);
+}
 
 const effectFacade: HabitatEffectFacade = {
-  succeed: <T>(value: T) => makeEffect<T>({ kind: "succeed", value }),
-  fail: <E>(error: E) => makeEffect<never, E>({ kind: "fail", error }),
-  gen: (body) => makeEffect({ kind: "gen", body }),
-  tryPromise: <TSuccess, TError>(input: {
-    readonly try: () => Promise<TSuccess> | TSuccess;
-    readonly catch: (cause: unknown) => TError;
-  }) =>
-    makeEffect<TSuccess, TError>({
-      kind: "try-promise",
-      attempt: input.try,
-      recover: input.catch,
-    }),
-  all: <const TEffects extends Readonly<Record<string, HabitatEffect<unknown, unknown, unknown>>>>(
-    effects: TEffects,
-    options?: {
-      readonly concurrency?: number | "unbounded";
-      readonly discard?: boolean;
-    }
-  ) =>
-    makeEffect<
-      HabitatEffectSuccessRecord<TEffects>,
-      HabitatEffectErrorUnion<TEffects>,
-      HabitatEffectRequirementUnion<TEffects>
-    >({
-      kind: "all",
-      effects: Object.freeze({ ...effects }),
-      ...options,
-    }),
-  timeout: (effect, duration) => transform(effect, "timeout", duration),
-  retry: (effect, policy) => transform(effect, "retry", Object.freeze({ ...policy })),
-  mapError: (effect, map) => transform(effect, "map-error", map),
-  catchTag: (effect, tag, handler) =>
-    transform(effect, "catch-tag", Object.freeze({ tag, handler })),
-  catchTags: (effect, handlers) => transform(effect, "catch-tags", Object.freeze({ ...handlers })),
-  orElse: (effect, fallback) => transform(effect, "or-else", fallback),
-  match: (effect, handlers) => transform(effect, "match", Object.freeze({ ...handlers })),
+  succeed: NativeEffect.succeed,
+  fail: NativeEffect.fail,
+  gen: NativeEffect.gen,
+  tryPromise: ({ try: attempt, catch: recover }) =>
+    NativeEffect.tryPromise({ try: () => Promise.resolve(attempt()), catch: recover }),
+  all,
+  timeout,
+  retry,
+  mapError: NativeEffect.mapError,
+  catchTag: NativeEffect.catchTag,
+  catchTags,
+  orElse: NativeEffect.catch,
+  match: (effect, handlers) => NativeEffect.match(effect, { ...handlers }),
   withSpan: (name, effect, attributes) =>
-    transform(
-      effect,
-      "span",
-      Object.freeze({ name, attributes: Object.freeze({ ...attributes }) })
-    ),
-  interruptible: (effect) => transform(effect, "interruptible"),
+    NativeEffect.withSpan(effect, name, { attributes: { ...attributes } }),
+  interruptible: NativeEffect.interruptible,
 };
 
 export const Effect: HabitatEffectFacade = Object.freeze(effectFacade);

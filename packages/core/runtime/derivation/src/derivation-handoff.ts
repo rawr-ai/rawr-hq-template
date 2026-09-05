@@ -1,6 +1,7 @@
 import type {
   AppRole,
   EffectExecutionPolicy,
+  ResourceRequirement,
   RuntimeLaunchIdentity,
   RuntimeProvider,
   ServiceRuntimeExport,
@@ -21,6 +22,7 @@ export interface RuntimeDerivationHandoff {
   readonly providers: readonly (readonly [string, RuntimeProvider])[];
   readonly services: readonly (readonly [string, ServiceRuntimeExport])[];
   readonly resourceBindings: readonly (readonly [string, string])[];
+  readonly resourceReferences: readonly (readonly [string, ResourceRequirement])[];
   readonly executionPolicies: readonly (readonly [ExecutionDescriptorRef, EffectExecutionPolicy])[];
 }
 

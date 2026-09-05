@@ -52,6 +52,7 @@
 - [Private runtime-derivation owner](runtime/derivation/AGENTS.md)
 - [Private runtime-compiler owner](runtime/compiler/AGENTS.md)
 - [Private runtime-bootgraph owner](runtime/bootgraph/AGENTS.md)
+- [Private Effect substrate owner](runtime/substrate/effect/AGENTS.md)
 
 ## Validation
 

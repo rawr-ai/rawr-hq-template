@@ -698,7 +698,8 @@ function normalizeProviderSelections(
   entrypoint: Entrypoint,
   sources: readonly NormalizedRuntimeConfigSource[],
   resourceRequirements: Map<string, ResourceRequirement>,
-  providerReferences: Map<string, RuntimeProvider>
+  providerReferences: Map<string, RuntimeProvider>,
+  resourceReferences: Map<string, AuthoredResourceRequirement>
 ): readonly ProviderSelection[] {
   const selections = new Map<string, ProviderSelection>();
   const providersById = new Map<string, RuntimeProvider>();
@@ -790,6 +791,10 @@ function normalizeProviderSelections(
         throw new TypeError("A provider resource requirement identity is duplicated.");
       }
       resourceRequirements.set(requirement.requirementId, requirement);
+      resourceReferences.set(
+        requirement.requirementId,
+        authored.provider.requires[dependencyIndex]!
+      );
       providerRequirementOrigins.set(requirement.requirementId, origin);
       if (existing === undefined) pending.push(requirement);
     }
@@ -1037,6 +1042,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
   const serviceDependencies = new Map<string, NormalizedServiceDependency>();
   const semanticDependencies = new Map<string, NormalizedSemanticDependency>();
   const resourceRequirements = new Map<string, ResourceRequirement>();
+  const resourceReferences = new Map<string, AuthoredResourceRequirement>();
   const serviceRequirementOrigins = new Map<string, string>();
   const plansByIdentity = new Map<string, ServiceBindingPlan>();
   const plansByRequest = new Map<string, ServiceBindingPlan>();
@@ -1140,6 +1146,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
         "plugin resource requirement identity"
       );
       state.resourceRequirementIds.push(requirement.requirementId);
+      resourceReferences.set(requirement.requirementId, authored);
     }
     collectAsyncEntries(state, entrypoint.app.id);
     collectWebEntries(state);
@@ -1150,7 +1157,8 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
     entrypoint,
     sources,
     resourceRequirements,
-    providerReferences
+    providerReferences,
+    resourceReferences
   );
   const sortedResourceRequirements = Object.freeze(
     [...resourceRequirements.values()].sort((left, right) =>
@@ -1314,6 +1322,11 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
           .map(([requirementId, selectionId]) =>
             Object.freeze([requirementId, selectionId] as const)
           )
+      ),
+      resourceReferences: Object.freeze(
+        [...resourceReferences]
+          .sort(([left], [right]) => compareStrings(left, right))
+          .map(([id, requirement]) => Object.freeze([id, requirement] as const))
       ),
       executionPolicies: Object.freeze(
         executionDescriptorTable

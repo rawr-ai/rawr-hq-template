@@ -91,6 +91,7 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",
+  "runtime-substrate-effect",
   "service",
 ] as const;
 const RUNTIME_BOOTGRAPH_V1_CLOSURE = [
@@ -1245,6 +1246,7 @@ describe("installed Habitat products", () => {
       "provider@1",
       "resource@1",
       "resource@2",
+      "resource@3",
       "runtime-bootgraph@1",
       "runtime-bootgraph@2",
       "runtime-compiler@1",
@@ -1255,6 +1257,7 @@ describe("installed Habitat products", () => {
       "runtime-derivation@1",
       "runtime-derivation@2",
       "runtime-derivation@3",
+      "runtime-substrate-effect@1",
       "service@1",
       "service@2",
       "service@3",
@@ -1286,6 +1289,7 @@ describe("installed Habitat products", () => {
     });
     expect(nestedStructureFiles).toEqual([
       "resource/versions/2/structure.toml",
+      "resource/versions/3/structure.toml",
       "runtime-bootgraph/versions/2/structure.toml",
       "runtime-compiler/versions/2/structure.toml",
       "runtime-definition/versions/2/structure.toml",
@@ -1646,6 +1650,11 @@ describe("installed Habitat products", () => {
         version: 2,
       },
       {
+        id: "resource",
+        path: "dist/blueprints/resource/versions/3/blueprint.toml",
+        version: 3,
+      },
+      {
         id: "runtime-bootgraph",
         path: "dist/blueprints/runtime-bootgraph/blueprint.toml",
         version: 1,
@@ -1695,6 +1704,11 @@ describe("installed Habitat products", () => {
         path: "dist/blueprints/runtime-derivation/versions/3/blueprint.toml",
         version: 3,
       },
+      {
+        id: "runtime-substrate-effect",
+        path: "dist/blueprints/runtime-substrate-effect/blueprint.toml",
+        version: 1,
+      },
       { id: "service", path: "dist/blueprints/service/blueprint.toml", version: 1 },
       {
         id: "service",
@@ -1719,6 +1733,10 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           definition: expect.objectContaining({ id: "resource", version: 2 }),
+          provenance: expect.objectContaining({ kind: "policy-pack" }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({ id: "resource", version: 3 }),
           provenance: expect.objectContaining({ kind: "policy-pack" }),
         }),
         expect.objectContaining({
@@ -1827,6 +1845,18 @@ describe("installed Habitat products", () => {
           status: "pass",
         }),
         expect.objectContaining({
+          instanceId: "resource-v3-acceptance",
+          ruleId: "resource_v3_structure",
+          runner: "habitat",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          instanceId: "resource-v3-acceptance",
+          ruleId: "resource_v3_effect_error_authority",
+          runner: "grit",
+          status: "pass",
+        }),
+        expect.objectContaining({
           instanceId: "@fixture/greeting-service",
           ruleId: "service_v3_client_lineage",
           runner: "grit",
@@ -1835,6 +1865,60 @@ describe("installed Habitat products", () => {
       ]),
       ok: true,
     });
+
+    const invalidResourceHelper = path.join(
+      consumerRoot,
+      "packages/resource-v3-acceptance/helper.ts"
+    );
+    await mkdir(invalidResourceHelper);
+    await writeFile(path.join(invalidResourceHelper, "entry.ts"), "export {};\n");
+    try {
+      const checkedResource = await run(
+        habitat,
+        ["check", "--instance", "resource-v3-acceptance", "--rule", "resource_v3_structure"],
+        { cwd: consumerRoot }
+      );
+      expect(checkedResource.exitCode).not.toBe(0);
+      expect(JSON.parse(checkedResource.stdout)).toMatchObject({
+        _tag: "Completed",
+        ok: false,
+        applications: [
+          expect.objectContaining({ ruleId: "resource_v3_structure", status: "fail" }),
+        ],
+      });
+    } finally {
+      await rm(invalidResourceHelper, { recursive: true, force: true });
+    }
+
+    const resourceHelper = path.join(consumerRoot, "packages/resource-v3-acceptance/runtime.ts");
+    const originalResourceHelper = await readFile(resourceHelper, "utf8");
+    await writeFile(
+      resourceHelper,
+      'import type { Effect } from "effect";\nexport type InvalidFailure = Effect.Effect<void, Error>;\n'
+    );
+    try {
+      const checkedHelper = await run(
+        habitat,
+        [
+          "check",
+          "--instance",
+          "resource-v3-acceptance",
+          "--rule",
+          "resource_v3_effect_error_authority",
+        ],
+        { cwd: consumerRoot }
+      );
+      expect(checkedHelper.exitCode).not.toBe(0);
+      expect(JSON.parse(checkedHelper.stdout)).toMatchObject({
+        _tag: "Completed",
+        ok: false,
+        applications: [
+          expect.objectContaining({ ruleId: "resource_v3_effect_error_authority", status: "fail" }),
+        ],
+      });
+    } finally {
+      await writeFile(resourceHelper, originalResourceHelper);
+    }
 
     const checkedRuntimeDefinition = await run(
       habitat,
@@ -3666,7 +3750,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       '      kind: "service.client.construction-bound", serviceId: consumedService.id,',
       "      withInvocation: () => {",
       "        const client = createRouterClient(serviceRouter);",
-      "        return { read: (input, options) => NativeEffect.tryPromise({ try: (signal) => client.read(input, { ...options, signal }), catch: (cause) => cause instanceof Error ? cause : new Error(String(cause)) }) };",
+      "        return { read: (input, options) => HabitatEffect.gen(function* () { return yield* NativeEffect.tryPromise({ try: (signal) => client.read(input, { ...options, signal }), catch: (cause) => cause instanceof Error ? cause : new Error(String(cause)) }); }) };",
       "      },",
       "    };",
       "  },",
@@ -3679,7 +3763,8 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "const serviceClient = consumedExport.construct({ deps: {} }).withInvocation({});",
       "const serviceEffect = serviceClient.read('installed');",
       "const serviceLazyCalls = [serviceConstructCalls, serviceBodyCalls];",
-      "const serviceNativeResult = await NativeEffect.runPromise(serviceEffect);",
+      "if (!NativeEffect.isEffect(serviceEffect)) throw new Error('SDK service value is not native Effect');",
+      "const serviceNativeResult = await NativeEffect.runPromise(NativeEffect.map(serviceEffect, (value) => value));",
       "const services = { workItems: serviceUse } as const satisfies",
       "  ServerServiceUses & AsyncServiceUses;",
       "const publicContract = oc.router({ sync: oc, promise: oc, effect: oc });",
@@ -4345,6 +4430,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
       2
     )}\n`,
     ...runtimeBootgraphAcceptanceFiles(),
+    ...resourceV3AcceptanceFiles(),
     ...runtimeCompilerAcceptanceFiles(),
     ...runtimeDefinitionAcceptanceFiles(),
     ...runtimeDerivationAcceptanceFiles(),
@@ -4978,4 +5064,37 @@ project = "packages/resource-v2-acceptance"
 
 [selections]
 `;
+}
+
+function resourceV3AcceptanceFiles(): Readonly<Record<string, string>> {
+  const root = "packages/resource-v3-acceptance";
+  return {
+    [`${root}/contract.ts`]: "export interface Capability { readonly ready: true }\n",
+    [`${root}/runtime.ts`]: "export const identity = { id: 'acceptance' };\n",
+    [`${root}/config-schema.ts`]: "export const schema = {};\n",
+    [`${root}/providers/acceptance/index.ts`]: "export const provider = {};\n",
+    [`${root}/package.json`]: JSON.stringify({
+      name: "@fixture/resource-v3-acceptance",
+      private: true,
+      version: "0.0.0",
+    }),
+    [`${root}/project.json`]: JSON.stringify({
+      name: "@fixture/resource-v3-acceptance",
+      projectType: "library",
+      sourceRoot: root,
+    }),
+    [`${root}/tsconfig.json`]: "{}\n",
+    [`${root}/tsconfig.build.json`]: "{}\n",
+    [`${root}/habitat.toml`]: `schemaVersion = 1
+id = "resource-v3-acceptance"
+ownerProject = "@fixture/resource-v3-acceptance"
+blueprint = "resource"
+blueprintVersion = 3
+
+[roots]
+project = "${root}"
+
+[selections]
+`,
+  };
 }

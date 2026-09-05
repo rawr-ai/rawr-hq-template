@@ -437,7 +437,10 @@ effective request and retain divergent-diamond refusal.
 package-less `runtime-definition` owner rather than a Habitat kind, project,
 package, bootgraph artifact, or new phase. A `ProviderFx<TValue, TError>` MUST
 be the exact curated `HabitatEffect<TValue, TError, never>` value, not a thunk,
-Promise, acquired value, raw Effect, or terminal result. Acquire MUST preserve
+Promise, acquired value, or terminal result. `HabitatEffect` MUST be the pinned
+native Effect value type behind a curated non-terminal facade, not a duplicate
+program representation or interpreter. Native service/resource Effects MUST
+compose directly without a second runner. Acquire MUST preserve
 typed `TError`. Release MUST be required, receive only the acquired value, and
 return `ProviderFx<void, never>`. The `providerFx` facade MUST contain exactly
 the enumerable keys `succeed`, `tryPromise`, and `acquireRelease` and MUST be
@@ -482,6 +485,12 @@ The Effect substrate alone owns managed runtime construction, native
 acquireRelease adaptation, execution, successful-acquisition finalizer
 registration, cleanup observation, rollback, reverse continuation and disposal.
 Compiler and bootgraph carry no provider plan or acquire/release body.
+
+Default native acquisition masking MUST preserve successful-acquire finalizer
+registration. Explicit authored interruption MUST retain native semantics;
+cleanup of partial or unreturned provider acquisitions remains provider-owned.
+The substrate MUST NOT inspect/rewrite a program AST or silently introduce a
+child fiber to override that choice.
 
 #### Scenario: Plan construction is exact, frozen, and cold
 

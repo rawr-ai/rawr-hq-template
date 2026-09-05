@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
+import { Effect as NativeEffect } from "effect";
 import { Type } from "typebox";
 
 import {
@@ -22,7 +23,6 @@ import {
   Effect,
   providerFx,
   providerSelection,
-  readHabitatEffectOperation,
   requireResource,
   resourceDep,
   semanticDep,
@@ -591,7 +591,7 @@ describe("complete runtime derivation", () => {
     expect(secondFixture.counters()).toEqual(ZERO_FIXTURE_CALLS);
   });
 
-  test("lowers every async parent occurrence to a distinct lazy operational descriptor", () => {
+  test("lowers every async parent occurrence to a distinct lazy operational descriptor", async () => {
     const contexts: unknown[] = [];
     const directProgram = Effect.succeed("direct");
     const generatedProgram = Effect.succeed("generated");
@@ -679,14 +679,9 @@ describe("complete runtime derivation", () => {
     const context = Object.freeze({ exact: true });
     const cold = directEntry[1].run({ input: Object.freeze({ ignored: true }), context });
     expect(contexts).toEqual([]);
-    const operation = readHabitatEffectOperation(cold);
-    expect(operation.kind).toBe("gen");
-    if (operation.kind !== "gen") throw new Error("Operational lowering must use Effect.gen.");
-    const iterator = operation.body();
-    expect(contexts).toEqual([]);
-    const yielded = iterator.next();
+    expect(NativeEffect.isEffect(cold)).toBe(true);
+    expect(await NativeEffect.runPromise(cold as NativeEffect.Effect<unknown>)).toBe("direct");
     expect(contexts).toEqual([context]);
-    expect(yielded).toEqual({ done: false, value: directProgram });
     expect(directEntry[1].policy).toBe(direct.policy);
 
     const generatedEntry = entries.find(
@@ -701,20 +696,11 @@ describe("complete runtime derivation", () => {
       input: Object.freeze({ ignored: true }),
       context,
     });
-    const generatedOuterOperation = readHabitatEffectOperation(generatedCold);
-    if (generatedOuterOperation.kind !== "gen") {
-      throw new Error("Generator lowering must use an outer Effect.gen.");
-    }
-    const generatedOuterYield = generatedOuterOperation.body().next();
-    expect(generatedOuterYield.done).toBe(false);
-    const generatedInnerOperation = readHabitatEffectOperation(
-      generatedOuterYield.value as Parameters<typeof readHabitatEffectOperation>[0]
+    expect(NativeEffect.isEffect(generatedCold)).toBe(true);
+    expect(contexts).toEqual([context]);
+    expect(await NativeEffect.runPromise(generatedCold as NativeEffect.Effect<unknown>)).toBe(
+      "generated"
     );
-    if (generatedInnerOperation.kind !== "gen") {
-      throw new Error("Authored generators must remain generator effects.");
-    }
-    const generatedInnerYield = generatedInnerOperation.body().next();
-    expect(generatedInnerYield).toEqual({ done: false, value: generatedProgram });
     expect(contexts).toEqual([context, context]);
     expect(generatedEntry[1].policy).toBe(generated.policy);
     expect(

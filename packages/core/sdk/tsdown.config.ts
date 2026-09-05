@@ -19,6 +19,7 @@ const blueprintIds = [
   "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",
+  "runtime-substrate-effect",
   "service",
 ];
 

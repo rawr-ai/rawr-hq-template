@@ -84,6 +84,9 @@ compiler closure. The selected complete `runtime-compiler@2` admits private
 helper and proof subdirectories. The SDK carries only definition and runner assets, with no
 compiler implementation bundle, public compiler face, or SDK-to-compiler
 source/build edge.
+The complete `runtime-substrate-effect@1` member closes the private native
+Effect provisioning owner. Its law carries no public runtime entrypoint.
+
 The `runtime-derivation@1` member preserves its immutable topology-only
 closure. `runtime-derivation@2` independently closes the finished private
 derivation owner and its behavior proofs. The selected `runtime-derivation@3`

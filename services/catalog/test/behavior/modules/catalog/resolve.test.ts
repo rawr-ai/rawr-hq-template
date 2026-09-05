@@ -1319,6 +1319,10 @@ describe("Habitat catalog resolve", () => {
         ".habitat/blueprints/grit-pattern/require_grit_helper_comments/rule.json",
       ],
       [
+        "require_managed_runtime_construction_owner",
+        ".habitat/overlays/repository/rules/require_managed_runtime_construction_owner/rule.json",
+      ],
+      [
         "require_nx_workspace_scheduler_scripts",
         ".habitat/blueprints/nx-workspace/require_nx_workspace_scheduler_scripts/rule.json",
       ],

@@ -278,6 +278,14 @@ describe("OpenTelemetry Node provider", () => {
           "x-habitat-signal": configured.headers["x-habitat-signal"],
           "Content-Type": "application/json",
         });
+        const transportHeaders = await exact.headers();
+        transportHeaders["User-Agent"] = "native-transport";
+        transportHeaders["x-habitat-signal"] = "changed-by-transport";
+        expect(await exact.headers()).toEqual({
+          "x-habitat-signal": configured.headers["x-habitat-signal"],
+          "Content-Type": "application/json",
+        });
+        expect(configured.headers).not.toHaveProperty("User-Agent");
         expect(exact.timeoutMillis).toBe(configured.timeoutMilliseconds);
         expect(exact.concurrencyLimit).toBe(30);
         expect(exact.compression).toBe("none");

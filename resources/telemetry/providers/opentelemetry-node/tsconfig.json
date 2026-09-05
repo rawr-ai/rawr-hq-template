@@ -5,6 +5,7 @@
   },
   "files": [
     "index.ts",
+    "runtime.ts",
     "degraded.ts",
     "enabled.ts",
     "exporters.ts",

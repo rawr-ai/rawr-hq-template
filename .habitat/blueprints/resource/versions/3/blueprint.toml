@@ -1,0 +1,41 @@
+schemaVersion = 1
+id = "resource"
+version = 3
+
+[[rules]]
+id = "resource_v3_effect_error_authority"
+lane = "enforced"
+message = "Resource Effect failure channels do not admit global Error or a same-source Error subclass."
+remediate = "Define a tagged failure at the resource or provider boundary and translate foreign exceptions there."
+
+[rules.runner]
+name = "grit"
+pattern = "resource_v3_effect_error_authority.md"
+patternName = "resource_v3_effect_error_authority"
+
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["*.ts", "providers/**/*.ts"] }]
+
+[[rules]]
+id = "resource_v3_structure"
+lane = "enforced"
+message = "Resources must preserve one closed provider-neutral project shell."
+remediate = "Restore contract.ts and the provider-family boundary at the resource project root."
+
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"
