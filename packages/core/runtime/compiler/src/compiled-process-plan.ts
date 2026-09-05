@@ -4,6 +4,7 @@ import type { HabitatDurationInput, HabitatRetryPolicy } from "../../definition/
 import { ExecutionDescriptorRefSchema } from "../../derivation/src/execution-descriptor-ref";
 import {
   NormalizedRuntimeProfileSchema,
+  NormalizedSemanticDependencySchema,
   ProviderSelectionSchema,
   ResourceRequirementSchema,
 } from "../../derivation/src/normalized-authoring-graph";
@@ -137,10 +138,10 @@ export const CompiledServiceBindingPlanSchema = ReadonlyObject(
     scopeRef: Type.Optional(Type.Index(ServiceBindingPlanSchema, ["scopeRef"])),
     configRef: Type.Optional(Type.Index(ServiceBindingPlanSchema, ["configRef"])),
     resources: immutable(CompiledResourceBindingSchema),
-    serviceBindingIds: ReadonlyObject(Type.Index(ServiceBindingPlanSchema, ["serviceBindingIds"])),
-    semanticDependencyIds: ReadonlyObject(
-      Type.Index(ServiceBindingPlanSchema, ["semanticDependencyIds"])
+    serviceDependencies: ReadonlyObject(
+      Type.Index(ServiceBindingPlanSchema, ["serviceDependencies"])
     ),
+    semanticDependencies: immutable(NormalizedSemanticDependencySchema),
   }),
   closedCompiler
 );
@@ -153,7 +154,7 @@ export const CompiledSurfacePlanSchema = ReadonlyObject(
     role: Type.Index(SurfaceRuntimePlanSchema, ["role"]),
     surface: Type.Index(SurfaceRuntimePlanSchema, ["surface"]),
     capability: Type.Index(SurfaceRuntimePlanSchema, ["capability"]),
-    serviceBindingIds: ReadonlyObject(Type.Index(SurfaceRuntimePlanSchema, ["serviceBindingIds"])),
+    serviceBindings: ReadonlyObject(Type.Index(SurfaceRuntimePlanSchema, ["serviceBindings"])),
     resources: immutable(CompiledResourceBindingSchema),
     workflowDispatcherIds: ReadonlyObject(
       Type.Index(SurfaceRuntimePlanSchema, ["workflowDispatcherDescriptorIds"])
@@ -237,6 +238,7 @@ export const CompiledProcessPlanSchema = ReadonlyObject(
     profileId: Type.Index(NormalizedRuntimeProfileSchema, ["profileId"]),
     roles: immutable(NormalizedAppRoleSchema),
     resourceRequirements: immutable(ResourceRequirementSchema),
+    configSources: ReadonlyObject(Type.Index(NormalizedRuntimeProfileSchema, ["configSources"])),
     providerSelections: immutable(ProviderSelectionSchema),
     providerDependencyGraph: ProviderDependencyGraphSchema,
     compiledResources: immutable(CompiledResourcePlanSchema),

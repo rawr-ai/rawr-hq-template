@@ -13,6 +13,6 @@ export default defineConfig({
   },
   deps: {
     neverBundle: true,
-    onlyImport: ["@orpc/contract", "@orpc/server", "typebox"],
+    onlyImport: ["@orpc/contract", "@orpc/server", "effect", "typebox"],
   },
 });

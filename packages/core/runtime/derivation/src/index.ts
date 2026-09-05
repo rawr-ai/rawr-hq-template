@@ -1,3 +1,5 @@
+export type { RuntimeDerivationHandoff } from "./derivation-handoff";
+export { readRuntimeDerivationHandoff } from "./derivation-handoff";
 export type { ExecutionDescriptorTable } from "./derive-execution-descriptor-table";
 export type {
   RuntimeDerivationInput,

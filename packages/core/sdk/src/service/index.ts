@@ -1,17 +1,22 @@
 export type {
+  ConstructionBoundServiceClient,
+  InvocationBoundEffectServiceClient,
   ResourceDependency,
   SemanticDependency,
+  ServiceConstructorInput,
   ServiceContractOf,
   ServiceDefinition,
   ServiceDependency,
   ServiceDependencyDeclaration,
   ServiceOf,
+  ServiceRuntimeExport,
   ServiceUse,
   ServiceUses,
 } from "../../../runtime/definition/src/service";
 export {
   defineService,
   resourceDep,
+  sealService,
   semanticDep,
   serviceDep,
   useService,

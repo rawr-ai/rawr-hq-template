@@ -155,6 +155,7 @@ describe("runtime authoring public faces", () => {
       "getProcedureMetadata",
       "procedureMetadata",
       "resourceDep",
+      "sealService",
       "semanticDep",
       "serviceDep",
       "useService",
@@ -250,7 +251,9 @@ describe("runtime authoring public faces", () => {
         });
       },
     });
-    const providedValue: RuntimeResourceValue<typeof resource> = { ready: true };
+    const providedValue: RuntimeResourceValue<typeof resource> = {
+      ready: true,
+    };
 
     expect(providerFace.defineRuntimeProvider).toBe(privateProvider.defineRuntimeProvider);
     expect(providerEffectFace.providerFx).toBe(privateProviderEffect.providerFx);
@@ -354,7 +357,10 @@ describe("runtime authoring public faces", () => {
     const process = appFace.defineProcessCatalog({
       application: { id: "application", roles: ["async", "web"] },
     }).application;
-    const profile = profileFace.defineRuntimeProfile({ id: "acceptance", providers: [] });
+    const profile = profileFace.defineRuntimeProfile({
+      id: "acceptance",
+      providers: [],
+    });
     const entrypoint = appFace.defineEntrypoint({
       id: "acceptance",
       app,
@@ -369,7 +375,10 @@ describe("runtime authoring public faces", () => {
       },
     });
 
-    const result = derivation.deriveRuntimeArtifacts({ entrypoint, profileId: "acceptance" });
+    const result = derivation.deriveRuntimeArtifacts({
+      entrypoint,
+      profileId: "acceptance",
+    });
     const executionEntries = result.executionDescriptorTable.entries();
     const webEntries = result.webRouteModuleTable.entries();
 
@@ -382,7 +391,9 @@ describe("runtime authoring public faces", () => {
     ]);
     expect(result.graph.topology).toBe(result.topology);
     expect(executionEntries).toHaveLength(1);
-    expect(executionEntries[0]?.[0]).toMatchObject({ boundary: "plugin.async-step" });
+    expect(executionEntries[0]?.[0]).toMatchObject({
+      boundary: "plugin.async-step",
+    });
     expect(result.executionDescriptorTable.get(executionEntries[0]![0])).toBe(
       executionEntries[0]![1]
     );
@@ -443,11 +454,21 @@ describe("runtime authoring public faces", () => {
     expect(server.useService).toBe(service.useService);
     expect(asyncPlugin.useService).toBe(service.useService);
 
-    const serviceDefinition = service.defineService({ id: "work-items", deps: {} });
-    const contract = serviceDefinition.oc.router({ read: serviceDefinition.oc });
-    const serviceUse = server.useService(serviceDefinition, { contract });
-    const selectedServiceUse = asyncPlugin.useService(serviceDefinition, {
+    const serviceDefinition = service.defineService({
+      id: "work-items",
+      deps: {},
+    });
+    const contract = serviceDefinition.oc.router({
+      read: serviceDefinition.oc,
+    });
+    const serviceExport = service.sealService(serviceDefinition, {
       contract,
+      construct: () => {
+        throw new Error("Cold constructor executed");
+      },
+    });
+    const serviceUse = server.useService(serviceExport);
+    const selectedServiceUse = asyncPlugin.useService(serviceExport, {
       instance: "secondary",
     });
     const services = { workItems: serviceUse } as const satisfies ServiceUses;

@@ -2,6 +2,7 @@ import { ReadonlyObject, type Static, Type } from "typebox";
 
 import { ExecutionDescriptorRefSchema } from "./execution-descriptor-ref";
 import { NormalizedAppRoleSchema } from "./normalized-runtime-topology";
+import { NamedServiceBindingSchema } from "./service-binding-plan";
 import { WebRouteModuleRefSchema } from "./web-route-module-table";
 
 export const SurfaceRuntimePlanSchema = ReadonlyObject(
@@ -16,9 +17,7 @@ export const SurfaceRuntimePlanSchema = ReadonlyObject(
     role: NormalizedAppRoleSchema,
     surface: Type.String(),
     capability: Type.String(),
-    serviceBindingIds: ReadonlyObject(
-      Type.Array(Type.String({ pattern: "^service-binding:sha256:[0-9a-f]{64}$" }))
-    ),
+    serviceBindings: ReadonlyObject(Type.Array(NamedServiceBindingSchema)),
     resourceRequirementIds: ReadonlyObject(
       Type.Array(Type.String({ pattern: "^resource-requirement:sha256:[0-9a-f]{64}$" }))
     ),

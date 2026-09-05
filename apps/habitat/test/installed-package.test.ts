@@ -1045,6 +1045,7 @@ describe("installed Habitat products", () => {
         "topology",
         "webRouteModuleTable",
       ],
+      resultUniqueSymbolFields: 1,
       runtime: RUNTIME_DERIVATION_RUNTIME_EXPORTS,
       types: RUNTIME_DERIVATION_TYPE_EXPORTS,
     });
@@ -1183,6 +1184,7 @@ describe("installed Habitat products", () => {
         "getProcedureMetadata",
         "procedureMetadata",
         "resourceDep",
+        "sealService",
         "semanticDep",
         "serviceDep",
         "useService",
@@ -2510,6 +2512,7 @@ async function assertColdPublicJavaScriptExport(
 function inspectTypeScriptModuleExports(declarationPath: string): {
   readonly graphFields: readonly string[];
   readonly resultFields: readonly string[];
+  readonly resultUniqueSymbolFields: number;
   readonly runtime: readonly string[];
   readonly types: readonly string[];
 } {
@@ -2572,16 +2575,32 @@ function inspectTypeScriptModuleExports(declarationPath: string): {
     throw new TypeError("Installed SDK derivation result has no structural graph contract.");
   }
   const graphType = checker.getTypeOfSymbolAtLocation(graphSymbol, graphDeclaration);
+  const resultFields: string[] = [];
+  let resultUniqueSymbolFields = 0;
+  for (const property of resultType.getProperties()) {
+    const declaration = property.valueDeclaration ?? property.declarations?.[0];
+    const name =
+      declaration !== undefined && ts.isPropertySignature(declaration)
+        ? declaration.name
+        : undefined;
+    if (
+      name !== undefined &&
+      ts.isComputedPropertyName(name) &&
+      (checker.getTypeAtLocation(name.expression).flags & ts.TypeFlags.UniqueESSymbol) !== 0
+    ) {
+      resultUniqueSymbolFields++;
+    } else {
+      resultFields.push(property.name);
+    }
+  }
 
   return {
     graphFields: graphType
       .getProperties()
       .map(({ name }) => name)
       .sort(),
-    resultFields: resultType
-      .getProperties()
-      .map(({ name }) => name)
-      .sort(),
+    resultFields: resultFields.sort(),
+    resultUniqueSymbolFields,
     runtime: runtime.sort(),
     types: types.sort(),
   };
@@ -3257,6 +3276,8 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
     runtimeTypeConsumerPath,
     [
       'import type { oc as NativeOc } from "@orpc/contract";',
+      'import { type as schemaType } from "@orpc/contract";',
+      'import { Effect as NativeEffect } from "effect";',
       'import type { implement as NativeImplement, os as NativeOs } from "@orpc/server";',
       'import type { HabitatEffect } from "@habitat-ai/sdk/effect";',
       'import type { EffectExecutionDescriptor } from "@habitat-ai/sdk/execution";',
@@ -3265,7 +3286,9 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       'import { providerFx, type ProviderAcquire, type ProviderEffectPlan, type ProviderFx, type ProviderFxFacade, type ProviderRelease } from "@habitat-ai/sdk/runtime/providers/effect";',
       'import { defineRuntimeResource, type RuntimeResourceValue } from "@habitat-ai/sdk/runtime/resources";',
       'import { defineWebAppPlugin } from "@habitat-ai/sdk/plugins/web";',
-      'import { defineService, serviceDep, useService } from "@habitat-ai/sdk/service";',
+      'import { defineService, sealService, serviceDep, useService } from "@habitat-ai/sdk/service";',
+      "// @ts-expect-error Executable handoff authority is not a public SDK export.",
+      'import type { readRuntimeDerivationHandoff } from "@habitat-ai/sdk/runtime/derivation";',
       'import type { ServiceBoundaryContext, ServiceContractOf, ServiceModuleContextProjection, ServiceUse, ServiceUses } from "@habitat-ai/sdk/service";',
       'import { RuntimeSchema, type RuntimeSchemaValue } from "@habitat-ai/sdk/runtime/schema";',
       'import { Type } from "typebox";',
@@ -3385,14 +3408,26 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "  config: RuntimeSchema.fromTypeBox(Type.Object({ readOnly: Type.Boolean() })),",
       "  invocation: RuntimeSchema.fromTypeBox(Type.Object({ traceId: Type.String() })),",
       "});",
+      "const siblingContract = sibling.oc.router({ read: sibling.oc.input(schemaType<string>()).output(schemaType<string>()) });",
+      "const siblingExport = sealService(sibling, {",
+      "  contract: siblingContract,",
+      "  construct: ({ scope, config }) => ({",
+      '    kind: "service.client.construction-bound", serviceId: sibling.id,',
+      "    withInvocation: ({ invocation }) => ({",
+      "      read: (input) => NativeEffect.succeed(scope.workspaceId + config.readOnly + invocation.traceId + input),",
+      "    }),",
+      "  }),",
+      "});",
+      "const constructedSibling = siblingExport.construct({ deps: {}, scope: { workspaceId: 'ready' }, config: { readOnly: true } });",
+      "const invokedSibling = constructedSibling.withInvocation({ invocation: { traceId: 'trace' } });",
+      "const typedResult: NativeEffect.Effect<string, unknown> = invokedSibling.read('input');",
+      "void typedResult;",
       "const dependent = defineService({",
       '  id: "dependent",',
-      "  deps: { sibling: serviceDep(sibling) },",
+      "  deps: { sibling: serviceDep(siblingExport) },",
       "});",
-      "const siblingContract = sibling.oc.router({ read: sibling.oc });",
-      "const siblingUse = useService(sibling, { contract: siblingContract });",
-      "const selectedSiblingUse = useService(sibling, {",
-      "  contract: siblingContract,",
+      "const siblingUse = useService(siblingExport);",
+      "const selectedSiblingUse = useService(siblingExport, {",
       '  instance: "secondary",',
       "});",
       "const siblingUses = { workItems: siblingUse } as const satisfies ServiceUses;",
@@ -3423,12 +3458,20 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "  installedBoundaryContext.invocation = installedBoundaryContext.invocation;",
       "  // @ts-expect-error Canonical provided context is immutable.",
       "  installedBoundaryContext.provided = installedBoundaryContext.provided;",
-      "  // @ts-expect-error A service use always carries an explicit contract witness.",
+      "  // @ts-expect-error A declaration is not a complete service export.",
       "  useService(sibling);",
-      "  // @ts-expect-error An empty options object cannot omit the contract witness.",
+      "  // @ts-expect-error Options cannot complete a declaration-only service.",
       "  useService(sibling, {});",
       "  // @ts-expect-error The predecessor alias field is not part of the cold relation.",
       '  useService(sibling, { contract: siblingContract, alias: "legacy" });',
+      "  // @ts-expect-error Schema-backed construction lanes are required.",
+      "  siblingExport.construct({ deps: {} });",
+      "  // @ts-expect-error Invocation schemas preserve their exact output type.",
+      "  constructedSibling.withInvocation({ invocation: { traceId: 42 } });",
+      "  // @ts-expect-error Native procedure input is preserved.",
+      "  invokedSibling.read(42);",
+      "  // @ts-expect-error A Promise constructor is not a construction-bound client.",
+      "  sealService(sibling, { contract: siblingContract, construct: async () => constructedSibling });",
       "  // @ts-expect-error Packed web route snapshots are readonly.",
       '  packedWebDefinition.routes[0].path = "/changed";',
       "  // @ts-expect-error Surplus author fields are absent from the packed route type.",
@@ -3531,7 +3574,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "      { traceId: string }",
       "    >",
       "  >,",
-      "  Assert<Equal<typeof dependent.deps.sibling.service, typeof sibling>>,",
+      "  Assert<Equal<typeof dependent.deps.sibling.service, typeof siblingExport>>,",
       "  Assert<Equal<typeof sibling.oc, typeof NativeOc>>,",
       "  Assert<Equal<typeof sibling.createMiddleware, typeof NativeOs.middleware>>,",
       "  Assert<Equal<typeof sibling.createImplementer, typeof NativeImplement>>,",
@@ -3569,7 +3612,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
     [
       'import "./service/impl";',
       "",
-      'import { oc } from "@orpc/contract";',
+      'import { oc, type as schemaType } from "@orpc/contract";',
       'import { createRouterClient, implement as nativeImplement } from "@orpc/server";',
       'import { Effect as NativeEffect } from "effect";',
       'import { Type } from "typebox";',
@@ -3596,7 +3639,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "  type ServiceUses as ServerServiceUses,",
       '} from "@habitat-ai/sdk/plugins/server";',
       'import { RuntimeSchema } from "@habitat-ai/sdk/runtime/schema";',
-      'import { defineService, useService as useServiceFace, type ServiceUse } from "@habitat-ai/sdk/service";',
+      'import { defineService, sealService, useService as useServiceFace, type ServiceUse } from "@habitat-ai/sdk/service";',
       "",
       "type Equal<TLeft, TRight> =",
       "  (<T>() => T extends TLeft ? 1 : 2) extends",
@@ -3609,13 +3652,34 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "type Assert<T extends true> = T;",
       "",
       "let bodyRuns = 0;",
+      "let serviceConstructCalls = 0;",
+      "let serviceBodyCalls = 0;",
       'const consumedService = defineService({ id: "installed-service", deps: {} });',
-      "const consumedContract = oc.router({ read: oc });",
-      "const serviceUse = useServiceFace(consumedService, { contract: consumedContract });",
-      "const selectedServiceUse = useAsyncService(consumedService, {",
+      "const consumedContract = oc.router({ read: oc.input(schemaType<string>()).output(schemaType<string>()) });",
+      "const serviceImplementation = nativeImplement(consumedContract);",
+      "const serviceRouter = serviceImplementation.router({ read: serviceImplementation.read.handler(({ input }) => { serviceBodyCalls++; return 'native:' + input; }) });",
+      "const consumedExport = sealService(consumedService, {",
       "  contract: consumedContract,",
+      "  construct: () => {",
+      "    serviceConstructCalls++;",
+      "    return {",
+      '      kind: "service.client.construction-bound", serviceId: consumedService.id,',
+      "      withInvocation: () => {",
+      "        const client = createRouterClient(serviceRouter);",
+      "        return { read: (input, options) => NativeEffect.tryPromise({ try: (signal) => client.read(input, { ...options, signal }), catch: (cause) => cause instanceof Error ? cause : new Error(String(cause)) }) };",
+      "      },",
+      "    };",
+      "  },",
+      "});",
+      "const serviceUse = useServiceFace(consumedExport);",
+      "const selectedServiceUse = useAsyncService(consumedExport, {",
       '  instance: "secondary",',
       "});",
+      "const serviceColdCalls = [serviceConstructCalls, serviceBodyCalls];",
+      "const serviceClient = consumedExport.construct({ deps: {} }).withInvocation({});",
+      "const serviceEffect = serviceClient.read('installed');",
+      "const serviceLazyCalls = [serviceConstructCalls, serviceBodyCalls];",
+      "const serviceNativeResult = await NativeEffect.runPromise(serviceEffect);",
       "const services = { workItems: serviceUse } as const satisfies",
       "  ServerServiceUses & AsyncServiceUses;",
       "const publicContract = oc.router({ sync: oc, promise: oc, effect: oc });",
@@ -3762,6 +3826,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "      implementServerApiPlugin === nativeImplement &&",
       "      implementServerInternalPlugin === nativeImplement,",
       "    operationOutcomes,",
+      "    sealedService: { coldCalls: serviceColdCalls, lazyCalls: serviceLazyCalls, finalCalls: [serviceConstructCalls, serviceBodyCalls], result: serviceNativeResult, definitionRetained: consumedExport.definition === consumedService, contractRetained: consumedExport.contract === consumedContract },",
       "    serviceUse: {",
       "      frozen: Object.isFrozen(serviceUse),",
       "      helperIdentity:",
@@ -3846,6 +3911,14 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       internal: "internal",
       promise: "promise",
       sync: "sync",
+    },
+    sealedService: {
+      coldCalls: [0, 0],
+      lazyCalls: [1, 0],
+      finalCalls: [1, 1],
+      result: "native:installed",
+      definitionRetained: true,
+      contractRetained: true,
     },
     serviceUse: {
       frozen: true,

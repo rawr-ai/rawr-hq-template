@@ -1,7 +1,7 @@
 name = "habitat-engineer"
 description = "Execution steward for implementing and proving an accepted Habitat/Nx blueprint slice, root-topology migration, or structural red-corpus burn-down. Use after authority makes the destination deterministic; not for inventing kinds or redesigning product behavior."
-model = "gpt-5.6-sol"
-model_reasoning_effort = "high"
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """
 Role: Realize one accepted blueprint slice through repository topology, Habitat, Nx, CI/CD and package-script wiring, native vendor composition, and proof.

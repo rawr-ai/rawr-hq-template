@@ -19,7 +19,6 @@ import {
   type PluginDefinition,
   requireResource,
   resourceDep,
-  type ServiceDefinition,
   type ServiceDependencyDeclaration,
   type ServiceUses,
   semanticDep,
@@ -33,6 +32,7 @@ import {
   type NormalizedRuntimeTopologyEdge,
   NormalizedRuntimeTopologyRuntimeSchema,
 } from "../src/index";
+import { coldService } from "./support/cold-service";
 
 interface ColdCounters {
   effect: number;
@@ -125,18 +125,18 @@ function makeOrderedFixture(reverse: boolean, counters: ColdCounters) {
         resource: resourceDep(serviceResource),
         semantic: semanticDep("Z.adapter"),
       };
-  const leaf = defineService({ id: "leaf.service", deps: leafDependencies });
-  const upper = defineService({ id: "Z.branch", deps: { leaf: serviceDep(leaf) } });
-  const lower = defineService({ id: "a.branch", deps: { leaf: serviceDep(leaf) } });
+  const leaf = coldService(defineService({ id: "leaf.service", deps: leafDependencies }));
+  const upper = coldService(defineService({ id: "Z.branch", deps: { leaf: serviceDep(leaf) } }));
+  const lower = coldService(defineService({ id: "a.branch", deps: { leaf: serviceDep(leaf) } }));
   const rootDependencies = reverse
     ? { lower: serviceDep(lower), upper: serviceDep(upper) }
     : { upper: serviceDep(upper), lower: serviceDep(lower) };
-  const root = defineService({ id: "root.service", deps: rootDependencies });
+  const root = coldService(defineService({ id: "root.service", deps: rootDependencies }));
   const hidden = defineService({
     id: "hidden.service",
     deps: { hidden: resourceDep(hiddenResource) },
   });
-  const services = { root: useService(root, { contract: { root: true } as const }) };
+  const services = { root: useService(root) };
 
   const sharedRequirement = requireResource({
     resource: sharedResource,
@@ -210,7 +210,9 @@ function makeOrderedFixture(reverse: boolean, counters: ColdCounters) {
   const plugins = reverse
     ? [webPlugin, lowerPlugin, asyncPlugin, upperPlugin]
     : [upperPlugin, asyncPlugin, lowerPlugin, webPlugin];
-  const roles = reverse ? (["async", "server"] as const) : (["server", "async"] as const);
+  const roles = reverse
+    ? (["web", "desktop", "async", "server"] as const)
+    : (["server", "async", "desktop", "web"] as const);
   const entrypoint = makeEntrypoint(plugins, roles);
 
   return {
@@ -275,7 +277,7 @@ describe("normalized runtime topology", () => {
         { pluginId: "async.workflow.cold" },
         { pluginId: "web.app.cold" },
       ],
-      roleRequirements: ["async", "server"],
+      roleRequirements: ["async", "desktop", "server", "web"],
       surfaceRequirements: [
         {
           plugin: { pluginId: "Z.plugin" },
@@ -583,7 +585,7 @@ describe("normalized runtime topology", () => {
     ).toThrow();
   });
 
-  test("admits a shared resource diamond but refuses duplicate exact plugin-resource edges", () => {
+  test("projects shared and repeated plugin-resource edges as a set", () => {
     const resource = defineRuntimeResource<string, unknown>({
       id: "shared",
       title: "Shared",
@@ -607,13 +609,12 @@ describe("normalized runtime topology", () => {
       id: "duplicate-edge",
       resourceRequirements: [requirement, requireResource({ resource, reason: "again" })],
     });
-    const refusedEntrypoint = makeEntrypoint([duplicateEdgePlugin]);
-    expect(() =>
-      deriveNormalizedRuntimeTopology({
-        entrypoint: refusedEntrypoint,
-        profileId: refusedEntrypoint.profile.id,
-      })
-    ).toThrow();
+    const repeatedEntrypoint = makeEntrypoint([duplicateEdgePlugin]);
+    const repeated = deriveNormalizedRuntimeTopology({
+      entrypoint: repeatedEntrypoint,
+      profileId: repeatedEntrypoint.profile.id,
+    });
+    expect(repeated.edges.filter((edge) => edge.kind === "plugin.resource")).toHaveLength(1);
   });
 
   test("refuses duplicate plugin identities, role literals, and surface tuples", () => {
@@ -651,13 +652,13 @@ describe("normalized runtime topology", () => {
     ).toThrow();
   });
 
-  test("refuses duplicate exact service edge tuples", () => {
+  test("preserves repeated service slots as one coarse topology edge", () => {
     const resource = defineRuntimeResource<string, unknown>({
       id: "resource",
       title: "Resource",
       purpose: "Resource",
     });
-    const dependency = defineService({ id: "dependency", deps: {} });
+    const dependency = coldService(defineService({ id: "dependency", deps: {} }));
     const duplicateServices = [
       defineService({
         id: "dependent",
@@ -676,32 +677,33 @@ describe("normalized runtime topology", () => {
     for (const service of duplicateServices) {
       const plugin = makePlugin({
         id: `plugin.${service.deps["first"]?.kind}`,
-        services: { service: useService(service, { contract: {} }) },
+        services: { service: useService(coldService(service)) },
       });
       const entrypoint = makeEntrypoint([plugin]);
-      expect(() =>
-        deriveNormalizedRuntimeTopology({ entrypoint, profileId: entrypoint.profile.id })
-      ).toThrow();
+      const topology = deriveNormalizedRuntimeTopology({
+        entrypoint,
+        profileId: entrypoint.profile.id,
+      });
+      expect(topology.edges.filter((edge) => edge.kind.startsWith("service."))).toHaveLength(1);
     }
   });
 
   test("refuses self-loops and longer service cycles under authored-order permutations", () => {
-    type MutableService = {
-      kind: "service.definition";
-      id: string;
-      deps: Record<string, ServiceDependencyDeclaration>;
+    const mutableService = (id: string) => {
+      const deps: Record<string, ServiceDependencyDeclaration> = {};
+      return { ...defineService({ id, deps }) };
     };
-    const asDefinition = (service: MutableService) => service as unknown as ServiceDefinition;
 
     for (const reverse of [false, true]) {
-      const self: MutableService = { kind: "service.definition", id: "self", deps: {} };
+      const self = mutableService("self");
+      const selfExport = coldService(self);
       self.deps = reverse
-        ? { semantic: semanticDep("adapter"), self: serviceDep(asDefinition(self)) }
-        : { self: serviceDep(asDefinition(self)), semantic: semanticDep("adapter") };
+        ? { semantic: semanticDep("adapter"), self: serviceDep(selfExport) }
+        : { self: serviceDep(selfExport), semantic: semanticDep("adapter") };
       const entrypoint = makeEntrypoint([
         makePlugin({
           id: `self.${reverse}`,
-          services: { self: useService(asDefinition(self), { contract: {} }) },
+          services: { self: useService(selfExport) },
         }),
       ]);
       expect(() =>
@@ -718,23 +720,20 @@ describe("normalized runtime topology", () => {
       [2, 1, 0],
     ] as const;
     for (const [first, second, third] of permutations) {
-      const services: MutableService[] = [
-        { kind: "service.definition", id: "a", deps: {} },
-        { kind: "service.definition", id: "b", deps: {} },
-        { kind: "service.definition", id: "c", deps: {} },
-      ];
+      const services = [mutableService("a"), mutableService("b"), mutableService("c")];
+      const exports = services.map(coldService);
       services[0]!.deps = {
-        next: serviceDep(asDefinition(services[1]!)),
+        next: serviceDep(exports[1]!),
         semantic: semanticDep("a.adapter"),
       };
       services[1]!.deps = {
         semantic: semanticDep("b.adapter"),
-        next: serviceDep(asDefinition(services[2]!)),
+        next: serviceDep(exports[2]!),
       };
-      services[2]!.deps = { next: serviceDep(asDefinition(services[0]!)) };
-      const ordered = [services[first]!, services[second]!, services[third]!];
+      services[2]!.deps = { next: serviceDep(exports[0]!) };
+      const ordered = [exports[first]!, exports[second]!, exports[third]!];
       const uses = Object.fromEntries(
-        ordered.map((service) => [service.id, useService(asDefinition(service), { contract: {} })])
+        ordered.map((service) => [service.definition.id, useService(service)])
       );
       const entrypoint = makeEntrypoint([
         makePlugin({ id: `cycle.${first}${second}${third}`, services: uses }),

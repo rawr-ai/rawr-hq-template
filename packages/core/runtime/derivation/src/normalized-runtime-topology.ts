@@ -4,6 +4,7 @@ import type {
   Entrypoint,
   ServiceDefinition,
   ServiceDependencyDeclaration,
+  ServiceRuntimeExport,
 } from "../../definition/src/index";
 import { readServiceUse } from "../../definition/src/index";
 import { RuntimeSchema } from "../../schema/src/index";
@@ -277,7 +278,7 @@ function dependencyEdge(
       return {
         kind: "service.service",
         serviceId: service.id,
-        dependencyServiceId: dependency.service.id,
+        dependencyServiceId: dependency.service.definition.id,
       };
     case "service.dependency.resource":
       return {
@@ -294,7 +295,7 @@ function dependencyEdge(
   }
 }
 
-/** Derives the private, topology-only runtime-derivation@1 artifact. */
+/** Derives the selected process's private topology-only artifact. */
 export function deriveNormalizedRuntimeTopology(input: {
   readonly entrypoint: Entrypoint;
   readonly profileId: string;
@@ -312,7 +313,9 @@ export function deriveNormalizedRuntimeTopology(input: {
   const edgeKeys = new Set<string>();
 
   const addEdge = (edge: NormalizedRuntimeTopologyEdge): void => {
-    addUniqueTuple(edgeKeys, edgeTuple(edge), "topology edge");
+    const key = tupleKey(edgeTuple(edge));
+    if (edgeKeys.has(key)) return;
+    edgeKeys.add(key);
     edges.push(edge);
   };
 
@@ -320,9 +323,10 @@ export function deriveNormalizedRuntimeTopology(input: {
     addUniqueTuple(roleKeys, [role], "process role");
   }
 
-  const serviceRoots: ServiceDefinition[] = [];
+  const serviceRoots: ServiceRuntimeExport[] = [];
 
   for (const plugin of entrypoint.app.plugins) {
+    if (!roleKeys.has(tupleKey([plugin.role]))) continue;
     const pluginIdentity: NormalizedPluginIdentity = {
       pluginId: plugin.id,
       ...(plugin.instance === undefined ? {} : { instance: plugin.instance }),
@@ -352,17 +356,27 @@ export function deriveNormalizedRuntimeTopology(input: {
     }
 
     for (const serviceUse of Object.values(plugin.services)) {
-      serviceRoots.push(readServiceUse(serviceUse).definition);
+      const carrier = readServiceUse(serviceUse);
+      if (carrier === undefined || serviceUse.serviceId !== carrier.service.definition.id) {
+        refuse("service-use identity mismatch");
+      }
+      serviceRoots.push(carrier.service);
     }
   }
 
   const pendingServices = [...serviceRoots];
-  const visitedServices = new WeakSet<ServiceDefinition>();
+  const servicesById = new Map<string, ServiceRuntimeExport>();
 
   while (pendingServices.length > 0) {
-    const service = pendingServices.pop();
-    if (service === undefined || visitedServices.has(service)) continue;
-    visitedServices.add(service);
+    const serviceExport = pendingServices.pop();
+    if (serviceExport === undefined) continue;
+    const service = serviceExport.definition;
+    const prior = servicesById.get(service.id);
+    if (prior !== undefined) {
+      if (prior !== serviceExport) refuse("conflicting complete service export");
+      continue;
+    }
+    servicesById.set(service.id, serviceExport);
 
     for (const dependency of Object.values(service.deps)) {
       addEdge(dependencyEdge(service, dependency));

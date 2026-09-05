@@ -166,7 +166,7 @@ export const NormalizedServiceUseSchema = ReadonlyObject(
     pluginOwnerId: Type.String({ pattern: "^plugin-owner:sha256:[0-9a-f]{64}$" }),
     localName: Type.String(),
     serviceId: Type.String(),
-    serviceInstance: Type.Optional(Type.String()),
+    serviceInstance: Type.Optional(Type.String({ minLength: 1 })),
   }),
   closed
 );
