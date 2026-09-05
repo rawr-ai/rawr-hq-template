@@ -1,8 +1,8 @@
 import { closeSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type as schemaType } from "@orpc/contract";
+import type { WithEffectContext } from "@orpc/experimental-effect";
 import { createRouterClient, implement } from "@orpc/server";
-import { Effect as NativeEffect } from "effect";
 import { Type } from "typebox";
 import { orderBootgraph } from "../../../runtime/bootgraph/src/index";
 import { compileRuntimePlan } from "../../../runtime/compiler/src/index";
@@ -202,25 +202,20 @@ export function produceProvisioningFixture(
   const contract = definition.oc.router({
     read: definition.oc.input(schemaType<string>()).output(schemaType<string>()),
   });
-  const implementation = implement(contract);
+  const implementation = implement(contract).$context<WithEffectContext<never>>();
   const router = implementation.router({ read: implementation.read.handler(({ input }) => input) });
   const service = sealService(definition, {
     contract,
-    construct: () => {
+    construct: ({ clients }) => {
       calls.construct++;
       return {
         kind: "service.client.construction-bound",
         serviceId: definition.id,
-        withInvocation: () => {
-          const client = createRouterClient(router);
-          return {
-            read: (input, options) =>
-              NativeEffect.tryPromise({
-                try: (signal) => client.read(input, { ...options, signal }),
-                catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-              }),
-          };
-        },
+        withInvocation: () =>
+          clients.bind({
+            context: () => ({}),
+            createNativeClient: (options) => createRouterClient(router, options),
+          }),
       };
     },
   });
@@ -295,7 +290,11 @@ export function produceProvisioningFixture(
     });
     const derivation = deriveRuntimeArtifacts({ entrypoint, profileId: profile.id });
     const compilation = compileRuntimePlan({ derivation });
-    return { compilation, bootgraph: orderBootgraph(compilation.plan.bootgraphInput) };
+    return {
+      compilation,
+      descriptorTable: derivation.executionDescriptorTable,
+      bootgraph: orderBootgraph(compilation.plan.bootgraphInput),
+    };
   }
   const asyncArtifacts = options.asyncConfig
     ? realize(defineProcessCatalog({ main: { id: `${processId}.async`, roles: ["async"] } }).main)

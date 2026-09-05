@@ -140,11 +140,10 @@ Application bounds execution.
 
 ## Current Realization
 
-The accepted `@habitat-ai/sdk` protocol-1 policy pack currently admits sixteen
-members: `app@1`, `package@1`, `plugin@1`, `plugin-nx@1`, `provider@1`,
-`resource@1`, `resource@2`, `runtime-bootgraph@1`, `runtime-compiler@1`,
-`runtime-definition@1`, `runtime-definition@2`, `runtime-derivation@1`,
-`runtime-derivation@2`, `runtime-substrate-effect@1`, `service@1`, `service@2`, and `service@3`.
+The accepted `@habitat-ai/sdk` protocol-1 policy pack admits the exact sorted
+members declared in [its manifest](../packages/core/sdk/habitat-pack.json).
+`runtime-process-runtime@1` closes the private process binding and execution
+owner; it is neither a new package nor a public lifecycle facade.
 `runtime-definition@1` is the immutable original cold private definition
 closure. `runtime-definition@2` independently closes the provider-plan
 authoring owner and its behavior proofs; neither version inherits, falls back,

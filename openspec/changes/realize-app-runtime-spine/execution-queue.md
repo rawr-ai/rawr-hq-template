@@ -20,8 +20,11 @@ native acquisition**, including native Effect values, selected preflight,
 rollback, independent file leases and the qualified telemetry provider through
 real compilation/provisioning. Independent reviews, full repository CI and all
 nine macOS installed tests pass, including the optional root-helper law refusal.
-Task 7 is locally accepted; Graphite and remote admission remain in progress.
-Neither candidate is claimed merged or released.
+Task 7 also passed required and Linux/Windows installed CI in PR 1009. Tasks
+8/9 now implement bounded access, native service binding and process execution
+on its child: full repository CI, all nine macOS installed tests, source/graph
+acceptance and independent final review pass. This complete three-story stack
+still awaits native Graphite merge. No candidate is claimed merged or released.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
 It has no live Effect provisioning, process binding, generic harness owner,
@@ -38,19 +41,13 @@ public release and consumer acceptance remain separate states.
 
 ## Current Boundary
 
-Complete native acquisition admission, then bind and execute real services over
-its ready resources. Native Effect values replace the former custom program
-algebra without exposing runtime authority. Qualified telemetry preserves its
-native lease and finalization deadline; source assembly does not yet expose a
-public provider or installed process runtime.
-
-The next binding story uses the coherently qualified official oRPC beta.32
-family and its native Effect client, retaining Effect beta.101. Process-owned
-request admission and actual settlement tracking must prevent resource release
-while a cancelled native request still finalizes. Do not add the community
-bridge alongside the official runner, restore held source, edit a consumer or
-reopen a broad survey. Exact API/helper spelling remains implementation-owner
-judgment, with independent review of the real contract.
+Complete stack admission, then implement task 10's cold adapter lowering and
+real agent-tool/desktop-background authoring before harness/mounting/observation.
+The verified binding story uses official oRPC beta.32 native clients and Effect
+beta.101, preserving actual request and stream settlement before resource
+release. No community bridge, replacement interpreter or second service runner
+is present. Native hosts, collector storage/query and async durability retain
+their later native gates. Do not restore held source or edit a consumer.
 
 ## Dependency Order
 

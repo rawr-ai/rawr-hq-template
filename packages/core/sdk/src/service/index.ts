@@ -3,6 +3,7 @@ export type {
   InvocationBoundEffectServiceClient,
   ResourceDependency,
   SemanticDependency,
+  ServiceClientAssembly,
   ServiceConstructorInput,
   ServiceContractOf,
   ServiceDefinition,

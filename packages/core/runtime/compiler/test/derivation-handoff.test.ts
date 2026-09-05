@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
-import { Effect } from "effect";
-import { requireResource } from "../../definition/src/index";
+import { createEffectClient } from "@orpc/experimental-effect";
+import { Context, Effect } from "effect";
+import { requireResource, type ServiceClientAssembly } from "../../definition/src/index";
 import {
   executionDescriptorId,
   resourceRequirementId,
@@ -9,6 +10,16 @@ import {
 import { readRuntimeDerivationHandoff } from "../../derivation/src/index";
 import { compileRuntimePlan } from "../src/index";
 import { alterHandoff, produceHandoff, zeroCalls } from "./helpers/handoff-fixture";
+
+// Standalone native proof assembly, not a compiler-owned process binder.
+const clients: ServiceClientAssembly = {
+  bind: ({ context, createNativeClient }) =>
+    createEffectClient(
+      createNativeClient({
+        context: () => ({ ...context(), "effect/context": Context.empty() }),
+      })
+    ),
+};
 
 for (const [name, profileHarnesses, processHarness, expected] of [
   ["process-only", [], "process-only", ["process-only"]],
@@ -45,16 +56,26 @@ test("nonempty native service/provider handoff survives producer locals without 
     (s) => s.serviceId === "child" && s.serviceInstance === "alpha"
   )!;
   const service = references.getService(child.bindingId);
-  const client = service.construct({ deps: { resource: {} }, scope: undefined, config: "ready" });
+  const client = service.construct({
+    clients,
+    deps: { resource: {} },
+    scope: undefined,
+    config: "ready",
+  });
   const call = client.withInvocation({ invocation: undefined });
-  expect(typeof call).toBe("object");
+  expect(typeof call).toBe("function");
   const selected = handoff.services.find(([id]) => id === child.bindingId)![1];
   expect(selected.contract).toHaveProperty("read");
   expect(counters.construct).toBe(1);
   expect(counters.operation).toBe(0);
-  if (typeof call === "function" || typeof call.read !== "function")
-    throw new Error("Missing native fixture operation");
-  expect(await Effect.runPromise(call.read("input"))).toBe("ready:input");
+  // Native recursive clients are callable proxies; this reference table erases named client types.
+  const read: unknown = Reflect.get(call, "read");
+  if (typeof read !== "function") throw new Error("Missing native fixture operation");
+  const operation = read("input");
+  expect(Effect.isEffect(operation)).toBe(true);
+  expect(counters.operation).toBe(0);
+  const result: unknown = await Effect.runPromise(operation);
+  expect(result).toBe("ready:input");
   expect(counters.operation).toBe(1);
 });
 

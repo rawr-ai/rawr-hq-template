@@ -17,6 +17,7 @@
         "{workspaceRoot}/.habitat/blueprints/runtime-compiler/**/*",
         "{workspaceRoot}/.habitat/blueprints/runtime-definition/**/*",
         "{workspaceRoot}/.habitat/blueprints/runtime-derivation/**/*",
+        "{workspaceRoot}/.habitat/blueprints/runtime-process-runtime/**/*",
         "{workspaceRoot}/.habitat/blueprints/runtime-substrate-effect/**/*",
         "{workspaceRoot}/.habitat/blueprints/service/**/*"
       ]

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "id": "require_process_runtime_access_owner",
+  "title": "Require Process Runtime Access Ownership",
+  "placement": { "niche": "repository", "blueprint": "_self", "category": "boundary" },
+  "operation": { "kind": "check" },
+  "ownerProject": "habitat",
+  "lane": "enforced",
+  "forbids": "ordinary production consumers importing private runtime assembly or concrete provider implementations",
+  "why": "Process assembly supplies bounded ready capabilities; ordinary authors must not acquire competing resources or reach private process handles.",
+  "remediate": "Consume the public SDK authoring face or a declared ready service/resource capability. Keep assembly in the authorized runtime or SDK owner.",
+  "message": "Private runtime assembly and concrete provider imports belong to their authorized owners.",
+  "pathCoverage": [
+    { "kind": "exact-path", "patterns": ["apps/**/*", "services/**/*", "plugins/**/*"] }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/overlays/repository/rules/require_process_runtime_access_owner/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/overlays/repository/rules/require_process_runtime_access_owner/pattern.md"
+    },
+    "patternName": "require_process_runtime_access_owner",
+    "acquisition": { "kind": "check", "roots": ["."] }
+  }
+}

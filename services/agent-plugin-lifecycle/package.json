@@ -27,9 +27,9 @@
   "dependencies": {
     "@noble/hashes": "2.2.0",
     "@opentelemetry/api": "1.9.0",
-    "@orpc/client": "2.0.0-beta.23",
-    "@orpc/contract": "2.0.0-beta.23",
-    "@orpc/server": "2.0.0-beta.23",
+    "@orpc/client": "2.0.0-beta.32",
+    "@orpc/contract": "2.0.0-beta.32",
+    "@orpc/server": "2.0.0-beta.32",
     "@habitat-ai/sdk": "workspace:*",
     "@habitat-ai/resource-agent-plugin-package-output": "workspace:*",
     "@habitat-ai/resource-content-workspace": "workspace:*",

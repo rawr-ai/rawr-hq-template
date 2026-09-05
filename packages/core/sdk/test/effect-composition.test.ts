@@ -1,7 +1,11 @@
 import { type as schemaType } from "@orpc/contract";
+import type { WithEffectContext } from "@orpc/experimental-effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Effect as NativeEffect } from "effect";
 import { expect, test } from "vitest";
+
+import { createInvocationTracker } from "../../runtime/process-runtime/src/invocation-tracker";
+import { createServiceClientAssembly } from "../../runtime/process-runtime/src/service-client-assembly";
 
 import * as effectFace from "../src/effect";
 import { defineService, sealService } from "../src/service";
@@ -12,7 +16,7 @@ test("curated effects compose natively through a complete service without early 
   const contract = definition.oc.router({
     read: definition.oc.input(schemaType<string>()).output(schemaType<string>()),
   });
-  const implementation = implement(contract);
+  const implementation = implement(contract).$context<WithEffectContext<never>>();
   const router = implementation.router({
     read: implementation.read.handler(({ input }) => {
       calls.body += 1;
@@ -21,25 +25,26 @@ test("curated effects compose natively through a complete service without early 
   });
   const service = sealService(definition, {
     contract,
-    construct: () => {
+    construct: ({ clients }) => {
       calls.construct += 1;
-      const client = createRouterClient(router);
       return {
         kind: "service.client.construction-bound",
         serviceId: definition.id,
-        withInvocation: () => ({
-          // Test-owned native boundary, not the future runtime service binder.
-          read: (input, options) =>
-            effectFace.Effect.tryPromise({
-              try: () => client.read(input, options),
-              catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-            }),
-        }),
+        withInvocation: () =>
+          clients.bind({
+            context: () => ({}),
+            createNativeClient: (options) => createRouterClient(router, options),
+          }),
       };
     },
   });
   expect(calls).toEqual({ construct: 0, body: 0, authored: 0 });
-  const client = service.construct({ deps: {} }).withInvocation({});
+  const client = service
+    .construct({
+      deps: {},
+      clients: createServiceClientAssembly(createInvocationTracker()),
+    })
+    .withInvocation({});
   const authored = effectFace.Effect.gen(function* () {
     calls.authored += 1;
     const input = yield* NativeEffect.succeed("input");

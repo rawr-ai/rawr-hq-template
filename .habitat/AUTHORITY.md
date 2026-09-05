@@ -91,6 +91,12 @@ cannot duplicate, weaken, or replace generic kind law.
 
 ## Current Realization
 
+`runtime-process-runtime@1` closes the private package-less owner for consumer
+resource access, service binding and process execution. Native bridge execution
+stays vendor-owned, resource acquisition stays substrate-owned, and raw process
+handles do not enter consumer projections. Its blueprint package carriage adds
+no public lifecycle API.
+
 The protocol-1 SDK pack's current sorted member inventory is declared in
 [its manifest](../packages/core/sdk/habitat-pack.json). Existing versions remain
 immutable for exact existing selections. `runtime-definition@1` preserves the

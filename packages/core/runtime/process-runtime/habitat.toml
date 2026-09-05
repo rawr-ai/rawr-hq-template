@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "runtime-process-runtime"
+ownerProject = "runtime-process-runtime"
+blueprint = "runtime-process-runtime"
+blueprintVersion = 1
+
+[roots]
+project = "packages/core/runtime/process-runtime"
+
+[selections]

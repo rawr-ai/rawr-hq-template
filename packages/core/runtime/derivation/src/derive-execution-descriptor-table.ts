@@ -2,6 +2,7 @@ import type {
   AsyncStepEffectDescriptor,
   ExecutionDescriptor,
   HabitatEffect,
+  ProcedureExecutionContext,
 } from "../../definition/src/index";
 import { Effect, isHabitatEffect } from "../../definition/src/index";
 import {
@@ -194,9 +195,21 @@ export function deriveAsyncExecutionEntry(
     executionId,
     boundary: "plugin.async-step",
     policy: authored.policy,
-    run(invocation: { readonly input: unknown; readonly context: unknown }) {
+    run(invocation: ProcedureExecutionContext<unknown, unknown>) {
       return Effect.gen(function* () {
-        const program: unknown = Reflect.apply(authored.effect, undefined, [invocation.context]);
+        if (
+          typeof invocation.context !== "object" ||
+          invocation.context === null ||
+          Array.isArray(invocation.context)
+        ) {
+          throw new TypeError("An async step requires its native boundary context.");
+        }
+        const context = {
+          ...invocation.context,
+          telemetry: invocation.telemetry,
+          execution: invocation.execution,
+        };
+        const program: unknown = Reflect.apply(authored.effect, undefined, [context]);
         if (isHabitatEffect(program)) return yield* program;
         if (isHabitatEffectGenerator(program)) return yield* Effect.gen(() => program);
         throw new TypeError("An async step must return a HabitatEffect or Effect generator.");

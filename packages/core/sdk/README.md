@@ -150,7 +150,7 @@ helper and proof grammar. Every predecessor remains byte-immutable.
 Each selected definition exposes only its required `project` anchor.
 Source-specific structure scopes carry blueprint-owned `src/**` relative
 paths; a caller-authored `source` binding is rejected as an unknown root role.
-The SDK build copies and hashes twelve blueprint directories through the manifest-listed
+The SDK build copies and hashes thirteen blueprint directories through the manifest-listed
 build inputs, including the private `runtime-substrate-effect@1` provisioning
 law. SDK integration tests consume compiler, bootgraph and substrate source;
 their test-source edges do not add production entrypoints or public APIs.

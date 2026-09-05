@@ -1331,6 +1331,10 @@ describe("Habitat catalog resolve", () => {
         ".habitat/blueprints/nx-workspace/require_package_publication_coherence/rule.json",
       ],
       [
+        "require_process_runtime_access_owner",
+        ".habitat/overlays/repository/rules/require_process_runtime_access_owner/rule.json",
+      ],
+      [
         "require_repository_script_topology",
         ".habitat/blueprints/nx-workspace/require_repository_script_topology/rule.json",
       ],

@@ -154,6 +154,7 @@ export const CompiledSurfacePlanSchema = ReadonlyObject(
     role: Type.Index(SurfaceRuntimePlanSchema, ["role"]),
     surface: Type.Index(SurfaceRuntimePlanSchema, ["surface"]),
     capability: Type.Index(SurfaceRuntimePlanSchema, ["capability"]),
+    instance: Type.Optional(Type.String({ minLength: 1 })),
     serviceBindings: ReadonlyObject(Type.Index(SurfaceRuntimePlanSchema, ["serviceBindings"])),
     resources: immutable(CompiledResourceBindingSchema),
     workflowDispatcherIds: ReadonlyObject(

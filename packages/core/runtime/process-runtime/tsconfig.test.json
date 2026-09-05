@@ -1,0 +1,22 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["bun-types"]
+  },
+  "include": ["src", "test"],
+  "references": [
+    {
+      "path": "../definition"
+    },
+    {
+      "path": "../derivation"
+    },
+    {
+      "path": "../compiler"
+    },
+    {
+      "path": "../substrate/effect"
+    }
+  ]
+}

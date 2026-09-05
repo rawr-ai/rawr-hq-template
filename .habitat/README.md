@@ -78,12 +78,17 @@ The `runtime-bootgraph@1` member preserves the original private package-less
 lifecycle-ordering closure. The selected complete `runtime-bootgraph@2` admits
 private helper and proof subdirectories. The SDK carries only definition and runner
 assets, with no bootgraph implementation bundle, public bootgraph face, or
-SDK-to-bootgraph source/build edge.
+production SDK-to-bootgraph call before task 10.6. SDK integration tests supply
+the already-admitted test-source/build edge.
 The `runtime-compiler@1` member preserves the original private package-less
 compiler closure. The selected complete `runtime-compiler@2` admits private
 helper and proof subdirectories. The SDK carries only definition and runner assets, with no
 compiler implementation bundle, public compiler face, or SDK-to-compiler
-source/build edge.
+production call before task 10.6. SDK integration tests supply the
+already-admitted test-source/build edge.
+The complete `runtime-process-runtime@1` member closes private process binding
+and execution, with a package-less source/proof grammar and no public SDK face.
+
 The complete `runtime-substrate-effect@1` member closes the private native
 Effect provisioning owner. Its law carries no public runtime entrypoint.
 
@@ -104,8 +109,10 @@ Effect-oRPC bootstrap behind `@habitat-ai/sdk/plugins/server/effect`; direct
 vendor bootstrap remains valid only for an SDK-internal service that cannot
 depend on the terminal SDK without reversing the package graph.
 Nested-member closure remains Habitat-owned. The closed package export law and
-Nx's `@nx/enforce-module-boundaries` rule own workspace-wide foreign-consumer
-direction.
+native Nx graph acceptance check foreign-consumer direction. The repository's
+current process-runtime access packet rejects parser-visible private runtime
+and concrete provider imports from ordinary production consumers. No activated
+`@nx/enforce-module-boundaries` enforcement is implied by generated templates.
 
 Compatibility packets below `agent-router`, `grit-pattern`, and `nx-workspace`
 retain the current frame laws: agent-router document shape, Grit helper

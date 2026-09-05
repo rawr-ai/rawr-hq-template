@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -49,6 +49,7 @@ const EXPECTED_PROJECT_ROOTS = {
   "runtime-compiler": "packages/core/runtime/compiler",
   "runtime-definition": "packages/core/runtime/definition",
   "runtime-derivation": "packages/core/runtime/derivation",
+  "runtime-process-runtime": "packages/core/runtime/process-runtime",
   "runtime-schema": "packages/core/runtime/schema",
   "runtime-substrate-effect": "packages/core/runtime/substrate/effect",
   "workstream-plugin-pack": "tools/workstream-plugin-pack",
@@ -74,6 +75,7 @@ const EXPECTED_SDK_DEPENDENCIES = [
   "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",
+  "runtime-process-runtime",
   "runtime-schema",
   "runtime-substrate-effect",
 ] as const;
@@ -435,6 +437,109 @@ function condemnedState(homeRoot: string, fixtureWorkspaceRoot: string): readonl
 }
 
 describe("cumulative product-separation absence", () => {
+  it("native Habitat refuses private imports but admits ready authoring and authorized owners", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "habitat-runtime-access-law-"));
+    const rule = "require_process_runtime_access_owner";
+    const packet = `.habitat/overlays/repository/rules/${rule}`;
+    const allowed = {
+      "apps/example/src/profile.ts":
+        'import { defineRuntimeProvider } from "@habitat-ai/sdk/runtime/providers";\nimport { Effect } from "effect";\n',
+      "services/example/src/resource.ts":
+        'export type { TelemetryResource } from "@habitat-ai/resource-telemetry";\n',
+      "packages/core/sdk/src/assembly.ts": 'import "../../runtime/process-runtime/src/index";\n',
+      "packages/core/runtime/process-runtime/src/assembly.ts":
+        'import "../../substrate/effect/src/index";\n',
+      "resources/telemetry/providers/opentelemetry-node/runtime.ts":
+        'import "../../../../packages/core/runtime/definition/src/index";\n',
+      "services/example/test/access.test.ts":
+        'import "../../../packages/core/runtime/definition/src/index";\n',
+      "plugins/agent/tools/example/fixtures/access.ts":
+        'require("@habitat-ai/resource-telemetry/providers/opentelemetry-node");\n',
+      "apps/example/dist/access.js":
+        'require("@habitat-ai/resource-telemetry/providers/opentelemetry-node");\n',
+      "services/example/src/documentation.ts":
+        'const example = "import from packages/core/runtime/process-runtime";\n',
+      "apps/example/src/import-options.ts":
+        'void import("effect", { with: { note: "@habitat-ai/resource-telemetry/providers/opentelemetry-node" } });\n',
+    };
+    const forbidden = {
+      "apps/example/src/static.ts":
+        'import { createProcessRuntime } from "../../../packages/core/runtime/process-runtime/src/index";\n',
+      "services/example/src/reexport.ts":
+        'export * from "../../../packages/core/runtime/definition/src/index";\n',
+      "plugins/agent/tools/example/src/dynamic.ts":
+        'void import("../../../../../packages/core/runtime/substrate/effect/src/index");\n',
+      "services/example/src/required.ts":
+        'require("@habitat-ai/resource-telemetry/providers/opentelemetry-node");\n',
+      "apps/example/src/provider.ts":
+        'export { acquireOpenTelemetryNode } from "../../../resources/telemetry/providers/opentelemetry-node/index";\n',
+      "services/example/src/type-only.ts":
+        'import type { ProcessRuntime } from "runtime-process-runtime";\n',
+      "apps/example/src/dynamic-options.ts":
+        'void import("@habitat-ai/resource-telemetry/providers/opentelemetry-node", { with: { type: "json" } });\n',
+      "plugins/desktop/windows/example/src/view.tsx":
+        'import "../../../../../packages/core/runtime/definition/src/index";\n',
+    };
+    async function addFiles(files: Readonly<Record<string, string>>) {
+      for (const [relative, source] of Object.entries(files)) {
+        await mkdir(path.dirname(path.join(root, relative)), { recursive: true });
+        await writeFile(path.join(root, relative), source);
+      }
+    }
+    async function check() {
+      const child = Bun.spawn(
+        [path.join(workspaceRoot, "node_modules/.bin/habitat"), "check", "--rule", rule],
+        {
+          cwd: root,
+          env: { ...process.env, GRIT_TELEMETRY_DISABLED: "true", NO_COLOR: "1" },
+          stdout: "pipe",
+          stderr: "pipe",
+        }
+      );
+      const timer = setTimeout(() => child.kill(), 25_000);
+      const [exitCode, stdout, stderr] = await Promise.all([
+        child.exited,
+        new Response(child.stdout).text(),
+        new Response(child.stderr).text(),
+      ]).finally(() => clearTimeout(timer));
+      const result = JSON.parse(stdout) as {
+        _tag: string;
+        ok: boolean;
+        applications: { status: string; findings: { path: string }[] }[];
+      };
+      expect(result._tag, stderr || stdout).toBe("Completed");
+      return { exitCode, result };
+    }
+    try {
+      await cp(path.join(workspaceRoot, packet), path.join(root, packet), { recursive: true });
+      await symlink(path.join(workspaceRoot, "node_modules"), path.join(root, "node_modules"));
+      await addFiles({
+        ".habitat/index.json": JSON.stringify({
+          schemaVersion: 2,
+          ownerRoots: { habitat: "scripts/habitat" },
+        }),
+        "package.json": JSON.stringify({ name: "runtime-access-proof", private: true }),
+        "scripts/habitat/project.json": JSON.stringify({ name: "habitat" }),
+        ...allowed,
+      });
+      execFileSync("git", ["init", "--quiet"], { cwd: root });
+      const positive = await check();
+      expect(positive.exitCode).toBe(0);
+      expect(positive.result.ok).toBe(true);
+      expect(positive.result.applications).toHaveLength(1);
+      expect(positive.result.applications[0].findings).toEqual([]);
+      await addFiles(forbidden);
+      const negative = await check();
+      expect(negative.result.ok).toBe(false);
+      expect(negative.result.applications[0].status).toBe("fail");
+      expect(
+        [...new Set(negative.result.applications[0].findings.map((finding) => finding.path))].sort()
+      ).toEqual(Object.keys(forbidden).sort());
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }, 60_000);
+
   it("has exactly the admitted Nx projects at their canonical roots", async () => {
     const graph = await createProjectGraphAsync({ exitOnError: true });
     const projects = readProjectsConfigurationFromProjectGraph(graph).projects;
@@ -466,6 +571,17 @@ describe("cumulative product-separation absence", () => {
         .sort()
     ).toEqual(["runtime-bootgraph", "runtime-compiler", "runtime-definition"]);
     expect(
+      (graph.dependencies["runtime-process-runtime"] ?? [])
+        .map(({ target }) => target)
+        .filter((target) => target in graph.nodes)
+        .sort()
+    ).toEqual([
+      "runtime-compiler",
+      "runtime-definition",
+      "runtime-derivation",
+      "runtime-substrate-effect",
+    ]);
+    expect(
       Object.entries(graph.dependencies)
         .filter(([, dependencies]) =>
           dependencies.some(({ target }) => target === "@habitat-ai/sdk")
@@ -473,6 +589,29 @@ describe("cumulative product-separation absence", () => {
         .map(([source]) => source)
         .sort()
     ).toEqual(EXPECTED_SDK_DEPENDENTS);
+
+    const incomingRuntimeOwners = {
+      "runtime-process-runtime": ["@habitat-ai/sdk"],
+      "runtime-substrate-effect": ["@habitat-ai/sdk", "runtime-process-runtime"],
+      "runtime-definition": [
+        "@habitat-ai/resource-telemetry",
+        "@habitat-ai/sdk",
+        "provider-telemetry-opentelemetry-node",
+        "runtime-compiler",
+        "runtime-derivation",
+        "runtime-process-runtime",
+        "runtime-substrate-effect",
+      ],
+      "provider-telemetry-opentelemetry-node": ["@habitat-ai/sdk"],
+    };
+    for (const [owner, expected] of Object.entries(incomingRuntimeOwners)) {
+      expect(
+        Object.entries(graph.dependencies)
+          .filter(([, dependencies]) => dependencies.some(({ target }) => target === owner))
+          .map(([source]) => source)
+          .sort()
+      ).toEqual(expected);
+    }
 
     const sdkMetadata = graph.nodes["@habitat-ai/sdk"]?.data.metadata as
       | { readonly js?: { readonly isInPackageManagerWorkspaces?: unknown } }

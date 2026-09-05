@@ -260,7 +260,7 @@ An adapter-lowered oRPC procedure MUST retain native oRPC validation,
 middleware, context, declared errors, transport, and abort outcomes. A
 synchronous or Promise-returning operation MAY use an inline native
 `.handler(...)`. An Effect-backed Habitat service operation MUST use exact
-`@orpc/experimental-effect@2.0.0-beta.23` implementation-owned `.effect(...)`,
+`@orpc/experimental-effect@2.0.0-beta.32` implementation-owned `.effect(...)`,
 installed once in `src/service/impl.ts`. The selected bridge MUST alone run the request
 Effect: it provides native `effect/context`, applies native `effect/wrap`,
 forwards the request signal to `Effect.runPromiseExit`, maps the resulting

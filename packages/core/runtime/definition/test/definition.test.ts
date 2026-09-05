@@ -996,6 +996,17 @@ describe("runtime definition", () => {
     const effect = descriptor.run({
       input: undefined,
       context: { requestedBy: "test" },
+      execution: {
+        appId: "test",
+        processId: "test",
+        entrypointId: "test",
+        profileId: "test",
+        role: "cli",
+        ownerId: "test",
+        executionId: descriptor.executionId,
+        traceId: "test",
+      },
+      telemetry: { span: (_name, program) => program, event: () => Effect.succeed(undefined) },
     });
 
     expect(channelsMatch).toBe(true);

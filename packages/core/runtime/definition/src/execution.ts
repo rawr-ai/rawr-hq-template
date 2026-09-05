@@ -1,4 +1,5 @@
 import type { HabitatEffect, HabitatRetryPolicy, HabitatTimeoutPolicy } from "./effect";
+import type { ProcedureExecutionContext } from "./execution-context";
 
 export type ExecutionBoundaryKind =
   | "plugin.async-step"
@@ -39,10 +40,9 @@ export interface EffectExecutionDescriptor<
   readonly executionId: string;
   readonly boundary: ExecutionBoundaryKind;
   readonly policy: EffectExecutionPolicy;
-  run(input: {
-    readonly input: TInput;
-    readonly context: TContext;
-  }): HabitatEffect<TOutput, TError, TRequirements>;
+  run(
+    input: ProcedureExecutionContext<TInput, TContext>
+  ): HabitatEffect<TOutput, TError, TRequirements>;
 }
 
 type AnyHabitatEffect = HabitatEffect<unknown, unknown, unknown>;

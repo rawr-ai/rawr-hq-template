@@ -63,6 +63,8 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk",
     "@habitat-ai/sdk/app",
     "@habitat-ai/sdk/effect",
+    "@habitat-ai/sdk/effect/context",
+    "@habitat-ai/sdk/effect/wrap",
     "@habitat-ai/sdk/execution",
     "@habitat-ai/sdk/service",
     "@habitat-ai/sdk/service/schema",
@@ -91,6 +93,7 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",
+  "runtime-process-runtime",
   "runtime-substrate-effect",
   "service",
 ] as const;
@@ -475,7 +478,7 @@ describe("installed Habitat products", () => {
     );
 
     await assertInstalledServiceConsumer(nx, fixturePath);
-  });
+  }, 360_000);
 
   it.each(
     RUNTIME_POLICY_SUCCESSORS
@@ -993,9 +996,9 @@ describe("installed Habitat products", () => {
     expect(sdkManifest.dependencies).toMatchObject({
       "@effect/platform-node": "4.0.0-beta.101",
       "@effect/platform-node-shared": "4.0.0-beta.101",
-      "@orpc/contract": "2.0.0-beta.23",
-      "@orpc/experimental-effect": "2.0.0-beta.23",
-      "@orpc/server": "2.0.0-beta.23",
+      "@orpc/contract": "2.0.0-beta.32",
+      "@orpc/experimental-effect": "2.0.0-beta.32",
+      "@orpc/server": "2.0.0-beta.32",
       effect: "4.0.0-beta.101",
     });
     expect(Object.values(sdkManifest.dependencies ?? {})).not.toContain("2.0.0-beta.20");
@@ -1113,6 +1116,8 @@ describe("installed Habitat products", () => {
         "const serverEffectAfter = typeof os.effect;",
         'const app = await import("@habitat-ai/sdk/app");',
         'const effect = await import("@habitat-ai/sdk/effect");',
+        'const effectContext = await import("@habitat-ai/sdk/effect/context");',
+        'const effectWrap = await import("@habitat-ai/sdk/effect/wrap");',
         'const execution = await import("@habitat-ai/sdk/execution");',
         'const service = await import("@habitat-ai/sdk/service");',
         'const schema = await import("@habitat-ai/sdk/service/schema");',
@@ -1128,7 +1133,7 @@ describe("installed Habitat products", () => {
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
         'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
-        "console.log(JSON.stringify({ app: Object.keys(app).sort(), asyncEffect: Object.keys(asyncEffect).sort(), asyncPlugins: Object.keys(asyncPlugins).sort(), derivation: Object.keys(derivation).sort(), effect: Object.keys(effect).sort(), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providerEffect: Object.keys(providerEffect).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), serverEffect: Object.keys(serverEffect).sort(), serverEffectAfter, serverEffectBefore, serverPlugins: Object.keys(serverPlugins).sort(), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
+        "console.log(JSON.stringify({ app: Object.keys(app).sort(), asyncEffect: Object.keys(asyncEffect).sort(), asyncPlugins: Object.keys(asyncPlugins).sort(), derivation: Object.keys(derivation).sort(), effect: Object.keys(effect).sort(), effectContext: Object.keys(effectContext), effectWrap: Object.keys(effectWrap), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providerEffect: Object.keys(providerEffect).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), serverEffect: Object.keys(serverEffect).sort(), serverEffectAfter, serverEffectBefore, serverPlugins: Object.keys(serverPlugins).sort(), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
       ].join("\n"),
       "utf8"
     );
@@ -1156,6 +1161,8 @@ describe("installed Habitat products", () => {
         "deriveRuntimeArtifacts",
       ],
       effect: ["Effect", "TaggedError"],
+      effectContext: [],
+      effectWrap: [],
       execution: [],
       profiles: ["defineRuntimeProfile", "providerSelection"],
       providerEffect: ["providerFx"],
@@ -1257,6 +1264,7 @@ describe("installed Habitat products", () => {
       "runtime-derivation@1",
       "runtime-derivation@2",
       "runtime-derivation@3",
+      "runtime-process-runtime@1",
       "runtime-substrate-effect@1",
       "service@1",
       "service@2",
@@ -1703,6 +1711,11 @@ describe("installed Habitat products", () => {
         id: "runtime-derivation",
         path: "dist/blueprints/runtime-derivation/versions/3/blueprint.toml",
         version: 3,
+      },
+      {
+        id: "runtime-process-runtime",
+        path: "dist/blueprints/runtime-process-runtime/blueprint.toml",
+        version: 1,
       },
       {
         id: "runtime-substrate-effect",
@@ -3138,8 +3151,8 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   };
   expect(servicePackage.dependencies).toEqual({
     "@habitat-ai/sdk": installVersion,
-    "@orpc/contract": "2.0.0-beta.23",
-    "@orpc/server": "2.0.0-beta.23",
+    "@orpc/contract": "2.0.0-beta.32",
+    "@orpc/server": "2.0.0-beta.32",
     typebox: "1.3.8",
   });
 
@@ -3285,6 +3298,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
         ...servicePackage,
         dependencies: {
           ...servicePackage.dependencies,
+          "@orpc/experimental-effect": "2.0.0-beta.32",
           effect: "4.0.0-beta.101",
         },
       },
@@ -3361,16 +3375,27 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
     [
       'import type { oc as NativeOc } from "@orpc/contract";',
       'import { type as schemaType } from "@orpc/contract";',
-      'import { Effect as NativeEffect } from "effect";',
-      'import type { implement as NativeImplement, os as NativeOs } from "@orpc/server";',
+      'import { Context, Effect as NativeEffect } from "effect";',
+      'import { createRouterClient, implement as NativeImplement, type os as NativeOs } from "@orpc/server";',
+      'import { createEffectClient, type WithEffectContext } from "@orpc/experimental-effect";',
       'import type { HabitatEffect } from "@habitat-ai/sdk/effect";',
+      'import type { EffectContext } from "@habitat-ai/sdk/effect/context";',
+      'import type { EffectWrap } from "@habitat-ai/sdk/effect/wrap";',
+      'import type { Exit } from "effect";',
+      "// @ts-expect-error Context projection does not expose runtime authority.",
+      'import type { ManagedRuntime } from "@habitat-ai/sdk/effect/context";',
+      "// @ts-expect-error Wrap projection does not expose an execution terminal.",
+      'import type { runPromise } from "@habitat-ai/sdk/effect/wrap";',
+      "// @ts-expect-error Execution contracts do not invent a boundary error registry.",
+      'import type { BoundaryErrors } from "@habitat-ai/sdk/execution";',
+      'import type { BoundaryTelemetry, EffectBoundaryContext, EffectExecutionExit, ProcedureExecutionContext } from "@habitat-ai/sdk/execution";',
       'import type { EffectExecutionDescriptor } from "@habitat-ai/sdk/execution";',
       'import type { RuntimeDerivationResult } from "@habitat-ai/sdk/runtime/derivation";',
       'import { defineRuntimeProvider, type ProviderBuildContext, type RuntimeProvider, type RuntimeProviderHealthDescriptor, type RuntimeResourceMap } from "@habitat-ai/sdk/runtime/providers";',
       'import { providerFx, type ProviderAcquire, type ProviderEffectPlan, type ProviderFx, type ProviderFxFacade, type ProviderRelease } from "@habitat-ai/sdk/runtime/providers/effect";',
       'import { defineRuntimeResource, type RuntimeResourceValue } from "@habitat-ai/sdk/runtime/resources";',
       'import { defineWebAppPlugin } from "@habitat-ai/sdk/plugins/web";',
-      'import { defineService, sealService, serviceDep, useService } from "@habitat-ai/sdk/service";',
+      'import { defineService, sealService, serviceDep, useService, type ServiceClientAssembly } from "@habitat-ai/sdk/service";',
       "// @ts-expect-error Executable handoff authority is not a public SDK export.",
       'import type { readRuntimeDerivationHandoff } from "@habitat-ai/sdk/runtime/derivation";',
       'import type { ServiceBoundaryContext, ServiceContractOf, ServiceModuleContextProjection, ServiceUse, ServiceUses } from "@habitat-ai/sdk/service";',
@@ -3394,6 +3419,11 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "      : false",
       "    : false;",
       "type Assert<T extends true> = T;",
+      'type ContextSlot = Assert<Equal<EffectContext<never>, WithEffectContext<never>["effect/context"]>>;',
+      'type WrapSlot = Assert<Equal<EffectWrap, NonNullable<WithEffectContext<never>["effect/wrap"]>>>;',
+      "type NativeExitSlot = Assert<Equal<EffectExecutionExit<string, Error>, Exit.Exit<string, Error>>>;",
+      "type ExecutionSlots = Assert<Equal<ProcedureExecutionContext<string, { readonly trace: string }>, { readonly input: string; readonly context: { readonly trace: string }; readonly execution: EffectBoundaryContext; readonly telemetry: BoundaryTelemetry }>>;",
+      'const installedClients: ServiceClientAssembly = { bind: ({ context, createNativeClient }) => createEffectClient(createNativeClient({ context: () => ({ ...context(), "effect/context": Context.empty() }) })) };',
       'type InstalledProcessDefaults = NonNullable<RuntimeDerivationResult["graph"]["profile"]["processDefaults"]>;',
       "type InstalledNestedProcessDefaults = Extract<",
       "  InstalledProcessDefaults[string],",
@@ -3495,14 +3525,15 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "const siblingContract = sibling.oc.router({ read: sibling.oc.input(schemaType<string>()).output(schemaType<string>()) });",
       "const siblingExport = sealService(sibling, {",
       "  contract: siblingContract,",
-      "  construct: ({ scope, config }) => ({",
-      '    kind: "service.client.construction-bound", serviceId: sibling.id,',
-      "    withInvocation: ({ invocation }) => ({",
-      "      read: (input) => NativeEffect.succeed(scope.workspaceId + config.readOnly + invocation.traceId + input),",
-      "    }),",
-      "  }),",
+      "  construct: ({ clients, scope, config }) => {",
+      "    const native = NativeImplement(siblingContract).$context<WithEffectContext<never> & { traceId: string }>();",
+      "    const router = native.router({ read: native.read.handler(({ input, context }) => scope.workspaceId + config.readOnly + context.traceId + input) });",
+      '    return { kind: "service.client.construction-bound", serviceId: sibling.id,',
+      "      withInvocation: ({ invocation }) => clients.bind({ context: () => invocation, createNativeClient: (options) => createRouterClient(router, options) }),",
+      "    };",
+      "  },",
       "});",
-      "const constructedSibling = siblingExport.construct({ deps: {}, scope: { workspaceId: 'ready' }, config: { readOnly: true } });",
+      "const constructedSibling = siblingExport.construct({ clients: installedClients, deps: {}, scope: { workspaceId: 'ready' }, config: { readOnly: true } });",
       "const invokedSibling = constructedSibling.withInvocation({ invocation: { traceId: 'trace' } });",
       "const typedResult: NativeEffect.Effect<string, unknown> = invokedSibling.read('input');",
       "void typedResult;",
@@ -3549,7 +3580,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "  // @ts-expect-error The predecessor alias field is not part of the cold relation.",
       '  useService(sibling, { contract: siblingContract, alias: "legacy" });',
       "  // @ts-expect-error Schema-backed construction lanes are required.",
-      "  siblingExport.construct({ deps: {} });",
+      "  siblingExport.construct({ clients: installedClients, deps: {} });",
       "  // @ts-expect-error Invocation schemas preserve their exact output type.",
       "  constructedSibling.withInvocation({ invocation: { traceId: 42 } });",
       "  // @ts-expect-error Native procedure input is preserved.",
@@ -3567,6 +3598,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "}",
       "",
       "export type PackedRuntimeDefinitionOracle = readonly [",
+      "  ContextSlot, WrapSlot, NativeExitSlot, ExecutionSlots,",
       "  Assert<Equal<InstalledProcessDefaultsIsNever, false>>,",
       "  Assert<Equal<InstalledNestedProcessDefaultsIsNever, false>>,",
       "  Assert<",
@@ -3698,7 +3730,8 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "",
       'import { oc, type as schemaType } from "@orpc/contract";',
       'import { createRouterClient, implement as nativeImplement } from "@orpc/server";',
-      'import { Effect as NativeEffect } from "effect";',
+      'import { Context, Effect as NativeEffect } from "effect";',
+      'import { createEffectClient, type WithEffectContext } from "@orpc/experimental-effect";',
       'import { Type } from "typebox";',
       'import { Effect as HabitatEffect } from "@habitat-ai/sdk/effect";',
       "import {",
@@ -3723,7 +3756,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "  type ServiceUses as ServerServiceUses,",
       '} from "@habitat-ai/sdk/plugins/server";',
       'import { RuntimeSchema } from "@habitat-ai/sdk/runtime/schema";',
-      'import { defineService, sealService, useService as useServiceFace, type ServiceUse } from "@habitat-ai/sdk/service";',
+      'import { defineService, sealService, useService as useServiceFace, type ServiceUse, type ServiceClientAssembly } from "@habitat-ai/sdk/service";',
       "",
       "type Equal<TLeft, TRight> =",
       "  (<T>() => T extends TLeft ? 1 : 2) extends",
@@ -3740,18 +3773,16 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       "let serviceBodyCalls = 0;",
       'const consumedService = defineService({ id: "installed-service", deps: {} });',
       "const consumedContract = oc.router({ read: oc.input(schemaType<string>()).output(schemaType<string>()) });",
-      "const serviceImplementation = nativeImplement(consumedContract);",
+      'const installedClients: ServiceClientAssembly = { bind: ({ context, createNativeClient }) => createEffectClient(createNativeClient({ context: () => ({ ...context(), "effect/context": Context.empty() }) })) };',
+      "const serviceImplementation = nativeImplement(consumedContract).$context<WithEffectContext<never>>();",
       "const serviceRouter = serviceImplementation.router({ read: serviceImplementation.read.handler(({ input }) => { serviceBodyCalls++; return 'native:' + input; }) });",
       "const consumedExport = sealService(consumedService, {",
       "  contract: consumedContract,",
-      "  construct: () => {",
+      "  construct: ({ clients }) => {",
       "    serviceConstructCalls++;",
       "    return {",
       '      kind: "service.client.construction-bound", serviceId: consumedService.id,',
-      "      withInvocation: () => {",
-      "        const client = createRouterClient(serviceRouter);",
-      "        return { read: (input, options) => HabitatEffect.gen(function* () { return yield* NativeEffect.tryPromise({ try: (signal) => client.read(input, { ...options, signal }), catch: (cause) => cause instanceof Error ? cause : new Error(String(cause)) }); }) };",
-      "      },",
+      "      withInvocation: () => clients.bind({ context: () => ({}), createNativeClient: (options) => createRouterClient(serviceRouter, options) }),",
       "    };",
       "  },",
       "});",
@@ -3760,7 +3791,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       '  instance: "secondary",',
       "});",
       "const serviceColdCalls = [serviceConstructCalls, serviceBodyCalls];",
-      "const serviceClient = consumedExport.construct({ deps: {} }).withInvocation({});",
+      "const serviceClient = consumedExport.construct({ clients: installedClients, deps: {} }).withInvocation({});",
       "const serviceEffect = serviceClient.read('installed');",
       "const serviceLazyCalls = [serviceConstructCalls, serviceBodyCalls];",
       "if (!NativeEffect.isEffect(serviceEffect)) throw new Error('SDK service value is not native Effect');",
@@ -4074,16 +4105,19 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   });
 
   await writeFile(callerSourcePath, 'import "../../../services/greeting/src/service/router.ts";\n');
-  const rejectedPrivateImport = await run(
-    nx,
-    ["run", "@fixture/caller:check", "--outputStyle=static", "--skipNxCache"],
-    { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
-  );
-  expect(rejectedPrivateImport.exitCode).not.toBe(0);
-  expect(`${rejectedPrivateImport.stdout}\n${rejectedPrivateImport.stderr}`).toContain(
-    "Projects cannot be imported by a relative or absolute path"
-  );
-  await writeFile(callerSourcePath, publicClientImport);
+  try {
+    const rejectedPrivateImport = await run(
+      nx,
+      ["run", "@fixture/caller:check", "--outputStyle=static", "--skipNxCache"],
+      { cwd: consumerRoot, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+    );
+    expect(rejectedPrivateImport.exitCode).not.toBe(0);
+    expect(`${rejectedPrivateImport.stdout}\n${rejectedPrivateImport.stderr}`).toContain(
+      "Projects cannot be imported by a relative or absolute path"
+    );
+  } finally {
+    await writeFile(callerSourcePath, publicClientImport);
+  }
 }
 
 async function listGeneratedServiceFiles(

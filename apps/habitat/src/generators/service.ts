@@ -26,8 +26,8 @@ const STRICT_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
 /** Exact non-SDK dependency pins emitted into every constructed service package. */
 export const SERVICE_GENERATOR_DEPENDENCY_VERSIONS = {
-  "@orpc/contract": "2.0.0-beta.23",
-  "@orpc/server": "2.0.0-beta.23",
+  "@orpc/contract": "2.0.0-beta.32",
+  "@orpc/server": "2.0.0-beta.32",
   typebox: "1.3.8",
 } as const;
 
