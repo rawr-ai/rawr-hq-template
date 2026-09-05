@@ -240,7 +240,17 @@
       "npm:public",
       "capability:habitat",
       "role:sdk"
-    ]
+    ],
+    "targets": {
+      "typecheck": {
+        "dependsOn": [
+          "check:test",
+          "check:tools",
+          "^build",
+          "build"
+        ]
+      }
+    }
   },
   "publishConfig": {
     "access": "public"
