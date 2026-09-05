@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: "src/index.ts",
+  entry: { index: "src/index.ts", "elysia/index": "elysia/index.ts" },
   outDir: "dist",
   format: "esm",
   platform: "neutral",
@@ -21,8 +21,12 @@ export default defineConfig({
       "@orpc/contract",
       "@orpc/experimental-effect",
       "@orpc/server",
+      "@orpc/shared",
+      "@orpc/openapi",
       "@standard-schema/spec",
       "effect",
+      "elysia",
+      "rou3",
       "typebox",
     ],
   },

@@ -93,6 +93,7 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/plugins/desktop",
     "@habitat-ai/sdk/plugins/desktop/effect",
     "@habitat-ai/sdk/runtime/harnesses",
+    "@habitat-ai/sdk/runtime/harnesses/elysia",
     "@habitat-ai/sdk/runtime/observation",
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
@@ -1207,6 +1208,10 @@ describe("installed Habitat products", () => {
         'const providerEffect = await import("@habitat-ai/sdk/runtime/providers/effect");',
         'const profiles = await import("@habitat-ai/sdk/runtime/profiles");',
         'if (Object.keys(await import("@habitat-ai/sdk/runtime/harnesses")).length !== 0) throw new Error("Harness contract exported live values");',
+        'const elysia = await import("@habitat-ai/sdk/runtime/harnesses/elysia");',
+        'if (Object.keys(elysia).join() !== "createElysiaHarness") throw new Error("Native companion export drift");',
+        'const nativeDescriptor = elysia.createElysiaHarness({ id: "cold", hostname: "127.0.0.1", port: 0, publicDocument: { path: "/openapi.json", info: { title: "Cold", version: "1" } } });',
+        'if (nativeDescriptor.id !== "cold" || nativeDescriptor.surfaces.join() !== "server/api,server/internal") throw new Error("Cold native descriptor failed");',
         'if (Object.keys(await import("@habitat-ai/sdk/runtime/observation")).length !== 0) throw new Error("Observation contract exported live values");',
         'const runtimeSchema = await import("@habitat-ai/sdk/runtime/schema");',
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
@@ -1352,6 +1357,7 @@ describe("installed Habitat products", () => {
       "runtime-derivation@2",
       "runtime-derivation@3",
       "runtime-harnesses@1",
+      "runtime-harnesses@2",
       "runtime-mounting@1",
       "runtime-observation@1",
       "runtime-process-runtime@1",
@@ -1396,6 +1402,7 @@ describe("installed Habitat products", () => {
       "runtime-definition/versions/3/structure.toml",
       "runtime-derivation/versions/2/structure.toml",
       "runtime-derivation/versions/3/structure.toml",
+      "runtime-harnesses/versions/2/structure.toml",
       "runtime-process-runtime/versions/2/structure.toml",
       "service/versions/2/structure.toml",
       "service/versions/3/structure.toml",
@@ -1826,6 +1833,11 @@ describe("installed Habitat products", () => {
         id: "runtime-harnesses",
         path: "dist/blueprints/runtime-harnesses/blueprint.toml",
         version: 1,
+      },
+      {
+        id: "runtime-harnesses",
+        path: "dist/blueprints/runtime-harnesses/versions/2/blueprint.toml",
+        version: 2,
       },
       {
         id: "runtime-mounting",
@@ -2638,6 +2650,14 @@ function assertPackedManifestExcludesVendors(
   manifest: PackedProductManifest,
   productName: PublicProduct["name"]
 ): void {
+  if (productName === "@habitat-ai/sdk") {
+    expect(isRecord(manifest.peerDependencies) ? manifest.peerDependencies.elysia : undefined).toBe(
+      "1.4.30"
+    );
+    expect(
+      isRecord(manifest.peerDependenciesMeta) ? manifest.peerDependenciesMeta.elysia : undefined
+    ).toEqual({ optional: true });
+  }
   for (const field of PACKAGE_DEPENDENCY_FIELDS) {
     const declarations = manifest[field];
     if (declarations === undefined) continue;
@@ -2653,6 +2673,16 @@ function assertPackedManifestExcludesVendors(
       throw new Error(`${productName} packed manifest has an invalid ${field} field.`);
     }
     for (const vendorPackage of ABSENT_VENDOR_PACKAGES) {
+      if (
+        vendorPackage === "elysia" &&
+        productName === "@habitat-ai/sdk" &&
+        (field === "peerDependencies" || field === "peerDependenciesMeta")
+      ) {
+        expect(isRecord(declarations) ? declarations.elysia : undefined).toEqual(
+          field === "peerDependencies" ? "1.4.30" : { optional: true }
+        );
+        continue;
+      }
       expect(declaredPackages, `${productName} ${field}`).not.toContain(vendorPackage);
     }
   }
@@ -2663,7 +2693,19 @@ function assertPackedManifestExcludesVendors(
     const loadPathStrings = collectManifestStrings(declarations);
     for (const vendorPackage of ABSENT_VENDOR_PACKAGES) {
       expect(
-        loadPathStrings.filter((candidate) => candidate.includes(vendorPackage)),
+        loadPathStrings.filter(
+          (candidate) =>
+            candidate.includes(vendorPackage) &&
+            !(
+              productName === "@habitat-ai/sdk" &&
+              field === "exports" &&
+              [
+                "./runtime/harnesses/elysia",
+                "./dist/runtime/harnesses/elysia.d.ts",
+                "./dist/runtime/harnesses/elysia.js",
+              ].includes(candidate)
+            )
+        ),
         `${productName} ${field}`
       ).toEqual([]);
     }
@@ -2870,6 +2912,12 @@ async function assertInstalledProjectionTypes(callerRoot: string): Promise<void>
         'import { defineDesktopBackgroundPlugin } from "@habitat-ai/sdk/plugins/desktop";',
         'import { defineDesktopBackground, type DesktopBackgroundDescriptor } from "@habitat-ai/sdk/plugins/desktop/effect";',
         'import type { HarnessDescriptor, HarnessMountInput, NativeHarnessHandle, RuntimeLaunchIdentity, ProcessRuntimeAccess, AppRole } from "@habitat-ai/sdk/runtime/harnesses";',
+        'import { createElysiaHarness } from "@habitat-ai/sdk/runtime/harnesses/elysia";',
+        'import type { ElysiaHarnessConfig, ElysiaRoutePayload, ServerMountRecord } from "@habitat-ai/sdk/runtime/harnesses/elysia";',
+        'const nativeConfig: ElysiaHarnessConfig = { id: "installed", hostname: "127.0.0.1", port: 0, publicDocument: { path: "/openapi.json", info: { title: "Installed", version: "1" } } };',
+        "const nativeDescriptor: HarnessDescriptor<ServerMountRecord> = createElysiaHarness(nativeConfig);",
+        'const nativePayload: Equal<ServerMountRecord["payload"], ElysiaRoutePayload> = true;',
+        "void [nativeDescriptor, nativePayload];",
         'import type { RuntimeLaunchIdentity as AppIdentity } from "@habitat-ai/sdk/app";',
         'import { startApp, type NativeIntegration, type StartedProcess, type StartAppOptions } from "@habitat-ai/sdk/app";',
         'import type { AgentToolMountRecord, NativeIntegrationHarness } from "@habitat-ai/sdk/runtime/harnesses";',

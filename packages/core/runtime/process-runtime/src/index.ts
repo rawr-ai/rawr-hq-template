@@ -3,6 +3,11 @@ export {
   createDesktopBackgroundAdapter,
   type LoweredDesktopBackground,
 } from "./adapters/desktop-background";
+export {
+  createElysiaApiAdapter,
+  createElysiaInternalAdapter,
+  type ElysiaRoutePayload,
+} from "./adapters/elysia";
 export { createOclifAdapter, type LoweredCliCommand } from "./adapters/oclif";
 export {
   type CreateProcessRuntimeInput,

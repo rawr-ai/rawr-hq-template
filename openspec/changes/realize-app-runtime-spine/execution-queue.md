@@ -66,13 +66,14 @@ public release and consumer acceptance remain separate states.
 
 ## Current Boundary
 
-Tasks 10.2-10.7 are submitted in PRs 1012-1014 with passing required and
-Linux/Windows installed checks. PR 1015's clean-build and installed dependency
-cohort repairs now pass renewed required and Linux/Windows CI. PR 1016 also
-passes all three remote gates, qualifying native generators with honest Nx
-staging and sequential publication semantics. Task 12.3's installed command
-projections are locally accepted and ready for submission. Admit these complete
-stories through the same native stack workflow without making tasks 12.1/12.2
+Tasks 10.2-10.7, Oclif self-host, qualified generators and task 12.3's installed
+authoring commands are merged through PRs 1012-1017. Each candidate passed
+required and Linux/Windows installed checks; the final authoring repair only
+corrected two integration-test budgets without changing runtime behavior.
+Graphite completed the one native stack merge at main
+`c954d04cb67280cff51d5f71a8d154d6b8410473`. Tasks 13.1/13.2 now qualify the
+complete native Elysia/oRPC server story, including the owning telemetry gate.
+Admit this complete story through the same native stack workflow without making tasks 12.1/12.2
 artificial prerequisites or claiming the remaining native hosts are complete.
 The one native sweep removed the four merged
 predecessors and the targeted child restack preserved an identical tree.

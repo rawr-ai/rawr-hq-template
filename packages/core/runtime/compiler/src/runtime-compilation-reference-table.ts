@@ -4,15 +4,19 @@ import type {
   ServiceRuntimeExport,
 } from "../../definition/src/index";
 import type { ProviderSelection } from "../../derivation/src/normalized-authoring-graph";
+import type { RuntimeServerSource } from "../../derivation/src/server-source";
 import type { ServiceBindingPlan } from "../../derivation/src/service-binding-plan";
 
 const resourceReferenceCarrier = Symbol("habitat.compilation.resource-references");
+const serverSourceCarrier = Symbol("habitat.compilation.server-sources");
 
 type ResourceReferenceEntries = readonly (readonly [string, ResourceRequirement])[];
+type ServerSourceEntries = readonly (readonly [string, RuntimeServerSource])[];
 
 export interface RuntimeCompilationReferenceTable {
   readonly kind: "runtime.compilation-reference-table";
   readonly [resourceReferenceCarrier]: ResourceReferenceEntries;
+  readonly [serverSourceCarrier]: ServerSourceEntries;
 
   getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider;
   getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceRuntimeExport;
@@ -29,6 +33,7 @@ export function createRuntimeCompilationReferenceTable(input: {
   readonly providers: readonly (readonly [ProviderSelection["selectionId"], RuntimeProvider])[];
   readonly services: readonly (readonly [ServiceBindingPlan["bindingId"], ServiceRuntimeExport])[];
   readonly resources: ResourceReferenceEntries;
+  readonly serverSources: ServerSourceEntries;
 }): RuntimeCompilationReferenceTable {
   const providers = new Map<ProviderSelection["selectionId"], RuntimeProvider>();
   const services = new Map<ServiceBindingPlan["bindingId"], ServiceRuntimeExport>();
@@ -58,6 +63,9 @@ export function createRuntimeCompilationReferenceTable(input: {
     [resourceReferenceCarrier]: Object.freeze(
       input.resources.map(([id, requirement]) => Object.freeze([id, requirement] as const))
     ),
+    [serverSourceCarrier]: Object.freeze(
+      input.serverSources.map(([id, source]) => Object.freeze([id, source] as const))
+    ),
     getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider {
       const provider = providers.get(selectionId);
       if (provider === undefined) throw new TypeError("Provider reference is absent.");
@@ -72,7 +80,18 @@ export function createRuntimeCompilationReferenceTable(input: {
     serviceEntries: () => serviceSnapshot,
   };
   Object.defineProperty(table, resourceReferenceCarrier, { enumerable: false });
+  Object.defineProperty(table, serverSourceCarrier, { enumerable: false });
   return Object.freeze(table);
+}
+
+/** Native projections are available only beside the exact compiled selected surface. */
+export function readRuntimeCompilationServerSources(
+  table: RuntimeCompilationReferenceTable
+): ServerSourceEntries {
+  const entries = table[serverSourceCarrier];
+  if (entries === undefined)
+    throw new TypeError("Compilation lost its native server-source handoff.");
+  return entries;
 }
 
 /** Exact authored requirements are private capabilities, not inspection-table fields. */

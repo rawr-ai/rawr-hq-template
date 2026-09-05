@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; installed authoring command projections locally accepted.
-Branch: `agent-root-habitat-authoring-cli`, stacked on the submitted generators.
+Status: `active`; native Elysia/oRPC server locally qualified, admission in progress.
+Branch: `agent-root-habitat-native-server`, continuing the merged authoring commands.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -11,6 +11,7 @@ Observation [1013](https://github.com/rawr-ai/rawr-hq-template/pull/1013).
 Mounting/startup [1014](https://github.com/rawr-ai/rawr-hq-template/pull/1014).
 Oclif self-host [1015](https://github.com/rawr-ai/rawr-hq-template/pull/1015).
 Qualified generators [1016](https://github.com/rawr-ai/rawr-hq-template/pull/1016).
+Installed authoring [1017](https://github.com/rawr-ai/rawr-hq-template/pull/1017).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -65,12 +66,55 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: task 12.3, two thin installed CLI projections of the accepted
-native generators. Root owns app composition, packaging and installed parity
-proof; the implementation peer owns the private authoring topic; the native
-peer owns per-kind native Tree runners. The cold peer independently reviews
-the composed mutation and runtime boundary. Tasks 12.1/12.2 and native server,
-async and web remain separate capabilities, not prerequisites for this projection.
+Current domino: tasks 13.1/13.2 together, complete native Elysia/oRPC server
+qualification, including the owning native telemetry gate. Root owns terminal
+SDK assembly, authority/law, packaging and composed acceptance; the runtime
+peer owns selected cold server references and process-owned native request
+assembly; the native peer owns Elysia lifecycle and host proofs. The cold peer
+independently reviews the complete path. Tasks 12.1/12.2, async and web remain
+separate capabilities, not prerequisites for this server story.
+
+The existing explicit descriptor registration remains the only representation.
+A narrow `@habitat-ai/sdk/runtime/harnesses/elysia` facade delegates a cold
+descriptor factory to its private owner; the generic harness face stays
+type-only. No SDK host-selection enum or hidden harness registry is added.
+The factory neither imports Elysia nor listens. Selected mount conditionally
+loads exact Elysia 1.4.30; Bun 1.3.14, oRPC beta.32 and Effect beta.101 stay
+unchanged. Native scratch proof verifies graceful stop retains a gated request,
+refuses a fresh connection and receives actual client abort on Request.signal.
+Only the composed fixture can prove native operation and resource ordering.
+
+Retain exact selected api/internal factory references and routeBase in the
+existing private derivation/compiler handoff. Invoke them only during live
+lowering. Native oRPC handlers receive process-owned request admission and
+bounded invocation clients; they never enter ProcessExecutionRuntime. The host
+receives lowered callbacks and public contract projections, not the app, plugin
+graph, raw managed runtime or provisioning values.
+
+One explicitly configured document path serves the combined selected public
+OpenAPI projection using native oRPC contract/path/generator facilities.
+Internal RPC stays excluded. Reject actual colliding method/path ownership
+before listening; equal routeBase alone is not a collision. Multiple descriptors
+for one surface explicitly replicate selected payloads; they do not introduce
+capability partitioning. Cohosting API/internal registers the same descriptor
+object twice and produces one mount and one owner-local native stop.
+Cross-public overlap uses the already-pinned native rou3 0.9.1 overlap API with
+oRPC's native parameter projection, now declared as a direct dependency rather
+than borrowed transitively. Concrete internal RPC paths use native matching,
+preserving all admitted methods and literal stars. Habitat adds no router or
+path-intersection engine. Native regex intersections can be conservative;
+admission refuses unresolved overlap rather than asserting exact disjointness.
+
+Server-native telemetry acceptance must co-land real native outcomes and
+correlation, not be left for task 15's audit. Ordinary CI uses real local OTLP
+receipt. The stronger collector persistence/query receipt and EVLog event
+cardinality remain named, unretired observability obligations until separately
+qualified against the existing local backend. The held implementation's old
+deadline-release behavior and beta.23 pins are not adoption authority.
+The native harness test depends on the complete server-native-telemetry target,
+so the real container-free fixture runs in the ordinary repository CI graph.
+
+The accepted task 12.3 underneath retains these contracts:
 
 The app injects two stateless native runner functions into the topic's existing
 SDK factory option contract. Each CLI-owned runner reads the operator's current
@@ -494,7 +538,23 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
-### Current Domino: Binding And Execution
+Finish native server admission, then qualify the complete Inngest Serve/Connect
+story in tasks 13.3-13.5. Preserve the accepted execution and mounting owners;
+do not infer async orchestration order from declared step membership. Retain the
+actual outer callback and triggers through the selected private handoff.
+Container-free proofs establish coldness, client identity and local lifetime;
+native retry, replay, history and Connect require a disposable development server.
+
+The next opening must also assign the currently unimplemented canonical
+`WorkflowDispatcher` consumer explicitly. Sections 15.8/19.1/24.4 prescribe
+process-owned materialization and server-only event admission, but tasks
+13.3-13.5 qualify native hosts without that consumer. Current derivation and
+compiler only attach the descriptor to its async execution owner; they do not
+yet represent server admission reachability. Keep this obligation unretired
+and separate from `FunctionBundle`, rather than silently treating native host
+acceptance or task 15's audit as its implementation.
+
+### Accepted Binding And Execution
 
 Tasks 8-9 turn the ready process into bounded resource access, cached native
 service clients and non-oRPC descriptor execution, with one idempotent process
@@ -866,6 +926,45 @@ external extension build/tests. This is candidate acceptance, not release.
 Next: admit this story and continue with complete native Elysia/oRPC server
 qualification, rather than a listener-only intermediate or product resumption.
 
+The authoring candidate's remote required check exposed only an undersized test
+budget around three bounded native generator subprocesses. The repair retains
+each 30-second subprocess deadline and gives those two integration tests a
+120-second outer budget. Corrected candidate `e2f7389af` passed required run
+33962851522 and Linux/Windows installed run 33962851116. Graphite's one native
+stack merge completed PRs 1012-1017, ending at main
+`c954d04cb67280cff51d5f71a8d154d6b8410473`; exact-main verification remains
+separate from those candidate receipts. No runtime behavior changed in this repair.
+
+### Native Server Qualification
+
+Tasks 13.1/13.2 are locally accepted. Cold Elysia descriptors, selected exact
+server factories, native public OpenAPI/internal RPC and official `.effect`
+requests now compose through the existing process lifecycle. Two real hosts
+share one provider topology. Request abort finalizes the native Effect; graceful
+stop refuses fresh connections, retains gated requests through the deadline,
+and releases resources exactly once only after native settlement.
+
+Independent reviews repaired cross-owner route shadowing using the pinned
+native router's overlap/matching facilities, and retained native trace IDs for
+ordinary `.handler` calls as well as `.effect`. No remaining P1/P2 was found.
+Actual OTLP receipt proves both native procedure and nested Effect correlation;
+disabled telemetry preserves the same lifecycle without inventing trace IDs.
+No second runtime, telemetry provider, request interpreter or routing engine
+was introduced. Native exception sanitization and backend queryability remain
+the separately named qualifications below.
+
+Verification: full repository CI passed all 163 tasks for 35 projects (eight
+cache hits). All nine installed-package tests passed in 207.25 seconds after
+correcting the packed blueprint structure inventory to include harness v2.
+Installed proof covers cold optional-host imports and the shared native
+oRPC/Effect dependency realm, not a packed Elysia child launch. Three isolated
+owner cache proofs passed 36 assertions, including exact output restoration
+and relevant-input invalidation. Native source-law regression tests passed
+four tests/21 assertions; strict OpenSpec validation passed. The strengthened
+composed fixture additionally checks request-signal identity and native defect
+response sanitization. These are local candidate receipts, not release or
+remaining async/same-app child acceptance.
+
 ### Backend Receipt Reuse
 
 Read-only discovery found a running Podman machine `orpc-efficacy-085`, cached
@@ -886,6 +985,18 @@ events flow through the one OpenTelemetry Logs pipeline, not a second OTLP
 writer, resource bootstrap or shutdown owner. Treat this as a source-backed
 integration input to requalify with the new native hosts, not current runtime
 implementation evidence.
+
+Native exception policy is a separate, explicit qualification input: pinned
+oRPC and Effect OpenTelemetry capture exception messages/stacks and status text.
+The provider's exportedAttributePaths config filters its authored defaults and
+technical logs, not arbitrary native spans. Current acceptance proves no
+automatic request input/output capture and data-only Habitat diagnostics; it
+does not claim all wire telemetry is secret-free. Before external backend
+deployment, qualify a deliberate secret-bearing exception against the chosen
+provider-owned sanitization policy. Preserve native outcomes and useful trace
+identity rather than modifying errors in the request bridge. This remains an
+unretired full-observability/export-policy obligation, not a generic catalog
+redaction engine or permission to reuse held telemetry WIP unchanged.
 
 ### Vendor Reference Maintenance
 
@@ -977,6 +1088,6 @@ not wholesale architecture replacements.
 Read this record, the current OpenSpec queue and the selected owner's authority.
 Admit each complete verified story through Graphite. Request one native stack
 merge when its candidates are green and sweep consumed branches only after
-actual merge. Continue from generic mounting into the complete Oclif self-host,
+actual merge. Continue from the native server into complete async qualification,
 using the SDK authorship inputs and native contracts at each actual boundary.
 Consumer repositories and held source remain outside this authorization.

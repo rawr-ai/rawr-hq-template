@@ -136,6 +136,11 @@
       "import": "./dist/runtime/harnesses/index.js",
       "default": "./dist/runtime/harnesses/index.js"
     },
+    "./runtime/harnesses/elysia": {
+      "types": "./dist/runtime/harnesses/elysia.d.ts",
+      "import": "./dist/runtime/harnesses/elysia.js",
+      "default": "./dist/runtime/harnesses/elysia.js"
+    },
     "./runtime/observation": {
       "types": "./dist/runtime/observation/index.d.ts",
       "import": "./dist/runtime/observation/index.js",
@@ -186,13 +191,19 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@effect/opentelemetry": "4.0.0-beta.101",
     "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/resources": "2.6.0",
+    "@opentelemetry/semantic-conventions": "1.40.0",
     "@orpc/client": "2.0.0-beta.32",
     "@orpc/contract": "2.0.0-beta.32",
     "@orpc/experimental-effect": "2.0.0-beta.32",
+    "@orpc/openapi": "2.0.0-beta.32",
+    "@orpc/opentelemetry": "2.0.0-beta.32",
     "@orpc/server": "2.0.0-beta.32",
     "@orpc/shared": "2.0.0-beta.32",
     "@standard-schema/spec": "1.1.0",
+    "rou3": "0.9.1",
     "effect": "4.0.0-beta.101",
     "dotenv": "16.4.7",
     "typebox": "1.3.8"
@@ -203,10 +214,14 @@
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
-    "@oclif/core": "^4.13.3"
+    "@oclif/core": "^4.13.3",
+    "elysia": "1.4.30"
   },
   "peerDependenciesMeta": {
     "@oclif/core": {
+      "optional": true
+    },
+    "elysia": {
       "optional": true
     }
   },

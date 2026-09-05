@@ -6,6 +6,7 @@ import {
   lstat,
   mkdir,
   mkdtemp,
+  readdir,
   readFile,
   realpath,
   rm,
@@ -44,12 +45,14 @@ test("restores an unchanged harness build and invalidates owner and upstream inp
     expect(first, first.stderr || first.stdout).toMatchObject({ exitCode: 0 });
     expect(cacheHit(first)).toBe(false);
     const expectedOutput = await readFile(outputPath);
+    const expectedAssets = await outputAssets(outputRoot);
 
     await rm(outputRoot, { recursive: true, force: false });
     const restored = await runBuild(fixtureRoot);
     expect(restored, restored.stderr || restored.stdout).toMatchObject({ exitCode: 0 });
     expect(cacheHit(restored), `${restored.stdout}\n${restored.stderr}`).toBe(true);
     expect(await readFile(outputPath)).toEqual(expectedOutput);
+    expect(await outputAssets(outputRoot)).toEqual(expectedAssets);
 
     await writeFile(
       configPath,
@@ -78,6 +81,17 @@ test("restores an unchanged harness build and invalidates owner and upstream inp
     await removeFixture(fixtureRoot);
   }
 }, 120_000);
+
+async function outputAssets(root: string): Promise<readonly (readonly [string, string])[]> {
+  const files = (await readdir(root, { recursive: true })).sort();
+  const assets: [string, string][] = [];
+  for (const relative of files) {
+    const filename = path.join(root, relative);
+    if ((await lstat(filename)).isFile())
+      assets.push([relative, (await readFile(filename)).toString("base64")]);
+  }
+  return assets;
+}
 
 async function createFixture(): Promise<string> {
   const fixtureRoot = await realpath(await mkdtemp(path.join(temporaryParent, FIXTURE_PREFIX)));
@@ -114,17 +128,22 @@ async function createFixture(): Promise<string> {
     }
     await writeNxConfig(fixtureRoot);
     for (const dependency of [
+      "@effect/opentelemetry",
+      "@opentelemetry/api",
       "@orpc/client",
       "@orpc/experimental-effect",
       "@orpc/contract",
       "@orpc/server",
+      "@orpc/openapi",
       "@orpc/shared",
       "@standard-schema/spec",
       "@types/node",
       "bun-types",
       "effect",
+      "elysia",
       "dotenv",
       "nx",
+      "rou3",
       "tsdown",
       "typebox",
       "typescript",

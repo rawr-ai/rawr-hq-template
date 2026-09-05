@@ -1,10 +1,12 @@
-import type {
-  CompiledServiceBindingPlan,
-  CompiledSurfacePlan,
-  RuntimeCompilationResult,
+import {
+  type CompiledServiceBindingPlan,
+  type CompiledSurfacePlan,
+  type RuntimeCompilationResult,
+  readRuntimeCompilationServerSources,
 } from "../../compiler/src/index";
 import type {
   ConstructionBoundServiceClient,
+  RuntimeObservationPort,
   ServiceConstructorInput,
   ServiceDefinition,
   ServiceRuntimeExport,
@@ -23,6 +25,7 @@ import {
   type PrepareMountsInput,
 } from "./mount-ready-process";
 import { createRuntimeAccess, type RuntimeAccess } from "./runtime-access";
+import { createNativeServerRequestAssembly } from "./server-request";
 import { createServiceBindingCache } from "./service-binding-cache";
 import { createServiceClientAssembly } from "./service-client-assembly";
 import type { AdapterLoweringResult, SurfaceAdapter } from "./surface-adapter";
@@ -50,6 +53,7 @@ export interface CreateProcessRuntimeInput {
   readonly provisioned: ProvisionedProcess;
   readonly descriptorTable: ExecutionDescriptorTable;
   readonly semanticAdapters?: ReadonlyMap<string, unknown>;
+  readonly observation?: RuntimeObservationPort;
 }
 
 export async function createProcessRuntime(
@@ -71,6 +75,7 @@ export async function createProcessRuntime(
 
   try {
     const { plan, references } = input.compilation;
+    const serverSources = new Map(readRuntimeCompilationServerSources(references));
     const registry = createExecutionRegistry({
       processId: plan.identity.process,
       registryInput: plan.executionRegistryInput,
@@ -218,6 +223,7 @@ export async function createProcessRuntime(
         values: handoff.values,
         admission,
       });
+      const serverSource = serverSources.get(surface.surfacePlanId);
       return adapter.lower({
         plan: surface,
         processAccess: access.process,
@@ -226,6 +232,28 @@ export async function createProcessRuntime(
         resources: capabilities.resources,
         executionRegistry: registry,
         executionRuntime: execution,
+        ...(serverSource === undefined
+          ? {}
+          : {
+              nativeServer: {
+                source: serverSource,
+                requests: createNativeServerRequestAssembly({
+                  identity: plan.identity,
+                  surface,
+                  admission,
+                  capabilities: (continuation) =>
+                    createSurfaceCapabilities({
+                      compilation: input.compilation,
+                      surface,
+                      bindings: bound,
+                      values: handoff.values,
+                      admission,
+                      continuation,
+                    }),
+                  observation: input.observation,
+                }),
+              },
+            }),
       });
     }
     const prepareMounts = createMountPreparation({

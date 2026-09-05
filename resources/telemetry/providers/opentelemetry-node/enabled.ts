@@ -56,6 +56,8 @@ import {
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
+import { ORPCInstrumentation } from "@orpc/opentelemetry";
+import { getOpenTelemetryConfig } from "@orpc/shared";
 import { Effect } from "effect";
 
 import { constructionDiagnostic, makeDegradedOpenTelemetryNodeLease } from "./degraded.js";
@@ -121,6 +123,7 @@ interface EnabledRuntime extends TelemetryRuntimeLifecycle {
   readonly meterProvider: MeterProvider;
   readonly loggerProvider: LoggerProvider;
   readonly propagator: CompositePropagator;
+  readonly enableORPC: () => void;
 }
 
 let enabledAcquisitionClaimed = false;
@@ -134,6 +137,12 @@ export async function acquireEnabledOpenTelemetryNode(
     return makeDegradedOpenTelemetryNodeLease(
       config,
       constructionDiagnostic("PROVIDER_ALREADY_ACQUIRED")
+    );
+  }
+  if (getOpenTelemetryConfig() !== undefined) {
+    return makeDegradedOpenTelemetryNodeLease(
+      config,
+      constructionDiagnostic("GLOBAL_TELEMETRY_OWNER_PRESENT")
     );
   }
   enabledAcquisitionClaimed = true;
@@ -250,6 +259,8 @@ async function constructRuntime(
     const activeMeterProvider = meterProvider;
     const activeLoggerProvider = loggerProvider;
     const activeContextManager = contextManager;
+    const instrumentation = new ORPCInstrumentation({ enabled: false });
+    let installedORPC: ReturnType<typeof getOpenTelemetryConfig>;
 
     return {
       tracerProvider: activeTracerProvider,
@@ -257,6 +268,15 @@ async function constructRuntime(
       loggerProvider: activeLoggerProvider,
       contextManager: activeContextManager,
       propagator,
+      enableORPC: () => {
+        instrumentation.enable();
+        installedORPC = getOpenTelemetryConfig();
+      },
+      releaseORPC: () => {
+        if (installedORPC !== undefined && getOpenTelemetryConfig() === installedORPC)
+          instrumentation.disable();
+        installedORPC = undefined;
+      },
       ownership: {
         context: false,
         propagation: false,
@@ -292,6 +312,7 @@ async function constructRuntime(
 }
 
 function registerRuntime(runtime: EnabledRuntime): boolean {
+  if (getOpenTelemetryConfig() !== undefined) return false;
   const ownership: GlobalOwnership = runtime.ownership;
   ownership.context = context.setGlobalContextManager(runtime.contextManager);
   if (!ownership.context) return false;
@@ -302,7 +323,9 @@ function registerRuntime(runtime: EnabledRuntime): boolean {
   ownership.metrics = metrics.setGlobalMeterProvider(runtime.meterProvider);
   if (!ownership.metrics) return false;
   ownership.logs = logs.setGlobalLoggerProvider(runtime.loggerProvider) === runtime.loggerProvider;
-  return ownership.logs;
+  if (!ownership.logs) return false;
+  runtime.enableORPC();
+  return true;
 }
 
 function makeEnabledLease(

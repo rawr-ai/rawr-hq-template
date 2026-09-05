@@ -14,6 +14,7 @@ import {
   type RuntimeStartupRecord,
   readLifecycleRecord,
 } from "./lifecycle";
+import { readServerProcedureRecord, type ServerProcedureRecord } from "./server-procedure";
 import {
   createTelemetry,
   type RuntimeDiagnostic,
@@ -108,6 +109,32 @@ export function createRuntimeObservation(input: {
     telemetry.event(record.kind, record);
   }
 
+  function appendProcedure(record: ServerProcedureRecord): void {
+    lastRecordAt = Date.now();
+    history.push({
+      diagnostic: {
+        id: `observation:${++sequence}`,
+        severity: record.nativeEffect?.defect
+          ? "error"
+          : record.outcome === "rejected"
+            ? "warning"
+            : "info",
+        phase: "observation",
+        recordKind: "status",
+        boundary: "process-runtime",
+        code: record.kind,
+        message: "A selected native server procedure returned or rejected.",
+        redaction: "safe",
+        payload: record,
+      },
+    });
+    if (history.length > limit) {
+      history.shift();
+      dropped++;
+    }
+    telemetry.event(record.kind, record);
+  }
+
   function append(payload?: ReleaseFailure): void {
     lastRecordAt = Date.now();
     const diagnostic: RuntimeDiagnostic =
@@ -150,6 +177,11 @@ export function createRuntimeObservation(input: {
       try {
         const envelope = fields(record, ["phase", "boundary", "kind", "correlationId", "payload"]);
         if (envelope !== undefined) {
+          const procedure = readServerProcedureRecord(envelope, seed);
+          if (procedure !== undefined) {
+            appendProcedure(procedure);
+            return;
+          }
           const lifecycleRecord = readLifecycleRecord(envelope, seed);
           if (lifecycleRecord !== undefined && lifecycle.accept(lifecycleRecord)) {
             appendLifecycle(lifecycleRecord);

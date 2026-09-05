@@ -70,6 +70,10 @@
   companion contract types, including bounded process access and definition-owned
   launch identity. It exports no live values, private mounting handles, host
   imports, registration singleton, or lifecycle controller.
+- The separate `@habitat-ai/sdk/runtime/harnesses/elysia` face exposes the cold
+  `createElysiaHarness` factory and exact companion types. Only native mount
+  dynamically imports the optional Elysia peer. The factory adds no host
+  selector, registration singleton, or second integration representation.
 - `@habitat-ai/sdk/runtime/observation` exposes only diagnostic, catalog,
   topology and telemetry contract types. It exports no collector factory,
   observation port implementation, storage, native sink or control surface.
@@ -84,6 +88,11 @@
   private runtime identity and adapter as source. Keep their definition witness
   in the same runtime assembly; do not bundle a second copy into the legacy
   private resource package or claim a new public telemetry provider export.
+  The standalone Bun `test/fixtures/server-runtime.ts` owns terminal composed
+  server acceptance, including the real OTLP receiver; native harness and
+  process owners retain their isolated tests. Native harness acceptance targets
+  invoke this fixture after the SDK build without importing SDK source into a
+  private runtime implementation or creating a nested Nx scheduler.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -130,6 +139,8 @@
   bootgraph policy-pack membership is asset carriage rather than an
   implementation or public-face edge.
   Shipped files are not members merely by being present.
+  `runtime-harnesses@1` remains immutable; its complete version-2 successor
+  admits the owner-local `elysia/` native host beside generic contracts.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
   qualified overlays remain repository-owned.
@@ -190,6 +201,7 @@
   `@habitat-ai/sdk/runtime/providers/effect`.
 - Public complete runtime derivation: `@habitat-ai/sdk/runtime/derivation`.
 - Public type-only companion contract: `@habitat-ai/sdk/runtime/harnesses`.
+- Public cold Elysia companion: `@habitat-ai/sdk/runtime/harnesses/elysia`.
 - Public type-only read models: `@habitat-ai/sdk/runtime/observation`.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and

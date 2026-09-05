@@ -1,8 +1,9 @@
 import { createEffectClient } from "@orpc/experimental-effect";
-import { Context, Effect } from "effect";
+import { Context } from "effect";
 
 import type { ServiceClientAssembly } from "../../definition/src/index";
 import { type InvocationTracker, invocationContinuationContext } from "./invocation-tracker";
+import { withNativeEffectTracing } from "./native-effect-tracing";
 
 export function createServiceClientAssembly(admission: InvocationTracker): ServiceClientAssembly {
   // Domain dependencies are explicit constructor inputs, not a process-wide Context store.
@@ -20,8 +21,8 @@ export function createServiceClientAssembly(admission: InvocationTracker): Servi
               ...serviceContext(),
               "effect/context": context,
               "effect/wrap": (program, options) =>
-                Effect.withSpan(program, "service.operation", {
-                  attributes: { "rpc.method": options.path.join(".") },
+                withNativeEffectTracing(program, "service.operation", {
+                  "rpc.method": options.path.join("."),
                 }),
             };
           },

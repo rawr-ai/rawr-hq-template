@@ -72,6 +72,7 @@ import {
   buildPortableRuntimePlanArtifact,
   type PortableRuntimePlanArtifact,
 } from "./portable-runtime-plan-artifact";
+import { readServerSource } from "./server-source";
 import type { NormalizedRuntimeConfigRef, ServiceBindingPlan } from "./service-binding-plan";
 import { assertSurfaceReferenceRelation } from "./surface-reference-policy";
 import type { SurfaceRuntimePlan } from "./surface-runtime-plan";
@@ -1243,6 +1244,21 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       .map((state) => buildSurfacePlan(state, executionDescriptorRefs, webRouteModuleRefs))
       .sort((left, right) => compareStrings(left.surfacePlanId, right.surfacePlanId))
   );
+  const serverSources = Object.freeze(
+    pluginStates
+      .flatMap((state) => {
+        const source = readServerSource(state.definition);
+        if (source === undefined) return [];
+        const id = surfacePlanId({
+          pluginOwnerId: state.ownerId,
+          role: state.definition.role,
+          surface: state.definition.surface,
+          capability: state.definition.capability,
+        });
+        return [Object.freeze([id, source] as const)];
+      })
+      .sort(([left], [right]) => compareStrings(left, right))
+  );
   const workflowDispatcherDescriptors = Object.freeze(
     pluginStates
       .flatMap((state) =>
@@ -1383,6 +1399,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
           .sort(([left], [right]) => compareStrings(left, right))
           .map(([id, requirement]) => Object.freeze([id, requirement] as const))
       ),
+      serverSources,
       executionPolicies: Object.freeze(
         executionDescriptorTable
           .entries()

@@ -69,6 +69,7 @@ const expectedRuntimeExports = [
   "./execution",
   "./runtime/derivation",
   "./runtime/harnesses",
+  "./runtime/harnesses/elysia",
   "./runtime/observation",
   "./runtime/profiles",
   "./runtime/providers",
@@ -146,6 +147,19 @@ describe("runtime authoring public faces", () => {
   test("imports the companion harness contract without live values", async () => {
     expect(Object.keys(await import("../src/runtime/harnesses"))).toEqual([]);
     expect(Object.keys(await import("../src/runtime/observation"))).toEqual([]);
+  });
+
+  test("projects only the cold Elysia descriptor factory on its explicit companion face", async () => {
+    const face = await import("../src/runtime/harnesses/elysia");
+    expect(Object.keys(face)).toEqual(["createElysiaHarness"]);
+    const descriptor = face.createElysiaHarness({
+      id: "native",
+      hostname: "127.0.0.1",
+      port: 0,
+      publicDocument: { path: "/openapi.json", info: { title: "Cold", version: "1" } },
+    });
+    expect(descriptor.id).toBe("native");
+    expect(descriptor.surfaces).toEqual(["server/api", "server/internal"]);
   });
   test("projects the exact cold tool/background authoring families without native hosts", async () => {
     const agent = await import("../src/plugins/agent");
@@ -684,13 +698,14 @@ describe("runtime authoring public faces", () => {
     }
   });
 
-  test("declares exactly the task 4.2 and 4.6 plugin subpaths without native-host metadata", () => {
+  test("keeps plugin subpaths closed and admits only the explicit optional Elysia peer", () => {
     const packageJson = JSON.parse(
       readFileSync(new URL("../package.json", import.meta.url), "utf8")
     ) as {
       exports: Record<string, unknown>;
       dependencies?: Record<string, string>;
       peerDependencies?: Record<string, string>;
+      peerDependenciesMeta?: Record<string, { optional?: boolean }>;
       optionalDependencies?: Record<string, string>;
     };
     const pluginExports = Object.keys(packageJson.exports)
@@ -731,6 +746,10 @@ describe("runtime authoring public faces", () => {
     expect(packageJson.exports).not.toHaveProperty("./plugins/server/mcp");
     expect(packageJson.exports).not.toHaveProperty("./plugins/async/inngest");
     expect(packageJson.exports).not.toHaveProperty("./plugins/web/effect");
-    expect(dependencyNames.filter((name) => /elysia|inngest/i.test(name))).toEqual([]);
+    expect(dependencyNames.filter((name) => /elysia|inngest/i.test(name))).toEqual(["elysia"]);
+    expect(packageJson.peerDependencies?.elysia).toBe("1.4.30");
+    expect(packageJson.peerDependenciesMeta?.elysia).toEqual({ optional: true });
+    expect(packageJson.dependencies ?? {}).not.toHaveProperty("elysia");
+    expect(packageJson.optionalDependencies ?? {}).not.toHaveProperty("elysia");
   });
 });

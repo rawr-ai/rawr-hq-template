@@ -176,6 +176,31 @@ identity, ordering and coldness tests; do not blanket-delete defenses.
 
 ## Risks / Trade-offs
 
+### Native Server Realization
+
+Tasks 13.1 and 13.2 co-land one complete native server story: the cold Elysia
+companion, selected private source handoff, native OpenAPI/public and RPC/internal
+handlers, original-request context, native Effect bridge, real graceful drain
+and provider-owned native telemetry. The accepted cohort is Bun 1.3.14,
+Elysia 1.4.30, Effect and Effect OpenTelemetry 4.0.0-beta.101, and oRPC
+2.0.0-beta.32. This does not add a new SDK host selector or registration model.
+
+Public documents use native contract projection before synthetic router
+aggregation so default paths remain identical to the served paths. Internal
+routers remain absent from publication; the host refuses cross-owner route
+collisions rather than silently accepting first-handler shadowing. Distinct
+host descriptors replicate selected surfaces, while the same descriptor
+cohosts its registered lanes. Native router semantics within a surface remain
+native-owned.
+
+The composed server fixture belongs to the terminal SDK test owner and runs
+under Bun through both native harness acceptance targets. It is not a private
+runtime import of the SDK. A real local OTLP receiver proves transmission and
+request/Effect trace lineage in ordinary tests. It deliberately does not claim
+collector processing or backend persistence/queryability. Those and product
+wide-event cardinality remain full-observability qualifications, not reasons to
+add Podman startup to the server's ordinary deterministic acceptance.
+
 The cold pipeline correction spans definition, derivation and compiler because
 their shared meaning is the defect. Splitting it into nonconforming law-only or
 half-plumbed source nodes would preserve a false green state. Task 0.1 is one
