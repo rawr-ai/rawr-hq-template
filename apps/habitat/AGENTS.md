@@ -38,7 +38,7 @@
 
 ## Flow
 
-- `habitat.app.ts` selects the foundation topic; `runtime/processes.ts` and
+- `habitat.app.ts` selects the foundation and authoring topics; `runtime/processes.ts` and
   `runtime/profiles/**` declare process and provider selections. `cli.ts`
   creates the exact entrypoint and starts it through the SDK.
 - `src/application.ts` supplies deployment input and native host mode.
@@ -57,6 +57,10 @@
 
 - Executable: `habitat`.
 - Native external-extension lifecycle: `habitat plugins ...`.
+- Source authoring: `habitat cli command create <topic> <name>` and
+  `habitat cli extension create <id> --destination <path>`, both with `--dry-run`.
+  The app supplies separate native generator runners; the invoking directory
+  is their exact root. Source creation never installs or activates its output.
 - Nx plugin: `@habitat-ai/cli/nx-plugin`.
 - Nx generators: `@habitat-ai/cli:preset`, `@habitat-ai/cli:init`, and
   `@habitat-ai/cli:remove-hook`.
@@ -83,6 +87,8 @@
   `@habitat-ai/cli:build`, and `@habitat-ai/cli:manifest` through Nx.
 - Run `@habitat-ai/cli:acceptance:oclif-native-plugins` when native extension
   installation or state behavior changes.
+- Run `@habitat-ai/cli:acceptance:generators-installed-package` for native Nx
+  generator and installed source-authoring command changes.
 - Run `@habitat-ai/cli:acceptance:generators-installed-package` for source
   creators. It reuses the isolated-registry native `nx add` fixture and executes
   the packed generators through native `nx generate`, not source imports.

@@ -1545,6 +1545,14 @@ describe("installed Habitat products", () => {
     expect(oclifManifest.version).toBe(productVersion("@habitat-ai/cli"));
     expect(oclifManifest.commands).toEqual({
       check: expect.objectContaining({ id: "check", pluginName: "@habitat-ai/cli" }),
+      "cli:command:create": expect.objectContaining({
+        id: "cli:command:create",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "cli:extension:create": expect.objectContaining({
+        id: "cli:extension:create",
+        pluginName: "@habitat-ai/cli",
+      }),
       hook: expect.objectContaining({ id: "hook", pluginName: "@habitat-ai/cli" }),
       resolve: expect.objectContaining({ id: "resolve", pluginName: "@habitat-ai/cli" }),
     });
