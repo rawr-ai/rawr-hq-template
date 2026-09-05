@@ -32,6 +32,7 @@ import {
   deriveCommandExecutionEntry,
   deriveDesktopBackgroundExecutionEntry,
   deriveToolExecutionEntry,
+  deriveWebExecutionEntry,
   type ExecutionDescriptorTable,
 } from "./derive-execution-descriptor-table";
 import type { ExecutionDescriptorRef } from "./execution-descriptor-ref";
@@ -1118,6 +1119,12 @@ function isCliTopicPlugin(plugin: PluginDefinition): plugin is CliTopicPluginDef
 function collectWebEntries(state: PluginDerivationState): void {
   if (!isWebPlugin(state.definition)) return;
   for (const route of state.definition.routes) {
+    if ("effect" in route) {
+      if ("module" in route && route.module !== undefined)
+        throw new TypeError("A web route must select exactly one Effect or module contribution.");
+      state.executionEntries.push(deriveWebExecutionEntry(state.ownerId, route));
+      continue;
+    }
     if (typeof route.module !== "function") throw new TypeError("A web route requires a loader.");
     state.webEntries.push(
       Object.freeze({

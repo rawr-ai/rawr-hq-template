@@ -156,8 +156,8 @@ published example project.
 
 ## 14. Realize The Qualified Web Harness
 
-- [ ] 14.1 Add the generic web adapter/harness build handoff and the required `@habitat-ai/sdk/plugins/web/effect` executable authoring face with an indispensable owner-local Habitat conformance fixture. Preserve the distinction between route-module loading and an actual web-local Effect body: only the latter enters descriptor/registry execution. Create no browser managed runtime without a selected browser resource.
-- [ ] 14.2 Prove the fixture's build output and native mount handoff through the terminal SDK web faces and exact `runtime-harnesses:acceptance:web` target, including a real selected web-local Effect body through its descriptor, derivation, lowering and process execution plus cold installed imports. Keep only the minimum owner-local fixture required by that acceptance. The deleted Vite/React product surface, `apps/web`, and `@rawr/web` identity remain absent.
+- [x] 14.1 Add the generic web adapter/harness build handoff and the required `@habitat-ai/sdk/plugins/web/effect` executable authoring face with an indispensable owner-local Habitat conformance fixture. Preserve the distinction between route-module loading and an actual web-local Effect body: only the latter enters descriptor/registry execution. Create no browser managed runtime without a selected browser resource.
+- [x] 14.2 Prove the fixture's build output and native mount handoff through the terminal SDK web faces and exact `runtime-harnesses:acceptance:web` target, including a real selected web-local Effect body through its descriptor, derivation, lowering and process execution plus cold installed imports. Keep only the minimum owner-local fixture required by that acceptance. The deleted Vite/React product surface, `apps/web`, and `@rawr/web` identity remain absent.
 
 ## 15. Audit, Handoff, Land, And Drain
 

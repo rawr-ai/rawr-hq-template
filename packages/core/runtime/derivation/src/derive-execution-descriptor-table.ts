@@ -8,6 +8,7 @@ import {
   type ExecutionDescriptor,
 } from "../../definition/src/execution";
 import type { ProcedureExecutionContext } from "../../definition/src/execution-context";
+import { lowerWebEffectDescriptor, type WebEffectDescriptor } from "../../definition/src/web";
 import type { RuntimeSchemaResult } from "../../schema/src/runtime-schema";
 import {
   assertExecutionDescriptorRefOwnData,
@@ -283,6 +284,26 @@ export function deriveDesktopBackgroundExecutionEntry(
     { boundary: "plugin.desktop-background", ownerId, backgroundId: background.id },
     background
   );
+}
+
+export function deriveWebExecutionEntry(
+  ownerId: string,
+  route: { readonly id: string; readonly path: string; readonly effect: WebEffectDescriptor }
+): readonly [ExecutionDescriptorRef, ExecutionDescriptor<unknown, unknown, unknown, unknown>] {
+  const identity: ExecutionDescriptorIdentityInput = {
+    boundary: "plugin.web-surface",
+    ownerId,
+    surfaceId: route.id,
+  };
+  const ref = refFromIdentity(identity, executionDescriptorId(identity));
+  return Object.freeze([
+    ref,
+    lowerWebEffectDescriptor({
+      executionId: ref.executionId,
+      path: route.path,
+      descriptor: route.effect,
+    }),
+  ]);
 }
 
 export function createExecutionDescriptorTable(

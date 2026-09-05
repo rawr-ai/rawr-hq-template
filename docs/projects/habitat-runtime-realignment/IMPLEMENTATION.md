@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; workflow admission locally qualified and entering remote admission; process isolation landed and exact-main accepted.
-Branch: `agent-root-habitat-workflow-admission`; Graphite parent `main`.
+Status: `active`; native web locally qualified for admission; workflow admission merged and exact-main verified.
+Branch: `agent-root-habitat-native-web`, parent `main` after workflow admission.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -15,6 +15,12 @@ Installed authoring [1017](https://github.com/rawr-ai/rawr-hq-template/pull/1017
 Native server [1018](https://github.com/rawr-ai/rawr-hq-template/pull/1018).
 Native async [1019](https://github.com/rawr-ai/rawr-hq-template/pull/1019).
 Built process isolation [1020](https://github.com/rawr-ai/rawr-hq-template/pull/1020).
+Workflow admission [1021](https://github.com/rawr-ai/rawr-hq-template/pull/1021),
+candidate `66397039ebdb18f84dcd4b21b7a94194eb7374ff`, merged as
+`18baa71dfbb6e62a3a0db98b619336e2a0ed1dce` on 2026-09-05.
+Its required candidate and Linux/Windows installed checks passed; exact-main
+Repository Ratchet [33985315987](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33985315987)
+passed. Graphite's native merge completed before the one consumed-branch sweep.
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -69,9 +75,14 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: task 13.7, explicit server-only workflow event admission.
-The accepted design below is a capability relation and native send boundary,
-not a workflow engine, generic event bus or new provider lifecycle.
+Current domino: tasks 14.1/14.2 together, native web build/mount handoff and
+request-time web-local Effect execution. The accepted design below separates
+native module loading from actual managed execution. It is not a product web
+app, browser managed runtime, router framework or general SSR platform.
+
+Task 13.7, explicit server-only workflow event admission, is locally qualified
+and submitted. Its native send boundary adds no workflow engine, generic event
+bus or provider lifecycle.
 
 The qualified predecessor is task 13.5, independently built same-app children through an
 ordinary packed SDK. One app and finite process catalog select separate thin
@@ -1267,6 +1278,124 @@ Habitat's generic harness lifecycle. Re-enter only with an independently
 versioned ordinary artifact and qualified public lifecycle. No MCP dependency,
 internal implementation, authoring face, copied artifact or release claim is
 admitted; the generic companion contract remains unchanged and core work proceeds.
+
+### Native Web Design
+
+Two independent cold/API and native-lifecycle reviews converged on one route
+array with disjoint arms: existing `{ id, path, module }` and new
+`{ id, path, effect }`. The latter retains one exact cold web descriptor from
+`defineWebEffect`; `route.id` supplies the existing `plugin.web-surface`
+occurrence identity. There is no second authored ID, separate effects tuple,
+discovery inside loaded modules or new descriptor registry. The derivation
+owner lowers cold web bodies through the definition-owned helper into ordinary per-occurrence operational
+descriptors with private route projection, using the same selected derivation,
+compilation and process execution path as other non-oRPC boundaries.
+
+For this first qualification, actual web-local execution means request-time
+work in a selected web-role host process. The original native Request is the
+existing procedure-context `input`; the result is a Response. Explicit ordinary
+host-process resource requirements are admitted; direct service binding stays
+absent. The body uses the existing resources, execution and telemetry context,
+native Effect values and policy. Request.signal supplies cancellation. No
+request reconstruction, second Effect runtime, browser resource inference or
+second request/context bag is added.
+
+Lazy route modules remain a different channel. Pass the existing exact
+WebRouteModuleTable through terminal startup to selected process lowering;
+resolve only the compiled route references. Module loaders run at native mount,
+not derivation, build-graph discovery or Effect execution. The generic payload
+distinguishes loader entries from bound Request-to-Response callbacks. The
+qualified Bun companion accepts the native module default HTMLBundle, owns the
+one native route map, rejects duplicate exact path ownership and otherwise
+retains Bun's native matching, asset and HTTP behavior. No wrapper around an
+arbitrary second mount callback satisfies this story.
+
+The pinned Bun 1.3.14 probe qualifies the canonical lazy TypeScript route module
+that statically imports HTML and exports its native HTMLBundle. Both unsplit and
+split/minified AOT builds run with source unavailable and serve actual HTML,
+JavaScript and CSS. Direct dynamic HTML imports instead fail in the native
+bundler (`require_page` undefined), so they are not a qualified example. Native
+AOT asset paths are output-relative; the deployment launches from the artifact
+root. Habitat does not change cwd or rewrite the native manifest. Bun owns the
+build through ordinary deployment tooling, not an author-callback parser or
+runtime bundler.
+
+The real native probe proves graceful stop refuses fresh connections but waits
+for both a held handler and a separately gated Response body. The existing
+invocation tracker does not yet retain Response.body: the implementation must
+extend its same lease through actual body settlement/cancellation, including
+pending native reads and cancellation cleanup. It must not create another tracker or claim that callback return
+proves HTTP drain. Native status/headers/body semantics matter; arbitrary custom
+Response subclass identity is not a new promised protocol.
+
+A follow-up native probe distinguishes transport stop from async body-cancel
+cleanup: Bun may finish `stop(false)` before that cleanup settles. The existing
+invocation lease must retain it independently. Bun also requires a real branded
+ReadableStream as Response.body; the existing override-proxy stream cannot be
+used there. Reuse the native stream wrapper without an override and reconstruct
+an ordinary Response, preserving status, headers and body, instead of adding a
+new stream or invocation protocol.
+
+The discriminating cancellation test also establishes the native limit:
+WHATWG cancellation closes pending reads immediately, before the underlying
+source's hidden async `pull` work must settle. An authored source must settle
+that work through its own `cancel` promise. Habitat retains native reads and
+cancellation cleanup, not unobservable abandoned work. Positive proofs join
+underlying work in `cancel`; the boundary proof refuses late capability access
+after native ownership ends. This follows the
+[native cancellation algorithm](https://streams.spec.whatwg.org/#readable-stream-cancel),
+not a second Habitat stream runtime.
+
+Independent review found and corrected a cross-lane regression before admission:
+Response body retention is explicitly enabled only for web execution on the
+existing tracker. Other lanes preserve their original Response identity and
+settlement, because native async serialization need not consume an HTTP body.
+
+A no-SDK Bun 1.3.14 discriminator also shows that an unhandled native route
+rejection can serve HTTP 500 but leave a nonzero child exit at graceful stop.
+The companion now uses Bun's ordinary
+[error callback](https://bun.sh/docs/runtime/http/error-handling) for a bounded
+500 response, preserving internal execution failures without leaking details or
+resetting process exit state. The composed proof asserts the actual failing
+Effect ran, not merely a generic 500, and requires every lifecycle event before
+comparing its order.
+
+Current proof: both unsplit and split/minified ordinary installed SDK builds
+run with route/HTML/JS/CSS source unavailable. Actual native asset fetches,
+request body/path/headers and Response status/headers, Effect failure and request
+cancellation, joined body cancellation cleanup, expired capabilities and real
+file release all pass. This does not claim browser JS execution, framework SSR
+or a new browser runtime. Shared repository and installed-policy gates remain
+required before this node is admitted.
+
+Review/qualification disposition: definition behavior and strict types pass
+(53 tests, 695 assertions); cold derivation/compiler behavior passes (154 tests);
+process/native owner behavior passes (100 tests, 737 assertions). Independent
+architecture, TypeScript, behavior and native-lifecycle review found no remaining
+material issue after the scoped Response retention and failure-oracle repairs.
+The new complete harness law v4 also corrects an inherited basename false
+positive for the definition-owned observation leaf; actual lifecycle-owner
+imports remain forbidden, and v1-v3 remain immutable. Four isolated pinned-CLI
+law tests pass (36 assertions).
+
+The final shared `bun run ci` passes all 167 tasks across 35 projects, including
+real web acceptance, all other native fixtures, owner cache proofs and topology
+policy. The first shared run found only an SDK export-order lint fix; it was
+repaired before the successful complete rerun. Installed-package acceptance
+passes all 10 tests, including cold Node web imports, strict peer-free public
+declarations, native v4 positive/negative structure and import acquisition, and
+immutable predecessor hashes. Tasks 14.1/14.2 are satisfied locally; candidate
+remote admission and exact-main verification remain distinct required gates.
+
+Root owns SDK startup/faces, selected harness law successor, installed built
+fixture, canonical examples and final qualification. Definition owns the cold
+route/body contract; derivation/compiler owns exact references and selection;
+process/native ownership handles lowering, Effect context and HTTP lifetime.
+Qualification must prove cold counters, build output with source unavailable,
+real resource-backed success/failure/abort, response stream drain, retained-view
+refusal, native stop before release, and installed import isolation. No deleted
+Vite/React product, `apps/web`, new production app, native browser controller or
+full SSR framework claim is restored.
 
 ### Backend Receipt Reuse
 

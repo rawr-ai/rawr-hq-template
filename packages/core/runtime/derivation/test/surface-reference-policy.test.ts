@@ -93,3 +93,16 @@ test("requires exact agent tool and desktop background role/surface relations", 
     }
   }
 });
+
+test("web Effect refs require the exact web/app lane while remaining distinct from module refs", () => {
+  const ref = { ...base, boundary: "plugin.web-surface" as const, surfaceId: "request" };
+  expect(() =>
+    assertSurfaceReferenceRelation({ role: "web", surface: "web/app" }, ref)
+  ).not.toThrow();
+  expect(() => assertSurfaceReferenceRelation({ role: "server", surface: "web/app" }, ref)).toThrow(
+    TypeError
+  );
+  expect(() => assertSurfaceReferenceRelation({ role: "web", surface: "server/api" }, ref)).toThrow(
+    TypeError
+  );
+});

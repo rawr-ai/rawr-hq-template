@@ -35,6 +35,10 @@
   `TypeError` before returning a result.
 - Missing optional resources remain derivation findings and produce no selected
   provider artifact in the compiled plan.
+- Selected web Effect refs resolve to their cold operational descriptors and
+  private route projections; module refs resolve through the separate exact
+  loader table. Compilation invokes neither channel and does not invent a web
+  source registry, path matcher or additional source discovery pass.
 - Named workflow admission consumes derivation's selected cross-owner relation,
   not a selected target execution surface or a second app-membership walk. The
   private admission handoff keeps caller/use identity, exact workflow/schema

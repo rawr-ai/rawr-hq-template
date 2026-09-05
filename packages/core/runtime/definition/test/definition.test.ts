@@ -374,9 +374,8 @@ if (false) {
     services: {},
   });
   defineWebAppPlugin.factory()({
-    capability: "invalid-resources",
+    capability: "explicit-resources",
     routes: [],
-    // @ts-expect-error Web projection cannot author runtime resource requirements.
     resourceRequirements: [],
   });
 }
@@ -1584,13 +1583,13 @@ describe("runtime definition", () => {
     expect(() => defineWebAppPlugin.factory()(invalidComposition)()).toThrow(
       "does not accept 'services'"
     );
-    const invalidResourceComposition = {
-      capability: "invalid-resource-composition",
+    const absentResourceComposition = {
+      capability: "absent-resource-composition",
       routes: [],
       resourceRequirements: undefined,
     };
-    expect(() => defineWebAppPlugin.factory()(invalidResourceComposition)()).toThrow(
-      "does not accept 'resourceRequirements'"
+    expect(defineWebAppPlugin.factory()(absentResourceComposition)().resourceRequirements).toEqual(
+      []
     );
   });
 

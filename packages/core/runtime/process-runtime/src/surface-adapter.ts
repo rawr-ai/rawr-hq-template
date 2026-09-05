@@ -4,6 +4,7 @@ import type { RuntimeResourceMap } from "../../definition/src/provider";
 import type { RuntimeSchema } from "../../definition/src/schema";
 import type { ConstructionBoundServiceClient } from "../../definition/src/service";
 import type { RuntimeServerSource } from "../../derivation/src/server-source";
+import type { WebRouteModuleTable } from "../../derivation/src/web-route-module-table";
 import type { InngestMountPayload } from "./async-payload";
 import type { ExecutionRegistry } from "./execution-registry";
 import type { ProcessExecutionRuntime } from "./execution-runtime";
@@ -46,6 +47,7 @@ export interface SurfaceAdapter<
     readonly resources: RuntimeResourceMap;
     readonly executionRegistry: ExecutionRegistry;
     readonly executionRuntime?: ProcessExecutionRuntime;
+    readonly webRouteModuleTable?: WebRouteModuleTable;
     readonly nativeAsync?: { bundle(): InngestMountPayload };
     readonly nativeServer?: {
       readonly source: RuntimeServerSource;

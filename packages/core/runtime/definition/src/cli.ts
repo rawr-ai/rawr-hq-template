@@ -1,14 +1,14 @@
 import type { RuntimeSchema } from "../../schema/src/runtime-schema";
+import type { HabitatEffect } from "./effect";
+import type { EffectExecutionPolicy } from "./execution";
+import type { BoundaryTelemetry, EffectBoundaryContext } from "./execution-context";
 import {
   freezeLocalExecutionPolicy,
   type LocalEffectProgram,
   type LocalProgramError,
   type LocalProgramOutput,
   type LocalProgramRequirements,
-} from "./agent";
-import type { HabitatEffect } from "./effect";
-import type { EffectExecutionPolicy } from "./execution";
-import type { BoundaryTelemetry, EffectBoundaryContext } from "./execution-context";
+} from "./local-effect";
 import {
   assertNoPluginClassificationFields,
   definePlugin,

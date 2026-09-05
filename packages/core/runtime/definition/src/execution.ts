@@ -43,6 +43,10 @@ export type ExecutionProjection<TInput = unknown> =
   | {
       readonly kind: "desktop.background";
       readonly cadence: HabitatDurationInput;
+    }
+  | {
+      readonly kind: "web.route";
+      readonly path: string;
     };
 
 export type ExecutionDescriptor<

@@ -27,6 +27,10 @@ import {
   createOclifAdapter,
   type LoweredCliCommand,
 } from "../../../runtime/process-runtime/src/adapters/oclif";
+import {
+  createWebAdapter,
+  type WebHostPayload,
+} from "../../../runtime/process-runtime/src/adapters/web";
 import type { InngestMountPayload } from "../../../runtime/process-runtime/src/async-payload";
 import type {
   MountReadySurfaceRuntimeRecord,
@@ -37,6 +41,7 @@ export type AgentToolMountRecord = MountReadySurfaceRuntimeRecord<readonly Lower
 export type CliCommandMountRecord = MountReadySurfaceRuntimeRecord<readonly LoweredCliCommand[]>;
 export type ServerMountRecord = MountReadySurfaceRuntimeRecord<ElysiaRoutePayload>;
 export type AsyncMountRecord = MountReadySurfaceRuntimeRecord<InngestMountPayload>;
+export type WebMountRecord = MountReadySurfaceRuntimeRecord<WebHostPayload>;
 export type DesktopBackgroundMountRecord = MountReadySurfaceRuntimeRecord<
   readonly LoweredDesktopBackground[]
 >;
@@ -67,12 +72,17 @@ export type NativeIntegration =
       readonly surface: "async/workflow" | "async/schedule" | "async/consumer";
       readonly harness: NativeIntegrationHarness<AsyncMountRecord>;
     }
+  | {
+      readonly surface: "web/app";
+      readonly harness: NativeIntegrationHarness<WebMountRecord>;
+    }
   | { readonly surface: "none"; readonly harness: NativeIntegrationHarness<never> };
 
 type Payload =
   | readonly (LoweredAgentTool | LoweredDesktopBackground | LoweredCliCommand)[]
   | ElysiaRoutePayload
-  | InngestMountPayload;
+  | InngestMountPayload
+  | WebHostPayload;
 type Descriptor = HarnessDescriptor<MountReadySurfaceRuntimeRecord<Payload>>;
 
 /** Resolve the selected IDs before any provider or native host can run. */
@@ -114,6 +124,7 @@ export function resolveIntegrations(
         "async/workflow",
         "async/schedule",
         "async/consumer",
+        "web/app",
         "none",
       ].includes(surface)
     )
@@ -153,7 +164,9 @@ export function resolveIntegrations(
             ? "desktop"
             : surface.startsWith("async/")
               ? "async"
-              : "server";
+              : surface === "web/app"
+                ? "web"
+                : "server";
     if (!harness.roles.includes(role) || !harness.surfaces.includes(surface))
       throw new TypeError("Native integration does not support its surface.");
     const matching = plan.surfaces.filter((item) => item.surface === surface && item.role === role);
@@ -173,7 +186,9 @@ export function resolveIntegrations(
                   ? createInngestScheduleAdapter({ harness: harness.id })
                   : surface === "async/consumer"
                     ? createInngestConsumerAdapter({ harness: harness.id })
-                    : createDesktopBackgroundAdapter({ harness: harness.id });
+                    : surface === "web/app"
+                      ? createWebAdapter({ harness: harness.id })
+                      : createDesktopBackgroundAdapter({ harness: harness.id });
     for (const item of matching) {
       assignments.push({ surface: item, adapter });
       covered.add(item.surfacePlanId);

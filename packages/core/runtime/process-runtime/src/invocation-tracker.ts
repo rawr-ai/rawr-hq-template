@@ -17,14 +17,23 @@ export function invocationContinuationContext(continuation: Continuation): Conte
   return Context.make(invocationContinuation, continuation);
 }
 
+export interface InvocationOutputOptions {
+  readonly responseBody?: boolean;
+}
+
 export interface InvocationTracker {
   assertOpen(): void;
   captureContinuation(): Continuation | undefined;
   assertAdmission(parent?: Continuation): void;
-  run<T>(operation: (own: Continuation) => Promise<T>, parent?: Continuation): Promise<T>;
+  run<T>(
+    operation: (own: Continuation) => Promise<T>,
+    parent?: Continuation,
+    output?: InvocationOutputOptions
+  ): Promise<T>;
   runExit<A, E>(
     operation: (own: Continuation) => Promise<Exit.Exit<A, E>>,
-    parent?: Continuation
+    parent?: Continuation,
+    output?: InvocationOutputOptions
   ): Promise<Exit.Exit<A, E>>;
   group(): InvocationGroup;
   closeAndDrain(): Promise<void>;
@@ -61,8 +70,10 @@ export function createInvocationTracker(): InvocationTracker {
     }
   }
 
-  function retainOutput<T>(output: T, retain: () => () => void): T {
-    if (!isAsyncIteratorObject(output) && !(output instanceof ReadableStream)) return output;
+  function retainOutput<T>(output: T, retain: () => () => void, responseBody = false): T {
+    const response = responseBody && output instanceof Response ? output : undefined;
+    const stream = response === undefined ? output : response.body;
+    if (!isAsyncIteratorObject(stream) && !(stream instanceof ReadableStream)) return output;
     const release = retain();
     let finished = false;
     let operations = 0;
@@ -86,9 +97,14 @@ export function createInvocationTracker(): InvocationTracker {
     };
     try {
       // Native return() can finish while an earlier next() is still pending.
-      const wrapped = isAsyncIteratorObject(output)
-        ? override(output, wrapAsyncIteratorPreservingEventMeta(output, hooks))
-        : override(output, wrapReadableStream(output, hooks));
+      if (response !== undefined && stream instanceof ReadableStream) {
+        // Bun consumes a branded body stream, not the proxy used to preserve arbitrary outputs.
+        // A web terminal owns an ordinary Response; its body extends this same invocation lease.
+        return new Response(wrapReadableStream(stream, hooks), response) as T;
+      }
+      const wrapped = isAsyncIteratorObject(stream)
+        ? override(stream, wrapAsyncIteratorPreservingEventMeta(stream, hooks))
+        : override(stream, wrapReadableStream(stream, hooks));
       // Native override preserves the output's extra properties while replacing its stream methods.
       return wrapped as T;
     } catch (error) {
@@ -142,17 +158,28 @@ export function createInvocationTracker(): InvocationTracker {
       return Fiber.getCurrent()?.getRef(invocationContinuation);
     },
     assertAdmission,
-    run<T>(operation: (own: Continuation) => Promise<T>, parent?: Continuation): Promise<T> {
-      return track(operation, retainOutput, parent);
+    run<T>(
+      operation: (own: Continuation) => Promise<T>,
+      parent?: Continuation,
+      output?: InvocationOutputOptions
+    ): Promise<T> {
+      return track(
+        operation,
+        (value, retain) => retainOutput(value, retain, output?.responseBody),
+        parent
+      );
     },
     runExit<A, E>(
       operation: (own: Continuation) => Promise<Exit.Exit<A, E>>,
-      parent?: Continuation
+      parent?: Continuation,
+      output?: InvocationOutputOptions
     ): Promise<Exit.Exit<A, E>> {
       return track(
         operation,
         (exit, retain) =>
-          Exit.isSuccess(exit) ? Exit.succeed(retainOutput(exit.value, retain)) : exit,
+          Exit.isSuccess(exit)
+            ? Exit.succeed(retainOutput(exit.value, retain, output?.responseBody))
+            : exit,
         parent
       );
     },

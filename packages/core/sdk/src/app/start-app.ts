@@ -70,6 +70,7 @@ export async function startApp(
     compilation,
     provisioned,
     descriptorTable: derivation.executionDescriptorTable,
+    webRouteModuleTable: derivation.webRouteModuleTable,
     observation: observation.port,
   });
   publish("binding.ready", "provisioning");

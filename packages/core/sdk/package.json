@@ -86,6 +86,11 @@
       "import": "./dist/plugins/web/index.js",
       "default": "./dist/plugins/web/index.js"
     },
+    "./plugins/web/effect": {
+      "types": "./dist/plugins/web/effect/index.d.ts",
+      "import": "./dist/plugins/web/effect/index.js",
+      "default": "./dist/plugins/web/effect/index.js"
+    },
     "./plugins/cli": {
       "types": "./dist/plugins/cli/index.d.ts",
       "import": "./dist/plugins/cli/index.js",
@@ -145,6 +150,11 @@
       "types": "./dist/runtime/harnesses/inngest.d.ts",
       "import": "./dist/runtime/harnesses/inngest.js",
       "default": "./dist/runtime/harnesses/inngest.js"
+    },
+    "./runtime/harnesses/web": {
+      "types": "./dist/runtime/harnesses/web.d.ts",
+      "import": "./dist/runtime/harnesses/web.js",
+      "default": "./dist/runtime/harnesses/web.js"
     },
     "./runtime/observation": {
       "types": "./dist/runtime/observation/index.d.ts",

@@ -36,6 +36,10 @@
   frozen cold table snapshots without copying referenced executable owners.
 - Effect descriptor refs and web route-module refs remain distinct; only Effect
   refs enter the seven-field portable artifact.
+- Web route membership is one disjoint module/Effect union. Route IDs and plugin
+  occurrences identify web Effects; paths stay in their private native route
+  projection. Module loaders stay exact in the separate route-module table.
+  Neither channel invokes authoring or selects sibling service/async roots.
 - Only explicit named server workflow uses derive admission descriptors. Exact
   app-member targets and requested subsets stay separate from async execution
   selection; identical target/subset descriptors may share caller-local uses

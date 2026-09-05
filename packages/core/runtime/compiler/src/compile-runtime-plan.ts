@@ -1,5 +1,6 @@
 import { Check } from "typebox/value";
 
+import { readExecutionProjection } from "../../definition/src/execution";
 import type { RuntimeProvider } from "../../definition/src/provider";
 import type { ServiceRuntimeExport } from "../../definition/src/service";
 import { readRuntimeDerivationHandoff } from "../../derivation/src/derivation-handoff";
@@ -604,6 +605,18 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
       const key = canonicalJson(ref);
       if (ref.ownerId !== plugin.ownerId || !executionRefs.has(key))
         refuse("surface execution reference");
+      if (ref.boundary === "plugin.web-surface") {
+        const descriptor = input.derivation.executionDescriptorTable.get(ref);
+        const projection = readExecutionProjection(descriptor);
+        if (
+          descriptor.kind !== "execution.effect" ||
+          typeof descriptor.run !== "function" ||
+          descriptor.policy !== executionPolicies.get(key) ||
+          projection?.kind !== "web.route" ||
+          typeof projection.path !== "string"
+        )
+          refuse("selected web execution projection");
+      }
       reachedExecutions.add(key);
     }
     sortedUnique(
@@ -615,6 +628,8 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
       assertSurfaceReferenceRelation(surface, ref);
       const key = canonicalJson(ref);
       if (ref.ownerId !== plugin.ownerId || !webRefs.has(key)) refuse("surface web reference");
+      if (typeof input.derivation.webRouteModuleTable.get(ref) !== "function")
+        refuse("selected web module reference");
       reachedWeb.add(key);
     }
     sortedUnique(surface.workflowDispatcherDescriptorIds, (id) => [id], "surface workflow order");

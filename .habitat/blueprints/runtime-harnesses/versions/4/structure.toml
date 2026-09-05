@@ -1,0 +1,80 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "runtime-harnesses-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = ["AGENTS.md", "habitat.toml", "project.json", "src", "elysia", "inngest", "web", "test", "tsconfig.json", "tsconfig.test.json", "tsdown.config.ts"]
+allowed = []
+
+[[scopes]]
+name = "runtime-harnesses-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|project.json|tsconfig.json|tsconfig.test.json|tsdown.config.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-harnesses-source"
+rootRole = "project"
+relativePath = "@(src|elysia|inngest|web)"
+kind = "directory"
+mode = "closed"
+required = ["index.ts"]
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-harnesses-source-directories"
+rootRole = "project"
+relativePath = "@(src|elysia|inngest|web)/**/[a-z]*([a-z0-9]|-[a-z0-9])"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-harnesses-source-files"
+rootRole = "project"
+relativePath = "@(src|elysia|inngest|web)/**/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-harnesses-proof"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9]).test.ts", "[a-z]*([a-z0-9]|-[a-z0-9]).typecheck.ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-harnesses-proof-directories"
+rootRole = "project"
+relativePath = "test/**/[a-z]*([a-z0-9]|-[a-z0-9])"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9]).test.ts", "[a-z]*([a-z0-9]|-[a-z0-9]).typecheck.ts", "[a-z]*([a-z0-9]|-[a-z0-9]).html", "[a-z]*([a-z0-9]|-[a-z0-9]).css", "[a-z]*([a-z0-9]|-[a-z0-9]).js", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-harnesses-native-web-fixture-assets"
+rootRole = "project"
+relativePath = "test/fixtures/**/*.@(html|css|js)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-harnesses-proof-files"
+rootRole = "project"
+relativePath = "test/**/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-harnesses-behavior-proofs"
+rootRole = "project"
+relativePath = "test/**/*.test.ts"
+kind = "file"
+mode = "closed"
