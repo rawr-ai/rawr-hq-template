@@ -89,6 +89,7 @@
     "@getgrit/cli": "0.1.0-alpha.1743007075",
     "@habitat-ai/cli": "0.5.15",
     "@habitat-ai/agent-plugin-lifecycle-service": "workspace:*",
+    "@habitat-ai/plugin-authoring": "workspace:*",
     "@habitat-ai/plugin-foundation": "workspace:*",
     "@habitat-ai/resource-filesystem": "workspace:*",
     "@habitat-ai/resource-rule-evaluation": "workspace:*",

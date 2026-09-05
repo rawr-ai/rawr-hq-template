@@ -32,7 +32,7 @@ export default defineConfig({
     neverBundle: [/^@habitat-ai\/sdk(?:\/|$)/, /^nx(?:\/|$)/],
     dts: { neverBundle: [/^@habitat-ai\/sdk(?:\/|$)/] },
     alwaysBundle: [
-      /^@habitat-ai\/(?:catalog-service|plugin-foundation|resource-filesystem|resource-rule-evaluation|resource-source-inventory)(?:\/|$)/,
+      /^@habitat-ai\/(?:catalog-service|plugin-authoring|plugin-foundation|resource-filesystem|resource-rule-evaluation|resource-source-inventory)(?:\/|$)/,
     ],
     onlyImport: [
       "@effect/platform-node",

@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; qualified native generators locally accepted, awaiting stack admission.
-Branch: `agent-root-habitat-qualified-generators`, stacked on the submitted self-host.
+Status: `active`; installed authoring command projections locally accepted.
+Branch: `agent-root-habitat-authoring-cli`, stacked on the submitted generators.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -10,6 +10,7 @@ Harness handoff [1012](https://github.com/rawr-ai/rawr-hq-template/pull/1012).
 Observation [1013](https://github.com/rawr-ai/rawr-hq-template/pull/1013).
 Mounting/startup [1014](https://github.com/rawr-ai/rawr-hq-template/pull/1014).
 Oclif self-host [1015](https://github.com/rawr-ai/rawr-hq-template/pull/1015).
+Qualified generators [1016](https://github.com/rawr-ai/rawr-hq-template/pull/1016).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -64,12 +65,20 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: task 11.6, two qualified native Nx source generators. Root owns
-complete-plan preflight/staging, native installed acceptance and packaging. The
-implementation peer owns the existing-topic command generator; the native-runtime
-peer owns the portable Oclif extension generator. The cold peer independently
-reviews identity, convergence and proof claims. No authoring command topic or
-app composition selection is created in this story.
+Current domino: task 12.3, two thin installed CLI projections of the accepted
+native generators. Root owns app composition, packaging and installed parity
+proof; the implementation peer owns the private authoring topic; the native
+peer owns per-kind native Tree runners. The cold peer independently reviews
+the composed mutation and runtime boundary. Tasks 12.1/12.2 and native server,
+async and web remain separate capabilities, not prerequisites for this projection.
+
+The app injects two stateless native runner functions into the topic's existing
+SDK factory option contract. Each CLI-owned runner reads the operator's current
+directory once at invocation and passes that exact root to native FsTree. It
+does not search parents, use the installed package root, retain mutable state,
+or confuse source-authoring cwd with the catalog reader's separately supplied
+workspace root. No SDK context extension, new resource/service, app reconstruction,
+nested Nx subprocess or replacement filesystem transaction is warranted.
 
 The accepted refinement follows the official Nx Tree contract and pinned
 23.1.1's `generate.js`/`tree.js`, with a real disk-failure regression. Each native
@@ -793,8 +802,10 @@ generation. The local native matrix passes after this repair. Repair commit
 `cf624450578b122b1297e5095c45b46cea6ec57a` is submitted in PR 1015 itself:
 test typechecking passes with the CLI dist directory physically absent before
 the uncached Nx run, and all nine installed tests pass again (179.50 seconds).
-Linux/Windows and required CI must requalify this revision before stack merge;
-its earlier green Linux installation is not a substitute for those gates.
+Required CI 33959536417 and Linux/Windows installed acceptance 33959536416
+subsequently passed this exact repair revision. PR 1016 also passes required
+CI 33959793691 and both installed lanes in 33959793759. Stack merge remains
+distinct from these candidate receipts.
 
 The next generator design loop is bounded by pinned Nx 23.1.1 evidence.
 Its native generator stages a virtual Tree, then flushes paths sequentially;
@@ -827,6 +838,33 @@ independently installed/built/tested portable external extension. Independent
 repair review reports no remaining material issue. This is not an npm release
 or task 12.3's installed authoring-command proof. The next complete capability is
 that thin CLI projection, not a new lifecycle or filesystem transaction system.
+
+### Installed Authoring Commands
+
+Task 12.3 is locally accepted. The selected private authoring topic exposes
+only the two qualified source creators through native Args/Flags and the
+existing Oclif process. Two app-injected stateless runners capture invocation
+cwd and call the same generators through native FsTree. The shared publication
+helper owns only native lock, change inventory and flush; it adds no alternate
+generator, workspace search, transaction engine or SDK lifecycle.
+
+Independent review caught cancellation settling an interruptible Effect while
+its uncancellable generator Promise could still publish files. Each command
+now joins that finite started operation uninterruptibly, then preserves native
+interruption. Gated tests prove no early invocation settlement and no invocation
+when interruption wins before entering the publication boundary. This is not
+rollback and does not claim generic pre-aborted native runPromise suppression.
+The final independent review has no remaining P1/P2.
+
+Verification: all 89 generator tests, nine topic tests, source/test TypeScript,
+native projection, owner law and full repository CI pass (162 tasks, uncached).
+All nine installed-package tests pass in 201.32 seconds after the cancellation
+repair. The installed matrix exercises both command creators, exact-byte parity
+with native Nx, dry-run and convergence, refused divergent/foreign writes,
+generated command build/body/native dispatch, and independently installed
+external extension build/tests. This is candidate acceptance, not release.
+Next: admit this story and continue with complete native Elysia/oRPC server
+qualification, rather than a listener-only intermediate or product resumption.
 
 ### Backend Receipt Reuse
 

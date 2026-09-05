@@ -200,12 +200,78 @@ export async function assertInstalledQualifiedGenerators(input: MatrixInput): Pr
     "@habitat-ai/plugin-foundation",
     "habitat-workspace",
   ]);
+  const habitat = path.join(root, "node_modules/.bin/habitat");
+  const cliCommand = ["cli", "command", "create", "foundation", "created"];
+  const beforeCli = await snapshot(root);
+  const dryCommand = await succeeds(habitat, [...cliCommand, "--dry-run"]);
+  expect(JSON.parse(dryCommand.stdout)).toMatchObject({ status: "dry-run" });
+  expect(await snapshot(root)).toEqual(beforeCli);
+  const createdCommand = await succeeds(habitat, cliCommand);
+  expect(JSON.parse(createdCommand.stdout)).toEqual({
+    status: "created",
+    paths: [
+      `${topic}/src/commands/created.ts`,
+      `${topic}/src/index.ts`,
+      `${topic}/test/commands/created.test.ts`,
+    ],
+  });
+  const afterCli = await snapshot(root);
+  const repeatCommand = await succeeds(habitat, cliCommand);
+  expect(JSON.parse(repeatCommand.stdout)).toEqual({ status: "converged", paths: [] });
+  await succeeds(nx, generate("cli-command", ["--topic=foundation", "--name=created"]));
+  expect(await snapshot(root)).toEqual(afterCli);
+  const refusedCommand = await command(habitat, [
+    "cli",
+    "command",
+    "create",
+    "foundation",
+    "refused",
+  ]);
+  expect(refusedCommand.exitCode).not.toBe(0);
+  expect(refusedCommand.stdout).toBe("");
+  expect(await snapshot(root)).toEqual(afterCli);
+
+  // A real installed CLI invocation needs no Nx workspace to create an external extension.
+  const foreignRoot = path.join(input.acceptanceRoot, "generator-foreign-authoring");
+  await mkdir(foreignRoot);
+  const cliExtension = ["cli", "extension", "create", "sample", "--destination", "plugin"];
+  expect(
+    JSON.parse((await succeeds(habitat, [...cliExtension, "--dry-run"], foreignRoot)).stdout)
+  ).toMatchObject({ status: "dry-run" });
+  expect(await readdir(foreignRoot)).toEqual([]);
+  const external = await succeeds(habitat, cliExtension, foreignRoot);
+  expect(JSON.parse(external.stdout).status).toBe("created");
+  expect(await readdir(foreignRoot)).toEqual(["plugin"]);
+  const foreignComplete = await snapshot(foreignRoot);
+  expect(JSON.parse((await succeeds(habitat, cliExtension, foreignRoot)).stdout)).toEqual({
+    status: "converged",
+    paths: [],
+  });
+  const forbidden = await command(habitat, cliCommand, foreignRoot);
+  expect(forbidden.exitCode).not.toBe(0);
+  expect(forbidden.stdout).toBe("");
+  expect(await snapshot(foreignRoot)).toEqual(foreignComplete);
+  for (const file of await listFiles(path.join(root, "extensions/sample"))) {
+    expect(await readFile(path.join(foreignRoot, "plugin", file), "utf8")).toBe(
+      await readFile(path.join(root, "extensions/sample", file), "utf8")
+    );
+  }
+  await writeFile(path.join(foreignRoot, "plugin/tsconfig.json"), '{"divergent":true}\n');
+  const divergentExternal = await snapshot(foreignRoot);
+  const refusedExtension = await command(habitat, cliExtension, foreignRoot);
+  expect(refusedExtension.exitCode).not.toBe(0);
+  expect(refusedExtension.stdout).toBe("");
+  expect(await snapshot(foreignRoot)).toEqual(divergentExternal);
+  await copyFile(
+    path.join(root, "extensions/sample/tsconfig.json"),
+    path.join(foreignRoot, "plugin/tsconfig.json")
+  );
   // Installation/build/testing here belongs to the proof, never either generator.
   await succeeds("bun", ["install", "--ignore-scripts"]);
   await succeeds("bun", ["run", "build"], path.join(root, topic));
   await succeeds("bun", ["run", "test:cli-commands"], path.join(root, topic));
   const extensionRoot = path.join(input.acceptanceRoot, "generator-extension-portable");
-  await cp(path.join(root, "extensions/sample"), extensionRoot, { recursive: true });
+  await cp(path.join(foreignRoot, "plugin"), extensionRoot, { recursive: true });
   await succeeds("bun", ["install", "--ignore-scripts"], extensionRoot);
   await succeeds("bun", ["run", "build"], extensionRoot);
   await succeeds("bun", ["run", "test"], extensionRoot);
@@ -213,6 +279,7 @@ export async function assertInstalledQualifiedGenerators(input: MatrixInput): Pr
   for (const [args, expected] of [
     [["foundation:echo", "Hello"], "Hello\n"],
     [["foundation:echo", "Hello", "--uppercase"], "HELLO\n"],
+    [["foundation:created", "Hello", "--uppercase"], "HELLO\n"],
   ] as const) {
     const result = await succeeds("node", ["invoke.mjs", ...args]);
     expect(result.stdout).toBe(expected);

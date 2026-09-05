@@ -41,9 +41,17 @@ describe("Habitat native Oclif projection", () => {
       onFinally() {},
       invoke: async () => resolved,
     });
-    expect(Object.keys(sourceBundle.COMMANDS).sort()).toEqual(["check", "hook", "resolve"]);
+    expect(Object.keys(sourceBundle.COMMANDS).sort()).toEqual([
+      "check",
+      "cli:command:create",
+      "cli:extension:create",
+      "hook",
+      "resolve",
+    ]);
     expect([...config.commandIDs].sort()).toEqual([
       "check",
+      "cli:command:create",
+      "cli:extension:create",
       "help",
       "hook",
       "plugins",
@@ -73,8 +81,18 @@ describe("Habitat native Oclif projection", () => {
     });
     await config.runCommand("check", ["--owner=", "--rule", "one", "--rule", "two"]);
     await config.runCommand("hook", ["agent-stop"]);
+    await config.runCommand("cli:command:create", ["foundation", "echo", "--dry-run"]);
+    await config.runCommand("cli:extension:create", ["sample", "--destination", "sample"]);
     expect(calls[0]?.[2]).toMatchObject({ args: {}, flags: { owner: "", rule: ["one", "two"] } });
     expect(calls[1]?.[2]).toMatchObject({ args: { name: "agent-stop" } });
+    expect(calls[2]?.[2]).toMatchObject({
+      args: { topic: "foundation", name: "echo" },
+      flags: { "dry-run": true },
+    });
+    expect(calls[3]?.[2]).toMatchObject({
+      args: { id: "sample" },
+      flags: { destination: "sample" },
+    });
     for (const [ref, source] of calls) {
       expect(
         sourceBundle.entries.find((entry) => entry.ref.executionId === ref.executionId)?.source

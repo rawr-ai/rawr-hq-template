@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "plugin-authoring"
+ownerProject = "@habitat-ai/plugin-authoring"
+blueprint = "plugin-cli-topic"
+blueprintVersion = 1
+
+[roots]
+project = "plugins/cli/topics/authoring"
+
+[selections]

@@ -43,6 +43,12 @@ child: all retained commands and Nx readers use one explicit process lifecycle;
 full CI passes 157 tasks, all nine installed tests pass, and the built/installed
 native matrix proves execution, observations, output and cleanup. The separate
 native extension lifecycle passes with one candidate SDK module realm.
+Task 11.6 is locally accepted in PR 1016: both packed native generators, all
+80 focused tests, generated native command dispatch, independently installed
+extension build/tests and full 157-task repository CI pass. Task 12.3 is locally
+accepted: both installed authoring commands share those generators, with exact
+parity, refusal, convergence and cancellation-before-settlement proofs. Full
+repository CI passes 162 tasks and all nine installed tests pass after repair.
 No package release or consumer acceptance is claimed.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
@@ -61,10 +67,13 @@ public release and consumer acceptance remain separate states.
 ## Current Boundary
 
 Tasks 10.2-10.7 are submitted in PRs 1012-1014 with passing required and
-Linux/Windows installed checks. Admit the locally verified Oclif self-host child
-as one complete retained-reader cutover, then implement task 11.6's native
-generators. Its planning loop must replace the inherited disk-atomicity claim
-with honest native Nx staging and flush semantics; see the implementation record.
+Linux/Windows installed checks. PR 1015's clean-build and installed dependency
+cohort repairs now pass renewed required and Linux/Windows CI. PR 1016 also
+passes all three remote gates, qualifying native generators with honest Nx
+staging and sequential publication semantics. Task 12.3's installed command
+projections are locally accepted and ready for submission. Admit these complete
+stories through the same native stack workflow without making tasks 12.1/12.2
+artificial prerequisites or claiming the remaining native hosts are complete.
 The one native sweep removed the four merged
 predecessors and the targeted child restack preserved an identical tree.
 All held worktree heads and staged telemetry work remain unchanged.
