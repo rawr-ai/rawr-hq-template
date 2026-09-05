@@ -43,7 +43,13 @@
   browser runtime, router vendor, DOM mount protocol, adapter, build execution,
   app composition, native harness lifecycle, or Effect subpath.
 - Implemented app, Effect, execution, service, resource, provider, profile, and
-  runtime-schema authoring faces project only cold definition capabilities.
+  runtime-schema authoring faces project cold definition capabilities or inert
+  shared invocation types. The curated Effect API uses native Effect values;
+  the SDK defines no interpreter or competing runtime.
+  `effect/context` and `effect/wrap` expose only exact native wiring types.
+  Process-owned service client assembly supplies the official bridge's context,
+  decoration and admission tracking without exposing provisioning values or a
+  raw runtime. The execution face adds no terminal.
   `@habitat-ai/sdk/runtime/profiles` is the sole cold provider-selection face.
   `@habitat-ai/sdk/runtime/providers` exposes only `defineRuntimeProvider` and
   the four provider/build/resource-map types. The separate
@@ -153,8 +159,8 @@
   modifying the canonical authoring source. Exact producer definitions resolve
   as inert duplicates of the package authority; drift at the same identity is
   rejected.
-- The copied and hashed build-input inventory contains twelve blueprint
-  directories and the manifest-listed inputs. Compiler, bootgraph and Effect substrate
+- The copied and hashed build-input inventory contains thirteen blueprint
+  directories and the manifest-listed inputs. Compiler, bootgraph, process runtime and Effect substrate
   policy assets do not add production entrypoints. SDK integration tests use
   their real source operations; production startApp composition waits for 10.6.
 
@@ -171,6 +177,8 @@
 - Public cold runtime authoring: `@habitat-ai/sdk/app`,
   `@habitat-ai/sdk/effect`, `@habitat-ai/sdk/execution`, and implemented
   `@habitat-ai/sdk/runtime/*` subpaths.
+- Public native wiring types: `@habitat-ai/sdk/effect/context` and
+  `@habitat-ai/sdk/effect/wrap`.
 - Public cold provider authoring: `@habitat-ai/sdk/runtime/providers` and
   `@habitat-ai/sdk/runtime/providers/effect`.
 - Public complete runtime derivation: `@habitat-ai/sdk/runtime/derivation`.
@@ -191,6 +199,8 @@
 - [[../runtime/derivation/AGENTS|Private runtime-derivation owner]]
 - [[../runtime/compiler/AGENTS|Private runtime-compiler owner]]
 - [[../runtime/bootgraph/AGENTS|Private runtime-bootgraph owner]]
+- [[../runtime/substrate/effect/AGENTS|Private Effect provisioning owner]]
+- [[../runtime/process-runtime/AGENTS|Private service binding and execution owner]]
 
 ## Validation
 

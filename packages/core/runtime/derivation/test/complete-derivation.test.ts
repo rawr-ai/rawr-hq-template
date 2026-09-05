@@ -677,11 +677,32 @@ describe("complete runtime derivation", () => {
     );
     if (directEntry === undefined) throw new Error("Fixture lacks the direct workflow entry.");
     const context = Object.freeze({ exact: true });
-    const cold = directEntry[1].run({ input: Object.freeze({ ignored: true }), context });
+    const executionMetadata = {
+      execution: {
+        appId: "lazy",
+        processId: "lazy",
+        entrypointId: "lazy",
+        profileId: "lazy",
+        role: "async" as const,
+        ownerId: directEntry[0].ownerId,
+        executionId: directEntry[0].executionId,
+        traceId: "test",
+      },
+      telemetry: {
+        span: <A, E, R>(_name: string, program: NativeEffect.Effect<A, E, R>) => program,
+        event: () => NativeEffect.void,
+      },
+    };
+    const cold = directEntry[1].run({
+      ...executionMetadata,
+      input: Object.freeze({ ignored: true }),
+      context,
+    });
     expect(contexts).toEqual([]);
     expect(NativeEffect.isEffect(cold)).toBe(true);
     expect(await NativeEffect.runPromise(cold as NativeEffect.Effect<unknown>)).toBe("direct");
-    expect(contexts).toEqual([context]);
+    const enrichedContext = { ...context, ...executionMetadata };
+    expect(contexts).toEqual([enrichedContext]);
     expect(directEntry[1].policy).toBe(direct.policy);
 
     const generatedEntry = entries.find(
@@ -693,15 +714,16 @@ describe("complete runtime derivation", () => {
     if (generatedEntry === undefined)
       throw new Error("Fixture lacks the generator workflow entry.");
     const generatedCold = generatedEntry[1].run({
+      ...executionMetadata,
       input: Object.freeze({ ignored: true }),
       context,
     });
     expect(NativeEffect.isEffect(generatedCold)).toBe(true);
-    expect(contexts).toEqual([context]);
+    expect(contexts).toEqual([enrichedContext]);
     expect(await NativeEffect.runPromise(generatedCold as NativeEffect.Effect<unknown>)).toBe(
       "generated"
     );
-    expect(contexts).toEqual([context, context]);
+    expect(contexts).toEqual([enrichedContext, enrichedContext]);
     expect(generatedEntry[1].policy).toBe(generated.policy);
     expect(
       entries

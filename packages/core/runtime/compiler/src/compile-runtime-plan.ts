@@ -654,6 +654,9 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
       role: surface.role,
       surface: surface.surface,
       capability: surface.capability,
+      ...(plugins.get(surface.pluginOwnerId)!.plugin.instance === undefined
+        ? {}
+        : { instance: plugins.get(surface.pluginOwnerId)!.plugin.instance }),
       serviceBindings: surface.serviceBindings,
       resources: lowerResourceBindings(surface.resourceRequirementIds),
       workflowDispatcherIds: surface.workflowDispatcherDescriptorIds,

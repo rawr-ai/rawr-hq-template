@@ -538,7 +538,7 @@ The execution registry is the executable-boundary matching boundary. It pairs ea
 
 The process execution runtime is the invocation execution boundary for non-oRPC
 descriptor lanes. It receives a matched executable boundary plus an explicit
-procedure execution context, supplies runtime-owned error and telemetry
+procedure execution context, supplies runtime-owned correlation and telemetry
 contexts, invokes the Effect descriptor, receives `HabitatEffect`, runs it
 through
 `EffectRuntimeAccess`, applies execution policy, and returns a host-compatible
@@ -799,7 +799,7 @@ The closed private implementation graph is:
 | `runtime-compiler` | complete process-plan admission and compilation | `runtime-definition`, `runtime-derivation` |
 | `runtime-bootgraph` | provider/resource order, identity, dedupe, and rollback order | `runtime-compiler` |
 | `runtime-substrate-effect` | one Effect scope, acquisition, registration, and release | `runtime-definition`, `runtime-compiler`, `runtime-bootgraph` |
-| `runtime-process-runtime` | service binding, execution, `EffectRuntimeAccess`, adapter lowering, mount-ready records, and its stop handle | `runtime-derivation`, `runtime-compiler`, `runtime-substrate-effect` |
+| `runtime-process-runtime` | service binding, execution, `EffectRuntimeAccess`, adapter lowering, mount-ready records, and its stop handle | `runtime-definition`, `runtime-derivation`, `runtime-compiler`, `runtime-substrate-effect` |
 | `runtime-harnesses` | generic harness contract and non-CLI native harness realizations | `runtime-definition`, `runtime-compiler`, `runtime-process-runtime` |
 | `runtime-observation` | definition-port implementation and non-authorizing diagnostic, telemetry, topology-record, and catalog projection | `runtime-definition` |
 | `runtime-mounting` | live `startApp(...)`, harness invocation, `StartedHarness` collection, reverse stop, and cross-owner finalization | `runtime-definition`, `runtime-process-runtime`, `runtime-harnesses` |
@@ -1223,7 +1223,7 @@ Names remain layer-specific. Similar concepts in different layers use different 
 | Runtime compilation | Private `compileRuntimePlan(...)`, `CompiledProcessPlan`, `RuntimeCompilationReferenceTable`, `CompilationObservationSeed`, and the closed §16 compiler DTO inventory | Bootgraph, process runtime, surface adapters, and later terminal composition through private owner edges; no public compiler face |
 | Lifecycle ordering | Private `orderBootgraph(...)`, `Bootgraph`, `BootResourceKey`, `BootResourceModule`, acquisition/release order, and rollback order; no public face, finding, or observation channel | Runtime substrate and later real terminal composition through private owner edges |
 | Provisioning | `ProvisionedProcess`, `ManagedRuntimeHandle` | Process runtime |
-| Runtime execution context | `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, `ProcedureExecutionContext`, `BoundaryErrors`, `BoundaryTelemetry` | Process runtime adapter lowering and SDK delegating hooks |
+| Runtime execution context | `ExecutionRegistry`, `ProcessExecutionRuntime`, `EffectRuntimeAccess`, `ProcedureExecutionContext`, `BoundaryTelemetry` | Process runtime adapter lowering and SDK delegating hooks |
 | Live access | `RuntimeAccess`, `ProcessRuntimeAccess`, `RoleRuntimeAccess`, `SurfaceRuntimeAccess` | Service binding, plugin projection, harness adapters |
 | Runtime binding | `ServiceBindingCache`, `ServiceBindingCacheKey`, `bindService(...)` | Process runtime and plugin projection |
 | Adapter lowering | `SurfaceAdapter`, `AdapterLoweringResult`, adapter-lowered payloads, `FunctionBundle` | Harnesses |
@@ -1712,8 +1712,8 @@ other. `Effect.gen(...)` remains valid for native Effect helpers, repositories,
 resource operations, provider-local composition where appropriate, generated
 code, and lower-level composition.
 
-File: `packages/core/sdk/src/execution/context.ts`  
-Layer: SDK operational execution context  
+File: `packages/core/runtime/definition/src/execution-context.ts`  
+Layer: shared inert invocation contracts, projected by SDK execution  
 Exactness: normative for common invocation fields and execution-context relation.
 
 ```ts
@@ -1721,7 +1721,6 @@ export interface ProcedureExecutionContext<TInput, TBoundaryContext> {
   readonly input: TInput;
   readonly context: TBoundaryContext;
   readonly telemetry: BoundaryTelemetry;
-  readonly errors: BoundaryErrors;
   readonly execution: EffectBoundaryContext;
 }
 
@@ -1737,7 +1736,6 @@ export interface EffectBoundaryContext {
   readonly executionId: string;
   readonly requestId?: string;
   readonly traceId: string;
-  readonly caller?: RuntimeCallerRef;
 }
 
 export interface BoundaryTelemetry {
@@ -1753,13 +1751,23 @@ export interface BoundaryTelemetry {
   ): HabitatEffect<void>;
 }
 
-export interface BoundaryErrors {
-  runtime(error: unknown): RuntimeBoundaryError;
-  domain(error: unknown): DomainBoundaryError;
-}
+export type EffectExecutionExit<TSuccess, TError> = Exit.Exit<TSuccess, TError>;
 ```
 
-`EffectBoundaryContext.traceId` is required for Habitat-managed executable invocation boundaries. If the native host does not supply a trace, the adapter or process execution runtime must mint one before invoking `descriptor.run(...)`. `requestId` remains optional host correlation; `traceId` is the required runtime correlation field passed into invocation schemas and telemetry. Lane-specific invocation facades such as CLI `invocation.traceId` and agent `shell.traceId` expose the same required trace identity guarantee when they feed required invocation schemas.
+`EffectBoundaryContext.traceId` comes from the actual native execution span
+before `descriptor.run(...)`. Continue an admitted native parent when supplied;
+otherwise native Effect creates the trace. Do not label an unrelated UUID as
+the trace of separately generated spans. `requestId` is optional host
+correlation. Async lowering installs runtime-owned telemetry and execution
+fields while preserving the native event, bound clients and resources.
+
+The native `Exit` and `Cause` preserve author-owned typed failure values,
+defects, interruption and combined reasons. Policy timeouts add the explicit
+`HabitatTimeoutError` channel. No undefined domain/runtime error wrappers or
+shared caller classification are invented. Native host adapters own public
+disclosure and authentication context; observations are bounded projections,
+not replacement outcomes. Shared inert invocation types live in definition,
+never in a downstream SDK owner imported by runtime implementation.
 
 ### 9.3 Execution descriptor table
 
@@ -1866,18 +1874,22 @@ table.
 
 ### 9.5 `EffectRuntimeAccess`
 
-`EffectRuntimeAccess` is the `runtime-process-runtime`-owned handle used by
-`ProcessExecutionRuntime` and runtime-owned adapter lowering to execute
+`EffectRuntimeAccess` names the `runtime-process-runtime`-owned capability used by
+`ProcessExecutionRuntime` to execute
 non-oRPC `HabitatEffect` descriptor programs against the single process managed
-runtime. SDK hooks may delegate to those runtime adapters but do not own or
-implement the handle. The native oRPC `.effect(...)` bridge does not call or
-receive `EffectRuntimeAccess`.
+runtime. It may be a private closure inside that execution owner, not a second
+handle object, runtime, or interpreter. Adapter-lowered callbacks invoke the
+matched execution boundary rather than receiving an arbitrary Effect runner.
+SDK hooks do not own this capability. The native oRPC `.effect(...)` bridge
+does not call or receive `EffectRuntimeAccess`.
 
 It is not app authoring, service dependency declaration, plugin projection fact, provider selection, or a public runtime handle.
 
-File: `packages/core/runtime/process-runtime/src/effect-runtime-access.ts`  
+File: `packages/core/runtime/process-runtime/src/execution-runtime.ts`  
 Layer: private runtime-process-runtime execution bridge  
-Exactness: normative for process-owned execution bridge and forbidden public export.
+Exactness: normative for process-owned execution bridge and forbidden public
+export; illustrative for a separate interface or object, which is unnecessary
+when a private closure suffices.
 
 ```ts
 export interface EffectRuntimeAccess {
@@ -1916,9 +1928,12 @@ through oRPC context without exposing this handle.
 `CompiledExecutionPlan` carries only the exact ref and copied
 `EffectExecutionPolicy`. It carries no error context, telemetry context, label,
 or resolver reference. `ProcessExecutionRuntime` derives the
-`ProcedureExecutionContext` error and telemetry capabilities from
+`ProcedureExecutionContext` correlation and telemetry capabilities from
 process/invocation state before it calls the descriptor, then passes only the
 resulting effect, boundary context, and policy to `EffectRuntimeAccess`.
+The implementation may perform that call directly inside the same owner.
+It must retain native managed-runtime fiber registration and error/cause
+semantics; the capability name does not require another forwarding layer.
 
 File: `packages/core/runtime/substrate/effect/managed-runtime-handle.ts`  
 Layer: runtime-owned raw Effect managed runtime  
@@ -1930,7 +1945,7 @@ exact wrapper generics and helper names.
 ```ts
 import { Context, Effect, Exit, Layer, ManagedRuntime } from "effect";
 
-export interface ManagedRuntimeHandle<TResources, TProvisionError> {
+export interface ManagedRuntimeHandle<TResources> {
   readonly kind: "managed-runtime.handle";
   readonly processId: string;
   readonly context: Context.Context<TResources>;
@@ -1941,7 +1956,7 @@ export interface ManagedRuntimeHandle<TResources, TProvisionError> {
 
   runExit<TSuccess, TError>(
     effect: Effect.Effect<TSuccess, TError, TResources>,
-  ): Promise<Exit.Exit<TSuccess, TError | TProvisionError>>;
+  ): Promise<Exit.Exit<TSuccess, TError>>;
 
   dispose(): Promise<void>;
 }
@@ -1951,7 +1966,7 @@ export async function createManagedRuntimeHandle<TResources, TProvisionError>(in
   providerPlans: readonly CompiledProviderPlan[];
   order: readonly BootResourceKey[];
   rollbackOrder: readonly BootResourceKey[];
-}): Promise<ManagedRuntimeHandle<TResources, TProvisionError>> {
+}): Promise<ManagedRuntimeHandle<TResources>> {
   const lifecycleLayer: Layer.Layer<TResources, TProvisionError, never> =
     Layer.effectContext(
       executeProviderPlansInBootgraphOrder<TResources, TProvisionError>({
@@ -1963,6 +1978,7 @@ export async function createManagedRuntimeHandle<TResources, TProvisionError>(in
 
   const runtime = ManagedRuntime.make(lifecycleLayer);
   const context = await runtime.context();
+  const ready = runtime as ManagedRuntime.ManagedRuntime<TResources, never>;
 
   return {
     kind: "managed-runtime.handle",
@@ -1974,7 +1990,7 @@ export async function createManagedRuntimeHandle<TResources, TProvisionError>(in
     },
 
     runExit(effect) {
-      return runtime.runPromiseExit(effect);
+      return ready.runPromiseExit(effect);
     },
 
     dispose() {
@@ -2487,6 +2503,9 @@ a `scope` schema and forbidden otherwise. `configRef` follows the same iff rule
 against the service's `config` schema. Invocation has no authoring config ref:
 when an `invocation` schema exists, the per-call caller/harness must supply and
 decode invocation input; when it does not, no invocation value is synthesized.
+The typed binding boundary validates that already-decoded value and forwards
+it unchanged. It must not invoke the decoder again: decoding and validation
+may have different input domains.
 Schema objects, schema identities, and decoded lane values never enter public
 normalized artifacts.
 
@@ -5288,9 +5307,10 @@ for the ref's exact `ExecutionDescriptorIdentityInput`; its `boundary` is
 value by reference. The operational descriptor retains the exact authored
 `effect` function by reference. Its `run(invocation)` invokes no authored code
 before returning a cold `HabitatEffect`; only execution of that returned Effect
-calls `authoredDescriptor.effect(invocation.context)`, passing the exact
-reference-identical `invocation.context` and never reconstructing it. A
-generator result is normalized through the definition-owned `Effect.gen(...)`,
+calls the authored function with its native lane context plus authoritative
+process-owned `telemetry` and `execution`. Those two fields override any
+same-named caller values; unrelated native context fields retain their values.
+A generator result is normalized through the definition-owned `Effect.gen(...)`,
 while the exact returned `HabitatEffect` is yielded by reference inside that
 lazy wrapper. The operational wrapper does not pass `invocation.input` to the
 authored async-step function.
@@ -6054,6 +6074,7 @@ export const CompiledSurfacePlanSchema = ReadonlyObject(Type.Object({
   role: Type.Index(SurfaceRuntimePlanSchema, ["role"]),
   surface: Type.Index(SurfaceRuntimePlanSchema, ["surface"]),
   capability: Type.Index(SurfaceRuntimePlanSchema, ["capability"]),
+  instance: Type.Optional(Type.String({ minLength: 1 })),
   serviceBindings: ReadonlyObject(
     Type.Index(SurfaceRuntimePlanSchema, ["serviceBindings"]),
   ),
@@ -6606,14 +6627,14 @@ Layer: runtime provisioning artifact
 Exactness: normative for provisioning output, access producer, and finalization owner.
 
 ```ts
-export interface ProvisionedProcess<TResources, TProvisionError> {
+export interface ProvisionedProcess<TResources> {
   readonly kind: "provisioned.process";
   readonly appId: string;
   readonly processId: string;
   readonly entrypointId: string;
   readonly profileId: string;
   readonly roles: readonly AppRole[];
-  readonly managedRuntime: ManagedRuntimeHandle<TResources, TProvisionError>;
+  readonly managedRuntime: ManagedRuntimeHandle<TResources>;
   readonly processResources: RuntimeResourceMap;
   readonly roleResources: RoleRuntimeResourceMap;
   readonly findings: readonly ProvisioningFinding[];
@@ -6705,6 +6726,41 @@ hooks never import or expose it.
 
 Service procedures do not receive broad `RuntimeAccess`. They receive declared `deps`, `scope`, `config`, per-call `invocation`, and execution-derived `provided`.
 
+Native service construction receives one typed `ServiceClientAssembly`
+capability. Its service-owned factory forwards the supplied native client
+options to `createRouterClient` over its private router; the process supplies
+the native context and admission/settlement interceptor and applies the official
+`createEffectClient`. These truthful native options are not an opaque security
+boundary. They may carry the sanctioned `effect/context` and `effect/wrap`
+slots, never the private provisioning resource store, managed runtime or scope.
+Domain procedure lanes remain separate from this native wiring boundary.
+
+The public `effect/context` and `effect/wrap` faces project the exact native
+slot types. They need no runtime object-builder merely to rename native keys.
+Actual composition and decoration stay process-owned, with real bridge tests;
+add a public executable helper only when it removes demonstrated complexity.
+
+Process stop closes admission and waits for admitted native calls and returned
+top-level iterator/stream consumption and cleanup before disposal. Caller
+interruption or initial Promise resolution does not prove native settlement.
+Native stream wrappers retain metadata and track pending pulls as well as
+finish callbacks. Already-admitted consumption may continue during draining;
+abandoned non-cooperative work can keep stop pending. No synthetic stream
+cancellation or forced provider release is introduced.
+
+Draining distinguishes new root work from continuation of an admitted request.
+An admitted native service or process execution may create invocation-bound
+dependency views and finish their calls after root admission closes. The
+process owns each continuation lease and retains it through actual returned
+stream cleanup. A view created inside an invocation captures that continuation
+through native Effect fiber context; the native client carries it across its
+Promise boundary. Each child call receives its own tracked lease. An expired
+or foreign continuation refuses and never silently becomes new root work.
+An unscoped view remains a root admission; merely calling a pre-created view
+inside a later Effect does not grant continuation authority. No author supplies
+a token, ambient Habitat store, second runner or scheduler. Scoped views are
+capabilities, not a sandbox against deliberate sharing of a live capability.
+
 ### 18.2 Process runtime
 
 The process runtime assembles processes.
@@ -6713,7 +6769,12 @@ The process runtime assembles processes.
 `RuntimeCompilationReferenceTable` of exact complete service exports,
 `ExecutionDescriptorTable`, the distinct `WebRouteModuleTable`, and
 `ProvisionedProcess`. Constructors do not hide in resource maps or the
-provisioned-process record. It returns mount-ready
+provisioned-process record. A matching provisioning artifact transfers cleanup
+responsibility to its first process-runtime assembly. Refusal before transfer
+leaves the artifact untouched. After transfer, assembly failure rolls back that
+artifact; it cannot be reused, and another attempt requires fresh provisioning.
+The transfer is a private per-artifact claim, not another lifecycle controller.
+It returns mount-ready
 surface records, adapter-lowered payloads and harness-plan inputs, owner-local
 findings, plus its own `stop(): Promise<void>` handle. It neither invokes
 harnesses nor returns `StartedHarness`. Only Effect executable boundaries enter
@@ -6737,7 +6798,6 @@ packages/core/runtime/process-runtime/
     mount-surfaces.ts
     surface-runtime-record.ts
     execution-runtime.ts
-    effect-runtime-access.ts
     stop.ts
 ```
 
@@ -6822,16 +6882,24 @@ Layer: process runtime execution bridge
 Exactness: normative for centralized Effect descriptor execution and explicit invocation input; illustrative for generic spelling.
 
 ```ts
+export interface ProcessExecutionInvocation<TInput, TContext> {
+  readonly input: TInput;
+  readonly context: TContext;
+  readonly requestId?: string;
+  readonly parentSpan?: ExecutionTraceParent;
+  readonly signal?: AbortSignal;
+}
+
 export interface ProcessExecutionRuntime {
   execute<TInput, TSuccess, TError, TContext>(input: {
     boundary: CompiledExecutableBoundary<TInput, TSuccess, TError, TContext>;
-    invocation: ProcedureExecutionContext<TInput, TContext>;
+    invocation: ProcessExecutionInvocation<TInput, TContext>;
   }): Promise<TSuccess>;
 
   executeExit<TInput, TSuccess, TError, TContext>(input: {
     boundary: CompiledExecutableBoundary<TInput, TSuccess, TError, TContext>;
-    invocation: ProcedureExecutionContext<TInput, TContext>;
-  }): Promise<EffectExecutionExit<TSuccess, TError>>;
+    invocation: ProcessExecutionInvocation<TInput, TContext>;
+  }): Promise<EffectExecutionExit<TSuccess, TError | HabitatTimeoutError>>;
 }
 ```
 
@@ -6845,19 +6913,31 @@ Exactness: normative.
 execution.effect
   -> receive matched CompiledExecutableBoundary
   -> validate boundary.plan.ref, boundary.ref, and descriptor identity/boundary agree
-  -> receive explicit ProcedureExecutionContext
-  -> construct runtime-owned error and telemetry contexts from process/invocation state
+  -> receive explicit input, boundary context and optional native correlation/signal
+  -> construct runtime-owned correlation and telemetry contexts from process/invocation state
+  -> assemble ProcedureExecutionContext with runtime-owned fields
   -> call descriptor.run(invocation)
   -> receive HabitatEffect
   -> run through EffectRuntimeAccess
   -> apply boundary.plan.policy
-  -> apply process-runtime-owned error and telemetry contexts
+  -> apply process-runtime-owned correlation and telemetry contexts
   -> return Promise result or structured exit to adapter/native host interop
 ```
 
 The process runtime supplies `EffectRuntimeAccess` only to non-oRPC descriptor
 lanes. Services and plugins do not receive it, and official Effect-oRPC does not
 call it.
+
+Native async steps reject a supplied interruption signal because native Inngest
+cancellation does not interrupt an already active step. Other lanes use their
+actual host signal only when the selected adapter provides one. Execution
+returns native `Exit` and retains typed failures, defects, interruption and
+combined causes; boundary timeout adds the declared `HabitatTimeoutError`.
+Shared invocation contracts live in `runtime-definition` and are projected by
+the SDK, avoiding a reverse runtime-to-SDK dependency. Correlation and telemetry
+are process-supplied before descriptor invocation and cannot be replaced by
+same-named fields in an authored async context. No generic error vocabulary or
+caller-classification object is required without an actual consumer.
 
 ### 18.5 `ServiceBindingCache` and `ServiceBindingCacheKey`
 
@@ -7250,7 +7330,7 @@ Layer: native bridge import law
 Exactness: normative for the exact selected package.
 
 ```text
-@orpc/experimental-effect@2.0.0-beta.23 extensions/effect
+@orpc/experimental-effect@2.0.0-beta.32 extensions/effect
 vendor-internal handlerGen mechanism (source proof only)
 ```
 
@@ -8751,7 +8831,7 @@ the substrate before that provider is claimed to work in a started process.
 | `CompiledExecutionRegistryInput` | Private `runtime-compiler` | `packages/core/runtime/compiler/src/compiled-process-plan.ts` | Synchronous `compileRuntimePlan(...)` | Process runtime | Compilation/mounting | Invalid or duplicate execution-id/ref pairing is built-in `TypeError` before compiler result | Exact closed boundaries-only registry-input gate; no table or descriptor |
 | `ExecutionRegistry` | Process runtime | `packages/core/runtime/process-runtime/execution-registry.ts` | Process runtime | Adapters and process execution runtime | Mounting/invocation | Owner-local identity mismatch and missing-boundary findings | Registry matching gate |
 | `ProcessExecutionRuntime` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/execution-runtime.ts` | Process runtime | Non-oRPC runtime adapter-lowered closures and SDK delegating hooks only | Mounting/invocation | Owner-local non-oRPC execution bridge findings | Execution bridge gate |
-| `EffectRuntimeAccess` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/src/effect-runtime-access.ts` | Process runtime | Process execution and process-runtime adapter interiors only | Mounting/invocation | Owner-local `HabitatEffect` execution findings | Effect runtime access gate |
+| `EffectRuntimeAccess` | `runtime-process-runtime` | `packages/core/runtime/process-runtime/src/execution-runtime.ts` | Process runtime | Private process execution capability; adapter callbacks use matched boundaries | Invocation | Native Effect results and causes | Effect runtime access gate |
 | `ManagedRuntimeHandle` | Runtime substrate | `packages/core/runtime/substrate/effect` | Runtime substrate | `EffectRuntimeAccess`, provisioning/finalization | Provisioning/invocation/finalization | Owner-local managed-runtime findings or definition-owned observation records | Managed runtime ownership gate |
 | `ServiceUse` | `runtime-definition`, projected by SDK | `packages/core/runtime/definition` | `useService(...)` selects a complete cold service export | Derivation and static contract/client inference | Definition/derivation | Public relation data plus private exact export and schema-gated binding inputs; invalid instance/key/ref refuses | Complete-export inference, coldness, and public/private boundary proof |
 | `NormalizedRuntimeTopology` | Private `runtime-derivation` foundation | `packages/core/runtime/derivation` | Private runtime derivation from selected launch facts | Complete derivation within the same owner | Derivation | Duplicate authored identities, conflicting declarations, selected service self-loops and longer cycles refuse independent of traversal order; repeated projected edges deduplicate. No prescribed private error class, chosen cycle path, diagnostic order, or finding payload | Owner-local TypeBox decode plus exact-copy, deterministic-order, and refusal gate |
@@ -8945,7 +9025,7 @@ process execution runtime
   executes non-oRPC Effect descriptors at invocation time
   receives explicit ProcedureExecutionContext
   uses CompiledExecutionPlan ref and policy only
-  constructs error and telemetry contexts from process/invocation state
+  constructs correlation and telemetry contexts from process/invocation state
   runs HabitatEffect through EffectRuntimeAccess
   emits owner-local execution findings or admitted observation records
 

@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 
+import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { Exit } from "effect";
 import { describe, expect, test } from "vitest";
-
 import type {
   ProviderBuildContext as PrivateProviderBuildContext,
   RuntimeProvider as PrivateRuntimeProvider,
@@ -15,6 +16,14 @@ import type {
   ProviderFxFacade as PrivateProviderFxFacade,
   ProviderRelease as PrivateProviderRelease,
 } from "../../runtime/definition/src/provider-effect-plan";
+import type { EffectContext } from "../src/effect/context";
+import type { EffectWrap } from "../src/effect/wrap";
+import type {
+  BoundaryTelemetry,
+  EffectBoundaryContext,
+  EffectExecutionExit,
+  ProcedureExecutionContext,
+} from "../src/execution";
 import type {
   ServiceContractOf as AsyncServiceContractOf,
   ServiceUses as AsyncServiceUses,
@@ -55,6 +64,8 @@ type TypesEqual<TLeft, TRight> =
 const expectedRuntimeExports = [
   "./app",
   "./effect",
+  "./effect/context",
+  "./effect/wrap",
   "./execution",
   "./runtime/derivation",
   "./runtime/profiles",
@@ -112,6 +123,8 @@ describe("runtime authoring public faces", () => {
     const [
       app,
       effect,
+      effectContext,
+      effectWrap,
       execution,
       profiles,
       providerEffect,
@@ -122,6 +135,8 @@ describe("runtime authoring public faces", () => {
     ] = await Promise.all([
       import("../src/app"),
       import("../src/effect"),
+      import("../src/effect/context"),
+      import("../src/effect/wrap"),
       import("../src/execution"),
       import("../src/runtime/profiles"),
       import("../src/runtime/providers/effect"),
@@ -138,6 +153,8 @@ describe("runtime authoring public faces", () => {
       "runtimeLaunchIdentity",
     ]);
     expect(Object.keys(effect).sort()).toEqual(["Effect", "TaggedError"]);
+    expect(Object.keys(effectContext)).toEqual([]);
+    expect(Object.keys(effectWrap)).toEqual([]);
     expect(Object.keys(execution)).toEqual([]);
     expect(Object.keys(profiles).sort()).toEqual(["defineRuntimeProfile", "providerSelection"]);
     expect(Object.keys(providerEffect)).toEqual(["providerFx"]);
@@ -190,14 +207,16 @@ describe("runtime authoring public faces", () => {
     }
   });
 
-  test("preserves the exact admitted runtime package subpaths without future empty faces", () => {
+  test("preserves the exact admitted runtime package subpaths", () => {
     const packageJson = JSON.parse(
       readFileSync(new URL("../package.json", import.meta.url), "utf8")
     ) as { exports: Record<string, unknown> };
     const runtimeExports = Object.keys(packageJson.exports)
       .filter(
         (subpath) =>
-          ["./app", "./effect", "./execution"].includes(subpath) || subpath.startsWith("./runtime/")
+          ["./app", "./effect", "./execution"].includes(subpath) ||
+          subpath.startsWith("./effect/") ||
+          subpath.startsWith("./runtime/")
       )
       .sort();
 
@@ -208,6 +227,24 @@ describe("runtime authoring public faces", () => {
       default: "./dist/runtime/providers/effect/index.js",
     });
     expect(packageJson.exports).not.toHaveProperty("./runtime/harnesses");
+  });
+
+  test("projects native context and wrap slots with inert execution contracts", () => {
+    const identity: readonly [
+      TypesEqual<EffectContext<never>, WithEffectContext<never>["effect/context"]>,
+      TypesEqual<EffectWrap, NonNullable<WithEffectContext<never>["effect/wrap"]>>,
+      TypesEqual<EffectExecutionExit<string, Error>, Exit.Exit<string, Error>>,
+      TypesEqual<
+        ProcedureExecutionContext<string, { readonly trace: string }>,
+        {
+          readonly input: string;
+          readonly context: { readonly trace: string };
+          readonly execution: EffectBoundaryContext;
+          readonly telemetry: BoundaryTelemetry;
+        }
+      >,
+    ] = [true, true, true, true];
+    expect(identity).toEqual([true, true, true, true]);
   });
 
   test("projects the exact cold provider authoring faces by implementation identity", async () => {

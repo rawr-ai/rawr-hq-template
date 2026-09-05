@@ -1,19 +1,63 @@
 import { expect, test } from "bun:test";
+import type { RouterContractClient } from "@orpc/contract";
+import {
+  createEffectClient,
+  type EffectClient,
+  type WithEffectContext,
+} from "@orpc/experimental-effect";
 import { createRouterClient, implement } from "@orpc/server";
-import { Effect } from "effect";
+import { Context, Effect } from "effect";
 import { Type } from "typebox";
 import { RuntimeSchema, standard } from "../../schema/src";
 import {
   defineRuntimeResource,
   defineService,
+  type InvocationBoundEffectServiceClient,
   readServiceUse,
   resourceDep,
+  type ServiceClientAssembly,
   type ServiceOf,
   type ServiceUse,
   sealService,
   serviceDep,
   useService,
 } from "../src";
+
+// Test-owned assembly, not a definition-owned runtime or production binder.
+const clients: ServiceClientAssembly = {
+  bind: ({ context, createNativeClient }) =>
+    createEffectClient(
+      createNativeClient({
+        context: () => ({ ...context(), "effect/context": Context.empty() }),
+      })
+    ),
+};
+
+type TypesEqual<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+
+test("delegates complete nested client and error typing to the official vendor contract", () => {
+  const definition = defineService({ id: "vendor-types", deps: {} });
+  const contract = definition.oc.router({
+    nested: {
+      read: definition.oc
+        .input(standard(Type.Object({ id: Type.String() })))
+        .output(standard(Type.String()))
+        .errors({ MISSING: { data: standard(Type.Object({ id: Type.String() })) } }),
+    },
+  });
+  const exact: TypesEqual<
+    InvocationBoundEffectServiceClient<typeof contract>,
+    EffectClient<RouterContractClient<typeof contract>>
+  > = true;
+  expect(exact).toBe(true);
+  if (false) {
+    // @ts-expect-error Assembly is one bounded capability, not a managed runtime.
+    clients.runPromise(Effect.succeed(1));
+    // @ts-expect-error Native process context is not exposed as a construction knob.
+    clients.context;
+  }
+});
 
 test("preserves absent lanes and the public contract/declaration generic meanings", () => {
   const definition = defineService({ id: "no-lanes", deps: {} });
@@ -31,14 +75,16 @@ test("preserves absent lanes and the public contract/declaration generic meaning
   const erased: ServiceUse<unknown> = selected;
   expect(sameDefinition).toBe(definition);
   expect(readServiceUse(erased).service === service).toBe(true);
-  service.construct({ deps: {} }).withInvocation({});
+  service.construct({ clients, deps: {} }).withInvocation({});
   if (false) {
+    // @ts-expect-error Process-owned client assembly is required even without schema lanes.
+    service.construct({ deps: {} });
     // @ts-expect-error No scope schema permits only absence, not an invented lane.
-    service.construct({ deps: {}, scope: "invented" });
+    service.construct({ clients, deps: {}, scope: "invented" });
     // @ts-expect-error No config schema permits only absence, not an invented lane.
-    service.construct({ deps: {}, config: 1 });
+    service.construct({ clients, deps: {}, config: 1 });
     // @ts-expect-error No invocation schema permits only absence, not an invented value.
-    service.construct({ deps: {} }).withInvocation({ invocation: "invented" });
+    service.construct({ clients, deps: {} }).withInvocation({ invocation: "invented" });
   }
 });
 
@@ -61,10 +107,10 @@ test("retains a complete typed native service after its producer scope leaves", 
     const contract = definition.oc.router({
       read: definition.oc.input(standard(Type.String())).output(standard(Type.String())),
     });
-    const native = implement(contract).$context<{ trace: string }>();
+    const native = implement(contract).$context<{ trace: string } & WithEffectContext<never>>();
     const service = sealService(definition, {
       contract,
-      construct: ({ deps, scope, config }) => {
+      construct: ({ clients, deps, scope, config }) => {
         constructions += 1;
         const router = native.router({
           read: native.read.handler(({ input, context }) => {
@@ -75,19 +121,11 @@ test("retains a complete typed native service after its producer scope leaves", 
         return {
           kind: "service.client.construction-bound",
           serviceId: definition.id,
-          withInvocation: ({ invocation }) => {
-            const client = createRouterClient(router, {
-              context: { trace: invocation.trace },
-            });
-            // Test-only native boundary adaptation, not the future runtime binding implementation.
-            return {
-              read: (input, options) =>
-                Effect.tryPromise({
-                  try: (signal) => client.read(input, { ...options, signal }),
-                  catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-                }),
-            };
-          },
+          withInvocation: ({ invocation }) =>
+            clients.bind({
+              context: () => ({ trace: invocation.trace }),
+              createNativeClient: (options) => createRouterClient(router, options),
+            }),
         };
       },
     });
@@ -129,6 +167,7 @@ test("retains a complete typed native service after its producer scope leaves", 
     useService(parent, { binding: { dependencies: { child: { instance: "" } } } })
   ).toThrow(TypeError);
   const client = service.construct({
+    clients,
     deps: { clock: { now: () => 7 } },
     scope: { tenant: "a" },
     config: { prefix: "b" },
@@ -147,6 +186,7 @@ test("retains a complete typed native service after its producer scope leaves", 
     // @ts-expect-error A declaration and caller-paired contract cannot form a service use.
     useService(service.definition, { contract: service.contract });
     service.construct({
+      clients,
       // @ts-expect-error Ready resource dependencies retain their capability type.
       deps: { clock: {} },
       scope: { tenant: "a" },

@@ -1,14 +1,13 @@
+import type { AnyNestedClient } from "@orpc/client";
 import {
-  type InferSchemaOutput,
-  type ORPCErrorFromErrorMap,
+  type ErrorMap,
   oc,
-  type ProcedureContract,
-  type ProcedureContractClient,
   type RouterContract,
-  type ThrowableError,
+  type RouterContractClient,
+  type Schema,
 } from "@orpc/contract";
-import { implement, os } from "@orpc/server";
-import type { Effect } from "effect";
+import type { EffectClient, WithEffectContext } from "@orpc/experimental-effect";
+import { type AnyORPCError, implement, os, type ProcedureClientOptions } from "@orpc/server";
 
 import type { RuntimeSchema } from "../../schema/src/runtime-schema";
 import type { RuntimeResource, RuntimeResourceValue } from "./resource";
@@ -96,6 +95,7 @@ type ConstructionLane<K extends string, T> = [T] extends [undefined]
   : { readonly [P in K]: T };
 
 export type ServiceConstructorInput<TDefinition extends ServiceDefinition> = {
+  readonly clients: ServiceClientAssembly;
   readonly deps: {
     readonly [K in keyof TDefinition["deps"]]: TDefinition["deps"][K] extends ResourceDependency<
       infer R
@@ -114,16 +114,25 @@ export type ServiceConstructorInput<TDefinition extends ServiceDefinition> = {
     TDefinition extends ServiceDefinition<string, infer _D, infer _S, infer C> ? C : never
   >;
 
-export type InvocationBoundEffectServiceClient<TContract extends RouterContract> =
-  TContract extends ProcedureContract<infer I, infer O, infer E>
-    ? (
-        ...args: Parameters<ProcedureContractClient<object, I, O, E>>
-      ) => Effect.Effect<InferSchemaOutput<O>, ORPCErrorFromErrorMap<E> | ThrowableError>
-    : {
-        readonly [K in keyof TContract]: TContract[K] extends RouterContract
-          ? InvocationBoundEffectServiceClient<TContract[K]>
-          : never;
-      };
+/** Process-owned native client assembly; the service retains its private router. */
+export interface ServiceClientAssembly {
+  bind<TContext extends object, TClient extends AnyNestedClient>(input: {
+    readonly context: () => TContext;
+    readonly createNativeClient: (
+      options: ProcedureClientOptions<
+        TContext & WithEffectContext<never>,
+        Schema<unknown>,
+        ErrorMap,
+        AnyORPCError,
+        object
+      >
+    ) => TClient;
+  }): EffectClient<TClient>;
+}
+
+export type InvocationBoundEffectServiceClient<TContract extends RouterContract> = EffectClient<
+  RouterContractClient<TContract>
+>;
 
 export interface ConstructionBoundServiceClient<
   TContract extends RouterContract = RouterContract,

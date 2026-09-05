@@ -28,6 +28,7 @@ export interface ProvisionedProcessHandoff {
   readonly compilation: RuntimeCompilationResult;
   readonly values: ProvisionedResourceValues;
   readonly config: PreflightConfig;
+  claim(): void;
 }
 
 export interface ProvisionedProcess {
@@ -37,7 +38,7 @@ export interface ProvisionedProcess {
   readonly entrypointId: string;
   readonly profileId: string;
   readonly roles: readonly AppRole[];
-  readonly managedRuntime: ManagedRuntimeHandle<ProvisionedResourceValues, unknown>;
+  readonly managedRuntime: ManagedRuntimeHandle<ProvisionedResourceValues>;
   readonly processResources: RuntimeResourceMap;
   readonly roleResources: RoleRuntimeResourceMap;
   readonly findings: readonly ProvisioningFinding[];
@@ -96,10 +97,17 @@ export const ProvisionedProcessSchema = ReadonlyObject(
 
 export function attachProvisionedProcessHandoff(
   process: Omit<ProvisionedProcess, typeof provisionedHandoff>,
-  handoff: ProvisionedProcessHandoff
+  handoff: Omit<ProvisionedProcessHandoff, "claim">
 ): ProvisionedProcess {
+  let claimed = false;
   const result = Object.defineProperty(process, provisionedHandoff, {
-    value: Object.freeze(handoff),
+    value: Object.freeze({
+      ...handoff,
+      claim(): void {
+        if (claimed) throw new TypeError("Provisioned process already has a runtime owner.");
+        claimed = true;
+      },
+    }),
     enumerable: false,
     writable: false,
     configurable: false,

@@ -1,9 +1,9 @@
 # Habitat Runtime Implementation
 
 Status: `active-draft`.
-Branch: `agent-root-habitat-runtime-acquisition`, stacked on the cold repair.
+Branch: `agent-root-habitat-runtime-binding`, stacked on native acquisition.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
-acquisition candidate not yet submitted.
+acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -157,11 +157,12 @@ including the real native service export, callable and declaration checks.
 The complete candidate CI command passed. PR 1008 now includes the Windows
 declaration-resolution correction at `ddefa31e3decd2c502a45bd8ff12000f120401a8`.
 Required CI and both Linux/Windows installed acceptance passed again (Repository
-Ratchet 33939076263, installed-package run 33939076218). Acquisition development
-continues on its child branch. This is
+Ratchet 33939076263, installed-package run 33939076218). Acquisition PR 1009 is
+also green at `2e394920a`: required run 33942339473 and Linux/Windows installed
+run 33942339472 passed. Binding/execution continues on its child branch. This is
 working-stack progress, not a claim that either story has merged or released.
 
-### Current Domino: Native Acquisition
+### Accepted Local Domino: Native Acquisition
 
 Task 7 owns a complete compiled-plan-to-ready-process story: source availability
 and selected schema preflight; exact dependency-resource lookup; one native
@@ -194,8 +195,9 @@ value fusion passed the complete rebuilt repository CI (123 tasks, 27 projects)
 and all nine macOS installed-package tests. The final installed rerun also
 proves the resource@3 error law rejects an invalid failure channel in an optional
 root helper. Independent acquisition, native Effect, telemetry and law reviews
-have no unresolved P1/P2. Tasks 7.1-7.5 are locally accepted; remote admission
-remains pending. These are not service-binding, native-host or release receipts.
+have no unresolved P1/P2. Tasks 7.1-7.5 are locally accepted and required remote
+checks passed; native stack merge remains pending. These are not
+service-binding, native-host or release receipts.
 
 Role visibility and lifetime are independent: the process projection contains
 process-lifetime values; each selected role projection contains unqualified
@@ -398,6 +400,126 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
+### Current Domino: Binding And Execution
+
+Tasks 8-9 turn the ready process into bounded resource access, cached native
+service clients and non-oRPC descriptor execution, with one idempotent process
+stop and no harness authority. The official oRPC family is coherently upgraded
+to beta.32 while Effect remains beta.101, based on exact published runtime/type
+probes. No community bridge or second service runner is introduced.
+
+Independent review identified four narrow corrections while connecting the
+actual owners. Process runtime directly imports definition-owned contract types;
+the missing canonical definition edge is admitted rather than hidden behind
+barrel re-exports. Task 8's vague retained-reader cutover means affected managed
+binding fixtures and new SDK projections: existing SDK module globals, catalog
+and CLI/Nx production readers still move atomically in task 11. Surface instance
+names survive derivation but were absent from compiled plans; lower that field
+directly from the already-validated plugin map. Runtime resource lookup follows
+normalized resource identity, not a new resource-object equality restriction;
+only the private ResourceRequirement map has the exact-reference law.
+
+Native client assembly is one constructor capability over the service's private
+router. Native options remain truthful and sanctioned, not falsely opaque;
+they carry no managed runtime, scope or private provisioning store. Public
+effect/context and effect/wrap project the actual native slot types, without
+object-builder helpers that merely rename keys. Process assembly owns the
+single native callback, policy/decorations and request accounting.
+
+Exact beta.32 stream probes show both initial Promise settlement and a native
+iterator finish callback can precede outstanding consumption. Track admitted
+native calls plus native top-level stream lifetimes and pending pull/cleanup
+operations using the vendor wrappers. Close admission, allow admitted work to
+finish, then dispose. Stop does not invent cancellation or claim an abandoned
+stream settled. Real HTTP disconnect remains a native-host gate.
+
+The execution contracts now use native `Exit` and actual span correlation,
+without a generic error vocabulary or a caller-classification object that has
+no consumer. Shared inert invocation types belong in definition, avoiding a
+runtime-to-SDK dependency. `EffectRuntimeAccess` is the existing private
+execution capability, implemented as a closure; a separate forwarding object
+or interpreter adds no protection. The ready handle refines its acquisition
+error to `never` only after native context acquisition succeeds, while retaining
+native managed-runtime methods and their scope/fiber registration. Native
+failure, defect, interruption and combined-cause identities remain intact.
+
+Independent binding review repaired two P2 defects. Exact handoff validation
+now precedes cleanup ownership; a synchronous per-artifact claim transfers
+cleanup to exactly one assembly. Mismatched and duplicate attempts leave the
+accepted owner live; failed claimed assembly rolls back and requires fresh
+provisioning. Typed invocation values use validation, not a second decode, and
+are forwarded unchanged. A real string-to-Date schema discriminates the two
+domains. Real SDK pipeline tests cover these cases and constructor rollback.
+
+Execution review also found async derivation discarded process-owned execution
+metadata. The live lowering now supplies execution and telemetry after copying
+authored lane context, preventing poisoned same-named fields from replacing
+actual trace identity. Native execution tests cover policy, causes, signal
+rules, trace parenting, event failure isolation and stream cleanup before file
+lease release. A direct ready-handle probe proves native fiber registration;
+only the process admission path claims drain-before-provider-release ordering.
+
+The source/structure audit found task 8.4 was not satisfied by the new blueprint
+shell: graph assertions lacked incoming private-owner constraints, and some
+provider package subpaths resolve in Nx to their parent resource. A repository
+parser-backed access packet and graph acceptance close current production
+consumer routes without banning raw Effect or adding another policy engine.
+App/profile, adapter and harness-specific constraints co-land with their actual
+task 10/11 owners; this does not claim a hostile-code sandbox or future hosts.
+
+The first complete gates caught stale standalone constructor fixtures, a
+generator still emitting beta.23, and installed probes relying on a transitive
+vendor dependency. Repair the real native fixture assembly and declare the
+probe's direct vendor dependency; do not weaken types or rely on hoisting.
+The registered access rule also required the catalog's exact inventory oracle
+to include it. All repairs passed the settled integrated rerun:
+
+- `bun run ci`: 28 projects, 128 tasks, 86 cache hits; build/check/test passed.
+- `bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package`: all nine
+  installed tests passed, including native assembly and the direct dependency.
+- `bunx nx run habitat:acceptance:product-separation-absence`: eight tests,
+  52 assertions passed, including actual Nx incoming edges and parser fixtures.
+- `bunx openspec validate realize-app-runtime-spine --strict` and
+  `git diff --check`: passed.
+
+Independent final semantic/source review has no remaining P1/P2. The existing
+proof-ledger steward lens confirms these are local task 8/9 acceptance receipts,
+not release, merged-main, future-host or sandbox evidence. Negative Nx mutation
+proof is not claimed; revisit it when introducing aliases or owner exceptions.
+Tasks 8/9 are locally verified. Remote stack admission is next.
+
+The next consumer review then exposed a real pre-merge task-8 defect: stop
+between two dependency calls in an already-admitted native service refused the
+second call. The discriminating real-lease regression fails while the six prior
+binding tests pass. Merge is held for repair and renewed gates; the receipts
+above do not waive this finding. Use native `Fiber.getCurrent()` and a private
+`Context.Reference` to capture continuation when a view is created, then carry
+it through official `effect/context`. Each actual invocation owns one lease,
+retained through stream cleanup. Expired/foreign views and new root calls still
+refuse. A pinned native probe establishes capture before the client's `await`
+and delivery into the official handler, without AsyncLocalStorage, a global
+pending-count exception or another runtime. This same repair prepares real
+tool/background execution without duplicating their capability declarations.
+The pinned [Effect fiber API](https://github.com/Effect-TS/effect/blob/effect%404.0.0-beta.101/packages/effect/src/Fiber.ts)
+and [native procedure client](https://github.com/middleapi/orpc/blob/v2.0.0-beta.32/packages/server/src/procedure-client.ts)
+anchor the capture/await distinction; runtime behavior tests remain decisive.
+
+The continuation repair is now implemented and independently reviewed with no
+remaining P1/P2. The tracker passes 12 tests/95 assertions; real SDK tests cover
+the sequential child call, expired views, native stream cleanup and admitted
+async-descriptor continuation. The full repository CI rerun passed 128 tasks
+(84 cache hits), product separation passed 8 tests/52 assertions, and strict
+OpenSpec validation passed. These are local receipts, not native-host evidence.
+
+The first remote PR-1010 installed run passed Linux but exposed a Windows
+acceptance-fixture defect: the compound adoption test exhausted its 180-second
+budget, and its intentional forbidden-import mutation lacked guaranteed
+restoration. Give only that compound test 360 seconds and restore its source in
+`finally`; keep individual command deadlines and boundary assertions unchanged.
+The repaired fixture passes all nine local installed tests (150.20 seconds),
+and the final repository check passes. A fresh remote Windows receipt remains
+required before merging the amended candidate.
+
 ### Backend Receipt Reuse
 
 Read-only discovery found a running Podman machine `orpc-efficacy-085`, cached
@@ -507,9 +629,11 @@ to invent another runner. Related SDK layer/harness drafts remain contextual,
 not wholesale architecture replacements.
 
 Read this record, the current OpenSpec queue and the selected owner's authority.
-Admit the locally accepted native acquisition story through Graphite, then
-continue into bounded service binding and execution. The cold predecessor's
-Windows rerun is green. Evaluate the
-SDK authorship input and pinned official oRPC bridge at that actual boundary,
-not as another broad planning phase. Consumer repositories and held source
-remain outside this implementation authorization.
+Finish the binding/execution gate and the repaired current-owner access law,
+then submit its complete story above the green acquisition predecessor. Request
+one native stack merge when the complete stack is green and perform the
+owner-authorized one-pass sweep only after actual merge. Continue through
+adapter lowering, real tool/background authoring, harness contracts and live
+mounting/observation under task 10. Use the SDK authorship inputs and native
+contracts at each actual boundary, not as a new broad planning phase. Consumer
+repositories and held source remain outside this implementation authorization.

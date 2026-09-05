@@ -1,6 +1,6 @@
 import { type as schemaType } from "@orpc/contract";
+import type { WithEffectContext } from "@orpc/experimental-effect";
 import { createRouterClient, implement } from "@orpc/server";
-import { Effect as NativeEffect } from "effect";
 import {
   defineApp,
   defineAsyncStepEffect,
@@ -156,7 +156,7 @@ export function produceHandoff(
   const contract = childDefinition.oc.router({
     read: childDefinition.oc.input(schemaType<string>()).output(schemaType<string>()),
   });
-  const native = implement(contract).$context<{ label: string }>();
+  const native = implement(contract).$context<{ label: string } & WithEffectContext<never>>();
   const nativeRouter = native.router({
     read: native.read.handler(({ input, context }) => {
       counters.operation++;
@@ -165,21 +165,16 @@ export function produceHandoff(
   });
   const child = sealService(childDefinition, {
     contract,
-    construct: ({ config }) => {
+    construct: ({ clients, config }) => {
       counters.construct++;
       return {
         kind: "service.client.construction-bound",
         serviceId: "child",
-        withInvocation: () => {
-          const client = createRouterClient(nativeRouter, { context: { label: String(config) } });
-          return {
-            read: (input, opts) =>
-              NativeEffect.tryPromise({
-                try: (signal) => client.read(input, { ...opts, signal }),
-                catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-              }),
-          };
-        },
+        withInvocation: () =>
+          clients.bind({
+            context: () => ({ label: String(config) }),
+            createNativeClient: (options) => createRouterClient(nativeRouter, options),
+          }),
       };
     },
   });

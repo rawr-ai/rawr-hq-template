@@ -1,6 +1,7 @@
 export * from "./app";
 export * from "./effect";
 export * from "./execution";
+export * from "./execution-context";
 export * from "./observation";
 export * from "./plugin";
 export * from "./profile";

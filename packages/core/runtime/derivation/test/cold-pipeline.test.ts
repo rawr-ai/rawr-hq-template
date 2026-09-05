@@ -1,6 +1,7 @@
 import { describe, expect, spyOn, test } from "bun:test";
+import { createEffectClient, type WithEffectContext } from "@orpc/experimental-effect";
 import { createRouterClient, implement } from "@orpc/server";
-import { Effect as NativeEffect } from "effect";
+import { Context, Effect as NativeEffect } from "effect";
 import { Type } from "typebox";
 
 import {
@@ -26,6 +27,7 @@ import {
   type RuntimeConfigSource,
   requireResource,
   resourceDep,
+  type ServiceClientAssembly,
   type ServiceDependencyDeclaration,
   type ServiceRuntimeExport,
   type ServiceUses,
@@ -42,6 +44,16 @@ import {
   readRuntimeDerivationHandoff,
 } from "../src/index";
 import { coldService } from "./support/cold-service";
+
+// Standalone native proof assembly, not a derivation-owned process binder.
+const clients: ServiceClientAssembly = {
+  bind: ({ context, createNativeClient }) =>
+    createEffectClient(
+      createNativeClient({
+        context: () => ({ ...context(), "effect/context": Context.empty() }),
+      })
+    ),
+};
 
 const LaneSchema = RuntimeSchema.fromTypeBox(Type.Object({ value: Type.String() }));
 const configRef = (key: string) => ({ kind: "runtime.config" as const, key });
@@ -138,10 +150,10 @@ describe("selected cold executable handoff", () => {
       const contract = definition.oc.router({
         echo: definition.oc.input(standard(Type.String())).output(standard(Type.String())),
       });
-      const native = implement(contract);
+      const native = implement(contract).$context<WithEffectContext<never>>();
       const service = sealService(definition, {
         contract,
-        construct: ({ deps }) => {
+        construct: ({ clients, deps }) => {
           calls.constructor += 1;
           const router = native.router({
             echo: native.echo.handler(({ input }) => {
@@ -152,16 +164,11 @@ describe("selected cold executable handoff", () => {
           return {
             kind: "service.client.construction-bound",
             serviceId: definition.id,
-            withInvocation: () => {
-              const client = createRouterClient(router);
-              return {
-                echo: (input, options) =>
-                  NativeEffect.tryPromise({
-                    try: (signal) => client.echo(input, { ...options, signal }),
-                    catch: (cause) => (cause instanceof Error ? cause : new Error(String(cause))),
-                  }),
-              };
-            },
+            withInvocation: () =>
+              clients.bind({
+                context: () => ({}),
+                createNativeClient: (options) => createRouterClient(router, options),
+              }),
           };
         },
       });
@@ -259,10 +266,11 @@ describe("selected cold executable handoff", () => {
       configurable: false,
     });
     // The producer scope is gone; the exact retained export is still natively callable.
-    const client = fixture.service.construct({ deps: { value: "retained" } });
-    expect(await NativeEffect.runPromise(client.withInvocation({}).echo("hello"))).toBe(
-      "retained:hello"
-    );
+    const client = fixture.service.construct({ clients, deps: { value: "retained" } });
+    const operation = client.withInvocation({}).echo("hello");
+    expect(NativeEffect.isEffect(operation)).toBe(true);
+    expect(calls.procedure).toBe(0);
+    expect(await NativeEffect.runPromise(operation)).toBe("retained:hello");
     expect(calls).toEqual({ constructor: 1, procedure: 1, provider: 0, effect: 0, loader: 0 });
   });
 
