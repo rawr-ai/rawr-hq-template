@@ -503,7 +503,7 @@ describe("complete runtime derivation", () => {
     const serverSurface = result.graph.surfaceRuntimePlans.find(
       (plan) => plan.surface === "server/internal"
     );
-    expect(asyncSurface?.workflowDispatcherDescriptorIds).toHaveLength(1);
+    expect(asyncSurface?.workflowDispatcherDescriptorIds).toEqual([]);
     expect(serverSurface?.workflowDispatcherDescriptorIds).toEqual([]);
     expect(fixture.counters()).toEqual(ZERO_FIXTURE_CALLS);
     expectRecursivelyFrozen(result.topology);

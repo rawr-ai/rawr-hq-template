@@ -21,6 +21,7 @@ import {
   type ServiceDependencyDeclaration,
   type ServiceRuntimeExport,
 } from "../../definition/src/service";
+import { readWorkflowDispatcherUse } from "../../definition/src/workflow-dispatcher-use";
 import type { RuntimeAsyncDescriptorReference, RuntimeAsyncSource } from "./async-source";
 import type { RuntimeDerivationHandoffCarrier } from "./derivation-carrier";
 import { attachRuntimeDerivationHandoff } from "./derivation-handoff";
@@ -84,6 +85,10 @@ import {
   type WebRouteModuleTable,
   type WebRouteModuleTableEntry,
 } from "./web-route-module-table";
+import type {
+  RuntimeWorkflowAdmissionCaller,
+  RuntimeWorkflowAdmissionSource,
+} from "./workflow-admission-source";
 import type { WorkflowDispatcherDescriptor } from "./workflow-dispatcher-descriptor";
 
 export interface RuntimeDerivationInput {
@@ -131,8 +136,9 @@ interface PluginDerivationState {
   readonly resourceRequirementIds: string[];
   readonly executionEntries: ReturnType<typeof deriveAsyncExecutionEntry>[];
   readonly webEntries: WebRouteModuleTableEntry[];
+  readonly workflowAdmissions: RuntimeWorkflowAdmissionSource[];
+  readonly workflowDispatchers: WorkflowDispatcherDescriptor[];
   asyncSource?: RuntimeAsyncSource;
-  workflowDispatcher?: WorkflowDispatcherDescriptor;
 }
 
 interface BindingContext {
@@ -914,7 +920,7 @@ function isDesktopBackgroundPlugin(
   );
 }
 
-function collectExecutionEntries(state: PluginDerivationState, appId: string): void {
+function collectExecutionEntries(state: PluginDerivationState): void {
   const plugin = state.definition;
   if (isCliTopicPlugin(plugin)) {
     for (const command of plugin.commands) {
@@ -943,7 +949,7 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
   };
 
   if (isAsyncWorkflowPlugin(plugin)) {
-    const workflowIds = sortedUnique(
+    sortedUnique(
       plugin.workflows.map((workflow) => workflow.id),
       "workflow id"
     );
@@ -966,24 +972,6 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
           })
         )
       ),
-    });
-    const descriptorId = workflowDispatcherId({
-      appId,
-      pluginOwnerId: state.ownerId,
-      role: "async",
-      surface: "async/workflow",
-      capability: plugin.capability,
-      workflowIds,
-    });
-    state.workflowDispatcher = Object.freeze({
-      kind: "workflow.dispatcher-descriptor",
-      descriptorId,
-      appId,
-      pluginOwnerId: state.ownerId,
-      role: "async",
-      surface: "async/workflow",
-      capability: plugin.capability,
-      workflowIds,
     });
     return;
   }
@@ -1041,6 +1029,88 @@ function collectExecutionEntries(state: PluginDerivationState, appId: string): v
   }
 }
 
+function collectWorkflowAdmissions(state: PluginDerivationState, app: Entrypoint["app"]): void {
+  const plugin = state.definition;
+  if (
+    plugin.role !== "server" ||
+    !["server/api", "server/internal"].includes(plugin.surface) ||
+    !("workflows" in plugin)
+  )
+    return;
+  const caller = plugin as RuntimeWorkflowAdmissionCaller;
+  if (typeof caller.workflows !== "object" || caller.workflows === null)
+    throw new TypeError("Server workflow admission requires a named use map.");
+  for (const useName of Object.keys(caller.workflows).sort(compareStrings)) {
+    const use = caller.workflows[useName];
+    if (use === undefined) throw new TypeError("A workflow dispatcher use is absent.");
+    const source = readWorkflowDispatcherUse(use);
+    if (source === undefined) throw new TypeError("A workflow dispatcher use lost its source.");
+    const target = source.plugin;
+    const occurrences = app.plugins.filter(
+      (candidate) => candidate.id === target.id && candidate.instance === target.instance
+    );
+    if (occurrences.length !== 1 || !Object.is(occurrences[0], target))
+      throw new TypeError("A workflow dispatcher target must be the exact app-member occurrence.");
+    sortedUnique(
+      target.workflows.map((workflow) => workflow.id),
+      "target workflow id"
+    );
+    if (
+      source.workflows.length === 0 ||
+      source.workflows.some((workflow) => !target.workflows.includes(workflow))
+    )
+      throw new TypeError("Workflow admission requires a nonempty exact target-member subset.");
+    const workflowIds = sortedUnique(
+      source.workflows.map((workflow) => workflow.id),
+      "workflow admission id"
+    );
+    const targetOwnerId = pluginOwnerId({
+      pluginId: target.id,
+      ...(target.instance === undefined ? {} : { instance: target.instance }),
+    });
+    const descriptorIdentity = {
+      appId: app.id,
+      pluginOwnerId: targetOwnerId,
+      role: "async" as const,
+      surface: "async/workflow" as const,
+      capability: target.capability,
+      workflowIds,
+    };
+    const descriptorId = workflowDispatcherId(descriptorIdentity);
+    const clientRequirement = normalizedRequirement(source.client, {
+      kind: "plugin",
+      pluginOwnerId: state.ownerId,
+    });
+    if (
+      clientRequirement.optional ||
+      !caller.resourceRequirements.includes(source.client) ||
+      !state.resourceRequirementIds.includes(clientRequirement.requirementId)
+    )
+      throw new TypeError(
+        "Workflow admission requires its exact ordinary caller client requirement."
+      );
+    state.workflowDispatchers.push(
+      Object.freeze({
+        kind: "workflow.dispatcher-descriptor",
+        descriptorId,
+        ...descriptorIdentity,
+      })
+    );
+    state.workflowAdmissions.push(
+      Object.freeze({
+        caller,
+        useName,
+        use,
+        target,
+        workflows: source.workflows,
+        client: source.client,
+        descriptorId,
+        clientRequirementId: clientRequirement.requirementId,
+      })
+    );
+  }
+}
+
 function isCliTopicPlugin(plugin: PluginDefinition): plugin is CliTopicPluginDefinition {
   return plugin.role === "cli" && plugin.surface === "cli/commands" && "commands" in plugin;
 }
@@ -1075,10 +1145,10 @@ function buildSurfacePlan(
     surface: plugin.surface,
     capability: plugin.capability,
   });
-  const dispatcherIds =
-    state.workflowDispatcher === undefined
-      ? Object.freeze([])
-      : Object.freeze([state.workflowDispatcher.descriptorId]);
+  const dispatcherIds = sortedUnique(
+    [...new Set(state.workflowDispatchers.map((descriptor) => descriptor.descriptorId))],
+    "surface workflow dispatcher id"
+  );
   const selectedExecutionRefs = executionRefs.filter((ref) => ref.ownerId === state.ownerId);
   const selectedWebRefs = webRefs.filter((ref) => ref.ownerId === state.ownerId);
   for (const ref of selectedExecutionRefs) assertSurfaceReferenceRelation(plugin, ref);
@@ -1167,6 +1237,8 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       resourceRequirementIds: [],
       executionEntries: [],
       webEntries: [],
+      workflowAdmissions: [],
+      workflowDispatchers: [],
     };
 
     for (const localName of Object.keys(definition.services).sort(compareStrings)) {
@@ -1245,7 +1317,8 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       state.resourceRequirementIds.push(requirement.requirementId);
       resourceReferences.set(requirement.requirementId, authored);
     }
-    collectExecutionEntries(state, entrypoint.app.id);
+    collectWorkflowAdmissions(state, entrypoint.app);
+    collectExecutionEntries(state);
     collectWebEntries(state);
     pluginStates.push(state);
   }
@@ -1324,21 +1397,31 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       })
       .sort(([left], [right]) => compareStrings(left, right))
   );
-  const workflowDispatcherDescriptors = Object.freeze(
+  const workflowAdmissions = Object.freeze(
     pluginStates
-      .flatMap((state) =>
-        state.workflowDispatcher === undefined ? [] : [state.workflowDispatcher]
-      )
-      .sort((left, right) => compareStrings(left.descriptorId, right.descriptorId))
+      .flatMap((state) => {
+        if (state.workflowAdmissions.length === 0) return [];
+        const id = surfacePlanId({
+          pluginOwnerId: state.ownerId,
+          role: state.definition.role,
+          surface: state.definition.surface,
+          capability: state.definition.capability,
+        });
+        return [Object.freeze([id, Object.freeze([...state.workflowAdmissions])] as const)];
+      })
+      .sort(([left], [right]) => compareStrings(left, right))
   );
-  for (let index = 1; index < workflowDispatcherDescriptors.length; index += 1) {
-    if (
-      workflowDispatcherDescriptors[index - 1]!.descriptorId ===
-      workflowDispatcherDescriptors[index]!.descriptorId
-    ) {
-      throw new TypeError("Duplicate workflow dispatcher identity.");
-    }
-  }
+  const workflowDispatcherDescriptors = Object.freeze(
+    [
+      ...new Map(
+        pluginStates.flatMap((state) =>
+          state.workflowDispatchers.map(
+            (descriptor) => [descriptor.descriptorId, descriptor] as const
+          )
+        )
+      ).values(),
+    ].sort((left, right) => compareStrings(left.descriptorId, right.descriptorId))
+  );
 
   const plugins: readonly NormalizedPluginDefinition[] = Object.freeze(
     pluginStates
@@ -1466,6 +1549,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       ),
       serverSources,
       asyncSources,
+      workflowAdmissions,
       executionPolicies: Object.freeze(
         executionDescriptorTable
           .entries()

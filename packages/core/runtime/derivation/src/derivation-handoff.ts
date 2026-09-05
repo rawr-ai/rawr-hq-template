@@ -9,6 +9,7 @@ import type { RuntimeDerivationResult } from "./derive-runtime-artifacts";
 import type { ExecutionDescriptorRef } from "./execution-descriptor-ref";
 import type { NormalizedAuthoringGraph } from "./normalized-authoring-graph";
 import type { RuntimeServerSource } from "./server-source";
+import type { RuntimeWorkflowAdmissionEntries } from "./workflow-admission-source";
 
 /** Exact cold references travel beside inspectable data, never inside it. */
 export interface RuntimeDerivationHandoff {
@@ -23,6 +24,7 @@ export interface RuntimeDerivationHandoff {
   readonly resourceReferences: readonly (readonly [string, ResourceRequirement])[];
   readonly serverSources: readonly (readonly [string, RuntimeServerSource])[];
   readonly asyncSources: readonly (readonly [string, RuntimeAsyncSource])[];
+  readonly workflowAdmissions: RuntimeWorkflowAdmissionEntries;
   readonly executionPolicies: readonly (readonly [ExecutionDescriptorRef, EffectExecutionPolicy])[];
 }
 

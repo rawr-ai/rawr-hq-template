@@ -5,6 +5,12 @@ import type { AppRole } from "./app";
 import type { RuntimeResourceMap } from "./provider";
 import type { ResourceRequirement } from "./resource";
 import type { ServiceClients, ServiceUses } from "./service";
+import {
+  readWorkflowDispatcherUse,
+  type WorkflowDispatcherClientRequirement,
+  type WorkflowDispatchers,
+  type WorkflowDispatcherUses,
+} from "./workflow-dispatcher-use";
 
 export interface PluginProjectionInput {
   readonly pluginId: string;
@@ -62,10 +68,14 @@ export function definePlugin<
 export type PluginServiceUses = ServiceUses;
 
 /** Native request context contains only this plugin's declared capabilities. */
-export type ServerPluginContext<TServices extends ServiceUses = ServiceUses> = {
+export type ServerPluginContext<
+  TServices extends ServiceUses = ServiceUses,
+  TWorkflows extends WorkflowDispatcherUses = Readonly<Record<never, never>>,
+> = {
   readonly request: Request;
   readonly clients: ServiceClients<TServices>;
   readonly resources: RuntimeResourceMap;
+  readonly workflows: WorkflowDispatchers<TWorkflows>;
 } & WithEffectContext<never>;
 
 const forbiddenPluginClassificationFields = [
@@ -128,22 +138,33 @@ export type ServerApiPluginInput<
   TServices extends PluginServiceUses = PluginServiceUses,
   TApi extends AnyRouter = AnyRouter,
   TResources extends readonly ResourceRequirement[] = readonly [],
+  TWorkflows extends WorkflowDispatcherUses = Readonly<Record<never, never>>,
 > = LanePluginInput<TCapability, TServices, TResources> & {
   readonly internal?: never;
   readonly routeBase: `/${string}`;
-  readonly api: () => TApi & Router<ServerPluginContext<NoInfer<TServices>>>;
+  readonly workflows?: TWorkflows;
+  readonly api: () => TApi & Router<ServerPluginContext<NoInfer<TServices>, NoInfer<TWorkflows>>>;
 };
+
+type ServerPluginResourceRequirements<
+  TResources extends readonly ResourceRequirement[],
+  TWorkflows extends WorkflowDispatcherUses,
+> = keyof TWorkflows extends never
+  ? TResources
+  : readonly (TResources[number] | WorkflowDispatcherClientRequirement)[];
 
 export interface ServerApiPluginDefinition<
   TCapability extends string = string,
   TServices extends PluginServiceUses = PluginServiceUses,
   TApi extends AnyRouter = AnyRouter,
   TResources extends readonly ResourceRequirement[] = readonly ResourceRequirement[],
+  TWorkflows extends WorkflowDispatcherUses = WorkflowDispatcherUses,
 > extends PluginDefinition<"server", "server/api", TCapability> {
   readonly id: `server.api.${TCapability}`;
   readonly services: TServices;
   readonly routeBase: `/${string}`;
-  readonly resourceRequirements: TResources;
+  readonly resourceRequirements: ServerPluginResourceRequirements<TResources, TWorkflows>;
+  readonly workflows: TWorkflows;
   readonly api: () => TApi;
 }
 
@@ -152,9 +173,12 @@ export type ServerInternalPluginInput<
   TServices extends PluginServiceUses = PluginServiceUses,
   TRouter extends AnyRouter = AnyRouter,
   TResources extends readonly ResourceRequirement[] = readonly [],
+  TWorkflows extends WorkflowDispatcherUses = Readonly<Record<never, never>>,
 > = LanePluginInput<TCapability, TServices, TResources> & {
   readonly routeBase: `/${string}`;
-  readonly internal: () => TRouter & Router<ServerPluginContext<NoInfer<TServices>>>;
+  readonly workflows?: TWorkflows;
+  readonly internal: () => TRouter &
+    Router<ServerPluginContext<NoInfer<TServices>, NoInfer<TWorkflows>>>;
 };
 
 export interface ServerInternalPluginDefinition<
@@ -162,12 +186,30 @@ export interface ServerInternalPluginDefinition<
   TServices extends PluginServiceUses = PluginServiceUses,
   TRouter extends AnyRouter = AnyRouter,
   TResources extends readonly ResourceRequirement[] = readonly ResourceRequirement[],
+  TWorkflows extends WorkflowDispatcherUses = WorkflowDispatcherUses,
 > extends PluginDefinition<"server", "server/internal", TCapability> {
   readonly id: `server.internal.${TCapability}`;
   readonly services: TServices;
   readonly routeBase: `/${string}`;
-  readonly resourceRequirements: TResources;
+  readonly resourceRequirements: ServerPluginResourceRequirements<TResources, TWorkflows>;
+  readonly workflows: TWorkflows;
   readonly internal: () => TRouter;
+}
+
+function includeWorkflowClientRequirements<
+  TResources extends readonly ResourceRequirement[],
+  TWorkflows extends WorkflowDispatcherUses,
+>(
+  requirements: TResources | undefined,
+  workflows: TWorkflows
+): ServerPluginResourceRequirements<TResources, TWorkflows> {
+  const resources: ResourceRequirement[] = [...(requirements ?? [])];
+  for (const use of Object.values(workflows)) {
+    const source = readWorkflowDispatcherUse(use);
+    if (source === undefined) throw new TypeError("A workflow dispatcher use has no cold source.");
+    if (!resources.includes(source.client)) resources.push(source.client);
+  }
+  return Object.freeze(resources) as ServerPluginResourceRequirements<TResources, TWorkflows>;
 }
 
 function buildServerApiPlugin<
@@ -175,11 +217,13 @@ function buildServerApiPlugin<
   const TServices extends PluginServiceUses,
   TApi extends AnyRouter,
   const TResources extends readonly ResourceRequirement[],
+  const TWorkflows extends WorkflowDispatcherUses,
 >(
-  input: ServerApiPluginInput<TCapability, TServices, TApi, TResources>
-): ServerApiPluginDefinition<TCapability, TServices, TApi, TResources> {
+  input: ServerApiPluginInput<TCapability, TServices, TApi, TResources, TWorkflows>
+): ServerApiPluginDefinition<TCapability, TServices, TApi, TResources, TWorkflows> {
   assertNoPluginClassificationFields(input);
-  const resources = Object.freeze([...(input.resourceRequirements ?? [])]) as unknown as TResources;
+  const workflows = Object.freeze({ ...input.workflows }) as TWorkflows;
+  const resources = includeWorkflowClientRequirements(input.resourceRequirements, workflows);
   const services = Object.freeze({ ...input.services }) as TServices;
   const routeBase = input.routeBase;
   const base = definePlugin({
@@ -199,6 +243,7 @@ function buildServerApiPlugin<
     services,
     routeBase,
     resourceRequirements: resources,
+    workflows,
     api: input.api,
   });
 }
@@ -208,11 +253,13 @@ function buildServerInternalPlugin<
   const TServices extends PluginServiceUses,
   TRouter extends AnyRouter,
   const TResources extends readonly ResourceRequirement[],
+  const TWorkflows extends WorkflowDispatcherUses,
 >(
-  input: ServerInternalPluginInput<TCapability, TServices, TRouter, TResources>
-): ServerInternalPluginDefinition<TCapability, TServices, TRouter, TResources> {
+  input: ServerInternalPluginInput<TCapability, TServices, TRouter, TResources, TWorkflows>
+): ServerInternalPluginDefinition<TCapability, TServices, TRouter, TResources, TWorkflows> {
   assertNoPluginClassificationFields(input);
-  const resources = Object.freeze([...(input.resourceRequirements ?? [])]) as unknown as TResources;
+  const workflows = Object.freeze({ ...input.workflows }) as TWorkflows;
+  const resources = includeWorkflowClientRequirements(input.resourceRequirements, workflows);
   const services = Object.freeze({ ...input.services }) as TServices;
   const routeBase = input.routeBase;
   const base = definePlugin({
@@ -232,6 +279,7 @@ function buildServerInternalPlugin<
     services,
     routeBase,
     resourceRequirements: resources,
+    workflows,
     internal: input.internal,
   });
 }
@@ -242,17 +290,27 @@ export interface ServerApiPluginBuilder {
     const TServices extends PluginServiceUses,
     TApi extends AnyRouter,
     const TResources extends readonly ResourceRequirement[] = readonly [],
+    const TWorkflows extends WorkflowDispatcherUses = Readonly<Record<never, never>>,
   >(
-    input: ServerApiPluginInput<TCapability, TServices, TApi, TResources>
-  ) => PluginFactory<void, ServerApiPluginDefinition<TCapability, TServices, TApi, TResources>>;
+    input: ServerApiPluginInput<TCapability, TServices, TApi, TResources, TWorkflows>
+  ) => PluginFactory<
+    void,
+    ServerApiPluginDefinition<TCapability, TServices, TApi, TResources, TWorkflows>
+  >;
   factory<TOptions>(): <
     const TCapability extends string,
     const TServices extends PluginServiceUses,
     TApi extends AnyRouter,
     const TResources extends readonly ResourceRequirement[] = readonly [],
+    const TWorkflows extends WorkflowDispatcherUses = Readonly<Record<never, never>>,
   >(
-    input: (options: TOptions) => ServerApiPluginInput<TCapability, TServices, TApi, TResources>
-  ) => PluginFactory<TOptions, ServerApiPluginDefinition<TCapability, TServices, TApi, TResources>>;
+    input: (
+      options: TOptions
+    ) => ServerApiPluginInput<TCapability, TServices, TApi, TResources, TWorkflows>
+  ) => PluginFactory<
+    TOptions,
+    ServerApiPluginDefinition<TCapability, TServices, TApi, TResources, TWorkflows>
+  >;
 }
 
 export interface ServerInternalPluginBuilder {
@@ -261,24 +319,26 @@ export interface ServerInternalPluginBuilder {
     const TServices extends PluginServiceUses,
     TRouter extends AnyRouter,
     const TResources extends readonly ResourceRequirement[] = readonly [],
+    const TWorkflows extends WorkflowDispatcherUses = Readonly<Record<never, never>>,
   >(
-    input: ServerInternalPluginInput<TCapability, TServices, TRouter, TResources>
+    input: ServerInternalPluginInput<TCapability, TServices, TRouter, TResources, TWorkflows>
   ) => PluginFactory<
     void,
-    ServerInternalPluginDefinition<TCapability, TServices, TRouter, TResources>
+    ServerInternalPluginDefinition<TCapability, TServices, TRouter, TResources, TWorkflows>
   >;
   factory<TOptions>(): <
     const TCapability extends string,
     const TServices extends PluginServiceUses,
     TRouter extends AnyRouter,
     const TResources extends readonly ResourceRequirement[] = readonly [],
+    const TWorkflows extends WorkflowDispatcherUses = Readonly<Record<never, never>>,
   >(
     input: (
       options: TOptions
-    ) => ServerInternalPluginInput<TCapability, TServices, TRouter, TResources>
+    ) => ServerInternalPluginInput<TCapability, TServices, TRouter, TResources, TWorkflows>
   ) => PluginFactory<
     TOptions,
-    ServerInternalPluginDefinition<TCapability, TServices, TRouter, TResources>
+    ServerInternalPluginDefinition<TCapability, TServices, TRouter, TResources, TWorkflows>
   >;
 }
 

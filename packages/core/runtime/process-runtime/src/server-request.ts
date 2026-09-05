@@ -9,6 +9,10 @@ import type { RuntimeLaunchIdentity } from "../../definition/src/app";
 import type { RuntimeObservationPort } from "../../definition/src/observation";
 import type { ServerPluginContext } from "../../definition/src/plugin";
 import type { RuntimeResourceMap } from "../../definition/src/provider";
+import type {
+  WorkflowDispatchers,
+  WorkflowDispatcherUses,
+} from "../../definition/src/workflow-dispatcher-use";
 import {
   type Continuation,
   type InvocationTracker,
@@ -34,6 +38,7 @@ export function createNativeServerRequestAssembly(input: {
   readonly capabilities: (continuation?: Continuation) => {
     readonly clients: BoundServiceBindingMap;
     readonly resources: RuntimeResourceMap;
+    readonly workflows?: WorkflowDispatchers<WorkflowDispatcherUses>;
   };
   readonly observation?: RuntimeObservationPort;
 }): NativeServerRequestAssembly {
@@ -41,7 +46,7 @@ export function createNativeServerRequestAssembly(input: {
   return Object.freeze<NativeServerRequestAssembly>({
     context(request: Request): NativeServerRequestContext {
       input.admission.assertOpen();
-      return { request, ...base, "effect/context": Context.empty() };
+      return { request, workflows: Object.freeze({}), ...base, "effect/context": Context.empty() };
     },
     clientInterceptors: [
       ({ next, ...options }) =>

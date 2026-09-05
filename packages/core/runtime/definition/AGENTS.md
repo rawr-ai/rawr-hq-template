@@ -27,6 +27,19 @@
   The public service boundary seals it after its implementation exists; the
   upstream declaration does not import its own router. Named dependency slots
   remain distinct even when their coarse topology edges coincide.
+- Server API/internal workflow admission uses are named cold capabilities.
+  `useWorkflowDispatcher` retains an exact workflow plugin occurrence, a
+  nonempty exact-member subset and one required native event-client resource
+  requirement. The caller includes that exact requirement through its ordinary
+  resource lane; identical references are not added twice, while distinct
+  requirements remain available to ordinary conflict refusal.
+- Admission contracts and server context types remain native-peer-free. Their
+  minimal workflow facts do not import native execution contexts, select async
+  functions or invoke schemas, routers, workflows or clients. The private use
+  carrier retains exact references; only owned records and arrays are frozen.
+- A declared dispatcher group's `send` infers payload from the selected workflow
+  and returns only native event IDs. Its optional `id` is the native event ID,
+  not a Habitat deduplication mechanism, run identity or lifecycle capability.
 - Provider `build(...)` is synchronous and cold: it returns a cold
   `ProviderEffectPlan`, never an acquisition result.
 - The provider build context contains already decoded provider config, lookup
@@ -74,6 +87,8 @@
 - Private assembly interface: `src/index.ts`.
 - Cold app/process/entrypoint authoring and selection owner: `src/app.ts`.
 - Cold provider-selection authoring owner: `src/profile.ts`.
+- Peer-free workflow admission contracts: `src/workflow-admission.ts`;
+  cold named uses and private accessor: `src/workflow-dispatcher-use.ts`.
 - Current cold provider descriptor module: `src/provider.ts`.
 - Current cold provider-plan module: `src/provider-effect-plan.ts`.
 - Private helper and proof decomposition follows the selected version's

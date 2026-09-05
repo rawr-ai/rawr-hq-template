@@ -6,6 +6,7 @@ import type { ServiceBindingPlan } from "../../derivation/src/service-binding-pl
 export const resourceReferenceCarrier = Symbol("habitat.compilation.resource-references");
 export const serverSourceCarrier = Symbol("habitat.compilation.server-sources");
 export const asyncSourceCarrier = Symbol("habitat.compilation.async-sources");
+export const workflowAdmissionCarrier = Symbol("habitat.compilation.workflow-admissions");
 
 /** Opaque cold handoffs do not make optional native hosts a dependency of plan consumers. */
 export interface RuntimeCompilationReferenceTable {
@@ -13,6 +14,7 @@ export interface RuntimeCompilationReferenceTable {
   readonly [resourceReferenceCarrier]: unknown;
   readonly [serverSourceCarrier]: unknown;
   readonly [asyncSourceCarrier]: unknown;
+  readonly [workflowAdmissionCarrier]: unknown;
 
   getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider;
   getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceRuntimeExport;

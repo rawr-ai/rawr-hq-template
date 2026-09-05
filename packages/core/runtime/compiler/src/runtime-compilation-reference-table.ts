@@ -11,7 +11,9 @@ import {
   type RuntimeCompilationReferenceTable,
   resourceReferenceCarrier,
   serverSourceCarrier,
+  workflowAdmissionCarrier,
 } from "./compilation-reference-contract";
+import type { RuntimeCompiledWorkflowAdmissionEntries } from "./runtime-workflow-admission";
 
 type ResourceReferenceEntries = readonly (readonly [string, ResourceRequirement])[];
 type ServerSourceEntries = readonly (readonly [string, RuntimeServerSource])[];
@@ -27,6 +29,7 @@ export function createRuntimeCompilationReferenceTable(input: {
   readonly resources: ResourceReferenceEntries;
   readonly serverSources: ServerSourceEntries;
   readonly asyncSources: AsyncSourceEntries;
+  readonly workflowAdmissions: RuntimeCompiledWorkflowAdmissionEntries;
 }): RuntimeCompilationReferenceTable {
   const providers = new Map<ProviderSelection["selectionId"], RuntimeProvider>();
   const services = new Map<ServiceBindingPlan["bindingId"], ServiceRuntimeExport>();
@@ -62,6 +65,11 @@ export function createRuntimeCompilationReferenceTable(input: {
     [asyncSourceCarrier]: Object.freeze(
       input.asyncSources.map(([id, source]) => Object.freeze([id, source] as const))
     ),
+    [workflowAdmissionCarrier]: Object.freeze(
+      input.workflowAdmissions.map(([id, admissions]) =>
+        Object.freeze([id, Object.freeze([...admissions])] as const)
+      )
+    ),
     getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider {
       const provider = providers.get(selectionId);
       if (provider === undefined) throw new TypeError("Provider reference is absent.");
@@ -78,7 +86,17 @@ export function createRuntimeCompilationReferenceTable(input: {
   Object.defineProperty(table, resourceReferenceCarrier, { enumerable: false });
   Object.defineProperty(table, serverSourceCarrier, { enumerable: false });
   Object.defineProperty(table, asyncSourceCarrier, { enumerable: false });
+  Object.defineProperty(table, workflowAdmissionCarrier, { enumerable: false });
   return Object.freeze(table);
+}
+
+/** Caller-local event admission receives only its already-resolved provisioned selection. */
+export function readRuntimeCompilationWorkflowAdmissions(
+  table: RuntimeCompilationReferenceTable
+): RuntimeCompiledWorkflowAdmissionEntries {
+  if (!hasWorkflowAdmissions(table))
+    throw new TypeError("Compilation lost its workflow-admission handoff.");
+  return table[workflowAdmissionCarrier];
 }
 
 /** Authored orchestration reaches mounting only through its compiled selected surface. */
@@ -109,6 +127,16 @@ export function readRuntimeCompilationResourceReferences(
 }
 
 // The private constructor is the only producer; consumers receive opaque carrier types.
+function hasWorkflowAdmissions(
+  table: RuntimeCompilationReferenceTable
+): table is RuntimeCompilationReferenceTable & {
+  readonly [workflowAdmissionCarrier]: RuntimeCompiledWorkflowAdmissionEntries;
+} {
+  return (
+    Object.hasOwn(table, workflowAdmissionCarrier) && table[workflowAdmissionCarrier] !== undefined
+  );
+}
+
 function hasAsyncSources(
   table: RuntimeCompilationReferenceTable
 ): table is RuntimeCompilationReferenceTable & {

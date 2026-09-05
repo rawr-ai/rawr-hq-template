@@ -55,3 +55,9 @@ built server and async children of one temporary complete app@2 using the packed
 SDK and real native hosts. Child IPC and explicit restart/failure controls are
 test-only; they add no production supervisor, public lifecycle controller, or
 native-owner dependency on SDK source.
+
+`acceptance:workflow-admission` qualifies server-only publication through actual
+acquired native clients to the local Dev Server and independent native receivers.
+It proves event acknowledgements and fan-out without selecting the target async
+execution closure, plus native send settlement before client/resource release.
+It does not qualify Cloud delivery, a product outbox, or exactly-once execution.

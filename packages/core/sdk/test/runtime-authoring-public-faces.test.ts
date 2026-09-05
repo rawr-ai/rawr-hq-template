@@ -578,6 +578,7 @@ describe("runtime authoring public faces", () => {
       "implementServerApiPlugin",
       "implementServerInternalPlugin",
       "useService",
+      "useWorkflowDispatcher",
     ]);
     expect(Object.keys(asyncPlugin).sort()).toEqual([
       "defineAsyncConsumerPlugin",

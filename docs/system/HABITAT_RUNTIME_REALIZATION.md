@@ -3417,7 +3417,7 @@ export function createWorkItemsOpsRouter() {
     triggerSync: os.triggerSync.effect(function* ({ input: payload, context }) {
       return yield* Effect.tryPromise({
         try: () =>
-          context.workflows.send(WorkItemsSyncWorkflow, {
+          context.workflows.workItems.send(WorkItemsSyncWorkflow, {
             itemId: payload.itemId,
             requestedBy: payload.actorId,
           }),
@@ -3432,6 +3432,11 @@ export function createWorkItemsOpsRouter() {
 }
 ```
 
+The server plugin explicitly declares its named use through
+`useWorkflowDispatcher(WorkItemsAsyncPlugin, { workflows: [WorkItemsSyncWorkflow], client })`,
+where `client` is the existing required native-client resource reference. That
+use is stored under `workflows.workItems`; it implies the client's ordinary
+resource requirement without selecting the target's async execution closure.
 The dispatcher remains durable async integration, not local Effect orchestration.
 
 ### 12.7 Async workflow plugin with step-local Effect execution
@@ -5746,6 +5751,16 @@ Producer: complete runtime derivation from selected workflow definitions and
 projections that request dispatcher access. Consumer: runtime compiler and
 process runtime.
 
+Only an explicit admission use produces this descriptor; selecting async
+execution alone does not. Its owner and lane describe the target workflow
+plugin, not the calling server surface. The exact requested subset determines
+the sorted `workflowIds` and existing digest. Identical target subsets may share
+a descriptor even when callers select different native clients. Caller identity,
+local use name, exact workflow references and client requirement stay in the
+private selected handoff; they must not be collapsed into descriptor identity.
+Target app membership is required, but it does not select that target's steps,
+services, execution resources or async harness.
+
 It is not a product API, native workflow execution, a live dispatcher, or a
 second source of async metadata.
 
@@ -7112,7 +7127,7 @@ provisioning. Server API and server internal projections may wrap event
 admission for caller-facing surfaces. Workflow plugins do not expose
 caller-facing product APIs.
 
-This live dispatcher and its server admission relation remain the separate
+This live dispatcher and its server admission relation are owned by the separate
 obligation in [task 13.7](../../openspec/changes/realize-app-runtime-spine/tasks.md).
 Native async authoring and Serve/Connect qualification do not implement or
 retire it. Workflow `eventName` is an explicitly authored native event trigger;
@@ -7122,25 +7137,58 @@ function. The dispatcher must preserve that native admission meaning.
 
 File: `packages/core/runtime/process-runtime/src/workflow-dispatcher.ts`  
 Layer: live runtime dispatcher integration  
-Exactness: normative for producer/consumer boundary and live materialization role; illustrative for method names.
+Exactness: normative for producer/consumer boundary, declared target membership,
+live materialization and native event-admission meaning. The public cold types
+remain definition-owned and contain no native Inngest authoring or host imports.
 
 ```ts
-export interface WorkflowDispatcher {
-  send<TPayload>(
-    workflow: AsyncWorkflowDefinition<string, TPayload>,
-    payload: TPayload,
-    options?: WorkflowDispatchOptions,
-  ): Promise<WorkflowDispatchResult>;
+export interface WorkflowDispatchResult {
+  readonly eventIds: readonly string[];
 }
 
-export interface WorkflowDispatchResult {
-  readonly ok: boolean;
-  readonly eventIds: readonly string[];
-  readonly admissionId?: string;
-  readonly acceptedAt: string;
-  readonly reason?: string;
+export interface WorkflowDispatchOptions {
+  readonly id?: string;
 }
+
+const workflows = {
+  workItems: useWorkflowDispatcher(WorkItemsAsyncPlugin, {
+    workflows: [WorkItemsSyncWorkflow],
+    client: requiredNativeClient,
+  }),
+};
+
+// Inside an admitted server handler, with payload inferred from this exact member:
+await context.workflows.workItems.send(WorkItemsSyncWorkflow, payload, { id: outboxEventId });
 ```
+
+There is one helper, not a second workflow definition or implicit global
+dispatcher. It retains the exact instantiated app-member plugin, a nonempty
+subset of its exact workflow objects, and an existing required native-client
+resource reference. Server API/internal builders freeze the named use map and
+include its client requirements in the ordinary caller resource lane. Repeated
+identical references dedupe; existing conflicting-requirement refusals remain.
+This is declared dependency and capability binding, not a security ACL that
+prevents a holder of the ordinary native resource from calling it directly.
+
+Each live named group is bound by caller and use name, not only by the shared
+descriptor ID. A copied, foreign or undeclared workflow refuses before send,
+even if another group has the same workflow ID. Payload typing must not widen
+the selected workflow based on the payload argument. Validate once through the
+owning schema's `validate`, then send the original value through the acquired
+native client with its authored `eventName`. Do not decode, replace the payload
+with a validator result, or serialize it in Habitat. Native serialization and
+receiver decoding remain distinct; arbitrary codec round trips are not promised.
+
+Return frozen native event IDs and preserve native rejection. The optional
+third argument forwards only the existing native event `id`, allowing a
+publisher to preserve source identity across retries. Its deduplication meaning
+remains native and bounded, never exactly once. No routing, environment or
+workflow-control options are added. The earlier illustrative success flag,
+timestamp and optional admission identity are removed rather than fabricated.
+Native send, including its middleware and retry Promise, is an admitted
+descendant held through actual settlement, even when the caller stops awaiting
+or is interrupted. No native send AbortSignal exists in the pinned cohort;
+caller interruption is not evidence that native send has completed.
 
 `WorkflowDispatcher.send(...)` confirms native event admission and returns event
 or admission identity. It MUST NOT label that result as workflow run identity.

@@ -35,6 +35,10 @@
   construction dependencies before calling synchronous service constructors.
 - Process-owned admission and settlement tracking must drain accepted work
   before releasing its resources; no second provider finalizer registry.
+- Named workflow dispatchers consume only compiled caller-local uses and their
+  exact acquired clients. Validate once, send the original payload, and retain
+  the complete native send Promise on an invocation descendant even when its
+  caller is interrupted or does not await it. Event IDs are not run IDs.
 - Closing executable admission is synchronous and non-releasing. Native cleanup
   may still read resources until ordinary process stop begins. Explicitly
   required provider health stays unknown/failing without admitted probe evidence.

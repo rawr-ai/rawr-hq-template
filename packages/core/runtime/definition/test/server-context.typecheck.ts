@@ -23,6 +23,8 @@ export function assertServerContextTypes(): void {
       const serviceId: string = context.clients.selected.serviceId;
       // @ts-expect-error Undeclared service clients are not ambient context.
       context.clients.other;
+      // @ts-expect-error Omitting workflow uses does not grant ambient dispatcher names.
+      context.workflows.undeclared;
       // @ts-expect-error Provider selection and runtime authority are not request context.
       context.managedRuntime;
       return { method: request.method, serviceId };
