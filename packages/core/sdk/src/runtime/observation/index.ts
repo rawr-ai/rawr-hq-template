@@ -1,0 +1,15 @@
+export type {
+  RuntimeCatalog,
+  RuntimeDiagnostic,
+  RuntimeDiagnosticRedaction,
+  RuntimeFinalizationRecord,
+  RuntimeSourceRef,
+  RuntimeTelemetry,
+  RuntimeTelemetryAnnotation,
+  RuntimeTelemetryPayload,
+  RuntimeTelemetryPrimitive,
+  RuntimeTelemetryRecord,
+  RuntimeTelemetrySink,
+  RuntimeTelemetrySpanInput,
+  RuntimeTopologyRecord,
+} from "../../../../runtime/observation/src/index";

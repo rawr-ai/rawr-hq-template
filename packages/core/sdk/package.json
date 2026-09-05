@@ -116,6 +116,11 @@
       "import": "./dist/runtime/harnesses/index.js",
       "default": "./dist/runtime/harnesses/index.js"
     },
+    "./runtime/observation": {
+      "types": "./dist/runtime/observation/index.d.ts",
+      "import": "./dist/runtime/observation/index.js",
+      "default": "./dist/runtime/observation/index.js"
+    },
     "./runtime/resources": {
       "types": "./dist/runtime/resources/index.d.ts",
       "import": "./dist/runtime/resources/index.js",

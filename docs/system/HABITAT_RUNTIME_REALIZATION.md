@@ -7833,6 +7833,18 @@ entrypoint
 
 Runtime telemetry provides process, provisioning, execution, and correlation context. Service semantic observability enriches semantic spans and events. Product analytics requires explicit service/resource ownership.
 
+Explicit `RuntimeTelemetry` inputs are deliberately authored telemetry, not
+arbitrary observation-port payloads. Preserve their names, phase, boundary and
+finite JSON-compatible metadata in detached records; their author owns semantic
+redaction. An annotation marked `omitted` does not project its value. Never
+append application results or caught errors automatically. Malformed metadata
+is omitted without preventing the callback or changing its exact result or
+rejection; synchronous and asynchronous sink failures are contained likewise.
+Every sink record carries the full five-field launch identity. A span's opaque
+unique correlation id is shared by its start and settlement records, including
+across repeated starts with identical logical launch identity. Collector-local
+sequence numbers are not globally unique identities.
+
 ### 22.3 `RuntimeCatalog`
 
 Catalog records state.
@@ -7875,6 +7887,23 @@ export interface RuntimeCatalog {
 ```
 
 Storage backend, indexing, retention, and exact persistence format are reserved. The minimum record sections are not reserved.
+
+The first observation implementation uses an observation-owned closed initial
+seed assembled by terminal SDK composition from actual compilation results.
+The compiler does not import that input contract or emit observation records.
+Preserve complete selected topology, distinguish known-empty selections from
+unobserved live activity, and never infer acquisition, execution, mounting or
+completed finalization merely from selection. Unknown or unsupported port
+payloads produce a bounded disposition with their payload omitted; supported
+records use fixed safe projections, not a configurable schema/redaction engine.
+The native provider release-failure projection preserves overlapping Cause
+flags and marks failed release only, never completed disposal.
+
+Snapshots are detached and immutable. The initial process-local implementation
+bounds retained event history and reports dropped entries, while preserving
+complete selected topology and already-observed provider failure state. This
+is not a persistence, retention-service or full native telemetry-chain claim;
+later live owners add their actual lifecycle publications at their own gates.
 
 ### 22.4 Diagnostic failure classes
 
