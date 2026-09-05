@@ -73,7 +73,7 @@ const forbiddenPluginClassificationFields = [
   "adapter",
 ] as const;
 
-type LanePluginInput<
+export type LanePluginInput<
   TCapability extends string,
   TServices extends PluginServiceUses,
   TResources extends readonly ResourceRequirement[],
@@ -84,9 +84,9 @@ type LanePluginInput<
   readonly resourceRequirements?: TResources;
 };
 
-type PluginInputResolver<TOptions, TInput> = TInput | ((options: TOptions) => TInput);
+export type PluginInputResolver<TOptions, TInput> = TInput | ((options: TOptions) => TInput);
 
-function assertNoPluginClassificationFields(input: object): void {
+export function assertNoPluginClassificationFields(input: object): void {
   for (const field of forbiddenPluginClassificationFields) {
     if (Object.hasOwn(input, field)) {
       throw new TypeError(`Plugin lane classification is fixed; '${field}' is not an input field.`);
@@ -94,7 +94,7 @@ function assertNoPluginClassificationFields(input: object): void {
   }
 }
 
-function makePluginFactory<TOptions, TInput, TDefinition extends PluginDefinition>(
+export function makePluginFactory<TOptions, TInput, TDefinition extends PluginDefinition>(
   input: PluginInputResolver<TOptions, TInput>,
   build: (resolved: TInput) => TDefinition
 ): PluginFactory<TOptions, TDefinition> {

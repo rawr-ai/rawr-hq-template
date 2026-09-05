@@ -1,4 +1,7 @@
+export type { RuntimeSchema } from "../../schema/src/runtime-schema";
+export * from "./agent";
 export * from "./app";
+export * from "./desktop";
 export * from "./effect";
 export * from "./execution";
 export * from "./execution-context";
@@ -9,3 +12,4 @@ export * from "./provider";
 export * from "./provider-effect-plan";
 export * from "./resource";
 export * from "./service";
+export * from "./tool-schema";

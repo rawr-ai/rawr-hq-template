@@ -1,9 +1,10 @@
 # Habitat Runtime Implementation
 
 Status: `active-draft`.
-Branch: `agent-root-habitat-runtime-binding`, stacked on native acquisition.
+Branch: `agent-root-habitat-runtime-adapters`, stacked on native binding/execution.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
+Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -57,6 +58,18 @@ direction, ownership conflict or new external operating commitment that cannot
 be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
+
+Current domino: task 10.1. Add cold surface lowering within the existing process
+owner and actual tools/background authoring, not native hosts or timers. The
+definition peer owns typed leaf/plugin declarations, the runtime peer owns
+occurrence lowering, root owns bounded capability assembly and adapters, and
+the cold-contract peer challenges integrated semantics and native policy proof.
+Use the same descriptor table and registry; one private projection on each
+operational descriptor carries the schema or cadence required by its adapter.
+The plugin declares clients/resources once. Each admitted invocation decodes
+tool input once before native retry evaluates its authored body. Lowering never
+executes or mounts. SDK installed/cold-import proof and the scoped adapter law
+co-land; generic harnesses and native-host qualification remain next boundaries.
 
 The owner's September 4 continuation delegates scope, execution and stopping
 point, requests perspective-specific standing peer review, and authorizes
@@ -519,6 +532,44 @@ restoration. Give only that compound test 360 seconds and restore its source in
 The repaired fixture passes all nine local installed tests (150.20 seconds),
 and the final repository check passes. A fresh remote Windows receipt remains
 required before merging the amended candidate.
+
+The amended binding candidate `214eeffba` now passes both required Repository
+Ratchet (33946644545) and Linux/Windows installed acceptance (33946644666).
+This resolves the pre-merge Windows finding without a runtime packaging change.
+The stack is not yet merged; task 10.1 proceeds on its child.
+
+### Cold Adapters And Tool/Background Authoring
+
+Task 10.1 is implemented and independently reviewed with no remaining P1/P2.
+The five SDK faces provide native TypeBox tool schemas, typed tool/background
+leaves and explicit plugin membership. Derivation retains exact operational
+references and private schema/cadence projection; adapters lower selected
+surfaces without executing or mounting. Actual invocation uses the existing
+managed execution runtime with input decoding once across retries and fresh,
+plugin-bounded clients/resources. Cadence is metadata, not a scheduler.
+
+Review exposed two defects now repaired: admitted streamed resource views must
+retain their existing continuation lease through cleanup, and pure generators
+must infer `never` error/environment channels rather than invented requirements.
+Default author contexts expose no ambient service clients. Real integration
+proof covers native service calls, retries, failures, cancellation, streamed
+cleanup, and stale-view/post-stop refusal. No native agent/desktop host is implied.
+
+The complete immutable process-runtime blueprint v2 adds only the adapter raw
+Effect import law. Its positive/negative native-engine proof runs in the
+existing uncached product-separation acceptance target, not a cached owner
+test that omits blueprint inputs. V1 is unchanged.
+
+Final local proof: repository CI 128 tasks (86 cache hits); repository check
+101 tasks; all nine installed SDK/CLI tests including installed exact-AER and
+no-ambient-client type proofs; product separation nine tests/61 assertions;
+derivation 42 tests/1,129 assertions; SDK runtime integration 24 tests; strict
+OpenSpec validation and diff checks. The first CI attempt sampled a test before
+its final formatting and failed lint; the settled-file rerun passed. The first
+installed attempt exposed a missing v2 closure inventory expectation, now fixed.
+Remote tip admission and exact-main verification remain required before merge
+or release claims. Next: admit this complete stack, then generic native-harness
+contracts, mount-ready handoff and mounting/observation, without resuming products.
 
 ### Backend Receipt Reuse
 

@@ -23,8 +23,12 @@ nine macOS installed tests pass, including the optional root-helper law refusal.
 Task 7 also passed required and Linux/Windows installed CI in PR 1009. Tasks
 8/9 now implement bounded access, native service binding and process execution
 on its child: full repository CI, all nine macOS installed tests, source/graph
-acceptance and independent final review pass. This complete three-story stack
-still awaits native Graphite merge. No candidate is claimed merged or released.
+acceptance and independent final review pass. The admitted-continuation repair
+at `214eeffba` also passes required and Linux/Windows installed CI in PR 1010.
+Task 10.1 is now independently reviewed and locally accepted on its child:
+full repository CI, installed SDK behavior/types and native adapter-law proof
+pass. The stack still awaits remote tip checks and native Graphite merge;
+no candidate is claimed merged or released.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
 It has no live Effect provisioning, process binding, generic harness owner,
@@ -41,8 +45,8 @@ public release and consumer acceptance remain separate states.
 
 ## Current Boundary
 
-Complete stack admission, then implement task 10's cold adapter lowering and
-real agent-tool/desktop-background authoring before harness/mounting/observation.
+Admit the complete stack including task 10.1's cold adapter lowering and real
+agent-tool/desktop-background authoring, then implement harness/mounting/observation.
 The verified binding story uses official oRPC beta.32 native clients and Effect
 beta.101, preserving actual request and stream settlement before resource
 release. No community bridge, replacement interpreter or second service runner

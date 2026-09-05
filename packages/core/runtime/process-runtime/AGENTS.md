@@ -22,6 +22,10 @@
   maps and native runtime handles remain inside process-runtime implementation;
   neither belongs on a service, plugin or module context.
 - Harness mounting and cross-owner finalization belong to downstream mounting.
+- Adapter contracts live in `src/surface-adapter.ts`; lowering helpers live in
+  `src/adapters/**`. The selected version-2 source law forbids raw Effect
+  imports there. Deferred payload callbacks may delegate to process execution;
+  behavior tests must prove lowering itself never executes or mounts.
 
 ## Behavior
 

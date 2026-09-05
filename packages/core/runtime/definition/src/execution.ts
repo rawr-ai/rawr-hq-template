@@ -1,4 +1,10 @@
-import type { HabitatEffect, HabitatRetryPolicy, HabitatTimeoutPolicy } from "./effect";
+import type { RuntimeSchema } from "../../schema/src/runtime-schema";
+import type {
+  HabitatDurationInput,
+  HabitatEffect,
+  HabitatRetryPolicy,
+  HabitatTimeoutPolicy,
+} from "./effect";
 import type { ProcedureExecutionContext } from "./execution-context";
 
 export type ExecutionBoundaryKind =
@@ -21,6 +27,19 @@ export interface EffectExecutionPolicy {
   readonly interruptible?: boolean;
 }
 
+const executionProjection = Symbol("habitat.execution-projection");
+
+export type ExecutionProjection<TInput = unknown> =
+  | {
+      readonly kind: "agent.tool";
+      readonly input: RuntimeSchema<TInput>;
+      readonly description: string;
+    }
+  | {
+      readonly kind: "desktop.background";
+      readonly cadence: HabitatDurationInput;
+    };
+
 export type ExecutionDescriptor<
   TInput,
   TOutput,
@@ -40,9 +59,30 @@ export interface EffectExecutionDescriptor<
   readonly executionId: string;
   readonly boundary: ExecutionBoundaryKind;
   readonly policy: EffectExecutionPolicy;
+  readonly [executionProjection]?: ExecutionProjection<TInput>;
   run(
     input: ProcedureExecutionContext<TInput, TContext>
   ): HabitatEffect<TOutput, TError, TRequirements>;
+}
+
+/** Private cold carriage for native lowering, without another descriptor lookup table. */
+export function attachExecutionProjection<TInput, TOutput, TError, TContext, TRequirements>(
+  descriptor: EffectExecutionDescriptor<TInput, TOutput, TError, TContext, TRequirements>,
+  projection: ExecutionProjection<TInput>
+): EffectExecutionDescriptor<TInput, TOutput, TError, TContext, TRequirements> {
+  Object.defineProperty(descriptor, executionProjection, {
+    value: Object.freeze({ ...projection }),
+    enumerable: false,
+    configurable: false,
+    writable: false,
+  });
+  return Object.freeze(descriptor);
+}
+
+export function readExecutionProjection<TInput, TOutput, TError, TContext, TRequirements>(
+  descriptor: EffectExecutionDescriptor<TInput, TOutput, TError, TContext, TRequirements>
+): ExecutionProjection<TInput> | undefined {
+  return descriptor[executionProjection];
 }
 
 type AnyHabitatEffect = HabitatEffect<unknown, unknown, unknown>;

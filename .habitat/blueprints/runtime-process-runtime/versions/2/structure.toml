@@ -1,0 +1,82 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "runtime-process-runtime-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "habitat.toml",
+  "project.json",
+  "src",
+  "test",
+  "tsconfig.json",
+  "tsconfig.test.json",
+  "tsdown.config.ts",
+]
+allowed = []
+
+[[scopes]]
+name = "runtime-process-runtime-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|project.json|tsconfig.json|tsconfig.test.json|tsdown.config.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-process-runtime-source"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "closed"
+required = ["index.ts"]
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-process-runtime-source-directories"
+rootRole = "project"
+relativePath = "src/**/[a-z]*([a-z0-9]|-[a-z0-9])"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-process-runtime-source-files"
+rootRole = "project"
+relativePath = "src/**/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-process-runtime-proof"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9]).test.ts", "[a-z]*([a-z0-9]|-[a-z0-9]).typecheck.ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-process-runtime-proof-directories"
+rootRole = "project"
+relativePath = "test/**/[a-z]*([a-z0-9]|-[a-z0-9])"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9]).test.ts", "[a-z]*([a-z0-9]|-[a-z0-9]).typecheck.ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "runtime-process-runtime-proof-files"
+rootRole = "project"
+relativePath = "test/**/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "runtime-process-runtime-behavior-proofs"
+rootRole = "project"
+relativePath = "test/**/*.test.ts"
+kind = "file"
+mode = "closed"

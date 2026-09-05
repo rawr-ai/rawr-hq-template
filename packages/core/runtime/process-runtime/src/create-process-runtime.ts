@@ -1,5 +1,6 @@
 import type {
   CompiledServiceBindingPlan,
+  CompiledSurfacePlan,
   RuntimeCompilationResult,
 } from "../../compiler/src/index";
 import type {
@@ -19,6 +20,8 @@ import { createInvocationTracker } from "./invocation-tracker";
 import { createRuntimeAccess, type RuntimeAccess } from "./runtime-access";
 import { createServiceBindingCache } from "./service-binding-cache";
 import { createServiceClientAssembly } from "./service-client-assembly";
+import type { AdapterLoweringResult, SurfaceAdapter } from "./surface-adapter";
+import { createSurfaceCapabilities } from "./surface-capabilities";
 
 export interface ProcessRuntime {
   readonly kind: "runtime.process";
@@ -29,6 +32,10 @@ export interface ProcessRuntime {
     bindingId: string,
     service: S
   ): ReturnType<S["construct"]>;
+  lower<T>(
+    surface: CompiledSurfacePlan,
+    adapter: SurfaceAdapter<CompiledSurfacePlan, T>
+  ): AdapterLoweringResult<T>;
   stop(): Promise<void>;
 }
 
@@ -65,7 +72,6 @@ export async function createProcessRuntime(
       descriptorTable: input.descriptorTable,
       assertOpen: admission.assertOpen,
     });
-    const execution = createProcessExecutionRuntime({ ...input, registry, admission });
     const bindings = new Map(plan.serviceBindings.map((binding) => [binding.bindingId, binding]));
     const requirements = new Map(
       plan.resourceRequirements.map((requirement) => [requirement.requirementId, requirement])
@@ -165,11 +171,59 @@ export async function createProcessRuntime(
     const bound = new Map(
       plan.serviceBindings.map((binding) => [binding.bindingId, construct(binding)])
     );
+    const execution = createProcessExecutionRuntime({
+      ...input,
+      registry,
+      admission,
+      surfaceCapabilities: (surface, continuation) =>
+        createSurfaceCapabilities({
+          compilation: input.compilation,
+          surface,
+          bindings: bound,
+          values: handoff.values,
+          admission,
+          continuation,
+        }),
+    });
+    const access = createRuntimeAccess(input.compilation, input.provisioned, admission);
     return Object.freeze({
       kind: "runtime.process",
-      access: createRuntimeAccess(input.compilation, input.provisioned, admission),
+      access,
       registry,
       execution,
+      lower<T>(
+        surface: CompiledSurfacePlan,
+        adapter: SurfaceAdapter<CompiledSurfacePlan, T>
+      ): AdapterLoweringResult<T> {
+        admission.assertOpen();
+        if (
+          !plan.surfaces.includes(surface) ||
+          adapter.role !== surface.role ||
+          adapter.surface !== surface.surface ||
+          adapter.harness.length === 0
+        )
+          throw new TypeError(
+            "Adapter requires an exact selected compiled surface and matching identity."
+          );
+        const roleAccess = access.roles.get(surface.role);
+        if (roleAccess === undefined) throw new TypeError("Adapter role is not selected.");
+        const capabilities = createSurfaceCapabilities({
+          compilation: input.compilation,
+          surface,
+          bindings: bound,
+          values: handoff.values,
+          admission,
+        });
+        return adapter.lower({
+          plan: surface,
+          processAccess: access.process,
+          roleAccess,
+          serviceBindings: capabilities.clients,
+          resources: capabilities.resources,
+          executionRegistry: registry,
+          executionRuntime: execution,
+        });
+      },
       binding<S extends ServiceRuntimeExport>(
         bindingId: string,
         service: S

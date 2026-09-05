@@ -26,10 +26,18 @@ export function assertSurfaceReferenceRelation(
       }
       return;
     }
+    case "plugin.agent-tool":
+      if (surface.role !== "agent" || surface.surface !== "agent/tools") {
+        throw new TypeError("An agent tool ref requires its agent/tools surface.");
+      }
+      return;
+    case "plugin.desktop-background":
+      if (surface.role !== "desktop" || surface.surface !== "desktop/background") {
+        throw new TypeError("A desktop background ref requires its desktop/background surface.");
+      }
+      return;
     case "plugin.cli-command":
     case "plugin.web-surface":
-    case "plugin.agent-tool":
-    case "plugin.desktop-background":
       throw new TypeError("The execution ref has no admitted definition-owned lane carrier.");
   }
 }
