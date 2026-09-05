@@ -32,7 +32,7 @@ export default defineConfig({
     neverBundle: [/^@habitat-ai\/sdk(?:\/|$)/, /^nx(?:\/|$)/],
     dts: { neverBundle: [/^@habitat-ai\/sdk(?:\/|$)/] },
     alwaysBundle: [
-      /^@habitat-ai\/(?:catalog-service|plugin-authoring|plugin-foundation|resource-filesystem|resource-rule-evaluation|resource-source-inventory)(?:\/|$)/,
+      /^@habitat-ai\/(?:agent-plugin-lifecycle-service|catalog-service|plugin-agent-plugins|plugin-authoring|plugin-foundation|resource-agent-plugin-package-output|resource-content-workspace|resource-filesystem|resource-native-agent-provider|resource-rule-evaluation|resource-source-inventory|resource-versioned-content)(?:\/|$)/,
     ],
     onlyImport: [
       "@effect/platform-node",
@@ -40,6 +40,7 @@ export default defineConfig({
       "@habitat-ai/sdk",
       "@nx/devkit",
       "@oclif/core",
+      "@opentelemetry/api",
       "@orpc/contract",
       "@orpc/experimental-effect",
       "@orpc/server",

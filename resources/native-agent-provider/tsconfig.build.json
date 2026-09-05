@@ -1,13 +1,17 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "declaration": true,
     "outDir": "dist",
     "rootDir": "."
   },
   "files": [
     "contract.ts",
+    "runtime.ts",
     "providers/effect-platform-node-shared.ts",
     "providers/codex-effect-platform-node/index.ts",
-    "providers/claude-effect-platform-node/index.ts"
+    "providers/codex-effect-platform-node/runtime.ts",
+    "providers/claude-effect-platform-node/index.ts",
+    "providers/claude-effect-platform-node/runtime.ts"
   ]
 }

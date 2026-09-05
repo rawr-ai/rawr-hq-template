@@ -115,7 +115,7 @@ repository.
   Cold declarations/discovery are allowed; no immediate acquisition interruption
   is claimed without a corresponding SDK contract. This prerequisite does not
   implement the agent-plugin or dev verticals.
-- [ ] 12.1 Create the final `plugins/cli/topics/agent-plugins` owner as the private
+- [x] 12.1 Create the final `plugins/cli/topics/agent-plugins` owner as the private
   `@habitat-ai/plugin-agent-plugins`, re-author the qualified
   `.habitat/overlays/agent-plugin-lifecycle` policy there, and add its command
   membership plus cold content-workspace/package-output/native-provider/

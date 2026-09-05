@@ -2,64 +2,31 @@ import type { AgentPluginPackageOutputResource } from "@habitat-ai/resource-agen
 import type { ContentWorkspaceResource } from "@habitat-ai/resource-content-workspace";
 import type { NativeAgentProviderResources } from "@habitat-ai/resource-native-agent-provider";
 import type { VersionedContentResource } from "@habitat-ai/resource-versioned-content";
-import type { AnalyticsClient, Logger } from "@habitat-ai/sdk/service";
-import { Effect } from "effect";
+import { Clock, Context, Effect } from "effect";
 
 import { type Client, type CreateClientOptions, createClient } from "../../../src/client";
 
 type LifecycleTestDeps = CreateClientOptions["deps"];
 
-/** Analytics observation captured by lifecycle-owned test instrumentation. */
-export type TestAnalyticsEntry = {
-  event: string;
-  payload: Record<string, unknown>;
-};
+export const testInvocation = Object.freeze({ context: {} });
 
-/** Structured log observation captured by lifecycle-owned test instrumentation. */
-export type TestLogEntry = {
-  level: "info" | "error";
-  event: string;
-  payload: Record<string, unknown>;
-};
-
-/** Records service analytics without introducing a production adapter. */
-export function createTestAnalytics(
-  options: { sink?: TestAnalyticsEntry[] } = {}
-): AnalyticsClient {
-  return {
-    track(event, payload) {
-      options.sink?.push({ event, payload: payload ?? {} });
-    },
+/** Override only wall-time reads at the native Promise boundary; scheduling stays live. */
+export function clockInvocation(now: () => Date) {
+  const live = Context.get(Context.empty(), Clock.Clock);
+  const read = () => now().getTime();
+  const clock: Clock.Clock = {
+    currentTimeMillisUnsafe: read,
+    currentTimeMillis: Effect.sync(read),
+    currentTimeNanosUnsafe: () => live.currentTimeNanosUnsafe(),
+    currentTimeNanos: live.currentTimeNanos,
+    sleep: (duration) => live.sleep(duration),
   };
+  return { context: { "effect/context": Context.make(Clock.Clock, clock) } };
 }
-
-/** Records structured service logs inside the lifecycle test owner. */
-export function createTestLogger(options: { sink?: TestLogEntry[] } = {}): Logger {
-  return {
-    info(event, payload) {
-      options.sink?.push({ level: "info", event, payload: payload ?? {} });
-    },
-    error(event, payload) {
-      options.sink?.push({ level: "error", event, payload: payload ?? {} });
-    },
-  };
-}
-
-export const testInvocation = Object.freeze({
-  context: {
-    invocation: {
-      traceId: "trace-agent-plugin-lifecycle-test",
-      commandId: "command-agent-plugin-lifecycle-test",
-    },
-  },
-});
 
 export function createLifecycleTestClient(overrides: Partial<LifecycleTestDeps> = {}): Client {
   const deps: LifecycleTestDeps = {
-    logger: createTestLogger(),
-    analytics: createTestAnalytics(),
     contentWorkspace: unavailableContentWorkspace(),
-    clock: { now: () => new Date("2026-07-17T00:00:00.000Z") },
     packageOutput: unavailablePackageOutput(),
     versionedContent: unavailableVersionedContent(),
     ...unavailableProviderResources(),

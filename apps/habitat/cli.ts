@@ -20,7 +20,7 @@ export const entrypoint = defineEntrypoint({
 
 export function runHabitatProcess(input: {
   readonly appRoot: string;
-  readonly sources: StartAppOptions["sources"];
+  readonly sources: () => StartAppOptions["sources"];
   readonly sourceBundle: OclifSourceBundle;
   readonly args?: readonly string[];
   readonly development?: boolean;
@@ -35,7 +35,7 @@ export function runHabitatProcess(input: {
   });
   const startup = () =>
     startApp(entrypoint, {
-      sources: input.sources,
+      sources: input.sources(),
       integrations: [host.integration],
       finalization: { policy: "waitForNativeStop", deadlineMs: 10_000 },
     });

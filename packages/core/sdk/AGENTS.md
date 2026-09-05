@@ -109,7 +109,9 @@
 - Qualified telemetry provisioning tests consume the resource/provider-owned
   private runtime identity and adapter as source. Keep their definition witness
   in the same runtime assembly; do not bundle a second copy into the legacy
-  private resource package or claim a new public telemetry provider export.
+  private resource package. The existing telemetry face projects these exact
+  cold declarations so process demand and profile supply can select them through
+  ordinary public SDK imports without exposing acquisition or native leases.
   The standalone Bun `test/fixtures/server-runtime.ts` owns terminal composed
   server acceptance, including the real OTLP receiver. `async-runtime.ts`
   owns composed Serve/Connect acceptance with the pinned native Dev Server and
@@ -131,7 +133,9 @@
   HTML/JavaScript/CSS plus request-time Effect, cancellation and response-body
   cleanup before resource release. This is not a product app or browser runtime.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
-  and declarative OpenTelemetry Node configuration. It exports no acquisition,
+  and declarative OpenTelemetry Node configuration, plus the resource-owned
+  `TelemetryRuntimeResource` and `defineOpenTelemetryNodeRuntimeProvider` cold
+  declarations assembled in the SDK's definition realm. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
   provisioning owns those mechanics. Service, plugin, and command authors add
   only optional semantic enrichment through their owning surfaces.

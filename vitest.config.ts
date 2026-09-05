@@ -65,7 +65,11 @@ export default defineConfig({
           environment: "node",
           fileParallelism: false,
           hookTimeout: 180_000,
-          include: ["test/installed-package.test.ts"],
+          include: [
+            "test/installed-package.test.ts",
+            "test/oclif/installed-command-argv.test.ts",
+            "test/oclif/installed-command-lifetime.test.ts",
+          ],
           testTimeout: 180_000,
         },
       },

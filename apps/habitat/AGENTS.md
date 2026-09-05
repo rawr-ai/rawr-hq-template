@@ -45,9 +45,14 @@
 
 ## Flow
 
-- `habitat.app.ts` selects the foundation and authoring topics; `runtime/processes.ts` and
+- `habitat.app.ts` selects the foundation, authoring and agent-plugin topics; `runtime/processes.ts` and
   `runtime/profiles/**` declare process and provider selections. `cli.ts`
   creates the exact cold entrypoint and supplies lazy SDK startup to the host.
+- The CLI process declares technical telemetry demand. Its profile selects the
+  existing SDK telemetry provider; `runtime/sources.ts` reads optional explicit
+  `HABITAT_TELEMETRY` JSON only after native admission and supplies app-owned
+  process identity. Absent configuration selects disabled telemetry. No service
+  logger, analytics or synthetic trace-id dependency participates.
 - `src/application.ts` supplies deployment input and native host mode.
   The foundation topic owns command projections; the app owns native Oclif
   lifecycle. The Nx reader uses the same managed execution without escaping a
@@ -64,6 +69,9 @@
 
 - Executable: `habitat`.
 - Native external-extension lifecycle: `habitat plugins ...`.
+- Curated content lifecycle: `habitat agent plugins
+  check|package|status|sync|test|vendors update`. Explicit versioned Git locators
+  and native homes remain procedure inputs; they never select executable sources.
 - Source authoring: `habitat cli command create <topic> <name>` and
   `habitat cli extension create <id> --destination <path>`, both with `--dry-run`.
   The app supplies separate native generator runners; the invoking directory
@@ -94,6 +102,15 @@
   `@habitat-ai/cli:build`, and `@habitat-ai/cli:manifest` through Nx.
 - Run `@habitat-ai/cli:acceptance:oclif-native-plugins` when native extension
   installation or state behavior changes.
+- Run `@habitat-ai/cli:acceptance:oclif-native-telemetry` with explicit qualified
+  Codex/Claude binaries for the complete installed lifecycle/provider gate.
+  Set `HABITAT_ACCEPTANCE_CODEX_BIN`, `HABITAT_ACCEPTANCE_CLAUDE_BIN`, and
+  `HABITAT_ACCEPTANCE_GIT_BIN` to absolute native executable paths. The target
+  opts into real local Git and native-home mutation only inside its owned
+  fixture. Do not select a home-switching launcher instead of a native binary.
+  This gate requires POSIX native CLIs; it is not a Windows provider receipt.
+  Ordinary installed acceptance retains container-free OTLP transport,
+  service ancestry and shutdown proof without requiring those native CLIs.
 - Run `@habitat-ai/cli:acceptance:generators-installed-package` for native Nx
   generator and installed source-authoring command changes.
 - Run `@habitat-ai/cli:acceptance:generators-installed-package` for source

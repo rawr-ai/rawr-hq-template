@@ -52,6 +52,7 @@ import {
   vendorPayloadDigest,
 } from "../../../../src/service/modules/vendors/model/policy/vendor-record-codec";
 import {
+  clockInvocation,
   createLifecycleTestClient,
   testInvocation,
   unavailableContentWorkspace,
@@ -65,7 +66,7 @@ const declarationPath = `vendor/sources/${sourceId}.json`;
 const provenancePath = `vendor/provenance/${sourceId}.json`;
 const lockPath = `vendor/locks/${sourceId}.json`;
 const destinationPath = `plugins/cognition/skills/${sourceId}`;
-const releaseInputPath = ".rawr/release-input.json";
+const releaseInputPath = ".habitat/release-input.json";
 type VendorStatusRequest = Parameters<Client["vendors"]["status"]>[0];
 type VendorUpdateRequest = Parameters<Client["vendors"]["update"]>[0];
 type VendorContentWorkspaceRef = VendorStatusRequest["contentWorkspace"];
@@ -308,6 +309,103 @@ describe("vendor lifecycle applications", () => {
     expect(decoded.value.observedAt).toBe(suppliedObservedAt);
   });
 
+  it("reads native Clock once after each materialized candidate, before capturing any writes", async () => {
+    const sourceIds = ["secondary", sourceId];
+    const instants = ["2027-03-04T05:06:07.890Z", "2027-03-04T05:06:08.901Z"];
+    const harness = new VendorHarness({ sourceIds });
+    harness.setRemote("next payload\n", "7");
+    const client = createLifecycleTestClient({
+      contentWorkspace: harness.contentWorkspace,
+      versionedContent: harness.versionedContent,
+    });
+    let clockReads = 0;
+    const result = await client.vendors.update(
+      { contentWorkspace, sourceIds },
+      clockInvocation(() => {
+        expect(harness.counters.materializeRemote).toBe(clockReads + 1);
+        expect(harness.counters.capture).toBe(0);
+        const instant = instants[clockReads++];
+        if (instant === undefined) throw new Error("Unexpected additional Clock read");
+        return new Date(instant);
+      })
+    );
+
+    expect(result.kind).toBe("AuthoredReviewableChanges");
+    expect(clockReads).toBe(2);
+    expect(harness.counters.materializeRemote).toBe(2);
+    expect(harness.counters.capture).toBe(1);
+    for (const [index, id] of sourceIds.entries()) {
+      const write = harness.lastWrites.find(
+        (entry) => entry.kind === "ReplaceFile" && entry.path === `vendor/provenance/${id}.json`
+      );
+      if (write?.kind !== "ReplaceFile") throw new Error("Expected native Clock provenance");
+      const provenance = decodeVendorProvenanceRecord(write.bytes);
+      if (!provenance.ok) throw new Error(provenance.failure.detail);
+      expect(provenance.value.observedAt).toBe(instants[index]);
+    }
+  });
+
+  it.each([
+    "held",
+    "converged",
+    "materialization-failed",
+  ] as const)("%s vendor work never reads native Clock", async (state) => {
+    const harness = new VendorHarness({ policy: state === "held" ? "held" : "tracked" });
+    if (state === "materialization-failed") {
+      harness.setRemote("next payload\n", "7");
+      harness.failUpstream("materialize", "Unavailable native materialization");
+    }
+    const client = createLifecycleTestClient({
+      contentWorkspace: harness.contentWorkspace,
+      versionedContent: harness.versionedContent,
+    });
+    let clockReads = 0;
+    const result = await client.vendors.update(
+      { contentWorkspace, sourceIds: [sourceId] },
+      clockInvocation(() => {
+        clockReads++;
+        throw new Error("Read-only or unmaterialized work must not sample Clock");
+      })
+    );
+
+    expect(result.kind).toBe(state === "converged" ? "ReadOnlyConverged" : "Rejected");
+    expect(clockReads).toBe(0);
+    expect(harness.counters.capture).toBe(0);
+    expect(harness.counters.apply).toBe(0);
+  });
+
+  it.each([
+    "invalid instant",
+    "throwing read",
+  ] as const)("refuses a native Clock %s before workspace capture", async (failure) => {
+    const harness = new VendorHarness();
+    harness.setRemote("next payload\n", "7");
+    const client = createLifecycleTestClient({
+      contentWorkspace: harness.contentWorkspace,
+      versionedContent: harness.versionedContent,
+    });
+    let clockReads = 0;
+    const result = await client.vendors.update(
+      { contentWorkspace, sourceIds: [sourceId] },
+      clockInvocation(() => {
+        clockReads++;
+        if (failure === "throwing read") throw new Error("Private native Clock failure");
+        return new Date(Number.NaN);
+      })
+    );
+
+    expect(result).toMatchObject({
+      kind: "Rejected",
+      issues: [{ code: "RuntimeFailure", sourceId }],
+    });
+    expect(JSON.stringify(result)).not.toContain("Private native Clock failure");
+    expect(clockReads).toBe(1);
+    expect(harness.counters.materializeRemote).toBe(1);
+    expect(harness.counters.capture).toBe(0);
+    expect(harness.counters.apply).toBe(0);
+    expect(harness.hasOpenCapture()).toBe(false);
+  });
+
   it("releases an unmutated capture when post-capture semantic truth drifts", async () => {
     const harness = new VendorHarness();
     harness.setRemote("next payload\n", "7");
@@ -376,13 +474,12 @@ describe("vendor lifecycle applications", () => {
     harness.pauseAfterPartialApply = true;
     const client = createLifecycleTestClient({
       contentWorkspace: harness.contentWorkspace,
-      clock: harness.clock,
       versionedContent: harness.versionedContent,
     });
     const controller = new AbortController();
     const update = client.vendors.update(
       { contentWorkspace, sourceIds: [sourceId] },
-      { ...testInvocation, signal: controller.signal }
+      { ...clockInvocation(harness.clock.now), signal: controller.signal }
     );
     const completed = update.then(
       (value) => ({ kind: "Success" as const, value }),
@@ -484,13 +581,12 @@ describe("vendor lifecycle applications", () => {
     const preflight = harness.deferRemoteObservation();
     const client = createLifecycleTestClient({
       contentWorkspace: harness.contentWorkspace,
-      clock: harness.clock,
       versionedContent: harness.versionedContent,
     });
     const controller = new AbortController();
     const update = client.vendors.update(
       { contentWorkspace, sourceIds: [sourceId] },
-      { ...testInvocation, signal: controller.signal }
+      { ...clockInvocation(harness.clock.now), signal: controller.signal }
     );
 
     await preflight.started;
@@ -509,7 +605,6 @@ describe("vendor lifecycle applications", () => {
     const capture = harness.deferCapture();
     const client = createLifecycleTestClient({
       contentWorkspace: harness.contentWorkspace,
-      clock: harness.clock,
       versionedContent: harness.versionedContent,
     });
     const controller = new AbortController();
@@ -517,7 +612,7 @@ describe("vendor lifecycle applications", () => {
     const update = client.vendors
       .update(
         { contentWorkspace, sourceIds: [sourceId] },
-        { ...testInvocation, signal: controller.signal }
+        { ...clockInvocation(harness.clock.now), signal: controller.signal }
       )
       .then(
         (value) => {
@@ -657,6 +752,7 @@ describe("vendor lifecycle applications", () => {
 interface HarnessOptions {
   readonly policy?: "tracked" | "held";
   readonly observedAt?: string;
+  readonly sourceIds?: readonly string[];
 }
 
 interface FileImage {
@@ -727,42 +823,42 @@ class VendorHarness {
     this.clock = Object.freeze({ now: () => new Date(options.observedAt ?? observedAt) });
     const admittedEntries = materializedEntries("current payload\n");
     const admitted = sourceIdentity("1", admittedEntries);
-    const declaration: VendorSourceDeclaration = Object.freeze({
-      schemaVersion: 1,
-      sourceId,
-      policy: options.policy ?? "tracked",
-      repositoryIdentity: admitted.repositoryIdentity,
-      refName: admitted.refName,
-      sourcePath: `skills/${sourceId}`,
-      destinationPath,
-      provenancePath,
-      lockPath,
-      curationRevision: 1,
-      supportedBaseline: "codex>=0.144.5",
+    const sources = (options.sourceIds ?? [sourceId]).map((id) => {
+      const declaration: VendorSourceDeclaration = Object.freeze({
+        schemaVersion: 1,
+        sourceId: id,
+        policy: options.policy ?? "tracked",
+        repositoryIdentity: admitted.repositoryIdentity,
+        refName: admitted.refName,
+        sourcePath: `skills/${sourceId}`,
+        destinationPath: `plugins/cognition/skills/${id}`,
+        provenancePath: `vendor/provenance/${id}.json`,
+        lockPath: `vendor/locks/${id}.json`,
+        curationRevision: 1,
+        supportedBaseline: "codex>=0.144.5",
+      });
+      const provenance: VendorProvenanceRecord = Object.freeze({
+        schemaVersion: 1,
+        sourceId: id,
+        admitted,
+        importedPayloadDigest: admitted.payloadDigest,
+        curationRevision: 1,
+        supportedBaseline: declaration.supportedBaseline,
+        observedLatest: admitted,
+        observedAt,
+        disposition: declaration.policy === "held" ? "held" : "admitted",
+      });
+      const lock: VendorLockRecord = Object.freeze({ schemaVersion: 1, sourceId: id, admitted });
+      const declarationBytes = encodeVendorSourceDeclaration(declaration);
+      const provenanceBytes = encodeVendorProvenanceRecord(provenance);
+      const lockBytes = encodeVendorLockRecord(lock);
+      this.files.set(`vendor/sources/${id}.json`, fileImage(declarationBytes));
+      this.files.set(declaration.provenancePath, fileImage(provenanceBytes));
+      this.files.set(declaration.lockPath, fileImage(lockBytes));
+      this.trees.set(declaration.destinationPath, admittedEntries);
+      return { id, declarationBytes, provenanceBytes, lockBytes };
     });
-    const provenance: VendorProvenanceRecord = Object.freeze({
-      schemaVersion: 1,
-      sourceId,
-      admitted,
-      importedPayloadDigest: admitted.payloadDigest,
-      curationRevision: 1,
-      supportedBaseline: declaration.supportedBaseline,
-      observedLatest: admitted,
-      observedAt,
-      disposition: declaration.policy === "held" ? "held" : "admitted",
-    });
-    const lock: VendorLockRecord = Object.freeze({ schemaVersion: 1, sourceId, admitted });
-    const declarationBytes = encodeVendorSourceDeclaration(declaration);
-    const provenanceBytes = encodeVendorProvenanceRecord(provenance);
-    const lockBytes = encodeVendorLockRecord(lock);
-    this.files.set(declarationPath, fileImage(declarationBytes));
-    this.files.set(provenancePath, fileImage(provenanceBytes));
-    this.files.set(lockPath, fileImage(lockBytes));
-    this.files.set(
-      releaseInputPath,
-      fileImage(releaseInputBytes(declarationBytes, provenanceBytes, lockBytes))
-    );
-    this.trees.set(destinationPath, admittedEntries);
+    this.files.set(releaseInputPath, fileImage(releaseInputBytes(sources)));
     this.remote = remoteTree(admitted.sourceCommit, admitted.sourceTree, admittedEntries);
 
     const harness = this;
@@ -1050,9 +1146,12 @@ class VendorHarness {
 }
 
 function releaseInputBytes(
-  declarationBytes: Uint8Array,
-  provenanceBytes: Uint8Array,
-  lockBytes: Uint8Array
+  sources: readonly {
+    readonly id: string;
+    readonly declarationBytes: Uint8Array;
+    readonly provenanceBytes: Uint8Array;
+    readonly lockBytes: Uint8Array;
+  }[]
 ): Uint8Array {
   const releaseInput = must(
     createAgentPluginReleaseInput({
@@ -1062,15 +1161,21 @@ function releaseInputBytes(
         {
           kind: "agent-plugin",
           pluginId: "cognition",
-          vendor: [
-            binding(declarationPath, VENDOR_SOURCE_PROTOCOL, declarationBytes),
-            binding(provenancePath, VENDOR_PROVENANCE_PROTOCOL, provenanceBytes),
-          ],
+          vendor: sources.flatMap(({ id, declarationBytes, provenanceBytes }) => [
+            binding(`vendor/sources/${id}.json`, VENDOR_SOURCE_PROTOCOL, declarationBytes),
+            binding(`vendor/provenance/${id}.json`, VENDOR_PROVENANCE_PROTOCOL, provenanceBytes),
+          ]),
           curation: [],
         },
       ],
-      ownershipClaims: [{ kind: "skill", identity: sourceId, ownerPluginId: "cognition" }],
-      locks: [binding(lockPath, VENDOR_LOCK_PROTOCOL, lockBytes)],
+      ownershipClaims: sources.map(({ id }) => ({
+        kind: "skill",
+        identity: id,
+        ownerPluginId: "cognition",
+      })),
+      locks: sources.map(({ id, lockBytes }) =>
+        binding(`vendor/locks/${id}.json`, VENDOR_LOCK_PROTOCOL, lockBytes)
+      ),
       qualityPolicies: [],
     })
   );
@@ -1251,7 +1356,6 @@ function must<T, E>(result: ReleaseResult<T, E>): T {
 function createVendorStatus(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
     contentWorkspace: runtime.contentWorkspace,
-    clock: runtime.clock,
     versionedContent: runtime.versionedContent,
   });
   return (request: VendorStatusRequest) => client.vendors.status(request, testInvocation);
@@ -1260,10 +1364,10 @@ function createVendorStatus(runtime: VendorHarness) {
 function createVendorUpdate(runtime: VendorHarness) {
   const client = createLifecycleTestClient({
     contentWorkspace: runtime.contentWorkspace,
-    clock: runtime.clock,
     versionedContent: runtime.versionedContent,
   });
-  return (request: VendorUpdateRequest) => client.vendors.update(request, testInvocation);
+  return (request: VendorUpdateRequest) =>
+    client.vendors.update(request, clockInvocation(runtime.clock.now));
 }
 
 function compareText(left: string, right: string): number {

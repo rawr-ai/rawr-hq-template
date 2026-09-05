@@ -1,0 +1,646 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "service-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "habitat.toml",
+  "package.json",
+  "project.json",
+  "src",
+  "tsconfig.json",
+]
+allowed = [
+  "test",
+  "tsconfig.build.json",
+  "tsconfig.test.json",
+  "vitest.config.ts",
+]
+
+[[scopes]]
+name = "service-required-project-files"
+rootRole = "project"
+relativePath = "@(AGENTS.md|habitat.toml|package.json|project.json|tsconfig.json)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "service-optional-project-files"
+rootRole = "project"
+relativePath = "@(tsconfig.build.json|tsconfig.test.json|vitest.config.ts)"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-source"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "closed"
+required = [
+  "client.ts",
+  "service",
+]
+allowed = []
+
+[[scopes]]
+name = "service-client-face"
+rootRole = "project"
+relativePath = "src/client.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "service-spine"
+rootRole = "project"
+relativePath = "src/service"
+kind = "directory"
+mode = "closed"
+required = [
+  "base.ts",
+  "contract.ts",
+  "impl.ts",
+  "modules",
+  "router.ts",
+]
+allowed = [
+  "db",
+  "middleware",
+  "model",
+]
+
+[[scopes]]
+name = "service-spine-faces"
+rootRole = "project"
+relativePath = "src/service/@(base.ts|contract.ts|impl.ts|router.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "service-database"
+rootRole = "project"
+relativePath = "src/service/db"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "migrations",
+  "stores",
+]
+allowed = [
+  "schema",
+]
+
+[[scopes]]
+name = "service-database-migrations"
+rootRole = "project"
+relativePath = "src/service/db/migrations"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.sql",
+]
+allowed = [
+]
+
+[[scopes]]
+name = "service-database-migration-files"
+rootRole = "project"
+relativePath = "src/service/db/migrations/*.sql"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-database-schema"
+rootRole = "project"
+relativePath = "src/service/db/schema"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+allowed = []
+forbidden = [
+  "generated.ts",
+  "helpers.ts",
+  "index.ts",
+]
+
+[[scopes]]
+name = "service-database-schema-files"
+rootRole = "project"
+relativePath = "src/service/db/schema/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-database-stores"
+rootRole = "project"
+relativePath = "src/service/db/stores"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+allowed = []
+forbidden = [
+  "helpers.ts",
+  "index.ts",
+  "provider.ts",
+]
+
+[[scopes]]
+name = "service-database-store-files"
+rootRole = "project"
+relativePath = "src/service/db/stores/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-root-middleware"
+rootRole = "project"
+relativePath = "src/service/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+allowed = []
+forbidden = [
+  "index.ts",
+]
+
+[[scopes]]
+name = "service-root-middleware-files"
+rootRole = "project"
+relativePath = "src/service/middleware/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-modules"
+rootRole = "project"
+relativePath = "src/service/modules"
+kind = "directory"
+mode = "closed"
+required = [
+  "*",
+]
+allowed = []
+
+[[scopes]]
+name = "service-module-shells"
+rootRole = "project"
+relativePath = "src/service/modules/*"
+kind = "directory"
+mode = "closed"
+required = [
+  "AGENTS.md",
+  "contract",
+  "module.ts",
+  "router",
+  "router.ts",
+]
+allowed = [
+  "middleware",
+  "model",
+]
+
+[[scopes]]
+name = "service-module-faces"
+rootRole = "project"
+relativePath = "src/service/modules/*/@(AGENTS.md|module.ts|router.ts)"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "service-module-contracts"
+rootRole = "project"
+relativePath = "src/service/modules/*/contract"
+kind = "directory"
+mode = "closed"
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-module-contract-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/contract/*.ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "service-module-routers"
+rootRole = "project"
+relativePath = "src/service/modules/*/router"
+kind = "directory"
+mode = "closed"
+required = [
+  "[a-z]*([a-z0-9]|-[a-z0-9]).ts",
+]
+allowed = []
+forbidden = [
+  "index.ts",
+]
+
+[[scopes]]
+name = "service-module-router-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/router/[a-z]*([a-z0-9]|-[a-z0-9]).ts"
+kind = "file"
+mode = "closed"
+
+[[scopes]]
+name = "service-module-middleware"
+rootRole = "project"
+relativePath = "src/service/modules/*/middleware"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-module-middleware-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/middleware/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-root-model"
+rootRole = "project"
+relativePath = "src/service/model"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "dto",
+  "entities",
+  "errors",
+  "policy",
+  "ports",
+]
+
+[[scopes]]
+name = "service-module-models"
+rootRole = "project"
+relativePath = "src/service/modules/*/model"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+allowed = [
+  "dto",
+  "entities",
+  "errors",
+  "policy",
+  "ports",
+]
+
+[[scopes]]
+name = "service-root-model-kinds"
+rootRole = "project"
+relativePath = "src/service/model/@(dto|entities|errors|policy|ports)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-root-model-files"
+rootRole = "project"
+relativePath = "src/service/model/@(dto|entities|errors|policy|ports)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-module-model-kinds"
+rootRole = "project"
+relativePath = "src/service/modules/*/model/@(dto|entities|errors|policy|ports)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "index.ts",
+  "!(index).ts",
+]
+allowed = []
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-module-model-files"
+rootRole = "project"
+relativePath = "src/service/modules/*/model/@(dto|entities|errors|policy|ports)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-test-root"
+rootRole = "project"
+relativePath = "test"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(acceptance|behavior|integration|mechanics|support)",
+]
+allowed = [
+  "acceptance",
+  "behavior",
+  "integration",
+  "mechanics",
+  "support",
+]
+
+[[scopes]]
+name = "service-acceptance-root"
+rootRole = "project"
+relativePath = "test/acceptance"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-acceptance-suites"
+rootRole = "project"
+relativePath = "test/acceptance/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-behavior-root"
+rootRole = "project"
+relativePath = "test/behavior"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(*.test.ts|modules)",
+]
+allowed = [
+  "*.test.ts",
+  "modules",
+]
+
+[[scopes]]
+name = "service-direct-behavior-suites"
+rootRole = "project"
+relativePath = "test/behavior/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-behavior-module-root"
+rootRole = "project"
+relativePath = "test/behavior/modules"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*",
+]
+allowed = [
+  "*",
+]
+
+[[scopes]]
+name = "service-behavior-module-shells"
+rootRole = "project"
+relativePath = "test/behavior/modules/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-behavior-module-suites"
+rootRole = "project"
+relativePath = "test/behavior/modules/*/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-mechanics-root"
+rootRole = "project"
+relativePath = "test/mechanics"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(client|contract|db)",
+]
+allowed = [
+  "client",
+  "contract",
+  "db",
+]
+
+[[scopes]]
+name = "service-runtime-mechanics-categories"
+rootRole = "project"
+relativePath = "test/mechanics/@(client|db)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-runtime-mechanics-suites"
+rootRole = "project"
+relativePath = "test/mechanics/@(client|db)/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-contract-mechanics"
+rootRole = "project"
+relativePath = "test/mechanics/contract"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(*.test.ts|*.typecheck.ts)",
+]
+allowed = [
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-contract-mechanics-files"
+rootRole = "project"
+relativePath = "test/mechanics/contract/@(*.test.ts|*.typecheck.ts)"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-integration-root"
+rootRole = "project"
+relativePath = "test/integration"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.test.ts",
+]
+allowed = [
+  "*.test.ts",
+]
+
+[[scopes]]
+name = "service-integration-suites"
+rootRole = "project"
+relativePath = "test/integration/*.test.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-support-root"
+rootRole = "project"
+relativePath = "test/support"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "@(db|modules|service)",
+]
+allowed = [
+  "db",
+  "modules",
+  "service",
+]
+
+[[scopes]]
+name = "service-support-categories"
+rootRole = "project"
+relativePath = "test/support/@(db|service)"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.ts",
+]
+allowed = [
+  "*.ts",
+]
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-support-category-files"
+rootRole = "project"
+relativePath = "test/support/@(db|service)/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true
+
+[[scopes]]
+name = "service-support-module-root"
+rootRole = "project"
+relativePath = "test/support/modules"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*",
+]
+allowed = [
+  "*",
+]
+
+[[scopes]]
+name = "service-support-module-shells"
+rootRole = "project"
+relativePath = "test/support/modules/*"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = [
+  "*.ts",
+]
+allowed = [
+  "*.ts",
+]
+forbidden = [
+  "*.spec.ts",
+  "*.test.ts",
+  "*.typecheck.ts",
+]
+
+[[scopes]]
+name = "service-support-module-files"
+rootRole = "project"
+relativePath = "test/support/modules/*/*.ts"
+kind = "file"
+mode = "closed"
+allowEmpty = true

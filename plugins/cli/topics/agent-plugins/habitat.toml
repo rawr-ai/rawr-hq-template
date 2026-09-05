@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "plugin-agent-plugins"
+ownerProject = "@habitat-ai/plugin-agent-plugins"
+blueprint = "plugin-cli-topic"
+blueprintVersion = 1
+
+[roots]
+project = "plugins/cli/topics/agent-plugins"
+
+[selections]

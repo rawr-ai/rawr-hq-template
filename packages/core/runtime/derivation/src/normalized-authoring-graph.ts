@@ -89,6 +89,13 @@ export const NormalizedRuntimeConfigSourceSchema = Type.Union([
 export const ResourceRequirementOwnerSchema = Type.Union([
   ReadonlyObject(
     Type.Object({
+      kind: Type.Literal("process"),
+      processId: Type.String(),
+    }),
+    closed
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("plugin"),
       pluginOwnerId: Type.String({ pattern: "^plugin-owner:sha256:[0-9a-f]{64}$" }),
     }),

@@ -10,7 +10,9 @@
 - Applies to `resources/telemetry/providers/opentelemetry-node/**`.
 - `runtime.ts` is the private source-assembly provider adapter. It shares the
   canonical definition owner with its consuming runtime, not a separately
-  bundled plan-witness realm, and does not change the native package entry.
+  bundled plan-witness realm. `@habitat-ai/sdk/telemetry` exposes this exact cold
+  declaration factory, not native acquisition or lease access; the native
+  package entry remains unchanged.
 
 ## Boundaries
 

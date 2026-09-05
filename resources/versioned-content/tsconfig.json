@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "files": ["contract.ts"]
+  "files": ["contract.ts", "runtime.ts"]
 }

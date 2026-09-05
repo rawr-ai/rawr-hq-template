@@ -1,0 +1,17 @@
+schemaVersion = 1
+
+[[scopes]]
+name = "agent-plugin-lifecycle-commands"
+root = "plugins/cli/topics/agent-plugins/src/commands"
+kind = "directory"
+mode = "closed"
+required = ["check.ts", "package.ts", "status.ts", "sync.ts", "test.ts", "vendors"]
+allowed = []
+
+[[scopes]]
+name = "agent-plugin-lifecycle-vendor-command"
+root = "plugins/cli/topics/agent-plugins/src/commands/vendors"
+kind = "directory"
+mode = "closed"
+required = ["update.ts"]
+allowed = []

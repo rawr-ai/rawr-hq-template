@@ -62,6 +62,7 @@
     "acceptance:oclif-installed-package": "vitest run --project habitat-cli-installed-package-acceptance",
     "acceptance:oclif-native-plugins": "vitest run --project habitat-cli-native-plugins-acceptance",
     "acceptance:oclif-native-runtime": "vitest run --project habitat-cli-native-runtime-acceptance",
+    "acceptance:oclif-native-telemetry": "HABITAT_NATIVE_AGENT_ACCEPTANCE=1 vitest run --project habitat-cli-installed-package-acceptance --testNamePattern \"adopts the packed CLI|connected agent-plugin native telemetry|real native agent-plugin lifecycle\"",
     "acceptance:generators-installed-package": "vitest run --project habitat-cli-installed-package-acceptance --testNamePattern \"adopts the packed CLI\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p test/tsconfig.json --noEmit",
@@ -75,6 +76,7 @@
     "@oclif/core": "4.13.3",
     "@oclif/plugin-help": "^6.2.27",
     "@oclif/plugin-plugins": "^5.4.84",
+    "@opentelemetry/api": "1.9.0",
     "@orpc/contract": "2.0.0-beta.32",
     "@orpc/experimental-effect": "2.0.0-beta.32",
     "@orpc/server": "2.0.0-beta.32",
@@ -157,6 +159,13 @@
         "cache": false,
         "dependsOn": [
           "build",
+          "manifest"
+        ],
+        "outputs": []
+      },
+      "acceptance:oclif-native-telemetry": {
+        "cache": false,
+        "dependsOn": [
           "manifest"
         ],
         "outputs": []

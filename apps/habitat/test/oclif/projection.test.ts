@@ -42,6 +42,12 @@ describe("Habitat native Oclif projection", () => {
       invoke: async () => resolved,
     });
     expect(Object.keys(sourceBundle.COMMANDS).sort()).toEqual([
+      "agent:plugins:check",
+      "agent:plugins:package",
+      "agent:plugins:status",
+      "agent:plugins:sync",
+      "agent:plugins:test",
+      "agent:plugins:vendors:update",
       "check",
       "cli:command:create",
       "cli:extension:create",
@@ -49,6 +55,12 @@ describe("Habitat native Oclif projection", () => {
       "resolve",
     ]);
     expect([...config.commandIDs].sort()).toEqual([
+      "agent:plugins:check",
+      "agent:plugins:package",
+      "agent:plugins:status",
+      "agent:plugins:sync",
+      "agent:plugins:test",
+      "agent:plugins:vendors:update",
       "check",
       "cli:command:create",
       "cli:extension:create",

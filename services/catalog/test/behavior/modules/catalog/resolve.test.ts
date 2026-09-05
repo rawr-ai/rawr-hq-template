@@ -1294,10 +1294,19 @@ describe("Habitat catalog resolve", () => {
 
     const compatibility = result.catalog.compatibility;
     expect(compatibility.ownerRoots).toEqual({
+      "@habitat-ai/plugin-agent-plugins": "plugins/cli/topics/agent-plugins",
       habitat: "scripts/habitat",
       "workstream-plugin-pack": "tools/workstream-plugin-pack",
     });
     expect(compatibility.rules.map(({ ruleId, manifestPath }) => [ruleId, manifestPath])).toEqual([
+      [
+        "require_agent_plugin_lifecycle_commands",
+        ".habitat/overlays/agent-plugin-lifecycle/rules/require_agent_plugin_lifecycle_commands/rule.json",
+      ],
+      [
+        "require_agent_plugin_lifecycle_projection",
+        ".habitat/overlays/agent-plugin-lifecycle/rules/require_agent_plugin_lifecycle_projection/rule.json",
+      ],
       [
         "require_agent_router_placement",
         ".habitat/overlays/repository/rules/require_agent_router_placement/rule.json",

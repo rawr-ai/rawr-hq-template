@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   lstat,
@@ -19,12 +19,19 @@ import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
 import { runServer } from "verdaccio";
 import { afterAll, aroundEach, beforeAll, describe, expect, it } from "vitest";
+import { verifyAgentPluginNativeLifecycle } from "./support/agent-plugin-native-matrix.js";
+import {
+  assertAgentPluginTrace,
+  receiveAgentPluginTelemetry,
+  runAgentPluginCommand,
+} from "./support/agent-plugin-telemetry-matrix.js";
 import {
   buildNativeRuntimeFixture,
   nativeRuntimeScenarios,
   verifyNativeRuntimeScenario,
 } from "./support/oclif-runtime-matrix.js";
 import { assertInstalledQualifiedGenerators } from "./support/qualified-generator-matrix.js";
+import { spawnInstalledCommand } from "./support/spawn-installed-command.js";
 
 type CommandResult = Readonly<{
   exitCode: number;
@@ -292,6 +299,23 @@ const IMMUTABLE_SERVICE_CLOSURES = {
     ],
     inventoryRoot: "service/versions/2",
     sha256: "2a94d39de52bbb8bf80f54342b41e8b8a0f5f93730bfb6b940a5ef8ec7d543e4",
+  },
+  service3: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "service/versions/3/blueprint.toml",
+      "service/versions/3/components/contract/authority.md",
+      "service/versions/3/components/contract/composition.md",
+      "service/versions/3/components/funnel/context.md",
+      "service/versions/3/components/funnel/effect-bridge.md",
+      "service/versions/3/components/funnel/router.md",
+      "service/versions/3/components/funnel/source-boundary.md",
+      "service/versions/3/components/spine/client-lineage.md",
+      "service/versions/3/components/spine/public-face.md",
+      "service/versions/3/structure.toml",
+    ],
+    inventoryRoot: "service/versions/3",
+    sha256: "d4b8ddf91e8fafb2799d094a445af367698856f2ff3ad6298f4dd6ef666d7cd6",
   },
 } as const;
 const IMMUTABLE_RUNTIME_HARNESS_CLOSURES = {
@@ -1076,6 +1100,154 @@ describe("installed Habitat products", () => {
     }
   });
 
+  it("exports a connected agent-plugin native telemetry trace from the installed pair", async () => {
+    await withInstalledOperation(async (signal) => {
+      const receiver = await receiveAgentPluginTelemetry();
+      // Native Windows shell discovery needs platform variables, not the user's state homes.
+      const env: NodeJS.ProcessEnv = {
+        PATH: process.env.PATH,
+        SYSTEMROOT: process.env.SYSTEMROOT,
+        COMSPEC: process.env.COMSPEC,
+        PATHEXT: process.env.PATHEXT,
+        PSModulePath: process.env.PSModulePath,
+        WINDIR: process.env.WINDIR,
+        SHELL: process.env.SHELL,
+        HOME: path.join(acceptanceRoot, "runtime/home"),
+        USERPROFILE: path.join(acceptanceRoot, "runtime/home"),
+        APPDATA: path.join(acceptanceRoot, "runtime/config"),
+        LOCALAPPDATA: path.join(acceptanceRoot, "runtime/cache"),
+        XDG_CONFIG_HOME: path.join(acceptanceRoot, "runtime/config"),
+        XDG_CACHE_HOME: path.join(acceptanceRoot, "runtime/cache"),
+        XDG_DATA_HOME: path.join(acceptanceRoot, "runtime/data"),
+        TMPDIR: path.join(acceptanceRoot, "runtime/tmp"),
+        TEMP: path.join(acceptanceRoot, "runtime/tmp"),
+        TMP: path.join(acceptanceRoot, "runtime/tmp"),
+        NO_COLOR: "1",
+        NODE_ENV: "production",
+        HABITAT_TELEMETRY: receiver.configuration,
+      };
+      let commandNumber = 0;
+      const command = async (
+        args: readonly string[],
+        stdin?: Uint8Array,
+        overrides: NodeJS.ProcessEnv = {}
+      ) => {
+        const current = ++commandNumber;
+        try {
+          return await runAgentPluginCommand({
+            cliRoot: path.join(consumerRoot, "node_modules/@habitat-ai/cli"),
+            cwd: consumerRoot,
+            env: { ...env, ...overrides },
+            args,
+            stdin,
+            signal,
+          });
+        } catch (cause) {
+          throw new Error(
+            `Connected telemetry command ${current} (${args.join(" ")}) failed after ${receiver.requests.length} OTLP requests.`,
+            { cause }
+          );
+        }
+      };
+      try {
+        const help = await command(["agent", "plugins", "check", "--help"], undefined, {
+          HABITAT_TELEMETRY: "not-json",
+        });
+        expect(help, help.stderr).toMatchObject({ code: 0 });
+        expect(help.stdout).not.toContain("--dry-run");
+        expect(help.stdout).not.toContain("--yes");
+        const refusal = await command(["agent", "plugins", "check", "--unknown-native-flag"]);
+        expect(refusal.code).not.toBe(0);
+        expect(receiver.requests).toEqual([]);
+
+        const body = new TextEncoder().encode(
+          JSON.stringify({
+            schemaVersion: 1,
+            contentAuthority: "installed-telemetry-proof",
+            members: [{ kind: "agent-plugin", pluginId: "alpha", vendor: [], curation: [] }],
+            ownershipClaims: [],
+            locks: [],
+            qualityPolicies: [],
+          })
+        );
+        const args = ["agent", "plugins", "check", "--mode", "release-input-record"];
+        const invalidConfiguration = await command(args, body, {
+          HABITAT_TELEMETRY: '{"authorization":"fixture-secret',
+        });
+        expect(invalidConfiguration.code).not.toBe(0);
+        expect(invalidConfiguration.stderr).toContain("HABITAT_TELEMETRY must contain valid JSON.");
+        expect(invalidConfiguration.stderr).not.toContain("fixture-secret");
+        expect(receiver.requests).toEqual([]);
+        const encoded = await command(args, body);
+        expect(encoded, encoded.stderr || encoded.stdout).toMatchObject({ code: 0 });
+        expect(encoded.stdout.endsWith("\n")).toBe(true);
+        expect(encoded.stdout.endsWith("\n\n")).toBe(false);
+        const first = assertAgentPluginTrace({
+          requests: receiver.requests,
+          commandId: "agent:plugins:check",
+          procedure: "releases.releaseInputRecord",
+        });
+        receiver.requests.length = 0;
+        const repeated = await command(args, new TextEncoder().encode(encoded.stdout));
+        expect(repeated, repeated.stderr || repeated.stdout).toMatchObject({
+          code: 0,
+          stdout: encoded.stdout,
+        });
+        const second = assertAgentPluginTrace({
+          requests: receiver.requests,
+          commandId: "agent:plugins:check",
+          procedure: "releases.releaseInputRecord",
+        });
+        expect(second).not.toBe(first);
+        receiver.requests.length = 0;
+        const malformed = await command(
+          [...args, "--json"],
+          new TextEncoder().encode("{not-json\n")
+        );
+        expect(malformed).toMatchObject({ code: 1, stderr: "" });
+        expect(JSON.parse(malformed.stdout)).toMatchObject({
+          operation: "releases.releaseInputRecord",
+          result: { ok: false, issues: [{ code: "INVALID_JSON" }] },
+        });
+        assertAgentPluginTrace({
+          requests: receiver.requests,
+          commandId: "agent:plugins:check",
+          procedure: "releases.releaseInputRecord",
+        });
+        expect(JSON.stringify(receiver.requests)).not.toContain("not-json");
+        expect(receiver.errors).toEqual([]);
+      } finally {
+        await receiver.close();
+      }
+    });
+  });
+
+  it.skipIf(process.env.HABITAT_NATIVE_AGENT_ACCEPTANCE !== "1")(
+    "qualifies the real native agent-plugin lifecycle from the installed pair",
+    async () => {
+      if (process.platform === "win32") {
+        throw new Error("Native agent-plugin acceptance requires qualified POSIX executables.");
+      }
+      const codex = process.env.HABITAT_ACCEPTANCE_CODEX_BIN;
+      const claude = process.env.HABITAT_ACCEPTANCE_CLAUDE_BIN;
+      const git = process.env.HABITAT_ACCEPTANCE_GIT_BIN;
+      if (codex === undefined || claude === undefined || git === undefined) {
+        throw new Error(
+          "Native agent-plugin acceptance requires explicit Codex, Claude and Git binaries."
+        );
+      }
+      const proof = await withInstalledOperation((signal) =>
+        verifyAgentPluginNativeLifecycle({
+          cliRoot: path.join(consumerRoot, "node_modules/@habitat-ai/cli"),
+          root: path.join(acceptanceRoot, "agent-plugin-native"),
+          binaries: { codex, claude, git },
+          signal,
+        })
+      );
+      expect(proof.processInstances).toBe(proof.receipts.length);
+    }
+  );
+
   describe("native admission through the installed CLI host", () => {
     let nativeRuntimeRoot = "";
     beforeAll(async () => {
@@ -1369,6 +1541,8 @@ describe("installed Habitat products", () => {
         'if (Object.keys(await import("@habitat-ai/sdk/runtime/observation")).length !== 0) throw new Error("Observation contract exported live values");',
         'const runtimeSchema = await import("@habitat-ai/sdk/runtime/schema");',
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
+        'const telemetryProvider = telemetry.defineOpenTelemetryNodeRuntimeProvider({ releaseDeadline: () => { throw new Error("Cold telemetry sampled its release deadline"); } });',
+        'if (telemetryProvider.provides !== telemetry.TelemetryRuntimeResource || telemetryProvider.provides.id !== "telemetry") throw new Error("Cold telemetry resource identity drift");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
         'await import("@habitat-ai/sdk/habitat-pack.json", { with: { type: "json" } });',
         "console.log(JSON.stringify({ app: Object.keys(app).sort(), asyncEffect: Object.keys(asyncEffect).sort(), asyncPlugins: Object.keys(asyncPlugins).sort(), derivation: Object.keys(derivation).sort(), effect: Object.keys(effect).sort(), effectContext: Object.keys(effectContext), effectWrap: Object.keys(effectWrap), execution: Object.keys(execution).sort(), profiles: Object.keys(profiles).sort(), providerEffect: Object.keys(providerEffect).sort(), providers: Object.keys(providers).sort(), resources: Object.keys(resources).sort(), runtimeSchema: Object.keys(runtimeSchema).sort(), sdk: Object.keys(sdk), schema: Object.keys(schema), serverEffect: Object.keys(serverEffect).sort(), serverEffectAfter, serverEffectBefore, serverPlugins: Object.keys(serverPlugins).sort(), service: Object.keys(service).sort(), telemetry: Object.keys(telemetry).sort() }));",
@@ -1459,6 +1633,8 @@ describe("installed Habitat products", () => {
         "TelemetryIdentityTextSchema",
         "TelemetryLogSeveritySchema",
         "TelemetryProcessIdentitySchema",
+        "TelemetryRuntimeResource",
+        "defineOpenTelemetryNodeRuntimeProvider",
       ],
     });
 
@@ -1524,6 +1700,7 @@ describe("installed Habitat products", () => {
       "service@1",
       "service@2",
       "service@3",
+      "service@4",
     ]);
 
     const canonicalBlueprintRoot = path.join(workspaceRoot, ".habitat/blueprints");
@@ -1567,6 +1744,7 @@ describe("installed Habitat products", () => {
       "runtime-process-runtime/versions/2/structure.toml",
       "service/versions/2/structure.toml",
       "service/versions/3/structure.toml",
+      "service/versions/4/structure.toml",
     ]);
     const nestedBlueprintResidue = blueprintInventory.filter((relativePath) => {
       const filename = relativePath.split("/").at(-1);
@@ -1713,6 +1891,30 @@ describe("installed Habitat products", () => {
     };
     expect(oclifManifest.version).toBe(productVersion("@habitat-ai/cli"));
     expect(oclifManifest.commands).toEqual({
+      "agent:plugins:check": expect.objectContaining({
+        id: "agent:plugins:check",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "agent:plugins:package": expect.objectContaining({
+        id: "agent:plugins:package",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "agent:plugins:status": expect.objectContaining({
+        id: "agent:plugins:status",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "agent:plugins:sync": expect.objectContaining({
+        id: "agent:plugins:sync",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "agent:plugins:test": expect.objectContaining({
+        id: "agent:plugins:test",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "agent:plugins:vendors:update": expect.objectContaining({
+        id: "agent:plugins:vendors:update",
+        pluginName: "@habitat-ai/cli",
+      }),
       check: expect.objectContaining({ id: "check", pluginName: "@habitat-ai/cli" }),
       "cli:command:create": expect.objectContaining({
         id: "cli:command:create",
@@ -2088,6 +2290,11 @@ describe("installed Habitat products", () => {
         id: "service",
         path: "dist/blueprints/service/versions/3/blueprint.toml",
         version: 3,
+      },
+      {
+        id: "service",
+        path: "dist/blueprints/service/versions/4/blueprint.toml",
+        version: 4,
       },
     ]);
     expect(resolvedCatalog.catalog.blueprints).toEqual(
@@ -5337,6 +5544,38 @@ async function removeOwnedFixture(root: string): Promise<void> {
   await rm(canonical, { recursive: true, force: false });
 }
 
+async function withInstalledOperation<A>(
+  operation: (signal: AbortSignal) => Promise<A>
+): Promise<A> {
+  if (commandsClosed) throw new Error("Installed-package acceptance has closed command admission.");
+  const parentSignal = commandSignal.getStore();
+  parentSignal?.throwIfAborted();
+  const controller = new AbortController();
+  const abort = () => controller.abort(parentSignal?.reason);
+  const settlement = commandSignal.run(controller.signal, () =>
+    Promise.resolve().then(() => {
+      controller.signal.throwIfAborted();
+      return operation(controller.signal);
+    })
+  );
+  const pending = {
+    cancel: (reason: unknown) => controller.abort(reason),
+    closed: settlement.then(
+      () => undefined,
+      () => undefined
+    ),
+  };
+  pendingCommands.add(pending);
+  parentSignal?.addEventListener("abort", abort, { once: true });
+  if (parentSignal?.aborted) abort();
+  try {
+    return await settlement;
+  } finally {
+    parentSignal?.removeEventListener("abort", abort);
+    pendingCommands.delete(pending);
+  }
+}
+
 async function run(
   executable: string,
   args: readonly string[],
@@ -5370,11 +5609,9 @@ async function run(
   delete env.NX_DRY_RUN;
 
   return new Promise((resolve, reject) => {
-    const child = spawn(executable, args, {
+    const child = spawnInstalledCommand(executable, args, {
       cwd: options.cwd ?? workspaceRoot,
-      detached: process.platform !== "win32",
       env,
-      shell: process.platform === "win32",
     });
     const stdout: string[] = [];
     const stderr: string[] = [];

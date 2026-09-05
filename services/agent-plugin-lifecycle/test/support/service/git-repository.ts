@@ -53,7 +53,7 @@ export async function createGeneratedGitRepository(
   const pluginId = must(parsePluginId(pluginName));
   const contentAuthority = must(parseContentAuthority("fixture-authority"));
   const repositoryIdentity = must(parseRepositoryIdentity("git:fixture-agent-plugins"));
-  const releaseInputPath = must(parseReleaseRelativePath(".rawr/release-input.json"));
+  const releaseInputPath = must(parseReleaseRelativePath(".habitat/release-input.json"));
   const pluginRoot = must(parseReleaseRelativePath("plugins/agent"));
   const payloadBytes = generatedPayloadBytes(pluginName);
   const releaseInput = must(
@@ -74,7 +74,7 @@ export async function createGeneratedGitRepository(
     })
   );
 
-  const rawrDirectory = join(root, ".rawr");
+  const rawrDirectory = join(root, ".habitat");
   const pluginDirectory = join(root, "plugins");
   const agentDirectory = join(pluginDirectory, "agent");
   const memberDirectory = join(agentDirectory, pluginId);
@@ -241,7 +241,8 @@ export function unsafeFixturePolicy(
     refName: input.refName ?? "refs/heads/main",
     sourceCommit: "0".repeat(40) as GitCommitId,
     sourceTree: "1".repeat(40) as GitTreeId,
-    releaseInputPath: (input.releaseInputPath ?? ".rawr/release-input.json") as ReleaseRelativePath,
+    releaseInputPath: (input.releaseInputPath ??
+      ".habitat/release-input.json") as ReleaseRelativePath,
     pluginRoot: "plugins/agent" as ReleaseRelativePath,
   };
 }

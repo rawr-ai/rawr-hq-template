@@ -10,6 +10,7 @@ import type {
 } from "@habitat-ai/sdk/runtime/harnesses";
 import type { RuntimeTelemetry } from "@habitat-ai/sdk/runtime/observation";
 import { Config, Errors, flush, handle, type Interfaces, run } from "@oclif/core";
+import { context, type Span, SpanStatusCode, trace } from "@opentelemetry/api";
 
 import { type OclifLoadOptions, type OclifRuntimeBinding, sameCliRef } from "./binding.js";
 import { type OclifSourceBundle, readOclifSourceBundle } from "./source-bundle.js";
@@ -51,9 +52,11 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
   let started: StartedProcess | undefined;
   let selected: ReadonlyMap<string, LoweredCliCommand> | undefined;
   let managedSignals = false;
+  let commandSpan: Span | undefined;
 
   function event(name: string): void {
     telemetry?.event(name);
+    commandSpan?.addEvent(name);
   }
   function cancel(): void {
     if (controller.signal.aborted) return;
@@ -119,7 +122,15 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
         throw new TypeError("Native Oclif command is outside its compiled invocation binding.");
       }
       active = true;
-      return command.invoke(parsed, { signal: controller.signal });
+      commandSpan = trace.getTracer("habitat.oclif").startSpan(`oclif ${ref.commandId}`, {
+        attributes: {
+          "habitat.command.id": ref.commandId,
+          "habitat.execution.id": ref.executionId,
+        },
+      });
+      return context.with(trace.setSpan(context.active(), commandSpan), () =>
+        command.invoke(parsed, { signal: controller.signal })
+      );
     },
     onFinally(error) {
       if (error !== undefined) primary ??= { error };
@@ -237,6 +248,10 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
           } catch (error) {
             primary ??= { error };
           }
+          // Native finally and output settlement belong to the command; provider release follows.
+          if (primary !== undefined) commandSpan?.setStatus({ code: SpanStatusCode.ERROR });
+          commandSpan?.end();
+          commandSpan = undefined;
           active = false;
         }
       });

@@ -2,7 +2,7 @@ schemaVersion = 1
 id = "@habitat-ai/resource-content-workspace"
 ownerProject = "@habitat-ai/resource-content-workspace"
 blueprint = "resource"
-blueprintVersion = 2
+blueprintVersion = 3
 
 [roots]
 project = "resources/content-workspace"

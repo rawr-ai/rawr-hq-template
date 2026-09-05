@@ -48,6 +48,28 @@ const RELEASE_INPUT_BLOB = oid("f");
 const WORKSPACE = "/tmp/personal-rawr-hq";
 
 describe("observed-Git current-main v3 selection", () => {
+  it("reads only the fixed Habitat selector path and never falls back to a legacy record", async () => {
+    const fixture = selectionFixture();
+    const paths: string[] = [];
+    const resource: ContentWorkspaceResource<never> = {
+      ...fixture.resource,
+      readGitBlobAtPath: (input) => {
+        paths.push(input.path);
+        if (input.path === ".habitat/agent-plugin-lifecycle/channels/current-main.json") {
+          return Effect.fail(failure("read-git-blob-at-path", "Missing", "No Habitat selector"));
+        }
+        // A readable old selector is not an alias for the current data interface.
+        return fixture.resource.readGitBlobAtPath({ ...input, path: CURRENT_MAIN_V3_RECORD_PATH });
+      },
+    };
+    await expect(select(resource)).resolves.toEqual({
+      kind: "STALE_RECORD",
+      reason: "No Habitat selector",
+    });
+    expect(paths).toEqual([".habitat/agent-plugin-lifecycle/channels/current-main.json"]);
+    expect(CURRENT_MAIN_V3_RELEASE_INPUT_PATH).toBe(".habitat/release-input.json");
+  });
+
   it("sequences the seven exact resource calls and returns the reviewed record", async () => {
     const fixture = selectionFixture();
 

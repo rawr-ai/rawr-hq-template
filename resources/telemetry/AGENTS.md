@@ -12,9 +12,10 @@
   scope.
 - This resource owns only the provider-neutral contract and its provider
   family.
-- `runtime.ts` is a private source-assembly identity, typechecked here and
-  consumed directly by runtime integration. It is not a native package export
-  or part of the existing distributable build.
+- `runtime.ts` is the resource-owned cold identity, typechecked here and
+  assembled through `@habitat-ai/sdk/telemetry` with the consuming runtime's
+  exact definition witness. It is not a separate native package export or
+  part of this package's distributable build.
 
 ## Boundaries
 

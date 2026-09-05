@@ -2,6 +2,7 @@ import { Check } from "typebox/value";
 
 import { readExecutionProjection } from "../../definition/src/execution";
 import type { RuntimeProvider } from "../../definition/src/provider";
+import type { ResourceRequirement as AuthoredResourceRequirement } from "../../definition/src/resource";
 import type { ServiceRuntimeExport } from "../../definition/src/service";
 import { readRuntimeDerivationHandoff } from "../../derivation/src/derivation-handoff";
 import type { RuntimeDerivationResult } from "../../derivation/src/derive-runtime-artifacts";
@@ -162,18 +163,25 @@ function checkProviderRequirement(
   provider: RuntimeProvider,
   requirement: ResourceRequirement
 ): void {
-  const matches = provider.requires.filter((declaration) => {
-    const lifetime = declaration.lifetime ?? declaration.resource.defaultLifetime;
-    return (
-      declaration.resource.id === requirement.resource.resourceId &&
-      lifetime === requirement.resource.lifetime &&
-      declaration.role === requirement.resource.role &&
-      declaration.instance === requirement.resource.instance &&
-      (declaration.optional ?? false) === requirement.optional &&
-      declaration.reason === requirement.reason
-    );
-  });
+  const matches = provider.requires.filter((declaration) =>
+    matchesRequirement(declaration, requirement)
+  );
   if (matches.length !== 1) refuse("provider requirement reference agreement");
+}
+
+function matchesRequirement(
+  declaration: AuthoredResourceRequirement,
+  requirement: ResourceRequirement
+): boolean {
+  return (
+    declaration.resource.id === requirement.resource.resourceId &&
+    (declaration.lifetime ?? declaration.resource.defaultLifetime) ===
+      requirement.resource.lifetime &&
+    declaration.role === requirement.resource.role &&
+    declaration.instance === requirement.resource.instance &&
+    (declaration.optional ?? false) === requirement.optional &&
+    declaration.reason === requirement.reason
+  );
 }
 
 export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompilationResult {
@@ -539,6 +547,45 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
   const reachedUses = new Set<string>();
   const reachedPlugins = new Set<string>();
   const pendingBindings: string[] = [];
+  const processResourceEdges = new Set<string>();
+  for (const requirement of requirements.values()) {
+    if (requirement.owner.kind !== "process") continue;
+    if (
+      requirement.owner.processId !== handoff.identity.process ||
+      (requirement.resource.role !== undefined && !roles.has(requirement.resource.role))
+    )
+      refuse("process requirement owner");
+    const declaration = required(
+      resourceReferences,
+      requirement.requirementId,
+      "process requirement reference"
+    );
+    if (!matchesRequirement(declaration, requirement))
+      refuse("process requirement reference agreement");
+    const selectionId = resourceBindings.get(requirement.requirementId);
+    if (
+      selectionId !== undefined &&
+      required(providers, selectionId, "process requirement provider").provides !==
+        declaration.resource
+    )
+      refuse("process requirement resource identity");
+    reachedRequirements.add(requirement.requirementId);
+    processResourceEdges.add(
+      canonicalJson({
+        kind: "process.resource",
+        processId: handoff.identity.process,
+        resource: requirement.resource,
+      })
+    );
+  }
+  same(
+    graph.topology.edges
+      .filter((edge) => edge.kind === "process.resource")
+      .map(canonicalJson)
+      .sort(compare),
+    [...processResourceEdges].sort(compare),
+    "process resource roots"
+  );
   const compiledWorkflowAdmissions: (readonly [
     string,
     readonly RuntimeCompiledWorkflowAdmission[],

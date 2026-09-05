@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; native web in remote admission; native CLI input admission locally qualified.
-Branch: `agent-root-habitat-cli-admission`, parent `agent-root-habitat-native-web`.
+Status: `active`; native web qualified; repaired CLI admission and task 12.1 locally qualified for candidate admission.
+Branch: `agent-root-habitat-agent-plugin-runtime`, parent `agent-root-habitat-cli-admission`.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -15,6 +15,8 @@ Installed authoring [1017](https://github.com/rawr-ai/rawr-hq-template/pull/1017
 Native server [1018](https://github.com/rawr-ai/rawr-hq-template/pull/1018).
 Native async [1019](https://github.com/rawr-ai/rawr-hq-template/pull/1019).
 Built process isolation [1020](https://github.com/rawr-ai/rawr-hq-template/pull/1020).
+Native CLI input admission [1023](https://github.com/rawr-ai/rawr-hq-template/pull/1023),
+candidate `5a55fd5fa`, includes the qualified installed-test lifetime repair.
 Workflow admission [1021](https://github.com/rawr-ai/rawr-hq-template/pull/1021),
 candidate `66397039ebdb18f84dcd4b21b7a94194eb7374ff`, merged as
 `18baa71dfbb6e62a3a0db98b619336e2a0ed1dce` on 2026-09-05.
@@ -24,7 +26,7 @@ passed. Graphite's native merge completed before the one consumed-branch sweep.
 Native web [1022](https://github.com/rawr-ai/rawr-hq-template/pull/1022), candidate
 `91d03dcbbfa54da030a0e8d21801333ca8e09b02`, has passed its required check
 [33988159150](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33988159150)
-and Linux installed check; Windows installed qualification is pending in
+and Linux/Windows installed checks in
 [33988159166](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33988159166).
 The first candidate's Windows failure exposed missing runtime-harnesses LF
 attributes: exact LF/CRLF hashes reproduced its expected/received immutable
@@ -32,7 +34,20 @@ proof values. The repaired parent adds the existing `text eol=lf` policy for
 that family without changing any historical file or hash. A real
 `core.autocrlf=true` checkout preserves all 13 tracked harness blueprint files
 byte-for-byte, and the repaired parent passes `bun run check`. This is a
-qualified repair, not an unchanged retry or a Windows pass claim.
+qualified repair. The repaired candidate's first Windows run then exceeded the
+job deadline without an assertion failure; its exact-job diagnostic retry
+passed on the same SHA. No timeout increase was needed. Native web remains
+unmerged while its dependent stack is qualified.
+
+The CLI admission candidate passed required/Linux checks but failed its broad
+Windows installed test at the test deadline, then hit an EBUSY teardown because
+timed-out commands were not joined. Repair the test boundary, not the product:
+split the 23 native scenarios into named cases, bind children to Vitest's public
+test signal, and join exact owned process-tree termination before fixture
+removal. That one-file repair is backported to the CLI admission node and passes
+all 33 installed tests plus app test TypeScript. Graphite restacked task 12.1;
+its resolved tree is byte-identical to the fully qualified integration tree.
+Remote Windows qualification of the repaired candidate remains required.
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -87,10 +102,35 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: native CLI input admission before live acquisition, a complete
-shared prerequisite for task 12.1. The retained command requirements exposed
-the current eager startup mismatch; weakening refusal to fit that order is not
-accepted. This is an app-owned native lifecycle repair, not a new runtime owner.
+Current domino: task 12.1's complete agent-plugin lifecycle integration. Its
+native input-admission prerequisite is locally qualified and submitted; the
+following admission decisions remain its accepted contract.
+
+Owner continuation on 2026-09-05 requests an explicit ownership check: verify
+that the service implements generic Habitat packaging/native lifecycle and
+versioned-data validation, not Marketplace membership or release decisions.
+The existing repository split assigns the generic service to Habitat, but the
+actual behavior must support that assignment. The admission steward reviews
+that boundary before app wiring. Compare service authorship with the accepted
+design and Magic's reference where useful. Fix clear substrate-induced defects;
+defer ordinary internal rearrangements unless they impede the current story.
+
+Accepted integration refinements: process catalogs explicitly declare process
+resource requirements, while profiles remain provider-supply candidates. Native
+telemetry belongs to that process requirement, not a fake service/plugin
+dependency. Expose the existing exact cold telemetry resource/provider through
+the SDK's current assembly, without a reverse dependency or duplicate identity.
+
+Native CLI admission owns flags, modes, scalar adaptation and bounded input
+transport. Aggregate domain/schema validation remains with the service before
+domain-port methods, not a new parsed-input hook. Preserve release-input typed
+UTF-8/JSON/canonicality failures and distinguish resource construction from
+resource operations in the inherited specification. Only JSON is a universal
+command flag: mutation controls belong to commands that actually implement
+them. Existing authoring commands already declare their own dry-run behavior.
+
+The qualified input-admission prerequisite repaired eager startup rather than
+weakening native refusal. It is an app-owned lifecycle repair, not a new runtime owner.
 
 Accepted design: `host.execute/run` receives a startup thunk. Native Oclif owns
 discovery, the selected Command and exactly one parse. Its Args/Flags custom
@@ -152,6 +192,45 @@ present native author and all five context lanes. Keep predecessors unchanged.
 Provider interruption needs native qualification: content-workspace's current
 execFile finalizer sends SIGTERM without awaiting close, unlike the scoped
 Effect process precedent. Runtime wrappers alone cannot qualify its shutdown.
+
+Task 12.1 implementation now selects all six native commands and the existing
+five provider factories through one managed service. Process-level resource
+requirements carry telemetry demand without granting plugin access. The service
+uses native Effect Clock only when capturing materialized vendor provenance;
+unused logger/analytics ports and duplicate middleware are removed. A complete
+immutable service@4 permits omission of an unused base author, but validates
+every present author and preserves the context lanes. Historical versions stay
+unchanged. The declared `.habitat/release-input.json` and
+`.habitat/agent-plugin-lifecycle/channels/current-main.json` interfaces replace
+the obsolete service paths without fallback. Marketplace adoption is not claimed.
+
+The content-workspace Git resource now uses the pinned native Effect Platform
+scoped child process rather than an execFile finalizer that returned before
+termination. The real interruption discriminator waits for native exit and
+checks a stopped heartbeat; this does not promise arbitrary launcher-descendant
+ownership. Installed ordinary acceptance already proves connected OTLP ancestry
+from Oclif through runtime execution, official oRPC and the service operation,
+including finally/flush before export and fresh process identity. The full
+native gate additionally uses explicit Codex/Claude executables and disposable
+Git/native homes. The complete installed run passes all 35 tests with native
+qualification enabled. Its 21 native command invocations cover all six commands,
+exact mutation prefixes, native inventories, package bytes, converged zero-mutation
+repeats, vendor source refusal without fetching, and connected OTLP ancestry.
+Codex 0.153.2 and Claude 2.1.220 use explicitly selected executables and disposable
+homes; this is local POSIX qualification, not Windows native-provider or backend
+storage acceptance. The separate named native-telemetry target also passes.
+
+Full repository CI passes 172 tasks across 36 projects. App test types, strict
+OpenSpec validation and diff hygiene pass. Independent service/API, native
+lifecycle and input-admission review has no remaining P1/P2 finding. The complete
+gate exposed stale exact manifest/export inventories and tests expecting eager
+process configuration; those oracles now match the selected commands and proven
+lazy admission contract without relaxing their checks. The installed fixture now
+owns timed-out commands and receiver cleanup through Vitest's public test signal,
+joins termination before removal, and tests native scenarios independently rather
+than inflating deadlines. Task 12.1 is satisfied locally; candidate and exact-main
+admission remain separate gates. The predecessor receives only its narrow test
+cleanup/scenario-split repair before stack submission.
 
 Tasks 14.1/14.2 are locally qualified and submitted: native web build/mount
 handoff and request-time web-local Effect execution. The accepted design below

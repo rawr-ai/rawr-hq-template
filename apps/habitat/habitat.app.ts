@@ -1,3 +1,4 @@
+import { createPlugin as createAgentPluginsPlugin } from "@habitat-ai/plugin-agent-plugins";
 import { createPlugin as createAuthoringPlugin } from "@habitat-ai/plugin-authoring";
 import { createPlugin as createFoundationPlugin } from "@habitat-ai/plugin-foundation";
 import { defineApp } from "@habitat-ai/sdk/app";
@@ -8,6 +9,7 @@ export const habitatApp = defineApp({
   id: "habitat",
   plugins: [
     createFoundationPlugin(),
+    createAgentPluginsPlugin(),
     createAuthoringPlugin({ runCliCommandGenerator, runCliExtensionGenerator }),
   ],
 });

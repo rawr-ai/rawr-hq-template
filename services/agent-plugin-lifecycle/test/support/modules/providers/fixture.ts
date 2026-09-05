@@ -74,7 +74,7 @@ const REPOSITORY_IDENTITY = requireParsed(
   parseRepositoryIdentity("git:github.com/rawr-ai/rawr-hq")
 );
 const CONTENT_AUTHORITY = requireParsed(parseContentAuthority("rawr-hq"));
-const RELEASE_INPUT_PATH = requireParsed(parseReleaseRelativePath(".rawr/release-input.json"));
+const RELEASE_INPUT_PATH = requireParsed(parseReleaseRelativePath(".habitat/release-input.json"));
 const PLUGIN_ROOT = requireParsed(parseReleaseRelativePath("plugins/agents"));
 const REPOSITORY_URL = "https://github.com/rawr-ai/rawr-hq.git";
 const SOURCE_REF = "refs/tags/agent-plugins-v1";

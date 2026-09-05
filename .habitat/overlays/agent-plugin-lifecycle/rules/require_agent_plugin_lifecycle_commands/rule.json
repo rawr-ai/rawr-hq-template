@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 2,
+  "id": "require_agent_plugin_lifecycle_commands",
+  "title": "Require Agent Plugin Lifecycle Command Inventory",
+  "placement": { "niche": "agent-plugin-lifecycle", "blueprint": "_self", "category": "structure" },
+  "operation": { "kind": "check" },
+  "ownerProject": "@habitat-ai/plugin-agent-plugins",
+  "lane": "enforced",
+  "forbids": "missing, additional or relocated curated lifecycle command owners",
+  "why": "One private Habitat topic owns the six retained lifecycle commands. Its inventory is separate from external Oclif extension management and from app provider selection.",
+  "remediate": "Keep check, package, status, sync, test and vendors/update in the qualified topic; put ordinary shared projection helpers beside the commands directory.",
+  "message": "Curated lifecycle must retain its exact six topic-owned commands.",
+  "pathCoverage": [
+    { "kind": "exact-path", "patterns": ["plugins/cli/topics/agent-plugins/src/commands/**"] }
+  ],
+  "supportFiles": {
+    "baseline": ".habitat/overlays/agent-plugin-lifecycle/rules/require_agent_plugin_lifecycle_commands/baseline.json"
+  },
+  "runner": {
+    "name": "habitat",
+    "mode": "structure",
+    "files": {
+      "structure": ".habitat/overlays/agent-plugin-lifecycle/rules/require_agent_plugin_lifecycle_commands/structure.toml"
+    }
+  }
+}

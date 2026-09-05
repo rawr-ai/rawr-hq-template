@@ -1,8 +1,7 @@
-import { type ExecFileException, execFile } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 
-import { NodeFileSystem } from "@effect/platform-node";
+import { NodeServices } from "@effect/platform-node";
 import type {
   ContentFileMode,
   ContentTreeEntry,
@@ -36,7 +35,8 @@ import {
   GitTrackedPathFlagSchema,
   MaterializeContentTreeInputSchema,
 } from "@habitat-ai/resource-content-workspace";
-import { Cause, Effect, Equal, Exit, FileSystem, Option, PlatformError } from "effect";
+import { Cause, Effect, Equal, Exit, FileSystem, Option, PlatformError, Stream } from "effect";
+import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import Schema from "typebox/schema";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -50,7 +50,7 @@ const CONTENT_TREE_STAGE_PREFIX = ".rawr-content-tree-stage-";
 const OBJECT_PATTERN = /^(?:[0-9a-f]{40}|[0-9a-f]{64})$/u;
 const REF_PATTERN = /^refs\/[A-Za-z0-9][A-Za-z0-9._/-]*$/u;
 
-type ProviderRequirements = FileSystem.FileSystem;
+type ProviderRequirements = FileSystem.FileSystem | ChildProcessSpawner.ChildProcessSpawner;
 
 export interface GitEffectPlatformNodeOptions {
   readonly gitExecutable?: string;
@@ -1131,51 +1131,51 @@ export function makeNodeContentWorkspaceResource(
   const resource = makeContentWorkspaceResource(options);
   return Object.freeze({
     inspectWorkspace: (input: Parameters<typeof resource.inspectWorkspace>[0]) =>
-      provideNodeFileSystem(resource.inspectWorkspace(input)),
+      provideNodeServices(resource.inspectWorkspace(input)),
     inspectGitRef: (input: Parameters<typeof resource.inspectGitRef>[0]) =>
-      provideNodeFileSystem(resource.inspectGitRef(input)),
+      provideNodeServices(resource.inspectGitRef(input)),
     inspectGitWorkspace: (input: Parameters<typeof resource.inspectGitWorkspace>[0]) =>
-      provideNodeFileSystem(resource.inspectGitWorkspace(input)),
+      provideNodeServices(resource.inspectGitWorkspace(input)),
     readGitTree: (input: Parameters<typeof resource.readGitTree>[0]) =>
-      provideNodeFileSystem(resource.readGitTree(input)),
+      provideNodeServices(resource.readGitTree(input)),
     readGitBlob: (input: Parameters<typeof resource.readGitBlob>[0]) =>
-      provideNodeFileSystem(resource.readGitBlob(input)),
+      provideNodeServices(resource.readGitBlob(input)),
     readGitBlobs: (input: Parameters<typeof resource.readGitBlobs>[0]) =>
-      provideNodeFileSystem(resource.readGitBlobs(input)),
+      provideNodeServices(resource.readGitBlobs(input)),
     captureGitWorkspaceEvidence: (
       input: Parameters<typeof resource.captureGitWorkspaceEvidence>[0]
-    ) => provideNodeFileSystem(resource.captureGitWorkspaceEvidence(input)),
+    ) => provideNodeServices(resource.captureGitWorkspaceEvidence(input)),
     observeGitStagedIndex: (input: Parameters<typeof resource.observeGitStagedIndex>[0]) =>
-      provideNodeFileSystem(resource.observeGitStagedIndex(input)),
+      provideNodeServices(resource.observeGitStagedIndex(input)),
     readGitBlobAtPath: (input: Parameters<typeof resource.readGitBlobAtPath>[0]) =>
-      provideNodeFileSystem(resource.readGitBlobAtPath(input)),
+      provideNodeServices(resource.readGitBlobAtPath(input)),
     isLocalGitAncestor: (input: Parameters<typeof resource.isLocalGitAncestor>[0]) =>
-      provideNodeFileSystem(resource.isLocalGitAncestor(input)),
+      provideNodeServices(resource.isLocalGitAncestor(input)),
     listGitChangedPaths: (input: Parameters<typeof resource.listGitChangedPaths>[0]) =>
-      provideNodeFileSystem(resource.listGitChangedPaths(input)),
+      provideNodeServices(resource.listGitChangedPaths(input)),
     readFile: (input: Parameters<typeof resource.readFile>[0]) =>
-      provideNodeFileSystem(resource.readFile(input)),
+      provideNodeServices(resource.readFile(input)),
     readTree: (input: Parameters<typeof resource.readTree>[0]) =>
-      provideNodeFileSystem(resource.readTree(input)),
+      provideNodeServices(resource.readTree(input)),
     materializeContentTree: (input: Parameters<typeof resource.materializeContentTree>[0]) =>
-      provideNodeFileSystem(resource.materializeContentTree(input)),
+      provideNodeServices(resource.materializeContentTree(input)),
     capture: (input: Parameters<typeof resource.capture>[0]) =>
-      provideNodeFileSystem(resource.capture(input)),
+      provideNodeServices(resource.capture(input)),
     apply: (input: Parameters<typeof resource.apply>[0]) =>
-      provideNodeFileSystem(resource.apply(input)),
+      provideNodeServices(resource.apply(input)),
     restore: (input: Parameters<typeof resource.restore>[0]) =>
-      provideNodeFileSystem(resource.restore(input)),
+      provideNodeServices(resource.restore(input)),
     settle: (input: Parameters<typeof resource.settle>[0]) =>
-      provideNodeFileSystem(resource.settle(input)),
+      provideNodeServices(resource.settle(input)),
     release: (input: Parameters<typeof resource.release>[0]) =>
-      provideNodeFileSystem(resource.release(input)),
+      provideNodeServices(resource.release(input)),
   });
 }
 
-function provideNodeFileSystem<A>(
+function provideNodeServices<A>(
   operation: Effect.Effect<A, ContentWorkspaceFailure, ProviderRequirements>
 ): Effect.Effect<A, ContentWorkspaceFailure> {
-  return operation.pipe(Effect.provide(NodeFileSystem.layer));
+  return operation.pipe(Effect.provide(NodeServices.layer));
 }
 
 function readLocalTree(
@@ -2528,7 +2528,11 @@ function readGitTrackedFlags(
   root: string,
   admittedPaths: readonly string[],
   maxBytes: number
-): Effect.Effect<readonly GitTrackedPathFlag[], ContentWorkspaceFailure> {
+): Effect.Effect<
+  readonly GitTrackedPathFlag[],
+  ContentWorkspaceFailure,
+  ChildProcessSpawner.ChildProcessSpawner
+> {
   return Effect.gen(function* () {
     if (admittedPaths.length === 0) return Object.freeze([]);
     const output = yield* gitBytes(
@@ -3435,7 +3439,11 @@ function gitObjectFormat(
   executable: string,
   root: string,
   operation: ContentWorkspaceFailure["operation"]
-): Effect.Effect<GitObjectFormat, ContentWorkspaceFailure> {
+): Effect.Effect<
+  GitObjectFormat,
+  ContentWorkspaceFailure,
+  ChildProcessSpawner.ChildProcessSpawner
+> {
   return gitText(executable, root, ["rev-parse", "--show-object-format"], operation).pipe(
     Effect.flatMap((format) =>
       format === "sha1" || format === "sha256"
@@ -3508,78 +3516,62 @@ function runGitCommand(
   stdin?: string
 ) {
   const stderrLimit = 64 * 1024;
-  const maxBuffer = Math.max(maxStdoutBytes, stderrLimit);
-  return Effect.callback<
-    Readonly<{ stdout: Uint8Array; stderr: Uint8Array; exitCode: number }>,
-    ContentWorkspaceFailure
-  >((resume) => {
-    let child: ReturnType<typeof execFile>;
-    try {
-      child = execFile(
-        executable,
-        [...args],
-        {
-          cwd: root,
-          encoding: null,
-          maxBuffer,
-          windowsHide: true,
-        },
-        (error, stdout, stderr) => {
-          const stdoutBytes = new Uint8Array(stdout);
-          const stderrBytes = new Uint8Array(stderr);
-          if (stdoutBytes.byteLength > maxStdoutBytes) {
-            resume(
-              fail(operation, "LimitExceeded", root, `Git stdout exceeds ${maxStdoutBytes} bytes`)
-            );
-            return;
-          }
-          if (stderrBytes.byteLength > stderrLimit) {
-            resume(
-              fail(operation, "LimitExceeded", root, `Git stderr exceeds ${stderrLimit} bytes`)
-            );
-            return;
-          }
-          if (error !== null && typeof error.code !== "number") {
-            resume(Effect.fail(execFileFailure(operation, root, error, maxBuffer)));
-            return;
-          }
-          const exitCode = error === null ? 0 : Number(error.code);
-          resume(
-            Effect.succeed(
-              Object.freeze({
-                stdout: stdoutBytes,
-                stderr: stderrBytes,
-                exitCode,
-              })
-            )
-          );
-        }
-      );
-      child.stdin?.end(stdin);
-    } catch (error) {
-      resume(Effect.fail(failure(operation, "GitFailed", root, errorMessage(error))));
-      return;
-    }
-    return Effect.sync(() => {
-      if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
-    });
+  const command = ChildProcess.make(executable, args, {
+    cwd: root,
+    extendEnv: true,
+    stdin: stdin === undefined ? Stream.empty : Stream.make(encoder.encode(stdin)),
+    forceKillAfter: "5 seconds",
   });
+  return Effect.scoped(
+    Effect.gen(function* () {
+      const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
+      // Native spawn throws before creating a handle for malformed executable names.
+      const process = yield* spawner
+        .spawn(command)
+        .pipe(
+          Effect.catchDefect((cause) => fail(operation, "GitFailed", root, errorMessage(cause)))
+        );
+      const [stdout, stderr, exitCode] = yield* Effect.all(
+        [
+          collectBoundedGitOutput(process.stdout, maxStdoutBytes, operation, root, "stdout"),
+          collectBoundedGitOutput(process.stderr, stderrLimit, operation, root, "stderr"),
+          process.exitCode,
+        ],
+        { concurrency: "unbounded" }
+      );
+      return Object.freeze({ stdout, stderr, exitCode: Number(exitCode) });
+    })
+  ).pipe(
+    Effect.catchTag("PlatformError", (cause) => fail(operation, "GitFailed", root, cause.message))
+  );
 }
 
-function execFileFailure(
+function collectBoundedGitOutput(
+  stream: Stream.Stream<Uint8Array, PlatformError.PlatformError>,
+  maxBytes: number,
   operation: ContentWorkspaceFailure["operation"],
   root: string,
-  error: ExecFileException,
-  maxBuffer: number
-): ContentWorkspaceFailure {
-  return failure(
-    operation,
-    error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER" ? "LimitExceeded" : "GitFailed",
-    root,
-    error.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER"
-      ? `Git output exceeds ${maxBuffer} bytes`
-      : errorMessage(error)
-  );
+  output: "stdout" | "stderr"
+) {
+  return Effect.gen(function* () {
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    yield* Stream.runForEach(stream, (chunk) => {
+      if (length + chunk.byteLength > maxBytes) {
+        return fail(operation, "LimitExceeded", root, `Git ${output} exceeds ${maxBytes} bytes`);
+      }
+      chunks.push(chunk);
+      length += chunk.byteLength;
+      return Effect.void;
+    });
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.byteLength;
+    }
+    return bytes;
+  });
 }
 
 function decodeGitOutput(

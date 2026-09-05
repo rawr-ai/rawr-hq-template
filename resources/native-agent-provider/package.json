@@ -8,16 +8,32 @@
     "directory": "resources/native-agent-provider"
   },
   "files": [
+    "dist",
     "contract.ts",
+    "runtime.ts",
     "providers/effect-platform-node-shared.ts",
     "providers/codex-effect-platform-node/index.ts",
-    "providers/claude-effect-platform-node/index.ts"
+    "providers/codex-effect-platform-node/runtime.ts",
+    "providers/claude-effect-platform-node/index.ts",
+    "providers/claude-effect-platform-node/runtime.ts"
   ],
   "type": "module",
   "imports": {
     "#native-agent-provider-effect-platform-node": "./providers/effect-platform-node-shared.ts"
   },
   "exports": {
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "default": "./dist/runtime.js"
+    },
+    "./providers/codex-effect-platform-node/runtime": {
+      "types": "./dist/providers/codex-effect-platform-node/runtime.d.ts",
+      "default": "./dist/providers/codex-effect-platform-node/runtime.js"
+    },
+    "./providers/claude-effect-platform-node/runtime": {
+      "types": "./dist/providers/claude-effect-platform-node/runtime.d.ts",
+      "default": "./dist/providers/claude-effect-platform-node/runtime.js"
+    },
     ".": {
       "types": "./contract.ts",
       "default": "./contract.ts"
@@ -37,6 +53,7 @@
     "typecheck": "tsc -p tsconfig.build.json --noEmit"
   },
   "dependencies": {
+    "@habitat-ai/sdk": "workspace:*",
     "@effect/platform-node": "4.0.0-beta.101",
     "effect": "4.0.0-beta.101",
     "typebox": "1.3.8"

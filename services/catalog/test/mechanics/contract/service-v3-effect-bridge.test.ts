@@ -7,8 +7,6 @@ import path from "node:path";
 const require = createRequire(import.meta.url);
 const gritEntrypoint = require.resolve("@getgrit/cli/run-grit.js");
 const repositoryRoot = path.resolve(import.meta.dir, "../../../../..");
-const ruleId = "service_v3_effect_bridge";
-const patternPath = ".habitat/blueprints/service/versions/3/components/funnel/effect-bridge.md";
 const effectExecutionTerminals = [
   "runFork",
   "runForkWith",
@@ -24,8 +22,10 @@ const effectExecutionTerminals = [
   "runSyncExitWith",
 ] as const;
 
-test("service@3 admits only the SDK Effect bootstrap at the service implementation", async () => {
-  const findings = await checkLaw({
+test.each([
+  3, 4,
+] as const)("service@%i admits only the SDK Effect bootstrap at the service implementation", async (version) => {
+  const findings = await checkLaw(version, {
     "valid-facade/src/service/impl.ts": `
       import "@habitat-ai/sdk/plugins/server/effect";
       export const service = base.use(auth).use(stores);
@@ -229,8 +229,13 @@ test("service@3 admits only the SDK Effect bootstrap at the service implementati
   );
 }, 30_000);
 
-async function checkLaw(files: Readonly<Record<string, string>>): Promise<string[]> {
-  const root = await mkdtemp(path.join(tmpdir(), "service-v3-effect-bridge-"));
+async function checkLaw(
+  version: 3 | 4,
+  files: Readonly<Record<string, string>>
+): Promise<string[]> {
+  const ruleId = `service_v${version}_effect_bridge`;
+  const patternPath = `.habitat/blueprints/service/versions/${version}/components/funnel/effect-bridge.md`;
+  const root = await mkdtemp(path.join(tmpdir(), `service-v${version}-effect-bridge-`));
   try {
     const gritDirectory = path.join(root, ".grit");
     await mkdir(gritDirectory);
@@ -270,7 +275,7 @@ async function checkLaw(files: Readonly<Record<string, string>>): Promise<string
     ]).finally(() => clearTimeout(timer));
     if (timedOut) throw new Error(`Grit timed out for ${ruleId}`);
     if (exitCode !== 0) throw new Error(`Grit failed for ${ruleId}: ${stderr || stdout}`);
-    const report = parseReport(stderr, stdout) as { results: readonly { path: string }[] };
+    const report = parseReport(ruleId, stderr, stdout) as { results: readonly { path: string }[] };
     return [...new Set(report.results.map((result) => result.path))].sort();
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -288,7 +293,7 @@ function gritEnv() {
   };
 }
 
-function parseReport(...outputs: string[]): unknown {
+function parseReport(ruleId: string, ...outputs: string[]): unknown {
   const line = outputs
     .flatMap((output) => output.split(/\r?\n/u))
     .map((item) => item.trim())

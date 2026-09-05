@@ -205,23 +205,27 @@ describe("Habitat app composition", () => {
     });
   }, 20_000);
 
-  it("accepts an unset command-timeout override at process activation", async () => {
+  it("keeps help independent of process configuration", async () => {
     const fixture = await makeEmptyWorkspace();
     const result = await runSourceCli(fixture.root, ["--help"]);
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("USAGE");
   });
 
-  it.each([
-    "0",
-    "1.5",
-    "600001",
-  ])("rejects HABITAT_COMMAND_TIMEOUT_MS=%s at process activation", async (timeout) => {
-    const result = await runSourceCli(appRoot, ["--help"], timeout);
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain(
-      "HABITAT_COMMAND_TIMEOUT_MS must be an integer from 1 through 600000."
-    );
+  describe.each(["0", "1.5", "600001"])("HABITAT_COMMAND_TIMEOUT_MS=%s", (timeout) => {
+    it("keeps native help independent of invalid process configuration", async () => {
+      const help = await runSourceCli(appRoot, ["--help"], timeout);
+      expect(help.exitCode).toBe(0);
+      expect(help.stdout).toContain("USAGE");
+    });
+
+    it("refuses invalid process configuration after native resolve admission", async () => {
+      const result = await runSourceCli(appRoot, ["resolve"], timeout);
+      expect(result.exitCode).not.toBe(0);
+      expect(result.stderr.replace(/\s+/gu, " ")).toContain(
+        "HABITAT_COMMAND_TIMEOUT_MS must be an integer from 1 through 600000."
+      );
+    });
   });
 });
 

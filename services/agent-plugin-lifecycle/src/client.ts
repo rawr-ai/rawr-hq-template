@@ -1,10 +1,21 @@
+import { AgentPluginPackageOutputRuntimeResource } from "@habitat-ai/resource-agent-plugin-package-output/runtime";
+import { ContentWorkspaceRuntimeResource } from "@habitat-ai/resource-content-workspace/runtime";
+import {
+  ClaudeNativeAgentProviderRuntimeResource,
+  CodexNativeAgentProviderRuntimeResource,
+} from "@habitat-ai/resource-native-agent-provider/runtime";
+import { VersionedContentRuntimeResource } from "@habitat-ai/resource-versioned-content/runtime";
+import { defineService, resourceDep, sealService } from "@habitat-ai/sdk/service";
 import {
   createRouterClient,
   type InferRouterInitialContext,
   type RouterClient,
 } from "@orpc/server";
+import { Context as NativeContext } from "effect";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
+import type { Context } from "./service/base";
+import { contract } from "./service/contract";
 
 import {
   ContentAuthoritySchema,
@@ -27,6 +38,7 @@ import type { ReleaseInputRefreshPolicyResult } from "./service/modules/releases
 import { router } from "./service/router";
 
 export { type Contract, contract } from "./service/contract";
+export { MAX_CURRENT_MAIN_V3_RECORD_BYTES as MAX_CURRENT_MAIN_RECORD_BYTES } from "./service/model/dto/current-main-record";
 
 /** Public release-input byte and curated-member bounds admitted before dispatch. */
 export {
@@ -35,12 +47,12 @@ export {
 } from "./service/model/dto/release-input";
 
 type RouterInitialContext = InferRouterInitialContext<typeof router>;
-type Invocation = RouterInitialContext["invocation"];
+type CallerContext = Partial<Pick<RouterInitialContext, "effect/context">>;
 
 /** Host-supplied boundary required to construct one local lifecycle client. */
 export type CreateClientOptions = Pick<RouterInitialContext, "deps" | "scope" | "config">;
 
-type WireClient = RouterClient<typeof router, { invocation: Invocation }>;
+type WireClient = RouterClient<typeof router, CallerContext>;
 type Procedure = (...args: never[]) => Promise<unknown>;
 type Tail<T extends readonly unknown[]> = T extends readonly [unknown, ...infer Rest]
   ? Rest
@@ -88,16 +100,55 @@ export function createClient(options: CreateClientOptions): Client;
 /** Implements local client construction through the service's native in-process router client. */
 export function createClient({ deps, scope, config }: CreateClientOptions): Client | WireClient {
   return createRouterClient(router, {
-    context: ({ invocation }: { invocation: Invocation }) =>
+    context: (caller: CallerContext) =>
       ({
         deps,
         scope,
         config,
-        invocation: { ...invocation },
+        invocation: {},
         provided: {},
+        "effect/context": caller["effect/context"] ?? NativeContext.empty(),
       }) satisfies RouterInitialContext,
   });
 }
+
+/** Cold dependency declaration; provider homes and workspaces remain explicit operation inputs. */
+export const definition = defineService({
+  id: "habitat.agent-plugin-lifecycle",
+  deps: {
+    contentWorkspace: resourceDep(ContentWorkspaceRuntimeResource),
+    packageOutput: resourceDep(AgentPluginPackageOutputRuntimeResource),
+    codex: resourceDep(CodexNativeAgentProviderRuntimeResource),
+    claude: resourceDep(ClaudeNativeAgentProviderRuntimeResource),
+    versionedContent: resourceDep(VersionedContentRuntimeResource),
+  },
+});
+
+/** Managed construction delegates its native Effect context and Promise boundary to the process. */
+export const serviceRuntimeExport = sealService(definition, {
+  contract,
+  construct: ({ clients, deps }) => ({
+    kind: "service.client.construction-bound",
+    serviceId: definition.id,
+    withInvocation: () =>
+      clients.bind({
+        context: () =>
+          ({
+            deps: {
+              contentWorkspace: deps.contentWorkspace,
+              packageOutput: deps.packageOutput,
+              nativeProviders: { codex: deps.codex, claude: deps.claude },
+              versionedContent: deps.versionedContent,
+            },
+            scope: {},
+            config: {},
+            invocation: {},
+            provided: {},
+          }) satisfies Context,
+        createNativeClient: (options) => createRouterClient(router, options),
+      }),
+  }),
+});
 
 /** Admits one caller-supplied current-main record operation request. */
 export const parseCurrentMainRecordInput = admitCurrentMainRecordInput;
