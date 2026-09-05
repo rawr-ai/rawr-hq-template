@@ -26,8 +26,9 @@ locator.
 - Invoke Habitat platform operations through the released Habitat CLI.
 - Manage genuine external extensions through the `habitat plugins`
   channel.
-- Curated agent lifecycle has no current Habitat CLI projection. Task 12.1
-  activates it only by landing command, manifest, profile, and policy together.
+- Operate generic curated agent-plugin lifecycle through `habitat agent plugins
+  check|package|status|sync|test|vendors update`, without transferring Marketplace
+  content or release authority into Habitat.
 - Invoke Rawr product behavior only through its independent repository and
   released Habitat interfaces.
 - Reconcile Marketplace provider, provenance, and export records through

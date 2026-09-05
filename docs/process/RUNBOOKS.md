@@ -22,8 +22,9 @@ Plugin/CLI lifecycle, telemetry proof, and ORPC/OpenAPI publication runbooks tha
 ## Command Surface Invariant
 
 - External Oclif extensions: `habitat plugins ...`
-- Curated agent-plugin lifecycle: no current Habitat CLI projection; task 12.1
-  must land its command, manifest, profile, and policy together.
+- Curated agent-plugin lifecycle: `habitat agent plugins
+  check|package|status|sync|test|vendors update`, through the managed Habitat
+  lifecycle service and its app-selected private topic.
 - Marketplace owns agent-plugin source, provenance, policy/evaluation inputs, and
   governed release, acceptance, and channel records. Reviewed `current-main`
   selects the exact Git and release-input identity for the canonical channel.

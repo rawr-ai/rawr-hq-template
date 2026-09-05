@@ -32,7 +32,7 @@ jobs:
           - os: ubuntu-latest
             timeoutMinutes: 15
           - os: windows-latest
-            timeoutMinutes: 35
+            timeoutMinutes: 45
     permissions:
       contents: read
     steps:
@@ -67,13 +67,14 @@ jobs:
           bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package
           --skip-nx-cache
           --outputStyle=stream
+          --reporter=verbose
 
   publish:
     name: Publish Nx release group
     if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
     needs: acceptance
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     permissions:
       contents: read
       id-token: write
@@ -118,7 +119,7 @@ jobs:
       - name: Publish Habitat SDK and CLI
         run: >-
           npx nx release publish
-          --outputStyle=static
+          --outputStyle=stream
 
       - name: Verify the registry release
         shell: bash
@@ -139,4 +140,4 @@ jobs:
           HABITAT_ACCEPTANCE_REGISTRY_VERSION="${release_version}" \
             bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package \
             --skip-nx-cache \
-            --outputStyle=static
+            --outputStyle=stream

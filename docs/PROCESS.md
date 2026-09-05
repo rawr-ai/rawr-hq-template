@@ -27,6 +27,7 @@ The previous plugin E2E workflow is preserved at `docs/process/quarantine/PLUGIN
 ## Command Channel Model
 
 - `habitat plugins ...` is reserved for external Oclif extensions.
-- Curated agent-plugin lifecycle has no current Habitat CLI projection. Task
-  12.1 must land its command, manifest, profile, and policy together.
-- No Rawr alias or premature `habitat agent plugins ...` route is admitted.
+- `habitat agent plugins check|package|status|sync|test|vendors update` projects
+  the managed Habitat lifecycle service through its app-selected private topic.
+- No Rawr alias is admitted. Marketplace content and governed release decisions
+  remain independent of these generic mechanics.
