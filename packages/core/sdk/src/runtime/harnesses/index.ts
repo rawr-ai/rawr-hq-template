@@ -13,3 +13,13 @@ export type {
   RequiredResourceReadinessRecord,
   RuntimeLaunchIdentity,
 } from "../../../../runtime/harnesses/src/index";
+export type {
+  LoweredAgentTool,
+  LoweredDesktopBackground,
+  MountReadySurfaceRuntimeRecord,
+} from "../../../../runtime/process-runtime/src/index";
+export type {
+  AgentToolMountRecord,
+  DesktopBackgroundMountRecord,
+  NativeIntegrationHarness,
+} from "../../app/integrations";

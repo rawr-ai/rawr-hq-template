@@ -52,7 +52,7 @@ export function defineDesktopBackground<
   LocalProgramOutput<P>,
   LocalProgramError<P>,
   LocalProgramRequirements<P>,
-  C
+  NoInfer<C>
 > {
   return Object.freeze({
     kind: "desktop.background",

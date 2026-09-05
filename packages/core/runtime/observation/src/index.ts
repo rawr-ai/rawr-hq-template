@@ -7,6 +7,12 @@ export {
 } from "./catalog";
 export { createRuntimeObservation, type RuntimeObservation } from "./collector";
 export type {
+  RuntimeHarnessHealthStatus,
+  RuntimeHarnessStatus,
+  RuntimeMountFinalizationRecord,
+  RuntimeStartupRecord,
+} from "./lifecycle";
+export type {
   RuntimeDiagnostic,
   RuntimeDiagnosticRedaction,
   RuntimeSourceRef,

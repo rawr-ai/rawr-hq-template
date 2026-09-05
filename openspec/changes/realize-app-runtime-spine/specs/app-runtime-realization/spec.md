@@ -682,6 +682,24 @@ whole-app aggregate, supervisor or sibling lifecycle controller is introduced.
 - **THEN** state remains draining and repeated stop shares the pending operation
 - **AND** no provider release or completed-drain claim occurs until native settlement
 
+Terminal SDK `startApp` MUST require explicit source input, finite per-start
+native integration registrations, and a validated `waitForNativeStop` policy
+with a nonnegative native-timer-representable integer deadline in milliseconds.
+It MUST resolve already-selected harness IDs and refuse conflicting descriptors,
+duplicate pairs, missing harnesses, incompatible roles/surfaces and uncovered
+selected surfaces before acquisition. Initial registrations admit agent/tools,
+desktop/background or an explicit empty-payload native integration, not arbitrary
+lowerers. Public typed payload consumers MUST reject narrower incompatible mount
+inputs; only actual process-owned lowered records cross into native hosts.
+
+Successful startup MUST mean successful mounting, not automatically passing
+readiness. Explicit per-kind health queries MUST refuse new probes once draining
+begins. Native stop MUST settle its already-started probes and report producers.
+Reports during mount MUST NOT create a mounted observation before success, and
+late reports MUST NOT revive draining/settled readiness. The public result MUST
+remain one process's identity, roles, stop, health/finalization and read models,
+never resources, native handles, sibling controls or a whole-app controller.
+
 #### Scenario: A later surface fails to mount
 
 - **WHEN** earlier selected surfaces mounted successfully before failure

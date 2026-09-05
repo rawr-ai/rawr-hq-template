@@ -7473,9 +7473,40 @@ harness reports promote this missing evidence.
 
 A rejected native `stop()` still means that native work and cleanup have
 settled; it must not reject at the first error while leaving cleanup running.
+This includes owner-started health probes and report producers. Runtime mounting
+does not add a separate health-work scheduler or drain queue. Start completes
+after successful mounts, not an automatic round of probes. Health queries are
+explicit and process-local; entering draining closes probe admission, and late
+reports cannot revive readiness.
 A failed `mount()` cleans up its own partially created native state before
 rejecting, because mounting receives handles only for successful mounts.
 These are native-owner obligations, not a generic force-stop or rollback engine.
+
+Terminal SDK startup accepts explicit per-invocation source inputs, native
+integration registrations and `finalization: { policy: "waitForNativeStop",
+deadlineMs }`. The deadline is a nonnegative integer representable by the native
+timer, validated before acquisition, with no implicit duration or force policy.
+This fills the reserved native mounting policy input; profile process defaults
+do not silently supply a competing finalization setting.
+
+An integration resolves an already-selected harness ID against one implemented
+surface adapter. The initial discriminants are `agent/tools`,
+`desktop/background`, and an explicit empty-payload `none` registration.
+Registrations cannot select processes, roles, providers or new surface plans.
+Before acquisition, refuse duplicate surface/harness pairs, conflicting descriptor
+objects under one ID, uncovered selected surfaces, missing selected harnesses,
+and incompatible descriptor roles/surfaces. Multiple admitted registrations for
+the same exact descriptor mount once with their grouped records. Public typed
+mount payloads project the exact process-owned mount-ready record and lowered
+operation contracts through the type-only harness face. Registration uses a
+function-property mount constraint so narrower incompatible payload consumers
+cannot pass through TypeScript method bivariance.
+
+The public start result contains only this process's identity, roles, stop,
+explicit health query, finalization snapshot, catalog snapshot and telemetry.
+It exposes no raw resource access, private native handle, compiler plan, sibling
+control or whole-app aggregate. Deadlines change truthful draining observations,
+never the actual stop promise or provider release order.
 
 `HarnessMountInput`, `NativeHarnessHandle`, `HarnessHealthReport`,
 `HarnessReportSink`, and the supporting interface types are import-safe public

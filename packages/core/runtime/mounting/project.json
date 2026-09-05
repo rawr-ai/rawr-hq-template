@@ -1,0 +1,31 @@
+{
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "name": "runtime-mounting",
+  "root": "packages/core/runtime/mounting",
+  "sourceRoot": "packages/core/runtime/mounting/src",
+  "projectType": "library",
+  "tags": ["type:runtime", "capability:habitat", "role:runtime-mounting"],
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bunx tsc -p packages/core/runtime/mounting/tsconfig.json --noEmit",
+          "bunx tsc -p packages/core/runtime/mounting/tsconfig.test.json --noEmit"
+        ]
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "parallelism": false,
+      "options": { "command": "bun test packages/core/runtime/mounting/test" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx tsdown --config packages/core/runtime/mounting/tsdown.config.ts"
+      }
+    },
+    "check": { "executor": "nx:noop" }
+  }
+}

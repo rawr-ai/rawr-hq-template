@@ -32,9 +32,12 @@ Tasks 10.2-10.4 now pass independent review, full repository CI, the real
 loopback HTTP handoff proof and all nine installed SDK/CLI tests on their child.
 Graphite has merged PRs 1008-1011; exact main
 `57557acfb6a3f94e05195d541c3be1677f121cbe` passes Repository Ratchet 33950917970.
-Handoff PR 1012 remains a submitted child; task 10.5 is independently reviewed
+Handoff PR 1012 remains a submitted child; task 10.5 in PR 1013 is independently reviewed
 and locally accepted on its child, including full CI, installed SDK/CLI and
-native law acceptance.
+native law acceptance. Tasks 10.6/10.7 are now independently reviewed and locally
+accepted: real terminal startup, native stop-before-release and observation;
+full CI (143 tasks), all nine installed tests and uncached native law acceptance
+(12 tests, 94 assertions) pass.
 No package release or consumer acceptance is claimed.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
@@ -52,11 +55,12 @@ public release and consumer acceptance remain separate states.
 
 ## Current Boundary
 
-Task 10.5 has completed the non-authorizing observation owner and real seeded
-catalog/telemetry projection. Tasks 10.2-10.4 are submitted in PR 1012 and remain
-independent of this child. Next: complete process-local mounting and its terminal
-SDK composition in 10.6/10.7. Sweep the merged predecessors once this working
-child is clean, then target only the kept child for restacking.
+Tasks 10.5-10.7 complete non-authorizing observation, process-local mounting and
+real terminal SDK startup. Tasks 10.2-10.4 are submitted in PR 1012 and observation
+in PR 1013. Admit the verified mounting child, then co-land 11.1-11.5 as the
+complete Oclif self-host and retained-reader cutover. The one native sweep removed the four merged
+predecessors and the targeted child restack preserved an identical tree.
+All held worktree heads and staged telemetry work remain unchanged.
 The verified binding story uses official oRPC beta.32 native clients and Effect
 beta.101, preserving actual request and stream settlement before resource
 release. No community bridge, replacement interpreter or second service runner

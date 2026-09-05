@@ -7,9 +7,8 @@
   runtime-definition, and complete runtime-derivation owners behind isolated
   public surfaces.
 - Transport the repository's generic Habitat blueprint bytes from the canonical
-  `.habitat/blueprints` tree as generated package assets, including the private
-  runtime-compiler and runtime-bootgraph structures without bundling their
-  implementations.
+  `.habitat/blueprints` tree as generated package assets. The app terminal bundles
+  the admitted private runtime implementations for selected-process startup.
 
 ## Scope
 
@@ -68,15 +67,13 @@
 - `@habitat-ai/sdk/runtime/observation` exposes only diagnostic, catalog,
   topology and telemetry contract types. It exports no collector factory,
   observation port implementation, storage, native sink or control surface.
-- Runtime compiler definitions are transported only as policy-pack closures.
-  The SDK exposes no compiler JavaScript or declaration face and has no
-  production composition dependency until task 10.6. SDK-owned task 7 integration
-  tests may import and call it, establishing real test-source Nx/build edges.
-- Runtime bootgraph definitions are transported only as policy-pack closures.
-  The SDK exposes no bootgraph JavaScript or declaration face and has no
-  production composition dependency until task 10.6. SDK-owned task 7 integration
-  tests may import and call it and the Effect substrate. Those test-source edges
-  do not expose a public lifecycle API or put provisioning in a production bundle.
+- `@habitat-ai/sdk/app` alone exposes `startApp` and its one-process result and
+  options. It composes actual derivation, compilation, ordering, provisioning,
+  binding, lowering and mounting of the exact supplied entrypoint. Explicit
+  integration registrations resolve selected IDs; they never reselect a process.
+  Compiler and bootgraph implementations remain private, with no public face.
+  Mounting owns native stop coordination; observation owns read models. The SDK
+  adds neither a runtime engine nor a sibling/whole-app lifecycle controller.
 - Qualified telemetry provisioning tests consume the resource/provider-owned
   private runtime identity and adapter as source. Keep their definition witness
   in the same runtime assembly; do not bundle a second copy into the legacy
@@ -166,10 +163,9 @@
   modifying the canonical authoring source. Exact producer definitions resolve
   as inert duplicates of the package authority; drift at the same identity is
   rejected.
-- The copied and hashed build-input inventory contains fifteen blueprint
-  directories and the manifest-listed inputs. Compiler, bootgraph, process runtime and Effect substrate
-  policy assets do not add production entrypoints. SDK integration tests use
-  their real source operations; production startApp composition waits for 10.6.
+- The copied and hashed build-input inventory contains sixteen blueprint
+  directories and the manifest-listed inputs. Owner policy assets do not create
+  additional public implementation entrypoints.
 
 ## Interfaces
 
@@ -212,6 +208,7 @@
 - [[../runtime/process-runtime/AGENTS|Private service binding and execution owner]]
 - [[../runtime/harnesses/AGENTS|Private native harness contract owner]]
 - [[../runtime/observation/AGENTS|Private observation owner]]
+- [[../runtime/mounting/AGENTS|Private mounting owner]]
 
 ## Validation
 

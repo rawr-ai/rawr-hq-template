@@ -12,3 +12,10 @@ export {
   defineProcessCatalog,
   runtimeLaunchIdentity,
 } from "../../../runtime/definition/src/app";
+export type {
+  FinalizationSnapshot,
+  NativeStopPolicy,
+  ProcessHealthSnapshot,
+} from "../../../runtime/mounting/src/index";
+export type { NativeIntegration } from "./integrations";
+export { type StartAppOptions, type StartedProcess, startApp } from "./start-app";

@@ -20,6 +20,7 @@ const blueprintIds = [
   "runtime-definition",
   "runtime-derivation",
   "runtime-harnesses",
+  "runtime-mounting",
   "runtime-observation",
   "runtime-process-runtime",
   "runtime-substrate-effect",

@@ -293,11 +293,21 @@ test("actual selected topology and native release failure project without invent
       produced.seed.executionRegistry.executionIds
     );
     expect(initial.surfaces[0]?.surfacePlanId).toBe(ready.records[0]?.surfacePlanId);
-    expect(initial.harnesses).toEqual([{ harnessId: "test.observation" }]);
+    expect(initial.harnesses).toEqual([
+      {
+        harnessId: "test.observation",
+        mountStatus: "unobserved",
+        readiness: "unknown",
+        liveness: "unknown",
+        stopStatus: "unobserved",
+      },
+    ]);
     expect(initial.workflowDispatchers).toEqual([]);
     expect(initial.lifecycleStatus).toEqual({
       topology: "selected",
       provisioning: "unobserved",
+      binding: "unobserved",
+      adapters: "unobserved",
       execution: "unobserved",
       mounting: "unobserved",
       finalization: "unobserved",
@@ -354,7 +364,7 @@ test("actual selected topology and native release failure project without invent
       expect.objectContaining({
         code: "provider.release.failed",
         severity: "error",
-        phase: "provisioning",
+        phase: "observation",
         recordKind: "finalization",
         redaction: "safe",
       }),

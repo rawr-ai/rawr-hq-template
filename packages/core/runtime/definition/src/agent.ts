@@ -91,7 +91,7 @@ export function defineTool<
   LocalProgramOutput<P>,
   LocalProgramError<P>,
   LocalProgramRequirements<P>,
-  C
+  NoInfer<C>
 > {
   return Object.freeze({
     kind: "agent.tool",

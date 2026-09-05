@@ -101,6 +101,7 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "runtime-definition",
   "runtime-derivation",
   "runtime-harnesses",
+  "runtime-mounting",
   "runtime-observation",
   "runtime-process-runtime",
   "runtime-substrate-effect",
@@ -1092,6 +1093,7 @@ describe("installed Habitat products", () => {
     await assertInstalledRuntimeDerivation(generatedServiceRoot);
     await assertInstalledProjectionTypes(generatedServiceRoot);
     await assertInstalledProviderAuthoring(generatedServiceRoot);
+    await assertInstalledRuntimeStart(generatedServiceRoot);
 
     const coldCliEntrypoint = path.join(consumerRoot, "cold-habitat-cli.mjs");
     await writeFile(
@@ -1169,7 +1171,13 @@ describe("installed Habitat products", () => {
       stderr: "",
     });
     expect(JSON.parse(coldSdk.stdout)).toMatchObject({
-      app: ["defineApp", "defineEntrypoint", "defineProcessCatalog", "runtimeLaunchIdentity"],
+      app: [
+        "defineApp",
+        "defineEntrypoint",
+        "defineProcessCatalog",
+        "runtimeLaunchIdentity",
+        "startApp",
+      ],
       asyncEffect: ["defineAsyncStepEffect"],
       asyncPlugins: [
         "defineAsyncConsumerPlugin",
@@ -1290,6 +1298,7 @@ describe("installed Habitat products", () => {
       "runtime-derivation@2",
       "runtime-derivation@3",
       "runtime-harnesses@1",
+      "runtime-mounting@1",
       "runtime-observation@1",
       "runtime-process-runtime@1",
       "runtime-process-runtime@2",
@@ -1744,6 +1753,11 @@ describe("installed Habitat products", () => {
       {
         id: "runtime-harnesses",
         path: "dist/blueprints/runtime-harnesses/blueprint.toml",
+        version: 1,
+      },
+      {
+        id: "runtime-mounting",
+        path: "dist/blueprints/runtime-mounting/blueprint.toml",
         version: 1,
       },
       {
@@ -2760,6 +2774,8 @@ async function assertInstalledProjectionTypes(callerRoot: string): Promise<void>
         'import { defineDesktopBackground, type DesktopBackgroundDescriptor } from "@habitat-ai/sdk/plugins/desktop/effect";',
         'import type { HarnessDescriptor, HarnessMountInput, NativeHarnessHandle, RuntimeLaunchIdentity, ProcessRuntimeAccess, AppRole } from "@habitat-ai/sdk/runtime/harnesses";',
         'import type { RuntimeLaunchIdentity as AppIdentity } from "@habitat-ai/sdk/app";',
+        'import { startApp, type NativeIntegration, type StartedProcess, type StartAppOptions } from "@habitat-ai/sdk/app";',
+        'import type { AgentToolMountRecord, NativeIntegrationHarness } from "@habitat-ai/sdk/runtime/harnesses";',
         'import type { RuntimeCatalog, RuntimeTelemetry, RuntimeDiagnostic } from "@habitat-ai/sdk/runtime/observation";',
         "// @ts-expect-error Observation construction remains private terminal composition.",
         'import { createRuntimeObservation } from "@habitat-ai/sdk/runtime/observation";',
@@ -2774,6 +2790,8 @@ async function assertInstalledProjectionTypes(callerRoot: string): Promise<void>
         'const background = defineDesktopBackground({ id: "installed", cadence: "60 seconds", effect: function* () { return 1; } });',
         'defineAgentToolPlugin.factory()({ capability: "installed", services: {}, tools: [tool] });',
         'defineDesktopBackgroundPlugin.factory()({ capability: "installed", services: {}, backgrounds: [background] });',
+        'defineAgentToolPlugin.factory()({ capability: "inline", services: {}, tools: [defineTool({ id: "inline", description: "Inline", input: toolSchema.object({ id: toolSchema.string() }), effect: function* (context) { const id: string = context.input.id; return id; } })] });',
+        'defineDesktopBackgroundPlugin.factory()({ capability: "inline", services: {}, backgrounds: [defineDesktopBackground({ id: "inline", cadence: "1 seconds", effect: function* (context) { void context.resources; return 1; } })] });',
         "type ToolChannels<T> = T extends ToolDescriptor<infer I, infer A, infer E, infer R, infer _C> ? [I, A, E, R] : never;",
         "type BackgroundChannels<T> = T extends DesktopBackgroundDescriptor<infer A, infer E, infer R, infer _C> ? [A, E, R] : never;",
         "type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;",
@@ -2784,6 +2802,15 @@ async function assertInstalledProjectionTypes(callerRoot: string): Promise<void>
         "const harnessRoles: Equal<HarnessMountInput['roles'], readonly AppRole[]> = true;",
         "const observationPhase: Equal<RuntimeDiagnostic['phase'], 'definition' | 'selection' | 'derivation' | 'compilation' | 'provisioning' | 'mounting' | 'observation'> = true;",
         "const observationRoles: Equal<RuntimeCatalog['roles'], readonly AppRole[]> = true;",
+        "const startResult: Equal<Awaited<ReturnType<typeof startApp>>, StartedProcess> = true;",
+        "const startOptions: Equal<Parameters<typeof startApp>[1], StartAppOptions> = true;",
+        'const publicProcess: Equal<keyof StartedProcess, "identity" | "roles" | "stop" | "health" | "finalization" | "catalog" | "telemetry"> = true;',
+        'const native: NativeIntegrationHarness<AgentToolMountRecord> = { id: "installed", roles: ["agent"], surfaces: ["agent/tools"], async mount(input) { const call: Promise<unknown> = input.mountReadyPayloads[0].payload[0].invoke({}); void call; return { stop: async () => {} }; } };',
+        'const registration: NativeIntegration = { surface: "agent/tools", harness: native };',
+        'const narrow: HarnessDescriptor<AgentToolMountRecord & { privateExtra: true }> = { id: "narrow", roles: ["agent"], surfaces: ["agent/tools"], async mount() { return { stop: async () => {} }; } };',
+        "// @ts-expect-error A narrower consumer cannot exploit method bivariance in the registration.",
+        'const rejected: NativeIntegration = { surface: "agent/tools", harness: narrow };',
+        "void [startResult, startOptions, publicProcess, registration, rejected];",
         "async function trace<T>(telemetry: RuntimeTelemetry, run: () => Promise<T>): Promise<T> { return telemetry.span({ name: 'installed', phase: 'observation', boundary: 'sdk' }, run); }",
         "const companion: HarnessDescriptor<{ invoke(): Promise<string> }> = {",
         '  id: "installed-companion", roles: ["server"], surfaces: ["internal"],',
@@ -2960,6 +2987,70 @@ async function assertInstalledRuntimeDerivation(callerRoot: string): Promise<voi
       surplusRejected: true,
       webCount: 1,
       webLoaderIdentity: true,
+    });
+  } finally {
+    await rm(entrypointPath, { force: true });
+  }
+}
+
+async function assertInstalledRuntimeStart(callerRoot: string): Promise<void> {
+  const entrypointPath = path.join(callerRoot, "installed-runtime-start.mjs");
+  try {
+    await writeFile(
+      entrypointPath,
+      [
+        'import { openSync, closeSync, fstatSync, unlinkSync } from "node:fs";',
+        'import { join } from "node:path";',
+        'import { defineApp, defineEntrypoint, defineProcessCatalog, startApp } from "@habitat-ai/sdk/app";',
+        'import { Effect } from "@habitat-ai/sdk/effect";',
+        'import { defineAgentToolPlugin } from "@habitat-ai/sdk/plugins/agent";',
+        'import { defineTool } from "@habitat-ai/sdk/plugins/agent/effect";',
+        'import { toolSchema } from "@habitat-ai/sdk/plugins/agent/schema";',
+        'import { defineRuntimeProfile, providerSelection } from "@habitat-ai/sdk/runtime/profiles";',
+        'import { defineRuntimeProvider } from "@habitat-ai/sdk/runtime/providers";',
+        'import { providerFx } from "@habitat-ai/sdk/runtime/providers/effect";',
+        'import { defineRuntimeResource, requireResource } from "@habitat-ai/sdk/runtime/resources";',
+        'const resource = defineRuntimeResource({ id: "installed.lease", title: "Lease", purpose: "Real installed startup" });',
+        'const required = requireResource({ resource, reason: "Real file lease" });',
+        "let acquired = 0; let released = 0; const paths = []; const tools = []; const started = [];",
+        'const provider = defineRuntimeProvider({ id: "installed.provider", title: "Provider", provides: resource, requires: [], build: () => providerFx.acquireRelease({',
+        '  acquire: providerFx.tryPromise({ try: () => { const file = join(process.cwd(), `start-lease-${++acquired}`); paths.push(file); return openSync(file, "wx"); }, catch: () => ({ _tag: "AcquireFailure" }) }),',
+        "  release: (fd) => Effect.gen(function* () { closeSync(fd); released++; }),",
+        "}) });",
+        'const tool = defineTool({ id: "read", description: "Read actual lease", input: toolSchema.object({}), effect: function* (context) { return fstatSync(context.resources.get(required)).isFile(); } });',
+        'const plugin = defineAgentToolPlugin.factory()({ capability: "installed", services: {}, resourceRequirements: [required], tools: [tool] })();',
+        'const app = defineApp({ id: "installed.app", plugins: [plugin] });',
+        'const profile = defineRuntimeProfile({ id: "test", providers: [providerSelection({ resource, provider })], harnesses: ["installed.host"] });',
+        'const selected = defineProcessCatalog({ main: { id: "main", roles: ["agent"] } }).main;',
+        'const entrypoint = defineEntrypoint({ id: "installed", app, profile, process: selected, identity: { app: app.id, process: selected.id, entrypoint: "installed", deployment: "test", source: "installed-sdk" } });',
+        'const harness = { id: "installed.host", roles: ["agent"], surfaces: ["agent/tools"], async mount(input) { tools.push(input.mountReadyPayloads[0].payload[0]); let stop; return { stop: () => stop ??= Promise.resolve(), readiness: async () => ({ launchIdentity: input.launchIdentity, harnessId: "installed.host", kind: "readiness", status: "passing", findings: [] }) }; } };',
+        'const options = { sources: { appRoot: process.cwd() }, integrations: [{ surface: "agent/tools", harness }], finalization: { policy: "waitForNativeStop", deadlineMs: 1000 } };',
+        "try {",
+        "  started.push(await startApp(entrypoint, options)); started.push(await startApp(entrypoint, options));",
+        "  const first = started[0].stop(); const shared = started[0].stop() === first; await first;",
+        "  const closed = await tools[0].invoke({}).then(() => false, () => true);",
+        "  const sibling = await tools[1].invoke({});",
+        "  const releasedBeforeSibling = released;",
+        '  const health = await started[1].health("readiness");',
+        "  await started[1].stop();",
+        "  console.log(JSON.stringify({ acquired, released, releasedBeforeSibling, shared, closed, sibling, identity: started[1].identity === entrypoint.identity, health: health.status, finalization: started[1].finalization().state, publicKeys: Object.keys(started[1]).sort(), resources: started[1].catalog().resources.length }));",
+        "} finally { for (const runtime of started) await runtime.stop(); for (const file of paths) unlinkSync(file); }",
+      ].join("\n")
+    );
+    const result = await run("node", [entrypointPath], { cwd: callerRoot, timeoutMs: 30_000 });
+    expect(result).toMatchObject({ exitCode: 0, stderr: "" });
+    expect(JSON.parse(result.stdout)).toEqual({
+      acquired: 2,
+      released: 2,
+      releasedBeforeSibling: 1,
+      shared: true,
+      closed: true,
+      sibling: true,
+      identity: true,
+      health: "passing",
+      finalization: "settled",
+      resources: 1,
+      publicKeys: ["catalog", "finalization", "health", "identity", "roles", "stop", "telemetry"],
     });
   } finally {
     await rm(entrypointPath, { force: true });
