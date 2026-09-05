@@ -11,9 +11,14 @@ import type {
   RuntimeResource,
   ServiceDefinition,
   ServiceDependencyDeclaration,
+  ServiceRuntimeExport,
   WebAppPluginDefinition,
 } from "../../definition/src/index";
 import { readServiceUse } from "../../definition/src/index";
+import {
+  attachRuntimeDerivationHandoff,
+  type RuntimeDerivationHandoffCarrier,
+} from "./derivation-handoff";
 import {
   type AsyncStepDescriptorOccurrence,
   createExecutionDescriptorTable,
@@ -62,6 +67,7 @@ import {
   type PortableRuntimePlanArtifact,
 } from "./portable-runtime-plan-artifact";
 import type { NormalizedRuntimeConfigRef, ServiceBindingPlan } from "./service-binding-plan";
+import { assertSurfaceReferenceRelation } from "./surface-reference-policy";
 import type { SurfaceRuntimePlan } from "./surface-runtime-plan";
 import {
   createWebRouteModuleTable,
@@ -76,7 +82,7 @@ export interface RuntimeDerivationInput {
   readonly profileId: string;
 }
 
-export interface RuntimeDerivationResult {
+export interface RuntimeDerivationResult extends RuntimeDerivationHandoffCarrier {
   readonly topology: NormalizedRuntimeTopology;
   readonly graph: NormalizedAuthoringGraph;
   readonly executionDescriptorTable: ExecutionDescriptorTable;
@@ -107,7 +113,7 @@ interface PluginDerivationState {
   readonly identity: NormalizedPluginIdentity;
   readonly ownerId: string;
   readonly serviceUseIds: string[];
-  readonly rootBindingIds: string[];
+  readonly serviceBindings: { readonly localName: string; readonly bindingId: string }[];
   readonly resourceRequirementIds: string[];
   readonly executionEntries: ReturnType<typeof deriveAsyncExecutionEntry>[];
   readonly webEntries: WebRouteModuleTableEntry[];
@@ -117,12 +123,13 @@ interface PluginDerivationState {
 interface BindingContext {
   readonly role: AppRole;
   readonly sources: readonly NormalizedRuntimeConfigSource[];
-  readonly serviceDefinitions: Map<string, ServiceDefinition>;
+  readonly serviceExports: Map<string, ServiceRuntimeExport>;
   readonly serviceDependencies: Map<string, NormalizedServiceDependency>;
   readonly semanticDependencies: Map<string, NormalizedSemanticDependency>;
   readonly resourceRequirements: Map<string, ResourceRequirement>;
   readonly serviceRequirementOrigins: Map<string, string>;
   readonly plansByIdentity: Map<string, ServiceBindingPlan>;
+  readonly plansByRequest: Map<string, ServiceBindingPlan>;
   readonly plansById: Map<string, ServiceBindingPlan>;
   readonly active: Set<string>;
 }
@@ -145,10 +152,6 @@ function sortedUnique(values: readonly string[], label: string): readonly string
     if (sorted[index - 1] === sorted[index]) throw new TypeError(`Duplicate ${label}.`);
   }
   return Object.freeze(sorted);
-}
-
-function sortedSet(values: readonly string[]): readonly string[] {
-  return Object.freeze([...new Set(values)].sort(compareStrings));
 }
 
 function copyResourceIdentity(
@@ -389,25 +392,34 @@ function insertUnique<T>(map: Map<string, T>, id: string, value: T, label: strin
   map.set(id, value);
 }
 
-function registerServiceDefinition(
-  definition: ServiceDefinition,
-  serviceDefinitions: Map<string, ServiceDefinition>
-): void {
-  const existing = serviceDefinitions.get(definition.id);
-  if (existing !== undefined && existing !== definition) {
-    throw new TypeError("One service id resolved to divergent definitions.");
+function registerServiceExport(
+  service: ServiceRuntimeExport,
+  serviceExports: Map<string, ServiceRuntimeExport>
+): ServiceDefinition {
+  if (
+    service.kind !== "service.runtime-export" ||
+    service.definition.kind !== "service.definition" ||
+    typeof service.construct !== "function"
+  ) {
+    throw new TypeError("A selected service requires its complete cold export.");
   }
-  serviceDefinitions.set(definition.id, definition);
+  const definition = service.definition;
+  const existing = serviceExports.get(definition.id);
+  if (existing !== undefined && existing !== service) {
+    throw new TypeError("One service id resolved to divergent complete exports.");
+  }
+  serviceExports.set(definition.id, service);
+  return definition;
 }
 
 function normalizeServiceRelations(
-  definition: ServiceDefinition,
-  serviceDefinitions: Map<string, ServiceDefinition>,
+  service: ServiceRuntimeExport,
+  serviceExports: Map<string, ServiceRuntimeExport>,
   serviceDependencies: Map<string, NormalizedServiceDependency>,
   semanticDependencies: Map<string, NormalizedSemanticDependency>,
   visited: Set<string>
 ): void {
-  registerServiceDefinition(definition, serviceDefinitions);
+  const definition = registerServiceExport(service, serviceExports);
   if (visited.has(definition.id)) return;
   visited.add(definition.id);
 
@@ -419,14 +431,14 @@ function normalizeServiceRelations(
         const dependencyId = serviceDependencyId({
           serviceId: definition.id,
           localName,
-          dependencyServiceId: dependency.service.id,
+          dependencyServiceId: dependency.service.definition.id,
         });
         const normalized = Object.freeze({
           kind: "normalized.service-dependency" as const,
           dependencyId,
           serviceId: definition.id,
           localName,
-          dependencyServiceId: dependency.service.id,
+          dependencyServiceId: dependency.service.definition.id,
         });
         const existing = serviceDependencies.get(dependencyId);
         if (existing !== undefined && canonicalJson(existing) !== canonicalJson(normalized)) {
@@ -435,7 +447,7 @@ function normalizeServiceRelations(
         serviceDependencies.set(dependencyId, normalized);
         normalizeServiceRelations(
           dependency.service,
-          serviceDefinitions,
+          serviceExports,
           serviceDependencies,
           semanticDependencies,
           visited
@@ -548,34 +560,50 @@ function serviceOwnedRequirement(
 }
 
 function deriveBindingPlan(input: {
-  readonly definition: ServiceDefinition;
+  readonly service: ServiceRuntimeExport;
   readonly instance?: string;
   readonly node?: RootBindingInput | DependencyBindingInput;
   readonly inheritedScope?: NormalizedRuntimeConfigRef;
   readonly inheritedConfig?: NormalizedRuntimeConfigRef;
   readonly context: BindingContext;
 }): ServiceBindingPlan {
-  const { context, definition, node } = input;
-  registerServiceDefinition(definition, context.serviceDefinitions);
+  const { context, node } = input;
+  const definition = registerServiceExport(input.service, context.serviceExports);
+  if (
+    input.instance !== undefined &&
+    (typeof input.instance !== "string" || input.instance.length === 0)
+  ) {
+    throw new TypeError("A service instance must be a nonempty string.");
+  }
   const activeKey = canonicalJson([context.role, definition.id, input.instance ?? ""]);
   if (context.active.has(activeKey)) throw new TypeError("Service bindings must be acyclic.");
+  const scopeRef = effectiveLaneRef(
+    definition.scope !== undefined,
+    node?.scope,
+    input.inheritedScope,
+    context.sources
+  );
+  const configRef = effectiveLaneRef(
+    definition.config !== undefined,
+    node?.config,
+    input.inheritedConfig,
+    context.sources
+  );
+  // Reuse a complete incoming request before descending through equal diamonds.
+  // Path-local overrides remain in the key so reuse cannot hide a divergent leaf.
+  const requestKey = canonicalJson([
+    activeKey,
+    scopeRef ?? null,
+    configRef ?? null,
+    node?.dependencies ?? {},
+  ]);
+  const reused = context.plansByRequest.get(requestKey);
+  if (reused !== undefined) return reused;
   context.active.add(activeKey);
   try {
-    const scopeRef = effectiveLaneRef(
-      definition.scope !== undefined,
-      node?.scope,
-      input.inheritedScope,
-      context.sources
-    );
-    const configRef = effectiveLaneRef(
-      definition.config !== undefined,
-      node?.config,
-      input.inheritedConfig,
-      context.sources
-    );
     const overrides = bindingNodeDependencies(node, definition);
     const resourceRequirementIds: string[] = [];
-    const serviceBindingIds: string[] = [];
+    const serviceDependencies: { readonly localName: string; readonly bindingId: string }[] = [];
     const semanticDependencyIds: string[] = [];
 
     for (const localName of Object.keys(definition.deps).sort(compareStrings)) {
@@ -606,14 +634,14 @@ function deriveBindingPlan(input: {
         case "service.dependency.service": {
           const override = overrides[localName];
           const child = deriveBindingPlan({
-            definition: dependency.service,
+            service: dependency.service,
             ...(override?.instance === undefined ? {} : { instance: override.instance }),
             ...(override === undefined ? {} : { node: override }),
             ...(scopeRef === undefined ? {} : { inheritedScope: scopeRef }),
             ...(configRef === undefined ? {} : { inheritedConfig: configRef }),
             context,
           });
-          serviceBindingIds.push(child.bindingId);
+          serviceDependencies.push(Object.freeze({ localName, bindingId: child.bindingId }));
           break;
         }
         case "service.dependency.semantic":
@@ -635,7 +663,7 @@ function deriveBindingPlan(input: {
       ...(scopeRef === undefined ? {} : { scopeRef: copyConfigRef(scopeRef) }),
       ...(configRef === undefined ? {} : { configRef: copyConfigRef(configRef) }),
       resourceRequirementIds: sortedUnique(resourceRequirementIds, "binding resource id"),
-      serviceBindingIds: sortedSet(serviceBindingIds),
+      serviceDependencies: Object.freeze(serviceDependencies),
       semanticDependencyIds: sortedUnique(semanticDependencyIds, "semantic dependency id"),
     };
     const bindingId = serviceBindingId(identityInput);
@@ -650,6 +678,7 @@ function deriveBindingPlan(input: {
       if (canonicalJson(existingIdentity) !== canonicalJson(plan)) {
         throw new TypeError("A service binding diamond diverged.");
       }
+      context.plansByRequest.set(requestKey, existingIdentity);
       return existingIdentity;
     }
     const existingId = context.plansById.get(bindingId);
@@ -657,6 +686,7 @@ function deriveBindingPlan(input: {
       throw new TypeError("A service binding identity collided.");
     }
     context.plansByIdentity.set(activeKey, plan);
+    context.plansByRequest.set(requestKey, plan);
     context.plansById.set(bindingId, plan);
     return plan;
   } finally {
@@ -667,33 +697,52 @@ function deriveBindingPlan(input: {
 function normalizeProviderSelections(
   entrypoint: Entrypoint,
   sources: readonly NormalizedRuntimeConfigSource[],
-  resourceRequirements: Map<string, ResourceRequirement>
+  resourceRequirements: Map<string, ResourceRequirement>,
+  providerReferences: Map<string, RuntimeProvider>
 ): readonly ProviderSelection[] {
   const selections = new Map<string, ProviderSelection>();
   const providersById = new Map<string, RuntimeProvider>();
   const providerRequirementOrigins = new Map<string, string>();
+  const candidatesByResource = new Map<string, AuthoredProviderSelection[]>();
 
   for (const candidate of entrypoint.profile.providers) {
     if (!isProviderSelection(candidate)) {
       throw new TypeError("Runtime profiles must contain provider selections.");
     }
-    const authored = candidate;
-    if (authored.resource !== authored.provider.provides) {
+    if (candidate.resource !== candidate.provider.provides) {
       throw new TypeError("A provider selection must use the provider's exact resource.");
     }
+    const resource = assertResourceIdentityInput({
+      resource: candidate.resource,
+      ...(candidate.lifetime === undefined ? {} : { lifetime: candidate.lifetime }),
+      ...(candidate.role === undefined ? {} : { role: candidate.role }),
+      ...(candidate.instance === undefined ? {} : { instance: candidate.instance }),
+      reason: "provider selection",
+    });
+    const key = canonicalJson(resource);
+    const candidates = candidatesByResource.get(key) ?? [];
+    candidates.push(candidate);
+    candidatesByResource.set(key, candidates);
+  }
+
+  // Only reached selections contribute config refs and transitive requirements.
+  const pending = [...resourceRequirements.values()];
+  const selectedResources = new Set<string>();
+  for (let index = 0; index < pending.length; index += 1) {
+    const requested = pending[index]!;
+    const resource = requested.resource;
+    const key = canonicalJson(resource);
+    const candidates = candidatesByResource.get(key) ?? [];
+    if (candidates.length > 1) throw new TypeError("Resource provider coverage is ambiguous.");
+    const authored = candidates[0];
+    if (authored === undefined || selectedResources.has(key)) continue;
+    selectedResources.add(key);
     const priorProvider = providersById.get(authored.provider.id);
     if (priorProvider !== undefined && priorProvider !== authored.provider) {
       throw new TypeError("One provider id resolved to divergent provider definitions.");
     }
     providersById.set(authored.provider.id, authored.provider);
 
-    const resource = assertResourceIdentityInput({
-      resource: authored.resource,
-      ...(authored.lifetime === undefined ? {} : { lifetime: authored.lifetime }),
-      ...(authored.role === undefined ? {} : { role: authored.role }),
-      ...(authored.instance === undefined ? {} : { instance: authored.instance }),
-      reason: "provider selection",
-    });
     let configRef: NormalizedRuntimeConfigRef | undefined;
     if (authored.provider.configSchema !== undefined) {
       const key = authored.config?.key ?? authored.provider.defaultConfigKey;
@@ -720,13 +769,18 @@ function normalizeProviderSelections(
       ...(configRef === undefined ? {} : { configRef: copyConfigRef(configRef) }),
     });
     insertUnique(selections, selectionId, selection, "provider selection identity");
+    providerReferences.set(selectionId, authored.provider);
 
-    for (let index = 0; index < authored.provider.requires.length; index += 1) {
-      const requirement = normalizedRequirement(authored.provider.requires[index]!, {
+    for (
+      let dependencyIndex = 0;
+      dependencyIndex < authored.provider.requires.length;
+      dependencyIndex += 1
+    ) {
+      const requirement = normalizedRequirement(authored.provider.requires[dependencyIndex]!, {
         kind: "provider",
         providerId: authored.provider.id,
       });
-      const origin = `${authored.provider.id}\u0000${index}`;
+      const origin = `${authored.provider.id}\u0000${dependencyIndex}`;
       const existing = resourceRequirements.get(requirement.requirementId);
       const priorOrigin = providerRequirementOrigins.get(requirement.requirementId);
       if (
@@ -737,6 +791,7 @@ function normalizeProviderSelections(
       }
       resourceRequirements.set(requirement.requirementId, requirement);
       providerRequirementOrigins.set(requirement.requirementId, origin);
+      if (existing === undefined) pending.push(requirement);
     }
   }
 
@@ -749,7 +804,8 @@ function normalizeProviderSelections(
 
 function validateCoverage(
   requirements: readonly ResourceRequirement[],
-  selections: readonly ProviderSelection[]
+  selections: readonly ProviderSelection[],
+  resourceBindings: Map<string, string>
 ): readonly DerivationFinding[] {
   const selectionsByResource = new Map<string, ProviderSelection[]>();
   const selectedResourceKeys = new Set<string>();
@@ -778,6 +834,7 @@ function validateCoverage(
       continue;
     }
     selectedResourceKeys.add(key);
+    resourceBindings.set(requirement.requirementId, matching[0]!.selectionId);
   }
 
   for (const key of selectionsByResource.keys()) {
@@ -920,6 +977,10 @@ function buildSurfacePlan(
     state.workflowDispatcher === undefined
       ? Object.freeze([])
       : Object.freeze([state.workflowDispatcher.descriptorId]);
+  const selectedExecutionRefs = executionRefs.filter((ref) => ref.ownerId === state.ownerId);
+  const selectedWebRefs = webRefs.filter((ref) => ref.ownerId === state.ownerId);
+  for (const ref of selectedExecutionRefs) assertSurfaceReferenceRelation(plugin, ref);
+  for (const ref of selectedWebRefs) assertSurfaceReferenceRelation(plugin, ref);
   return Object.freeze({
     kind: "surface.runtime-plan",
     surfacePlanId: id,
@@ -927,18 +988,18 @@ function buildSurfacePlan(
     role: plugin.role,
     surface: plugin.surface,
     capability: plugin.capability,
-    serviceBindingIds: sortedSet(state.rootBindingIds),
+    serviceBindings: Object.freeze(
+      [...state.serviceBindings].sort((left, right) =>
+        compareTuples([left.localName, left.bindingId], [right.localName, right.bindingId])
+      )
+    ),
     resourceRequirementIds: sortedUnique(
       state.resourceRequirementIds,
       "surface resource requirement id"
     ),
     workflowDispatcherDescriptorIds: dispatcherIds,
-    executionDescriptorRefs: Object.freeze(
-      executionRefs.filter((ref) => ref.ownerId === state.ownerId).map(copyExecutionRef)
-    ),
-    webRouteModuleRefs: Object.freeze(
-      webRefs.filter((ref) => ref.ownerId === state.ownerId).map(copyWebRef)
-    ),
+    executionDescriptorRefs: Object.freeze(selectedExecutionRefs.map(copyExecutionRef)),
+    webRouteModuleRefs: Object.freeze(selectedWebRefs.map(copyWebRef)),
   });
 }
 
@@ -972,17 +1033,23 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
   });
   const { entrypoint } = input;
   const sources = normalizeConfigSources(entrypoint.profile.configSources);
-  const serviceDefinitions = new Map<string, ServiceDefinition>();
+  const serviceExports = new Map<string, ServiceRuntimeExport>();
   const serviceDependencies = new Map<string, NormalizedServiceDependency>();
   const semanticDependencies = new Map<string, NormalizedSemanticDependency>();
   const resourceRequirements = new Map<string, ResourceRequirement>();
   const serviceRequirementOrigins = new Map<string, string>();
   const plansByIdentity = new Map<string, ServiceBindingPlan>();
+  const plansByRequest = new Map<string, ServiceBindingPlan>();
   const plansById = new Map<string, ServiceBindingPlan>();
+  const providerReferences = new Map<string, RuntimeProvider>();
+  const resourceBindings = new Map<string, string>();
   const serviceUses = new Map<string, NormalizedServiceUse>();
   const pluginStates: PluginDerivationState[] = [];
+  const visitedRelations = new Set<string>();
+  const roles = new Set(topology.roleRequirements);
 
   for (const definition of entrypoint.app.plugins) {
+    if (!roles.has(definition.role)) continue;
     const identity = Object.freeze({
       pluginId: definition.id,
       ...(definition.instance === undefined ? {} : { instance: definition.instance }),
@@ -993,23 +1060,22 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       identity,
       ownerId,
       serviceUseIds: [],
-      rootBindingIds: [],
+      serviceBindings: [],
       resourceRequirementIds: [],
       executionEntries: [],
       webEntries: [],
     };
 
-    const visitedRelations = new Set<string>();
     for (const localName of Object.keys(definition.services).sort(compareStrings)) {
       const serviceUse = definition.services[localName];
       if (serviceUse === undefined) throw new TypeError("A plugin service use is absent.");
       const carrier = readServiceUse(serviceUse);
-      if (carrier === undefined || serviceUse.serviceId !== carrier.definition.id) {
+      if (carrier === undefined || serviceUse.serviceId !== carrier.service.definition.id) {
         throw new TypeError("A service-use carrier disagrees with its public relation.");
       }
       normalizeServiceRelations(
-        carrier.definition,
-        serviceDefinitions,
+        carrier.service,
+        serviceExports,
         serviceDependencies,
         semanticDependencies,
         visitedRelations
@@ -1017,7 +1083,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       const useId = serviceUseId({
         pluginOwnerId: ownerId,
         localName,
-        serviceId: carrier.definition.id,
+        serviceId: carrier.service.definition.id,
         ...(serviceUse.serviceInstance === undefined
           ? {}
           : { serviceInstance: serviceUse.serviceInstance }),
@@ -1027,7 +1093,7 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
         useId,
         pluginOwnerId: ownerId,
         localName,
-        serviceId: carrier.definition.id,
+        serviceId: carrier.service.definition.id,
         ...(serviceUse.serviceInstance === undefined
           ? {}
           : { serviceInstance: serviceUse.serviceInstance }),
@@ -1038,12 +1104,13 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       const bindingContext: BindingContext = {
         role: definition.role,
         sources,
-        serviceDefinitions,
+        serviceExports,
         serviceDependencies,
         semanticDependencies,
         resourceRequirements,
         serviceRequirementOrigins,
         plansByIdentity,
+        plansByRequest,
         plansById,
         active: new Set<string>(),
       };
@@ -1051,14 +1118,14 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
         throw new TypeError("A service-use binding must affect a reachable binding lane.");
       }
       const rootPlan = deriveBindingPlan({
-        definition: carrier.definition,
+        service: carrier.service,
         ...(serviceUse.serviceInstance === undefined
           ? {}
           : { instance: serviceUse.serviceInstance }),
         ...(carrier.binding === undefined ? {} : { node: carrier.binding }),
         context: bindingContext,
       });
-      state.rootBindingIds.push(rootPlan.bindingId);
+      state.serviceBindings.push(Object.freeze({ localName, bindingId: rootPlan.bindingId }));
     }
 
     for (const authored of definition.resourceRequirements) {
@@ -1079,13 +1146,22 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
     pluginStates.push(state);
   }
 
-  const providerSelections = normalizeProviderSelections(entrypoint, sources, resourceRequirements);
+  const providerSelections = normalizeProviderSelections(
+    entrypoint,
+    sources,
+    resourceRequirements,
+    providerReferences
+  );
   const sortedResourceRequirements = Object.freeze(
     [...resourceRequirements.values()].sort((left, right) =>
       compareStrings(left.requirementId, right.requirementId)
     )
   );
-  const findings = validateCoverage(sortedResourceRequirements, providerSelections);
+  const findings = validateCoverage(
+    sortedResourceRequirements,
+    providerSelections,
+    resourceBindings
+  );
 
   const executionDescriptorTable = createExecutionDescriptorTable(
     pluginStates.flatMap((state) => state.executionEntries)
@@ -1144,6 +1220,9 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
       .sort((left, right) => compareStrings(left.ownerId, right.ownerId))
   );
   const harnesses = sortedUnique(entrypoint.profile.harnesses ?? [], "profile harness");
+  const harnessIds = new Set(harnesses);
+  if (entrypoint.process.harness !== undefined) harnessIds.add(entrypoint.process.harness);
+  const selectedHarnessIds = Object.freeze([...harnessIds].sort(compareStrings));
   const roleSurfaceEntries = buildRoleSurfaceIndex(surfaceRuntimePlans);
   const graph: NormalizedAuthoringGraph = Object.freeze({
     kind: "normalized.authoring-graph",
@@ -1202,11 +1281,45 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
     topology,
     graph.executionDescriptorRefs
   );
-  return Object.freeze({
-    topology,
-    graph,
-    executionDescriptorTable,
-    webRouteModuleTable,
-    portableArtifact,
-  });
+  return attachRuntimeDerivationHandoff(
+    {
+      topology,
+      graph,
+      executionDescriptorTable,
+      webRouteModuleTable,
+      portableArtifact,
+    },
+    {
+      graph,
+      identity: topology.identity,
+      profileId: topology.profileId,
+      roles: topology.roleRequirements,
+      harnessIds: selectedHarnessIds,
+      providers: Object.freeze(
+        [...providerReferences]
+          .sort(([left], [right]) => compareStrings(left, right))
+          .map(([id, provider]) => Object.freeze([id, provider] as const))
+      ),
+      services: Object.freeze(
+        graph.serviceBindingPlans.map((plan) => {
+          const service = serviceExports.get(plan.serviceId);
+          if (service === undefined)
+            throw new TypeError("A binding lost its complete service export.");
+          return Object.freeze([plan.bindingId, service] as const);
+        })
+      ),
+      resourceBindings: Object.freeze(
+        [...resourceBindings]
+          .sort(([left], [right]) => compareStrings(left, right))
+          .map(([requirementId, selectionId]) =>
+            Object.freeze([requirementId, selectionId] as const)
+          )
+      ),
+      executionPolicies: Object.freeze(
+        executionDescriptorTable
+          .entries()
+          .map(([ref, descriptor]) => Object.freeze([ref, descriptor.policy] as const))
+      ),
+    }
+  );
 }

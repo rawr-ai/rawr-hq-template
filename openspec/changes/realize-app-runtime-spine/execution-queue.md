@@ -7,21 +7,24 @@ This queue does not select work in another task.
 
 ## Current State
 
-Realignment preparation is locally complete and independently reviewed; its
-[workstream](../../../docs/projects/habitat-runtime-realignment/WORKSTREAM.md)
-defines the required Graphite/exact-main admission condition. Runtime source
-remains paused. After that admission, the first implementation action is
-**0.1: correct the cold semantic
-pipeline**, followed by **0.2: simplify trusted boot admission**. Neither is
-implemented by this documentation/policy preparation.
+Realignment preparation is admitted through PR 1007 and exact-main Repository
+Ratchet at `80c19fc1291515acbf21e88c97385d5e29d74341`. The owner has authorized
+resumed implementation with iterative research and independent steward review.
+The [implementation record](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md)
+holds the current frame, team, findings and proof. **0.1: correct the cold
+semantic pipeline** and **0.2: simplify trusted boot admission** are implemented,
+independently reviewed and locally accepted, including full repository CI and
+installed SDK/CLI acceptance. Graphite admission is the current gate; **7.1-7.5:
+native acquisition** follows it.
 
-Baseline main has schema, definition, derivation, compiler and bootgraph owners.
+Opening main has schema, definition, derivation, compiler and bootgraph owners.
 It has no live Effect provisioning, process binding, generic harness owner,
-observation owner or mounting owner. Existing cold code/tests still embody the
+observation owner or mounting owner. Its baseline cold code/tests embody the
 previous target in named-instance mapping, profile coverage, constructor
 handoff, compiler normalization and Proxy admission. The Unicode and DAG work
-defects also remain source work. These gaps must be repaired, not waived by
-baseline green tests.
+defects also existed at that baseline. The current isolated candidate repairs
+those cold-pipeline gaps with composed review, bootgraph and packed SDK checks.
+It is not yet merged or released.
 
 Released 0.5.15 provides foundation/service law. Current main's added runtime
 faces have not thereby been published. Installed local candidate proof,
@@ -66,6 +69,13 @@ Cross-cutting owner law/schema/cache/router obligations are acceptance condition
 not a second earlier serial queue.
 
 ## Independent Work
+
+Before affected SDK authoring work (8.3, 10.1, server/async and web), apply the
+owner's [SDK authorship investigation input](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#sdk-authorship-investigation-input).
+It requires locating and assessing the Documents/Projects/RAWR "SDK design
+update" and prior incorporation, native-provider anchoring, and bounded semantic
+ablation under requisite variety. It is future design input, not new authority
+or a blocker to the current cold repair.
 
 Ledger D-1, inquiry D-2, later Rawr adoption/retirement D-3 and native
 agent/desktop host integration D-4 are in

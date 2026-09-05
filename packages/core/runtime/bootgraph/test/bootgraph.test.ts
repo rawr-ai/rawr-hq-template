@@ -6,7 +6,7 @@ import { createProjectGraphAsync, readProjectsConfigurationFromProjectGraph } fr
 import { Check } from "typebox/value";
 import { parseConfigFileTextToJson } from "typescript";
 
-import type { BootgraphInput } from "../../compiler/src";
+import { type BootgraphInput, BootgraphInputSchema } from "../../compiler/src";
 import * as runtimeBootgraph from "../src";
 import { BootgraphSchema, orderBootgraph } from "../src";
 
@@ -73,10 +73,6 @@ function permutations<T>(values: readonly T[]): T[][] {
       ...remainder,
     ])
   );
-}
-
-function nullPrototypeRecord<T extends object>(value: T): T {
-  return Object.assign(Object.create(null), value) as T;
 }
 
 function copyInput(value: BootgraphInput): BootgraphInput {
@@ -157,6 +153,7 @@ function expectSuccessfulOutput(
   expectedDependencies: Readonly<Record<string, readonly string[]>> = {}
 ): Bootgraph {
   const inputObjects = collectObjects(value);
+  expect(Check(BootgraphInputSchema, value)).toBe(true);
   const result = orderBootgraph(value);
 
   expect(Check(BootgraphSchema, result)).toBe(true);
@@ -234,15 +231,6 @@ function expectBuiltInTypeErrorBeforeResult(value: unknown, name: string): void 
   expect(result, name).toBe(noResult);
   expect(thrown, name).toBeInstanceOf(TypeError);
   expect(thrown instanceof TypeError ? thrown.constructor : undefined, name).toBe(TypeError);
-}
-
-function expectBuiltInTypeErrorWithoutAccessorWork(
-  value: unknown,
-  name: string,
-  accessorCalls: () => number
-): void {
-  expectBuiltInTypeErrorBeforeResult(value, name);
-  expect(accessorCalls(), name).toBe(0);
 }
 
 function readJson(relativePath: string): JsonObject {
@@ -489,33 +477,6 @@ describe("runtime bootgraph", () => {
     ]);
   });
 
-  test("accepts exact null-prototype input, node, resource, and edge records", () => {
-    const dependencyBase = makeNode("1", "resource.null-dependency");
-    const dependentBase = makeNode("2", "resource.null-dependent", {
-      lifetime: "role",
-      role: "agent",
-      instance: "primary",
-    });
-    const dependency = nullPrototypeRecord({
-      ...dependencyBase,
-      resource: nullPrototypeRecord({ ...dependencyBase.resource }),
-    });
-    const dependent = nullPrototypeRecord({
-      ...dependentBase,
-      resource: nullPrototypeRecord({ ...dependentBase.resource }),
-    });
-    const edge = nullPrototypeRecord({ ...makeEdge("2", "1", "1") });
-    const value = nullPrototypeRecord({
-      kind: "bootgraph.input" as const,
-      nodes: [dependent, dependency],
-      edges: [edge],
-    });
-
-    expectSuccessfulOutput(value, [selectionId("1"), selectionId("2")], {
-      [selectionId("2")]: [selectionId("1")],
-    });
-  });
-
   test("preserves the complete input object graph on success and refusal", () => {
     const successfulInput = copyInput(baselineInput);
     Object.freeze(successfulInput.nodes[0]!.resource);
@@ -574,8 +535,16 @@ describe("runtime bootgraph", () => {
       ...validEdgeInput,
       edges: [replacement],
     });
+    const sparseNodes = [...valid.nodes];
+    delete sparseNodes[0];
+    const sparseEdges = [...valid.edges];
+    delete sparseEdges[0];
     const cases: readonly { readonly name: string; readonly value: unknown }[] = [
+      { name: "undefined input", value: undefined },
       { name: "null input", value: null },
+      { name: "numeric input", value: 1 },
+      { name: "string input", value: "bootgraph.input" },
+      { name: "boolean input", value: true },
       { name: "array input", value: [] },
       { name: "missing input kind", value: { nodes: valid.nodes, edges: valid.edges } },
       { name: "wrong input kind", value: { ...valid, kind: "bootgraph.wrong" } },
@@ -584,6 +553,9 @@ describe("runtime bootgraph", () => {
       { name: "missing edges", value: { kind: valid.kind, nodes: valid.nodes } },
       { name: "non-array edges", value: { ...valid, edges: {} } },
       { name: "surplus input field", value: { ...valid, surplus: true } },
+      { name: "sparse nodes array", value: { ...valid, nodes: sparseNodes } },
+      { name: "sparse edges array", value: { ...valid, edges: sparseEdges } },
+      { name: "undefined node", value: replaceNode(undefined) },
       { name: "null node", value: replaceNode(null) },
       { name: "array node", value: replaceNode([]) },
       {
@@ -641,6 +613,7 @@ describe("runtime bootgraph", () => {
         name: "surplus resource field",
         value: replaceNode({ ...node, resource: { ...resource, surplus: true } }),
       },
+      { name: "undefined edge", value: replaceEdge(undefined) },
       { name: "null edge", value: replaceEdge(null) },
       { name: "array edge", value: replaceEdge([]) },
       {
@@ -691,380 +664,6 @@ describe("runtime bootgraph", () => {
       { name: "surplus edge field", value: replaceEdge({ ...edge, surplus: true }) },
     ];
     for (const { name, value } of cases) expectBuiltInTypeErrorBeforeResult(value, name);
-  });
-
-  test("refuses non-ordinary, accessor, hidden, symbolic, sparse, and augmented containers", () => {
-    let accessorCalls = 0;
-    const cases: {
-      name: string;
-      value: unknown;
-      accessorCalls?: () => number;
-    }[] = [];
-    const addAccessorCase = (
-      name: string,
-      target: object,
-      key: PropertyKey,
-      value: unknown,
-      wrap: (target: object) => unknown
-    ) => {
-      Object.defineProperty(target, key, {
-        configurable: true,
-        enumerable: true,
-        get: () => {
-          accessorCalls += 1;
-          return value;
-        },
-      });
-      cases.push({ name, value: wrap(target), accessorCalls: () => accessorCalls });
-    };
-
-    const valid = copyInput(baselineInput);
-    const validNodeArrayInput = makeInput(valid.nodes);
-    const validEdgeInput = makeInput(
-      [makeNode("5", "resource.edge-target"), makeNode("6", "resource.edge-source")],
-      [makeEdge("6", "7", "5")]
-    );
-    const replaceNode = (replacement: unknown) => ({
-      ...valid,
-      nodes: [replacement, ...valid.nodes.slice(1)],
-    });
-    const replaceEdge = (replacement: unknown) => ({
-      ...validEdgeInput,
-      edges: [replacement],
-    });
-    cases.push({
-      name: "foreign input prototype",
-      value: Object.assign(Object.create({ foreign: true }), valid),
-    });
-    cases.push({
-      name: "foreign node prototype",
-      value: replaceNode(Object.assign(Object.create({ foreign: true }), valid.nodes[0])),
-    });
-    cases.push({
-      name: "foreign resource prototype",
-      value: replaceNode({
-        ...valid.nodes[0]!,
-        resource: Object.assign(Object.create({ foreign: true }), valid.nodes[0]!.resource),
-      }),
-    });
-    cases.push({
-      name: "foreign edge prototype",
-      value: replaceEdge(Object.assign(Object.create({ foreign: true }), validEdgeInput.edges[0])),
-    });
-
-    class NodeArray extends Array<BootgraphNode> {}
-    cases.push({
-      name: "node array subclass",
-      value: { ...validNodeArrayInput, nodes: new NodeArray(...validNodeArrayInput.nodes) },
-    });
-    class EdgeArray extends Array<BootgraphEdge> {}
-    cases.push({
-      name: "edge array subclass",
-      value: { ...validEdgeInput, edges: new EdgeArray(...validEdgeInput.edges) },
-    });
-
-    for (const [name, collectionKey, fixture] of [
-      ["nodes", "nodes", validNodeArrayInput],
-      ["edges", "edges", validEdgeInput],
-    ] as const) {
-      const sparse = [...fixture[collectionKey]];
-      delete sparse[0];
-      cases.push({ name: `sparse ${name} array`, value: { ...fixture, [collectionKey]: sparse } });
-
-      const hidden = [...fixture[collectionKey]];
-      Object.defineProperty(hidden, "0", {
-        configurable: true,
-        enumerable: false,
-        value: hidden[0],
-        writable: true,
-      });
-      cases.push({ name: `hidden ${name} index`, value: { ...fixture, [collectionKey]: hidden } });
-
-      const augmented = [...fixture[collectionKey]];
-      Object.defineProperty(augmented, "surplus", {
-        configurable: true,
-        enumerable: true,
-        value: true,
-        writable: true,
-      });
-      cases.push({
-        name: `augmented ${name} array`,
-        value: { ...fixture, [collectionKey]: augmented },
-      });
-
-      const hiddenSurplus = [...fixture[collectionKey]];
-      Object.defineProperty(hiddenSurplus, "surplus", {
-        configurable: true,
-        enumerable: false,
-        value: true,
-        writable: true,
-      });
-      cases.push({
-        name: `hidden surplus ${name} array field`,
-        value: { ...fixture, [collectionKey]: hiddenSurplus },
-      });
-
-      const symbolic = [...fixture[collectionKey]];
-      Object.defineProperty(symbolic, Symbol(name), {
-        configurable: true,
-        enumerable: true,
-        value: true,
-        writable: true,
-      });
-      cases.push({
-        name: `symbolic ${name} array field`,
-        value: { ...fixture, [collectionKey]: symbolic },
-      });
-    }
-
-    const hugeSparseNodes: BootgraphNode[] = [];
-    hugeSparseNodes.length = 0xffffffff;
-    cases.push({
-      name: "huge sparse nodes array",
-      value: { ...validNodeArrayInput, nodes: hugeSparseNodes },
-    });
-
-    const hiddenNode = { ...valid.nodes[0]! };
-    Object.defineProperty(hiddenNode, "providerId", {
-      configurable: true,
-      enumerable: false,
-      value: hiddenNode.providerId,
-      writable: true,
-    });
-    cases.push({ name: "hidden node field", value: replaceNode(hiddenNode) });
-
-    const hiddenSurplusInput = copyInput(baselineInput);
-    Object.defineProperty(hiddenSurplusInput, "surplus", {
-      configurable: true,
-      enumerable: false,
-      value: true,
-      writable: true,
-    });
-    cases.push({ name: "hidden surplus input field", value: hiddenSurplusInput });
-    const hiddenSurplusNode = { ...valid.nodes[0]! };
-    Object.defineProperty(hiddenSurplusNode, "surplus", {
-      configurable: true,
-      enumerable: false,
-      value: true,
-      writable: true,
-    });
-    cases.push({
-      name: "hidden surplus node field",
-      value: replaceNode(hiddenSurplusNode),
-    });
-
-    const hiddenResource = { ...valid.nodes[0]!.resource };
-    Object.defineProperty(hiddenResource, "resourceId", {
-      configurable: true,
-      enumerable: false,
-      value: hiddenResource.resourceId,
-      writable: true,
-    });
-    cases.push({
-      name: "hidden resource field",
-      value: replaceNode({ ...valid.nodes[0]!, resource: hiddenResource }),
-    });
-    const hiddenSurplusResource = { ...valid.nodes[0]!.resource };
-    Object.defineProperty(hiddenSurplusResource, "surplus", {
-      configurable: true,
-      enumerable: false,
-      value: true,
-      writable: true,
-    });
-    cases.push({
-      name: "hidden surplus resource field",
-      value: replaceNode({ ...valid.nodes[0]!, resource: hiddenSurplusResource }),
-    });
-    const hiddenRoleResource = {
-      resourceId: "resource.hidden-role",
-      lifetime: "role",
-      role: "server",
-    };
-    Object.defineProperty(hiddenRoleResource, "role", {
-      configurable: true,
-      enumerable: false,
-      value: "server",
-      writable: true,
-    });
-    cases.push({
-      name: "hidden optional role field",
-      value: {
-        ...valid,
-        nodes: [{ ...makeNode("d", "resource.hidden-role"), resource: hiddenRoleResource }],
-        edges: [],
-      },
-    });
-    const hiddenInstanceResource = {
-      resourceId: "resource.hidden-instance",
-      lifetime: "process",
-      instance: "primary",
-    };
-    Object.defineProperty(hiddenInstanceResource, "instance", {
-      configurable: true,
-      enumerable: false,
-      value: "primary",
-      writable: true,
-    });
-    cases.push({
-      name: "hidden optional instance field",
-      value: {
-        ...valid,
-        nodes: [{ ...makeNode("d", "resource.hidden-instance"), resource: hiddenInstanceResource }],
-        edges: [],
-      },
-    });
-    const inheritedRoleResource = Object.assign(Object.create({ role: "server" }), {
-      resourceId: "resource.inherited-role",
-      lifetime: "role",
-    });
-    cases.push({
-      name: "inherited optional role field",
-      value: {
-        ...valid,
-        nodes: [{ ...makeNode("d", "resource.inherited-role"), resource: inheritedRoleResource }],
-        edges: [],
-      },
-    });
-    const inheritedInstanceResource = Object.assign(Object.create({ instance: "primary" }), {
-      resourceId: "resource.inherited-instance",
-      lifetime: "process",
-    });
-    cases.push({
-      name: "inherited optional instance field",
-      value: {
-        ...valid,
-        nodes: [
-          {
-            ...makeNode("d", "resource.inherited-instance"),
-            resource: inheritedInstanceResource,
-          },
-        ],
-        edges: [],
-      },
-    });
-
-    const hiddenEdge = { ...validEdgeInput.edges[0]! };
-    Object.defineProperty(hiddenEdge, "requirementId", {
-      configurable: true,
-      enumerable: false,
-      value: hiddenEdge.requirementId,
-      writable: true,
-    });
-    cases.push({ name: "hidden edge field", value: replaceEdge(hiddenEdge) });
-    const hiddenSurplusEdge = { ...validEdgeInput.edges[0]! };
-    Object.defineProperty(hiddenSurplusEdge, "surplus", {
-      configurable: true,
-      enumerable: false,
-      value: true,
-      writable: true,
-    });
-    cases.push({
-      name: "hidden surplus edge field",
-      value: replaceEdge(hiddenSurplusEdge),
-    });
-
-    const symbolicInput = copyInput(baselineInput) as BootgraphInput & { [key: symbol]: boolean };
-    symbolicInput[Symbol("surplus")] = true;
-    cases.push({ name: "symbolic input field", value: symbolicInput });
-    const symbolicNode = { ...valid.nodes[0]! };
-    Object.defineProperty(symbolicNode, Symbol("node surplus"), {
-      configurable: true,
-      enumerable: true,
-      value: true,
-      writable: true,
-    });
-    cases.push({ name: "symbolic node field", value: replaceNode(symbolicNode) });
-    const symbolicResource = { ...valid.nodes[0]!.resource };
-    Object.defineProperty(symbolicResource, Symbol("resource surplus"), {
-      configurable: true,
-      enumerable: true,
-      value: true,
-      writable: true,
-    });
-    cases.push({
-      name: "symbolic resource field",
-      value: replaceNode({ ...valid.nodes[0]!, resource: symbolicResource }),
-    });
-    const symbolicEdge = { ...validEdgeInput.edges[0]! };
-    Object.defineProperty(symbolicEdge, Symbol("edge surplus"), {
-      configurable: true,
-      enumerable: true,
-      value: true,
-      writable: true,
-    });
-    cases.push({ name: "symbolic edge field", value: replaceEdge(symbolicEdge) });
-
-    const accessorInput = copyInput(baselineInput);
-    addAccessorCase(
-      "input accessor",
-      accessorInput,
-      "nodes",
-      accessorInput.nodes,
-      (target) => target
-    );
-    const accessorNode = { ...valid.nodes[0]! };
-    addAccessorCase(
-      "node accessor",
-      accessorNode,
-      "providerId",
-      accessorNode.providerId,
-      replaceNode
-    );
-    const accessorResource = { ...valid.nodes[0]!.resource };
-    addAccessorCase(
-      "resource accessor",
-      accessorResource,
-      "resourceId",
-      accessorResource.resourceId,
-      (target) => replaceNode({ ...valid.nodes[0]!, resource: target })
-    );
-    const accessorEdge = { ...validEdgeInput.edges[0]! };
-    addAccessorCase(
-      "edge accessor",
-      accessorEdge,
-      "requirementId",
-      accessorEdge.requirementId,
-      replaceEdge
-    );
-    const accessorNodes = [...validNodeArrayInput.nodes];
-    addAccessorCase("node array accessor", accessorNodes, "0", accessorNodes[0], (target) => ({
-      ...validNodeArrayInput,
-      nodes: target,
-    }));
-    const accessorEdges = [...validEdgeInput.edges];
-    addAccessorCase("edge array accessor", accessorEdges, "0", accessorEdges[0], (target) => ({
-      ...validEdgeInput,
-      edges: target,
-    }));
-
-    for (const { name, value, accessorCalls: calls } of cases) {
-      if (calls === undefined) expectBuiltInTypeErrorBeforeResult(value, name);
-      else expectBuiltInTypeErrorWithoutAccessorWork(value, name, calls);
-    }
-    expect(accessorCalls).toBe(0);
-  });
-
-  test("refuses inherited numeric array entries without leaking global state", () => {
-    const inheritedIndex = ["4294967294", "4294967293", "4294967292"].find(
-      (key) =>
-        !Object.prototype.hasOwnProperty.call(Object.prototype, key) &&
-        !Object.prototype.hasOwnProperty.call(Array.prototype, key)
-    );
-    if (inheritedIndex === undefined)
-      throw new Error("No unoccupied high array index is available.");
-
-    try {
-      Object.defineProperty(Object.prototype, inheritedIndex, {
-        configurable: true,
-        enumerable: false,
-        value: "inherited numeric pollution",
-        writable: true,
-      });
-      expectBuiltInTypeErrorBeforeResult(baselineInput, "inherited numeric array entry");
-    } finally {
-      Reflect.deleteProperty(Object.prototype, inheritedIndex);
-    }
-    expect(Object.prototype.hasOwnProperty.call(Object.prototype, inheritedIndex)).toBe(false);
   });
 
   test("refuses every duplicate identity and exact-edge case", () => {
@@ -1177,220 +776,5 @@ describe("runtime bootgraph", () => {
       "orderBootgraph",
     ]);
     expect("BOOTGRAPH_RESERVATION" in runtimeBootgraph).toBe(false);
-  });
-});
-
-describe("runtime bootgraph task 6.2b Proxy admission", () => {
-  type ProxyWrapper = <T extends object>(target: T) => T;
-  type ProxyCandidate = {
-    readonly name: string;
-    readonly create: (wrap: ProxyWrapper) => unknown;
-  };
-
-  function expectBuiltInTypeError(value: unknown, name: string): void {
-    const noResult = Symbol("no result");
-    let result: unknown = noResult;
-    let thrown: unknown;
-    try {
-      result = orderBootgraph(value as BootgraphInput);
-    } catch (error) {
-      thrown = error;
-    }
-    expect(result, name).toBe(noResult);
-    expect(thrown, name).toBeInstanceOf(TypeError);
-    expect(thrown instanceof TypeError ? thrown.constructor : undefined, name).toBe(TypeError);
-  }
-
-  const proxyCandidates: readonly ProxyCandidate[] = [
-    {
-      name: "input shell",
-      create: (wrap) => wrap(copyInput(baselineInput)),
-    },
-    {
-      name: "nodes array",
-      create: (wrap) => {
-        const value = copyInput(baselineInput);
-        return { ...value, nodes: wrap(value.nodes) };
-      },
-    },
-    {
-      name: "edges array",
-      create: (wrap) => {
-        const value = copyInput(baselineInput);
-        return { ...value, edges: wrap(value.edges) };
-      },
-    },
-    {
-      name: "node record",
-      create: (wrap) => {
-        const value = copyInput(baselineInput);
-        return { ...value, nodes: [wrap(value.nodes[0]!), ...value.nodes.slice(1)] };
-      },
-    },
-    {
-      name: "resource record",
-      create: (wrap) => {
-        const value = copyInput(baselineInput);
-        const firstNode = value.nodes[0]!;
-        return {
-          ...value,
-          nodes: [{ ...firstNode, resource: wrap(firstNode.resource) }, ...value.nodes.slice(1)],
-        };
-      },
-    },
-    {
-      name: "edge record",
-      create: (wrap) => {
-        const value = copyInput(baselineInput);
-        return { ...value, edges: [wrap(value.edges[0]!), ...value.edges.slice(1)] };
-      },
-    },
-  ];
-
-  test("refuses active and revoked Proxies at all six container positions without traps", () => {
-    const marker = new Error("Proxy trap invoked");
-    let trapCalls = 0;
-    const trap = (): never => {
-      trapCalls += 1;
-      throw marker;
-    };
-    const handler = <T extends object>(): ProxyHandler<T> => ({
-      getPrototypeOf: trap,
-      ownKeys: trap,
-      getOwnPropertyDescriptor: trap,
-      has: trap,
-      get: trap,
-    });
-    const activeProxy: ProxyWrapper = <T extends object>(target: T): T =>
-      new Proxy(target, handler<T>());
-    const revokedProxy: ProxyWrapper = <T extends object>(target: T): T => {
-      const revocable = Proxy.revocable(target, handler<T>());
-      revocable.revoke();
-      return revocable.proxy;
-    };
-
-    for (const { name, create } of proxyCandidates) {
-      expectBuiltInTypeError(create(activeProxy), `active ${name}`);
-      expectBuiltInTypeError(create(revokedProxy), `revoked ${name}`);
-    }
-    expect(trapCalls).toBe(0);
-  });
-
-  test("refuses direct and inherited proxied record and array prototypes without traps", () => {
-    const marker = new Error("prototype Proxy trap invoked");
-    let trapCalls = 0;
-    const trap = (): never => {
-      trapCalls += 1;
-      throw marker;
-    };
-    const handler: ProxyHandler<object> = {
-      getPrototypeOf: trap,
-      ownKeys: trap,
-      getOwnPropertyDescriptor: trap,
-      has: trap,
-      get: trap,
-    };
-    const proxiedPrototype = new Proxy({}, handler);
-    const inheritedPrototype = Object.create(proxiedPrototype);
-    const revokedPrototype = Proxy.revocable({}, handler);
-    revokedPrototype.revoke();
-    const revokedInheritedPrototype = Object.create(revokedPrototype.proxy);
-
-    const directRecord = copyInput(baselineInput);
-    Object.setPrototypeOf(directRecord, proxiedPrototype);
-    const inheritedRecord = copyInput(baselineInput);
-    Object.setPrototypeOf(inheritedRecord, inheritedPrototype);
-    const directArray = copyInput(baselineInput);
-    Object.setPrototypeOf(directArray.nodes, proxiedPrototype);
-    const inheritedArray = copyInput(baselineInput);
-    Object.setPrototypeOf(inheritedArray.nodes, inheritedPrototype);
-    const revokedDirectRecord = copyInput(baselineInput);
-    Object.setPrototypeOf(revokedDirectRecord, revokedPrototype.proxy);
-    const revokedInheritedRecord = copyInput(baselineInput);
-    Object.setPrototypeOf(revokedInheritedRecord, revokedInheritedPrototype);
-    const revokedDirectArray = copyInput(baselineInput);
-    Object.setPrototypeOf(revokedDirectArray.nodes, revokedPrototype.proxy);
-    const revokedInheritedArray = copyInput(baselineInput);
-    Object.setPrototypeOf(revokedInheritedArray.nodes, revokedInheritedPrototype);
-
-    const cases = [
-      { name: "direct record prototype", value: directRecord },
-      { name: "inherited record prototype", value: inheritedRecord },
-      { name: "direct array prototype", value: directArray },
-      { name: "inherited array prototype", value: inheritedArray },
-      { name: "revoked direct record prototype", value: revokedDirectRecord },
-      { name: "revoked inherited record prototype", value: revokedInheritedRecord },
-      { name: "revoked direct array prototype", value: revokedDirectArray },
-      { name: "revoked inherited array prototype", value: revokedInheritedArray },
-    ] as const;
-    for (const { name, value } of cases) expectBuiltInTypeError(value, name);
-    expect(trapCalls).toBe(0);
-  });
-
-  test("refuses record-field and array-index accessors without invoking getters", () => {
-    const marker = new Error("getter invoked");
-    let getterCalls = 0;
-    const getter = (): never => {
-      getterCalls += 1;
-      throw marker;
-    };
-
-    const recordField = copyInput(baselineInput);
-    Object.defineProperty(recordField, "nodes", {
-      configurable: true,
-      enumerable: true,
-      get: getter,
-    });
-    const arrayIndex = copyInput(baselineInput);
-    const nodes = [...arrayIndex.nodes];
-    Object.defineProperty(nodes, "0", {
-      configurable: true,
-      enumerable: true,
-      get: getter,
-    });
-
-    expectBuiltInTypeError(recordField, "record field accessor");
-    expectBuiltInTypeError({ ...arrayIndex, nodes }, "array index accessor");
-    expect(getterCalls).toBe(0);
-  });
-
-  test("preserves one synchronous exact closed-schema-valid success", () => {
-    const validSelectionId = selectionId("4");
-    const value = {
-      kind: "bootgraph.input",
-      nodes: [
-        {
-          selectionId: validSelectionId,
-          providerId: "provider.worker",
-          resource: { resourceId: "resource.worker", lifetime: "process" },
-        },
-      ],
-      edges: [],
-    } as const satisfies BootgraphInput;
-    const key = {
-      kind: "boot.resource-key",
-      selectionId: validSelectionId,
-      resourceId: "resource.worker",
-      lifetime: "process",
-    } as const;
-
-    const result = expectSuccessfulOutput(value, [validSelectionId]);
-
-    expect(result).not.toBeInstanceOf(Promise);
-    expect(Check(BootgraphSchema, result)).toBe(true);
-    expect(result).toEqual({
-      kind: "bootgraph.ordered",
-      modules: [
-        {
-          kind: "boot.resource-module",
-          key,
-          providerId: "provider.worker",
-          dependencies: [],
-        },
-      ],
-      order: [key],
-      rollbackOrder: [key],
-      releaseOrder: [key],
-    });
   });
 });

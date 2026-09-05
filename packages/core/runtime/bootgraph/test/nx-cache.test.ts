@@ -99,6 +99,7 @@ async function createFixture(): Promise<string> {
       "@standard-schema/spec",
       "@types/node",
       "bun-types",
+      "effect",
       "nx",
       "tsdown",
       "typebox",

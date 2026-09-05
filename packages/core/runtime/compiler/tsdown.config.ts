@@ -13,10 +13,13 @@ export default defineConfig({
   },
   deps: {
     neverBundle: true,
+    // The terminal SDK bundles source; private declarations preserve owner identity.
+    dts: { neverBundle: [/^\.\.\/\.\.\/(definition|derivation)\/src\//, /^[^./]/] },
     onlyImport: [
       "@orpc/contract",
       "@orpc/server",
       "@standard-schema/spec",
+      "effect",
       "node:crypto",
       "typebox",
     ],

@@ -1,5 +1,3 @@
-import { isProxy } from "node:util/types";
-
 import { ReadonlyObject, type Static, type TSchema, Type } from "typebox";
 import { Check } from "typebox/value";
 
@@ -36,129 +34,9 @@ function refuse(): never {
   throw new TypeError("Bootgraph ordering refused.");
 }
 
-function collectPrototypeChain(value: object): readonly object[] | undefined {
-  const prototypes: object[] = [];
-  const seen = new Set<object>();
-  let prototype = Object.getPrototypeOf(value);
-
-  while (prototype !== null) {
-    if (isProxy(prototype) || seen.has(prototype)) return undefined;
-    seen.add(prototype);
-    prototypes.push(prototype);
-    prototype = Object.getPrototypeOf(prototype);
-  }
-
-  return prototypes;
-}
-
-function readExactOwnDataProperties(
-  value: unknown,
-  required: readonly string[],
-  optional: readonly string[] = []
-): ReadonlyMap<string, unknown> | undefined {
-  if (isProxy(value)) return undefined;
-  if (value === null || typeof value !== "object" || Array.isArray(value)) return undefined;
-
-  const prototypes = collectPrototypeChain(value);
-  if (prototypes === undefined) return undefined;
-  const directPrototype = prototypes[0] ?? null;
-  if (directPrototype !== Object.prototype && directPrototype !== null) return undefined;
-
-  const allowed = new Set([...required, ...optional]);
-  const keys = Reflect.ownKeys(value);
-  const properties = new Map<string, unknown>();
-
-  for (const key of keys) {
-    if (typeof key !== "string" || !allowed.has(key)) return undefined;
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (descriptor === undefined || !("value" in descriptor) || !descriptor.enumerable) {
-      return undefined;
-    }
-    properties.set(key, descriptor.value);
-  }
-
-  if (required.some((key) => !properties.has(key))) return undefined;
-  for (const key of optional) {
-    if (properties.has(key)) continue;
-    for (const prototype of prototypes) {
-      if (Object.getOwnPropertyDescriptor(prototype, key) !== undefined) return undefined;
-    }
-  }
-
-  return properties;
-}
-
-function isCanonicalArrayIndex(key: PropertyKey): key is string {
-  if (typeof key !== "string" || key.length === 0) return false;
-  const index = Number(key);
-  return Number.isInteger(index) && index >= 0 && index < 2 ** 32 - 1 && `${index}` === key;
-}
-
-function readDenseOwnDataArray(value: unknown): readonly unknown[] | undefined {
-  if (isProxy(value)) return undefined;
-  if (!Array.isArray(value)) return undefined;
-
-  const prototypes = collectPrototypeChain(value);
-  if (prototypes === undefined || prototypes[0] !== Array.prototype) return undefined;
-  for (const prototype of prototypes) {
-    if (Reflect.ownKeys(prototype).some(isCanonicalArrayIndex)) return undefined;
-  }
-
-  const keys = Reflect.ownKeys(value);
-  const lengthDescriptor = Object.getOwnPropertyDescriptor(value, "length");
-  if (lengthDescriptor === undefined || !("value" in lengthDescriptor)) return undefined;
-  const length = lengthDescriptor.value;
-  if (!Number.isInteger(length) || length < 0 || length > 2 ** 32 - 1) return undefined;
-  if (keys.length !== length + 1) return undefined;
-
-  const elements = new Array<unknown>(length);
-  for (const key of keys) {
-    if (key === "length") continue;
-    if (!isCanonicalArrayIndex(key) || Number(key) >= length) return undefined;
-    const descriptor = Object.getOwnPropertyDescriptor(value, key);
-    if (descriptor === undefined || !("value" in descriptor) || !descriptor.enumerable) {
-      return undefined;
-    }
-    elements[Number(key)] = descriptor.value;
-  }
-
-  return elements;
-}
-
-function hasAdmittedNodeShape(value: unknown): boolean {
-  const properties = readExactOwnDataProperties(value, ["selectionId", "providerId", "resource"]);
-  if (properties === undefined) return false;
-  return (
-    readExactOwnDataProperties(
-      properties.get("resource"),
-      ["resourceId", "lifetime"],
-      ["role", "instance"]
-    ) !== undefined
-  );
-}
-
-function hasAdmittedEdgeShape(value: unknown): boolean {
-  return (
-    readExactOwnDataProperties(value, ["fromSelectionId", "requirementId", "toSelectionId"]) !==
-    undefined
-  );
-}
-
-function scanAdmittedInput(value: unknown): boolean {
-  const properties = readExactOwnDataProperties(value, ["kind", "nodes", "edges"]);
-  if (properties === undefined) return false;
-
-  const nodes = readDenseOwnDataArray(properties.get("nodes"));
-  const edges = readDenseOwnDataArray(properties.get("edges"));
-  if (nodes === undefined || edges === undefined) return false;
-  for (const node of nodes) if (!hasAdmittedNodeShape(node)) return false;
-  for (const edge of edges) if (!hasAdmittedEdgeShape(edge)) return false;
-  return true;
-}
-
 function assertAdmittedInput(value: unknown): asserts value is BootgraphInput {
   try {
-    if (!scanAdmittedInput(value) || !Check(BootgraphInputSchema, value)) refuse();
+    if (!Check(BootgraphInputSchema, value)) refuse();
   } catch {
     refuse();
   }

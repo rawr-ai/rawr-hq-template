@@ -13,12 +13,14 @@ export default defineConfig({
   },
   deps: {
     neverBundle: true,
+    dts: {
+      neverBundle: [/^\.\.\/\.\.\/compiler\/src(?:\/|$)/, /^[^./]/],
+    },
     onlyImport: [
       "@orpc/contract",
       "@orpc/server",
       "@standard-schema/spec",
       "node:crypto",
-      "node:util",
       "typebox",
     ],
   },

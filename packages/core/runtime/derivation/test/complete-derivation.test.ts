@@ -59,6 +59,7 @@ import {
   NormalizedJsonValueSchema,
 } from "../src/normalized-authoring-graph";
 import { createWebRouteModuleTable } from "../src/web-route-module-table";
+import { coldService } from "./support/cold-service";
 
 type TypesEqual<TLeft, TRight> =
   (<T>() => T extends TLeft ? 1 : 2) extends <T>() => T extends TRight ? 1 : 2
@@ -119,36 +120,43 @@ function makeFixture(options: FixtureOptions = {}) {
     purpose: "Fixture optional resource",
   });
 
-  const shared = defineService({
-    id: "fixture.shared",
-    deps: { database: resourceDep(processResource) },
-    scope: LaneSchema,
-    config: LaneSchema,
-  });
-  const left = defineService({
-    id: "fixture.left",
-    deps: { shared: serviceDep(shared) },
-    scope: LaneSchema,
-    config: LaneSchema,
-  });
-  const right = defineService({
-    id: "fixture.right",
-    deps: { shared: serviceDep(shared) },
-    scope: LaneSchema,
-    config: LaneSchema,
-  });
-  const root = defineService({
-    id: "fixture.root",
-    deps: {
-      cache: resourceDep(roleResource),
-      left: serviceDep(left),
-      right: serviceDep(right),
-      telemetry: semanticDep("fixture.telemetry"),
-    },
-    scope: LaneSchema,
-    config: LaneSchema,
-  });
-  const contract = root.oc.router({ read: root.oc });
+  const shared = coldService(
+    defineService({
+      id: "fixture.shared",
+      deps: { database: resourceDep(processResource) },
+      scope: LaneSchema,
+      config: LaneSchema,
+    })
+  );
+  const left = coldService(
+    defineService({
+      id: "fixture.left",
+      deps: { shared: serviceDep(shared) },
+      scope: LaneSchema,
+      config: LaneSchema,
+    })
+  );
+  const right = coldService(
+    defineService({
+      id: "fixture.right",
+      deps: { shared: serviceDep(shared) },
+      scope: LaneSchema,
+      config: LaneSchema,
+    })
+  );
+  const root = coldService(
+    defineService({
+      id: "fixture.root",
+      deps: {
+        cache: resourceDep(roleResource),
+        left: serviceDep(left),
+        right: serviceDep(right),
+        telemetry: semanticDep("fixture.telemetry"),
+      },
+      scope: LaneSchema,
+      config: LaneSchema,
+    })
+  );
   const binding = {
     scope: { kind: "runtime.config" as const, key: "ROOT_SCOPE" },
     config: { kind: "runtime.config" as const, key: "ROOT_CONFIG" },
@@ -198,7 +206,7 @@ function makeFixture(options: FixtureOptions = {}) {
   });
   const asyncPlugin = defineAsyncWorkflowPlugin.factory()({
     capability: "jobs",
-    services: { root: useService(root, { contract, binding }) },
+    services: { root: useService(root, { binding }) },
     resourceRequirements: [
       requireResource({
         resource: optionalResource,
@@ -213,7 +221,7 @@ function makeFixture(options: FixtureOptions = {}) {
     role: "server",
     surface: "server/internal",
     capability: "fixture-server",
-    services: { root: useService(root, { contract, binding }) },
+    services: { root: useService(root, { binding }) },
     resourceRequirements: [],
     project: ({ pluginId }) => ({ kind: "plugin.projection", facts: { pluginId } }),
   });
@@ -1032,7 +1040,7 @@ describe("complete runtime derivation", () => {
       executionDescriptor:
         '{"boundary":"plugin.async-step","kind":"execution.descriptor-identity","ownerId":"plugin-owner:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","stepId":"deliver","workflowId":"delivery"}',
       serviceBinding:
-        '{"configRef":{"key":"CONFIG","kind":"runtime.config-ref","sources":[]},"kind":"service.binding-identity","resourceRequirementIds":["resource-requirement:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"],"role":"async","scopeRef":{"key":"SCOPE","kind":"runtime.config-ref","sources":[]},"semanticDependencyIds":["semantic-dependency:sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"],"serviceBindingIds":["service-binding:sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"],"serviceId":"golden.service","serviceInstance":"primary"}',
+        '{"configRef":{"key":"CONFIG","kind":"runtime.config-ref","sources":[]},"kind":"service.binding-identity","resourceRequirementIds":["resource-requirement:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"],"role":"async","scopeRef":{"key":"SCOPE","kind":"runtime.config-ref","sources":[]},"semanticDependencyIds":["semantic-dependency:sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"],"serviceDependencies":[{"bindingId":"service-binding:sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","localName":"child"}],"serviceId":"golden.service","serviceInstance":"primary"}',
       portable:
         '{"executionDescriptorRefs":[{"boundary":"plugin.async-step","executionId":"execution-descriptor:sha256:5745df06cfdcca54246c2ed3a9bac034a5b7218eca93d17779d24393a1e66111","kind":"execution.descriptor-ref","ownerId":"plugin-owner:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","stepId":"deliver","workflowId":"delivery"}],"identity":{"app":"golden.app","deployment":"test","entrypoint":"golden.entrypoint","process":"golden.process","source":"golden-source"},"kind":"portable.runtime-plan-artifact","profileId":"golden.profile","roles":["async","web"],"surfaces":[{"capability":"jobs","plugin":{"instance":"primary","pluginId":"golden.plugin"},"role":"async","surface":"async/workflow"}]}',
     } as const;
@@ -1046,7 +1054,7 @@ describe("complete runtime derivation", () => {
       surfacePlan: "00152239913cf6940d115ed5737bca5720b0884542f12a41855af93493d6033f",
       workflowDispatcher: "21e4175c54d60484d4c05b4d91ca7d44d6c01b51b8ae9bec9b81c2db7e2716c2",
       executionDescriptor: "5745df06cfdcca54246c2ed3a9bac034a5b7218eca93d17779d24393a1e66111",
-      serviceBinding: "f31223fe89bae8f24fd929433bea5fcc4cfd7a434942f421107dc472cf66cfd3",
+      serviceBinding: "8fdc10aa94883adbd2594aea07aeec08d53c1019860178d01be39def7e30986e",
       portable: "e4203d295e46d96c9b0643795bfecac11f52e165f1766d45fcbdf7c60b6ca39a",
     } as const;
 
@@ -1142,7 +1150,9 @@ describe("complete runtime derivation", () => {
         scopeRef: { kind: "runtime.config-ref", key: "SCOPE", sources: [] },
         configRef: { kind: "runtime.config-ref", key: "CONFIG", sources: [] },
         resourceRequirementIds: [`resource-requirement:sha256:${"b".repeat(64)}`],
-        serviceBindingIds: [`service-binding:sha256:${"d".repeat(64)}`],
+        serviceDependencies: [
+          { localName: "child", bindingId: `service-binding:sha256:${"d".repeat(64)}` },
+        ],
         semanticDependencyIds: [`semantic-dependency:sha256:${"c".repeat(64)}`],
       })
     ).toBe(`service-binding:sha256:${expected.serviceBinding}`);

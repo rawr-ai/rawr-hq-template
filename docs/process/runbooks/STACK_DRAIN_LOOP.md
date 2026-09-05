@@ -1,6 +1,6 @@
 # Stack Drain Loop (Graphite)
 
-Use this runbook when a Graphite stack has multiple branches/PRs that must be published, merged, and pruned in a repeatable loop.
+Use this runbook to publish a stack, let Graphite merge it, then sweep its consumed branches in one pass. Do not orchestrate a separate drain cycle for every branch.
 
 ## When to use
 
@@ -26,21 +26,30 @@ gt sync --no-restack
 - Keep stack mutation Graphite-first (`gt`), not ad-hoc `git rebase`.
 - Promote Habitat, Rawr, and Marketplace independently; never merge one repository into another.
 
-## Canonical drain loop
+## Publish, merge, then sweep
 
-Run this cycle until `gt ls` stabilizes and merged branches are pruned:
+From the intended stack tip, publish and request the native stack merge:
 
 ```bash
 gt ss --publish --ai --stack --no-interactive
 gt merge --no-interactive
-gt sync --no-restack --no-interactive
+```
+
+Wait for Graphite's merge to finish and confirm that the intended PRs are actually merged. A successful merge request is not itself completion. Do not repeatedly submit or merge while that request is still progressing.
+
+Once merged, sweep the consumed branches together:
+
+```bash
+gt sync --force --no-restack --no-interactive
 gt ls
 ```
+
+Check the worktree and branch state before using `--force`: it suppresses overwrite/deletion confirmations, not only prompts about merged branches. Preserve unrelated local work and occupied worktrees. Required checks and exact-main verification still apply; the cleanup mechanism does not replace them.
 
 ## Failure and recovery
 
 1. Merge blocked (checks/review/conflict):
-- Fix the blocking condition, then rerun the canonical loop.
+- Fix the blocking condition and resume at the affected operation, rather than restarting a per-branch loop.
 
 2. Transient test failure while validating drain:
 - Re-run only the failing test once in isolation.
@@ -54,7 +63,7 @@ git worktree list
 ```
 - Remove disposable worktrees pinning merged branches, then rerun:
 ```bash
-gt sync --no-restack --no-interactive
+gt sync --force --no-restack --no-interactive
 ```
 
 4. Stack ordering/drift looks wrong:
@@ -70,7 +79,9 @@ Do not use manual branch deletion as the normal drain cleanup path:
 - `git branch -d <branch>`
 - `git branch -D <branch>`
 
-Use Graphite publish/merge/sync/prune behavior as canonical.
+Use Graphite publish/merge/sync/prune behavior as canonical. Check installed command help when flags change; `gt upgrade --no-interactive` checks for and installs CLI updates.
+
+Command authority: [Graphite command reference](https://graphite.com/docs/command-reference) and the installed CLI help.
 
 ## Exit criteria
 

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import type { RouterContract } from "@orpc/contract";
 import { call, implement } from "@orpc/server";
 import { Type } from "typebox";
 import { Validator } from "typebox/schema";
@@ -48,11 +49,25 @@ import {
   requireResource,
   resourceDep,
   runtimeLaunchIdentity,
+  sealService,
   semanticDep,
   serviceDep,
   TaggedError,
   useService,
 } from "../src";
+
+// Topology-only fixtures must never ask for live service construction.
+function coldService<D extends ServiceDefinition, C extends RouterContract>(
+  definition: D,
+  contract: C
+) {
+  return sealService(definition, {
+    contract,
+    construct: () => {
+      throw new Error("Cold constructor executed");
+    },
+  });
+}
 
 type HabitatEffectChannels<TEffect> =
   TEffect extends HabitatEffect<infer TSuccess, infer TError, infer TRequirements>
@@ -291,7 +306,9 @@ if (false) {
     build: async () =>
       // @ts-expect-error Provider build returns a plan synchronously, never a Promise.
       providerFx.acquireRelease({
-        acquire: providerFx.succeed<ProviderTypeOracleValue>({ now: () => new Date(0) }),
+        acquire: providerFx.succeed<ProviderTypeOracleValue>({
+          now: () => new Date(0),
+        }),
         release: () => providerFx.succeed(undefined),
       }),
   });
@@ -394,7 +411,10 @@ function createEntrypointMismatchFixture(mismatchedField: "app" | "process" | "e
     },
   });
   const app = defineApp({ id: "selection.app", plugins: [plugin] });
-  const profile = defineRuntimeProfile({ id: "selection.profile", providers: [] });
+  const profile = defineRuntimeProfile({
+    id: "selection.profile",
+    providers: [],
+  });
   const process = defineProcessCatalog({
     server: { id: "selection.process", roles: ["server"] },
   }).server;
@@ -478,7 +498,10 @@ describe("runtime definition", () => {
         },
       });
       const app = defineApp({ id: "selected.app", plugins: [plugin] });
-      const profile = defineRuntimeProfile({ id: "selected.profile", providers: [] });
+      const profile = defineRuntimeProfile({
+        id: "selected.profile",
+        providers: [],
+      });
       const process = defineProcessCatalog({
         server: { id: "selected.process", roles: ["server"] },
       }).server;
@@ -600,7 +623,10 @@ describe("runtime definition", () => {
       health: { kind: "provider.health", required: true },
       build: providerBuild,
     });
-    const providerConfig = { kind: "runtime.config", key: "clock.selected" } as const;
+    const providerConfig = {
+      kind: "runtime.config",
+      key: "clock.selected",
+    } as const;
     const selectedProvider = providerSelection({
       resource,
       provider,
@@ -616,13 +642,15 @@ describe("runtime definition", () => {
       id: "work",
       deps: { clock: resourceDep(resource) },
     });
-    const serviceContract = { operation: "list-work" } as const;
+    const serviceContract = service.oc.router({ list: service.oc });
     const plugin = definePlugin({
       id: "work.api",
       role: "server",
       surface: "api.public",
       capability: "work",
-      services: { workItems: useService(service, { contract: serviceContract }) },
+      services: {
+        workItems: useService(coldService(service, serviceContract), {}),
+      },
       resourceRequirements: [],
       project: ({ pluginId }) => ({
         kind: "plugin.projection",
@@ -670,7 +698,7 @@ describe("runtime definition", () => {
     expect(pluginServiceKeysMatch).toBe(true);
     expect(providerSelectionTypeMatches).toBe(true);
     expect(plugin.services.workItems.serviceId).toBe(service.id);
-    expect(readServiceUse(plugin.services.workItems).definition).toBe(service);
+    expect(readServiceUse(plugin.services.workItems).service.definition).toBe(service);
     expect(provider.configSchema?.redaction).toEqual({ paths: ["zone"] });
     expect(profile.providers[0]).toBe(selectedProvider);
     expect(Object.keys(defaultProviderSelection)).toEqual(["provider", "resource"]);
@@ -737,11 +765,15 @@ describe("runtime definition", () => {
       purpose: "Supplies process time.",
     });
     const laneSchema = RuntimeSchema.fromTypeBox(Type.String());
-    const auditLog = defineService({ id: "audit-log", deps: {}, config: laneSchema });
+    const auditLog = defineService({
+      id: "audit-log",
+      deps: {},
+      config: laneSchema,
+    });
     const query = defineService({
       id: "work-query",
       deps: {
-        auditLog: serviceDep(auditLog),
+        auditLog: serviceDep(coldService(auditLog, {})),
         clock: resourceDep(clock),
         audit: semanticDep("audit"),
       },
@@ -752,7 +784,7 @@ describe("runtime definition", () => {
     const service = defineService({
       id: "work-items",
       deps: {
-        query: serviceDep(query),
+        query: serviceDep(coldService(query, {})),
         clock: resourceDep(clock),
         audit: semanticDep("audit"),
       },
@@ -760,9 +792,7 @@ describe("runtime definition", () => {
       config: laneSchema,
       metadataDefaults,
     });
-    const contract = {
-      list: { method: "GET", path: "/work-items" },
-    } as const;
+    const contract = service.oc.router({ list: service.oc });
     const binding = {
       scope: { kind: "runtime.config", key: " work.scope " },
       config: { kind: "runtime.config", key: "work.config" },
@@ -779,24 +809,24 @@ describe("runtime definition", () => {
         },
       },
     } as const;
-    const defaultUse = useService(service, { contract, binding });
-    const replicaUse = useService(service, { contract, instance: "replica" });
+    const defaultUse = useService(coldService(service, contract), { binding });
+    const replicaUse = useService(coldService(service, contract), {
+      instance: "replica",
+    });
     if (false) {
-      // @ts-expect-error A service use always carries an explicit contract witness.
+      // @ts-expect-error A declaration alone is not a complete service export.
       useService(service);
-      // @ts-expect-error An empty options object cannot omit the contract witness.
+      // @ts-expect-error Options cannot complete an unsealed declaration.
       useService(service, {});
       // @ts-expect-error The predecessor alias field is not part of the cold relation.
-      useService(service, { contract, alias: "legacy" });
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), { alias: "legacy" });
+      useService(coldService(service, contract), {
         binding: {
           // @ts-expect-error Only dependency bindings may select an instance.
           instance: "not-a-root-field",
         },
       });
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: {
           dependencies: {
             query: {
@@ -851,9 +881,13 @@ describe("runtime definition", () => {
     expect(Object.getOwnPropertySymbols(defaultUse)).toHaveLength(1);
     expect(
       Object.getOwnPropertyDescriptor(defaultUse, Object.getOwnPropertySymbols(defaultUse)[0]!)
-    ).toMatchObject({ configurable: false, enumerable: false, writable: false });
-    expect(defaultCarrier.definition).toBe(service);
-    expect(defaultCarrier.contract).toBe(contract);
+    ).toMatchObject({
+      configurable: false,
+      enumerable: false,
+      writable: false,
+    });
+    expect(defaultCarrier.service.definition).toBe(service);
+    expect(defaultCarrier.service.contract).toBe(contract);
     expect(defaultCarrier.binding).toEqual(binding);
     expect(defaultCarrier.binding).not.toBe(binding);
     expect(defaultCarrier.binding?.scope).not.toBe(binding.scope);
@@ -867,8 +901,8 @@ describe("runtime definition", () => {
       binding.dependencies.query.dependencies
     );
     expect(defaultCarrier.binding?.scope?.key).toBe(" work.scope ");
-    expect(replicaCarrier.definition).toBe(service);
-    expect(replicaCarrier.contract).toBe(contract);
+    expect(replicaCarrier.service.definition).toBe(service);
+    expect(replicaCarrier.service.contract).toBe(contract);
     expect(Object.hasOwn(replicaCarrier, "binding")).toBe(false);
     expect(Object.isFrozen(defaultCarrier)).toBe(true);
     expect(Object.isFrozen(defaultCarrier.binding)).toBe(true);
@@ -893,44 +927,37 @@ describe("runtime definition", () => {
     expect(services.replicatedWorkItems).toBe(replicaUse);
 
     expect(() =>
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: { scope: { kind: "runtime.config", key: "" } },
       })
     ).toThrow(TypeError);
     expect(() =>
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: { dependencies: { unknown: {} } },
       })
     ).toThrow(TypeError);
     expect(() =>
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: { dependencies: { clock: {} } },
       })
     ).toThrow(TypeError);
     expect(() =>
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: { dependencies: { audit: {} } },
       })
     ).toThrow(TypeError);
     expect(() =>
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: { dependencies: { query: { dependencies: { unknown: {} } } } },
       })
     ).toThrow(TypeError);
     expect(() =>
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: { dependencies: { query: { dependencies: { clock: {} } } } },
       })
     ).toThrow(TypeError);
     expect(() =>
-      useService(service, {
-        contract,
+      useService(coldService(service, contract), {
         binding: { dependencies: { query: { dependencies: { audit: {} } } } },
       })
     ).toThrow(TypeError);
@@ -966,7 +993,10 @@ describe("runtime definition", () => {
     > = true;
 
     expect(runCalls).toBe(0);
-    const effect = descriptor.run({ input: undefined, context: { requestedBy: "test" } });
+    const effect = descriptor.run({
+      input: undefined,
+      context: { requestedBy: "test" },
+    });
 
     expect(channelsMatch).toBe(true);
     expect(runCalls).toBe(1);
@@ -1003,14 +1033,14 @@ describe("runtime definition", () => {
     });
     const billing = defineService({
       id: "billing",
-      deps: { accounts: serviceDep(accounts) },
+      deps: { accounts: serviceDep(coldService(accounts, {})) },
     });
     const schemaChannelsMatch: TypesEqual<
       ServiceSchemaChannels<typeof accounts>,
       readonly [{ workspaceId: string }, { readOnly: boolean }, { traceId: string }]
     > = true;
     const dependencyIdentityMatches: TypesEqual<
-      typeof billing.deps.accounts.service,
+      typeof billing.deps.accounts.service.definition,
       typeof accounts
     > = true;
     let middlewareRuns = 0;
@@ -1028,20 +1058,22 @@ describe("runtime definition", () => {
 
     expect(schemaChannelsMatch).toBe(true);
     expect(dependencyIdentityMatches).toBe(true);
-    expect(billing.deps.accounts.service).toBe(accounts);
+    expect(billing.deps.accounts.service.definition).toBe(accounts);
     expect(middlewareRuns).toBe(0);
     expect(procedure).toHaveProperty("~orpc");
 
     if (false) {
-      // @ts-expect-error serviceDep accepts a sibling definition, not a string identity.
+      // @ts-expect-error serviceDep accepts a complete sibling export, not a string identity.
       serviceDep("accounts");
 
       // @ts-expect-error The sibling service literal identity remains available.
-      const wrongSiblingId: "users" = billing.deps.accounts.service.id;
+      const wrongSiblingId: "users" = billing.deps.accounts.service.definition.id;
       void wrongSiblingId;
 
-      // @ts-expect-error The scope schema decodes workspaceId as a string.
-      const wrongScope: ServiceSchemaChannels<typeof accounts>[0] = { workspaceId: 1 };
+      const wrongScope: ServiceSchemaChannels<typeof accounts>[0] = {
+        // @ts-expect-error The scope schema decodes workspaceId as a string.
+        workspaceId: 1,
+      };
       void wrongScope;
     }
   });
@@ -1064,7 +1096,9 @@ describe("runtime definition", () => {
 
     if (false) {
       // @ts-expect-error TaggedError reserves _tag for its canonical discriminator.
-      class InvalidFailure extends TaggedError("Failure")<{ readonly _tag: "Counterfeit" }> {}
+      class InvalidFailure extends TaggedError("Failure")<{
+        readonly _tag: "Counterfeit";
+      }> {}
       void InvalidFailure;
     }
   });
@@ -1320,7 +1354,9 @@ describe("runtime definition", () => {
       id: input.id,
       source: "promise",
     }));
-    const services = { workItems: useService(service, { contract }) } as const;
+    const services = {
+      workItems: useService(coldService(service, contract), {}),
+    } as const;
     let apiRuns = 0;
     const createApi = defineServerApiPlugin.factory()({
       capability: "work-items",
@@ -1332,17 +1368,17 @@ describe("runtime definition", () => {
       },
     });
     let optionMappings = 0;
-    const createInternal = defineServerInternalPlugin.factory<{ readonly base: `/${string}` }>()(
-      (options) => {
-        optionMappings += 1;
-        return {
-          capability: "work-items-ops",
-          routeBase: options.base,
-          services,
-          internal: () => internalHandler,
-        };
-      }
-    );
+    const createInternal = defineServerInternalPlugin.factory<{
+      readonly base: `/${string}`;
+    }>()((options) => {
+      optionMappings += 1;
+      return {
+        capability: "work-items-ops",
+        routeBase: options.base,
+        services,
+        internal: () => internalHandler,
+      };
+    });
 
     expect(apiRuns).toBe(0);
     expect(optionMappings).toBe(0);
@@ -1380,7 +1416,7 @@ describe("runtime definition", () => {
     expect(api.services.workItems).toBe(services.workItems);
     expect(internal.services.workItems).toBe(services.workItems);
     expect(api.services.workItems.serviceId).toBe(service.id);
-    expect(readServiceUse(api.services.workItems).definition).toBe(service);
+    expect(readServiceUse(api.services.workItems).service.definition).toBe(service);
     expect(api.api()).toBe(nativeHandler);
     expect(apiRuns).toBe(1);
     expect(Object.isFrozen(api)).toBe(true);
@@ -1624,7 +1660,11 @@ describe("runtime definition", () => {
     expect(mixedChannels).toBe(true);
     const inputSchema = RuntimeSchema.fromTypeBox(Type.Object({ itemId: Type.String() }));
     const eventSchema = RuntimeSchema.fromTypeBox(Type.Object({ itemId: Type.String() }));
-    const workflow = defineWorkflow({ id: "items.sync", inputSchema, steps: [step] as const });
+    const workflow = defineWorkflow({
+      id: "items.sync",
+      inputSchema,
+      steps: [step] as const,
+    });
     const schedule = defineSchedule({
       id: "items.nightly",
       cron: "0 0 * * *",
@@ -1637,8 +1677,10 @@ describe("runtime definition", () => {
       steps: [step] as const,
     });
     const service = defineService({ id: "items", deps: {} });
-    const serviceContract = { operation: "sync-items" } as const;
-    const services = { items: useService(service, { contract: serviceContract }) } as const;
+    const serviceContract = service.oc.router({ sync: service.oc });
+    const services = {
+      items: useService(coldService(service, serviceContract), {}),
+    } as const;
     const workflowPlugin = defineAsyncWorkflowPlugin.factory()({
       capability: "item-sync",
       services,

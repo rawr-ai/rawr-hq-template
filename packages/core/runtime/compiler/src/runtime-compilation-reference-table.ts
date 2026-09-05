@@ -1,4 +1,4 @@
-import type { RuntimeProvider, ServiceDefinition } from "../../definition/src/index";
+import type { RuntimeProvider, ServiceRuntimeExport } from "../../definition/src/index";
 import type { ProviderSelection } from "../../derivation/src/normalized-authoring-graph";
 import type { ServiceBindingPlan } from "../../derivation/src/service-binding-plan";
 
@@ -6,10 +6,10 @@ export interface RuntimeCompilationReferenceTable {
   readonly kind: "runtime.compilation-reference-table";
 
   getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider;
-  getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceDefinition;
+  getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceRuntimeExport;
 
   providerEntries(): readonly (readonly [ProviderSelection["selectionId"], RuntimeProvider])[];
-  serviceEntries(): readonly (readonly [ServiceBindingPlan["bindingId"], ServiceDefinition])[];
+  serviceEntries(): readonly (readonly [ServiceBindingPlan["bindingId"], ServiceRuntimeExport])[];
 }
 
 function compareStrings(left: string, right: string): number {
@@ -18,10 +18,10 @@ function compareStrings(left: string, right: string): number {
 
 export function createRuntimeCompilationReferenceTable(input: {
   readonly providers: readonly (readonly [ProviderSelection["selectionId"], RuntimeProvider])[];
-  readonly services: readonly (readonly [ServiceBindingPlan["bindingId"], ServiceDefinition])[];
+  readonly services: readonly (readonly [ServiceBindingPlan["bindingId"], ServiceRuntimeExport])[];
 }): RuntimeCompilationReferenceTable {
   const providers = new Map<ProviderSelection["selectionId"], RuntimeProvider>();
-  const services = new Map<ServiceBindingPlan["bindingId"], ServiceDefinition>();
+  const services = new Map<ServiceBindingPlan["bindingId"], ServiceRuntimeExport>();
 
   for (const [selectionId, provider] of input.providers) {
     if (providers.has(selectionId)) throw new TypeError("Duplicate provider reference.");
@@ -50,7 +50,7 @@ export function createRuntimeCompilationReferenceTable(input: {
       if (provider === undefined) throw new TypeError("Provider reference is absent.");
       return provider;
     },
-    getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceDefinition {
+    getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceRuntimeExport {
       const service = services.get(bindingId);
       if (service === undefined) throw new TypeError("Service reference is absent.");
       return service;

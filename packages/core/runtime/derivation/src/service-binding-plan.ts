@@ -61,6 +61,14 @@ export const NormalizedRuntimeConfigRefSchema = ReadonlyObject(
   closed
 );
 
+export const NamedServiceBindingSchema = ReadonlyObject(
+  Type.Object({
+    localName: Type.String(),
+    bindingId: Type.String({ pattern: "^service-binding:sha256:[0-9a-f]{64}$" }),
+  }),
+  closed
+);
+
 export const ServiceBindingPlanSchema = ReadonlyObject(
   Type.Object({
     kind: Type.Literal("service.binding-plan"),
@@ -69,7 +77,7 @@ export const ServiceBindingPlanSchema = ReadonlyObject(
     }),
     role: NormalizedAppRoleSchema,
     serviceId: Type.String(),
-    serviceInstance: Type.Optional(Type.String()),
+    serviceInstance: Type.Optional(Type.String({ minLength: 1 })),
     scopeRef: Type.Optional(NormalizedRuntimeConfigRefSchema),
     configRef: Type.Optional(NormalizedRuntimeConfigRefSchema),
     resourceRequirementIds: ReadonlyObject(
@@ -79,13 +87,7 @@ export const ServiceBindingPlanSchema = ReadonlyObject(
         })
       )
     ),
-    serviceBindingIds: ReadonlyObject(
-      Type.Array(
-        Type.String({
-          pattern: "^service-binding:sha256:[0-9a-f]{64}$",
-        })
-      )
-    ),
+    serviceDependencies: ReadonlyObject(Type.Array(NamedServiceBindingSchema)),
     semanticDependencyIds: ReadonlyObject(
       Type.Array(
         Type.String({
