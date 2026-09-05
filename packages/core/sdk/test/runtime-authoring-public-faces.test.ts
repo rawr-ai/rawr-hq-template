@@ -70,6 +70,7 @@ const expectedRuntimeExports = [
   "./runtime/derivation",
   "./runtime/harnesses",
   "./runtime/harnesses/elysia",
+  "./runtime/harnesses/inngest",
   "./runtime/observation",
   "./runtime/profiles",
   "./runtime/providers",
@@ -160,6 +161,20 @@ describe("runtime authoring public faces", () => {
     });
     expect(descriptor.id).toBe("native");
     expect(descriptor.surfaces).toEqual(["server/api", "server/internal"]);
+  });
+  test("projects only a cold Inngest companion with an existing native client resource", async () => {
+    const face = await import("../src/runtime/harnesses/inngest");
+    const resources = await import("../src/runtime/resources");
+    expect(Object.keys(face)).toEqual(["createInngestHarness"]);
+    const client = resources.defineRuntimeResource<"client", import("inngest").Inngest>({
+      id: "client",
+      title: "Client",
+      purpose: "Native host",
+    });
+    const descriptor = face.createInngestHarness({ id: "native", client, mode: "connect" });
+    expect(descriptor.id).toBe("native");
+    expect(descriptor.roles).toEqual(["async"]);
+    expect(descriptor.surfaces).toEqual(["async/workflow", "async/schedule", "async/consumer"]);
   });
   test("projects the exact cold tool/background authoring families without native hosts", async () => {
     const agent = await import("../src/plugins/agent");
@@ -458,8 +473,10 @@ describe("runtime authoring public faces", () => {
     });
     const workflow = asyncFace.defineWorkflow({
       id: "delivery",
+      eventName: "delivery/requested",
       inputSchema: schemaFace.RuntimeSchema.fromTypeBox(Type.Object({ id: Type.String() })),
       steps: [authoredStep],
+      run: () => undefined,
     });
     const asyncPlugin = asyncFace.defineAsyncWorkflowPlugin.factory()({
       capability: "delivery",
@@ -528,16 +545,24 @@ describe("runtime authoring public faces", () => {
     expect(loaderCalls).toBe(0);
   });
 
-  test("cold-imports only the task 4.2 server and async authoring operations", async () => {
-    const [server, asyncPlugin, asyncEffect, service, pluginDefinitions, executionDefinitions] =
-      await Promise.all([
-        import("../src/plugins/server"),
-        import("../src/plugins/async"),
-        import("../src/plugins/async/effect"),
-        import("../src/service"),
-        import("../../runtime/definition/src/plugin"),
-        import("../../runtime/definition/src/execution"),
-      ]);
+  test("cold-imports only the admitted server and async authoring operations", async () => {
+    const [
+      server,
+      asyncPlugin,
+      asyncEffect,
+      service,
+      pluginDefinitions,
+      executionDefinitions,
+      asyncDefinitions,
+    ] = await Promise.all([
+      import("../src/plugins/server"),
+      import("../src/plugins/async"),
+      import("../src/plugins/async/effect"),
+      import("../src/service"),
+      import("../../runtime/definition/src/plugin"),
+      import("../../runtime/definition/src/execution"),
+      import("../../runtime/definition/src/async-plugin"),
+    ]);
     const { implement, os } = await import("@orpc/server");
 
     expect((os as { readonly effect?: unknown }).effect).toBeUndefined();
@@ -563,18 +588,18 @@ describe("runtime authoring public faces", () => {
       "defineWorkflow",
       "useService",
     ]);
-    expect(Object.keys(asyncEffect)).toEqual(["defineAsyncStepEffect"]);
+    expect(Object.keys(asyncEffect).sort()).toEqual(["defineAsyncStepEffect", "stepEffect"]);
 
     expect(server.defineServerApiPlugin).toBe(pluginDefinitions.defineServerApiPlugin);
     expect(server.defineServerInternalPlugin).toBe(pluginDefinitions.defineServerInternalPlugin);
     expect(server.implementServerApiPlugin).toBe(implement);
     expect(server.implementServerInternalPlugin).toBe(implement);
-    expect(asyncPlugin.defineAsyncWorkflowPlugin).toBe(pluginDefinitions.defineAsyncWorkflowPlugin);
-    expect(asyncPlugin.defineAsyncSchedulePlugin).toBe(pluginDefinitions.defineAsyncSchedulePlugin);
-    expect(asyncPlugin.defineAsyncConsumerPlugin).toBe(pluginDefinitions.defineAsyncConsumerPlugin);
-    expect(asyncPlugin.defineWorkflow).toBe(pluginDefinitions.defineWorkflow);
-    expect(asyncPlugin.defineSchedule).toBe(pluginDefinitions.defineSchedule);
-    expect(asyncPlugin.defineConsumer).toBe(pluginDefinitions.defineConsumer);
+    expect(asyncPlugin.defineAsyncWorkflowPlugin).toBe(asyncDefinitions.defineAsyncWorkflowPlugin);
+    expect(asyncPlugin.defineAsyncSchedulePlugin).toBe(asyncDefinitions.defineAsyncSchedulePlugin);
+    expect(asyncPlugin.defineAsyncConsumerPlugin).toBe(asyncDefinitions.defineAsyncConsumerPlugin);
+    expect(asyncPlugin.defineWorkflow).toBe(asyncDefinitions.defineWorkflow);
+    expect(asyncPlugin.defineSchedule).toBe(asyncDefinitions.defineSchedule);
+    expect(asyncPlugin.defineConsumer).toBe(asyncDefinitions.defineConsumer);
     expect(asyncEffect.defineAsyncStepEffect).toBe(executionDefinitions.defineAsyncStepEffect);
     expect(server.useService).toBe(service.useService);
     expect(asyncPlugin.useService).toBe(service.useService);
@@ -648,7 +673,7 @@ describe("runtime authoring public faces", () => {
       expect(face).not.toHaveProperty("Effect");
     }
 
-    expect(asyncEffect).not.toHaveProperty("stepEffect");
+    expect(typeof asyncEffect.stepEffect).toBe("function");
   });
 
   test("cold-imports only the task 4.6 web authoring operation", async () => {
@@ -698,7 +723,7 @@ describe("runtime authoring public faces", () => {
     }
   });
 
-  test("keeps plugin subpaths closed and admits only the explicit optional Elysia peer", () => {
+  test("keeps plugin subpaths closed and admits only the explicit optional native peers", () => {
     const packageJson = JSON.parse(
       readFileSync(new URL("../package.json", import.meta.url), "utf8")
     ) as {
@@ -746,10 +771,17 @@ describe("runtime authoring public faces", () => {
     expect(packageJson.exports).not.toHaveProperty("./plugins/server/mcp");
     expect(packageJson.exports).not.toHaveProperty("./plugins/async/inngest");
     expect(packageJson.exports).not.toHaveProperty("./plugins/web/effect");
-    expect(dependencyNames.filter((name) => /elysia|inngest/i.test(name))).toEqual(["elysia"]);
+    expect(dependencyNames.filter((name) => /elysia|inngest/i.test(name)).sort()).toEqual([
+      "elysia",
+      "inngest",
+    ]);
     expect(packageJson.peerDependencies?.elysia).toBe("1.4.30");
     expect(packageJson.peerDependenciesMeta?.elysia).toEqual({ optional: true });
+    expect(packageJson.peerDependencies?.inngest).toBe("4.18.0");
+    expect(packageJson.peerDependenciesMeta?.inngest).toEqual({ optional: true });
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("elysia");
     expect(packageJson.optionalDependencies ?? {}).not.toHaveProperty("elysia");
+    expect(packageJson.dependencies ?? {}).not.toHaveProperty("inngest");
+    expect(packageJson.optionalDependencies ?? {}).not.toHaveProperty("inngest");
   });
 });

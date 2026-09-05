@@ -1,5 +1,6 @@
-import type { CompiledSurfacePlan } from "../../../compiler/src/index";
-import { type HabitatDurationInput, readExecutionProjection } from "../../../definition/src/index";
+import type { CompiledSurfacePlan } from "../../../compiler/src/compiled-process-plan";
+import { type HabitatDurationInput } from "../../../definition/src/effect";
+import { readExecutionProjection } from "../../../definition/src/execution";
 import type { SurfaceAdapter } from "../surface-adapter";
 import type { NativeInvocationOptions } from "./agent-tools";
 

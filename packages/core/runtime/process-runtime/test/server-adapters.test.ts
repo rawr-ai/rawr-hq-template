@@ -5,7 +5,8 @@ import { OpenAPIGenerator, openapi } from "@orpc/openapi";
 import { createProcedureClient, createRouterClient, ORPCError, os } from "@orpc/server";
 import { Effect } from "effect";
 
-import { compileRuntimePlan, readRuntimeCompilationServerSources } from "../../compiler/src/index";
+import { compileRuntimePlan } from "../../compiler/src/compile-runtime-plan";
+import { readRuntimeCompilationServerSources } from "../../compiler/src/runtime-compilation-reference-table";
 import {
   defineRuntimeProvider,
   defineRuntimeResource,

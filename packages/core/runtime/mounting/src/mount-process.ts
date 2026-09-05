@@ -1,8 +1,5 @@
-import type {
-  AppRole,
-  RuntimeLaunchIdentity,
-  RuntimeObservationPort,
-} from "../../definition/src/index";
+import type { AppRole, RuntimeLaunchIdentity } from "../../definition/src/app";
+import type { RuntimeObservationPort } from "../../definition/src/observation";
 import type {
   HarnessDescriptor,
   HarnessHealthKind,
@@ -19,7 +16,7 @@ import {
   type MountReadySurfaceRuntimeRecord,
   readMountReadyProcessHandoff,
   readMountReadySurfaceRuntimeRecord,
-} from "../../process-runtime/src/index";
+} from "../../process-runtime/src/mount-ready-process";
 import {
   createFinalization,
   type FinalizationSnapshot,

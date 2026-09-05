@@ -1,4 +1,4 @@
-import type { RuntimeLaunchIdentity } from "../../definition/src/index";
+import type { RuntimeLaunchIdentity } from "../../definition/src/app";
 import type {
   HarnessFinding,
   HarnessHealthReport,

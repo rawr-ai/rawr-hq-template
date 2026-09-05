@@ -18,7 +18,11 @@
     "test": {
       "executor": "nx:run-commands",
       "parallelism": false,
-      "dependsOn": ["^build", "acceptance:server-native-telemetry"],
+      "dependsOn": [
+        "^build",
+        "acceptance:server-native-telemetry",
+        "acceptance:async-native-telemetry"
+      ],
       "options": { "command": "bun test packages/core/runtime/harnesses/test" }
     },
     "acceptance:server": {
@@ -37,6 +41,15 @@
       "dependsOn": ["^build", { "projects": ["@habitat-ai/sdk"], "target": "build" }],
       "options": {
         "command": "bun packages/core/sdk/test/fixtures/server-runtime.ts"
+      }
+    },
+    "acceptance:async-native-telemetry": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "dependsOn": ["^build", { "projects": ["@habitat-ai/sdk"], "target": "build" }],
+      "options": {
+        "command": "bun packages/core/sdk/test/fixtures/async-runtime.ts"
       }
     },
     "build": {

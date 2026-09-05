@@ -2,8 +2,9 @@ import { readFile } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { parse } from "dotenv";
 
-import type { RuntimeCompilationResult } from "../../../compiler/src/index";
-import type { RuntimeProvider, ServiceRuntimeExport } from "../../../definition/src/index";
+import type { RuntimeCompilationResult } from "../../../compiler/src/compile-runtime-plan";
+import type { RuntimeProvider } from "../../../definition/src/provider";
+import type { ServiceRuntimeExport } from "../../../definition/src/service";
 
 type ConfigSchema = NonNullable<RuntimeProvider["configSchema"]>;
 type SourcePolicy = RuntimeCompilationResult["plan"]["configSources"];

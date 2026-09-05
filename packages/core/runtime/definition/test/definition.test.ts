@@ -1655,19 +1655,23 @@ describe("runtime definition", () => {
     const eventSchema = RuntimeSchema.fromTypeBox(Type.Object({ itemId: Type.String() }));
     const workflow = defineWorkflow({
       id: "items.sync",
+      eventName: "items/sync",
       inputSchema,
       steps: [step] as const,
+      run: () => undefined,
     });
     const schedule = defineSchedule({
       id: "items.nightly",
       cron: "0 0 * * *",
       steps: [step] as const,
+      run: () => undefined,
     });
     const consumer = defineConsumer({
       id: "items.changed",
       eventName: "items/changed",
       eventSchema,
       steps: [step] as const,
+      run: () => undefined,
     });
     const service = defineService({ id: "items", deps: {} });
     const serviceContract = service.oc.router({ sync: service.oc });
@@ -1728,23 +1732,25 @@ describe("runtime definition", () => {
     expect(Object.isFrozen(step.policy)).toBe(true);
     expect(Object.isFrozen(step.policy.retry)).toBe(true);
     expect(Object.isFrozen(workflow.steps)).toBe(true);
-    expect("run" in workflow).toBe(false);
+    expect(typeof workflow.run).toBe("function");
     expect("FunctionBundle" in workflowPlugin).toBe(false);
     expect("stepEffect" in workflowPlugin).toBe(false);
 
     if (false) {
       // @ts-expect-error Consumer event payloads require a RuntimeSchema.
       defineConsumer({ id: "invalid", eventName: "invalid", steps: [step] });
+      // @ts-expect-error Cold async declarations retain their required native run callback.
       defineWorkflow({
         id: "invalid",
+        eventName: "invalid",
         inputSchema,
         steps: [step],
-        // @ts-expect-error Native run functions do not belong in cold task-4.2 declarations.
-        run: async () => undefined,
       });
       defineWorkflow({
         id: "fake-step",
+        eventName: "fake-step",
         inputSchema,
+        run: () => undefined,
         steps: [
           // @ts-expect-error Async membership requires a complete cold Effect descriptor.
           { kind: "async.step-effect", id: "fake" },

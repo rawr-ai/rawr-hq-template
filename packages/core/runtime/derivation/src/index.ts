@@ -1,3 +1,11 @@
+export type {
+  RuntimeAsyncConsumerSource,
+  RuntimeAsyncDeclarationSource,
+  RuntimeAsyncDescriptorReference,
+  RuntimeAsyncScheduleSource,
+  RuntimeAsyncSource,
+  RuntimeAsyncWorkflowSource,
+} from "./async-source";
 export type { RuntimeDerivationHandoff } from "./derivation-handoff";
 export { readRuntimeDerivationHandoff } from "./derivation-handoff";
 export type { ExecutionDescriptorTable } from "./derive-execution-descriptor-table";

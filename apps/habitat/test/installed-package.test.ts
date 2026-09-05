@@ -94,6 +94,7 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/plugins/desktop/effect",
     "@habitat-ai/sdk/runtime/harnesses",
     "@habitat-ai/sdk/runtime/harnesses/elysia",
+    "@habitat-ai/sdk/runtime/harnesses/inngest",
     "@habitat-ai/sdk/runtime/observation",
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
@@ -1137,6 +1138,7 @@ describe("installed Habitat products", () => {
     await assertInstalledWebProjection(generatedServiceRoot);
     await assertInstalledRuntimeDerivation(generatedServiceRoot);
     await assertInstalledProjectionTypes(generatedServiceRoot);
+    await assertInstalledOptionalHostIsolation(generatedServiceRoot);
     await assertInstalledProviderAuthoring(generatedServiceRoot);
     await assertInstalledRuntimeStart(generatedServiceRoot);
 
@@ -1210,6 +1212,11 @@ describe("installed Habitat products", () => {
         'if (Object.keys(await import("@habitat-ai/sdk/runtime/harnesses")).length !== 0) throw new Error("Harness contract exported live values");',
         'const elysia = await import("@habitat-ai/sdk/runtime/harnesses/elysia");',
         'if (Object.keys(elysia).join() !== "createElysiaHarness") throw new Error("Native companion export drift");',
+        'const inngest = await import("@habitat-ai/sdk/runtime/harnesses/inngest");',
+        'if (Object.keys(inngest).join() !== "createInngestHarness") throw new Error("Async companion export drift");',
+        'const asyncClient = resources.defineRuntimeResource({ id: "cold.client", title: "Client", purpose: "Cold native client" });',
+        'const asyncDescriptor = inngest.createInngestHarness({ id: "cold-async", client: asyncClient, mode: "connect" });',
+        'if (asyncDescriptor.id !== "cold-async" || asyncDescriptor.surfaces.join() !== "async/workflow,async/schedule,async/consumer") throw new Error("Cold async descriptor failed");',
         'const nativeDescriptor = elysia.createElysiaHarness({ id: "cold", hostname: "127.0.0.1", port: 0, publicDocument: { path: "/openapi.json", info: { title: "Cold", version: "1" } } });',
         'if (nativeDescriptor.id !== "cold" || nativeDescriptor.surfaces.join() !== "server/api,server/internal") throw new Error("Cold native descriptor failed");',
         'if (Object.keys(await import("@habitat-ai/sdk/runtime/observation")).length !== 0) throw new Error("Observation contract exported live values");',
@@ -1235,7 +1242,7 @@ describe("installed Habitat products", () => {
         "runtimeLaunchIdentity",
         "startApp",
       ],
-      asyncEffect: ["defineAsyncStepEffect"],
+      asyncEffect: ["defineAsyncStepEffect", "stepEffect"],
       asyncPlugins: [
         "defineAsyncConsumerPlugin",
         "defineAsyncSchedulePlugin",
@@ -1358,7 +1365,9 @@ describe("installed Habitat products", () => {
       "runtime-derivation@3",
       "runtime-harnesses@1",
       "runtime-harnesses@2",
+      "runtime-harnesses@3",
       "runtime-mounting@1",
+      "runtime-mounting@2",
       "runtime-observation@1",
       "runtime-process-runtime@1",
       "runtime-process-runtime@2",
@@ -1403,6 +1412,8 @@ describe("installed Habitat products", () => {
       "runtime-derivation/versions/2/structure.toml",
       "runtime-derivation/versions/3/structure.toml",
       "runtime-harnesses/versions/2/structure.toml",
+      "runtime-harnesses/versions/3/structure.toml",
+      "runtime-mounting/versions/2/structure.toml",
       "runtime-process-runtime/versions/2/structure.toml",
       "service/versions/2/structure.toml",
       "service/versions/3/structure.toml",
@@ -1840,9 +1851,19 @@ describe("installed Habitat products", () => {
         version: 2,
       },
       {
+        id: "runtime-harnesses",
+        path: "dist/blueprints/runtime-harnesses/versions/3/blueprint.toml",
+        version: 3,
+      },
+      {
         id: "runtime-mounting",
         path: "dist/blueprints/runtime-mounting/blueprint.toml",
         version: 1,
+      },
+      {
+        id: "runtime-mounting",
+        path: "dist/blueprints/runtime-mounting/versions/2/blueprint.toml",
+        version: 2,
       },
       {
         id: "runtime-observation",
@@ -2657,6 +2678,12 @@ function assertPackedManifestExcludesVendors(
     expect(
       isRecord(manifest.peerDependenciesMeta) ? manifest.peerDependenciesMeta.elysia : undefined
     ).toEqual({ optional: true });
+    expect(
+      isRecord(manifest.peerDependencies) ? manifest.peerDependencies.inngest : undefined
+    ).toBe("4.18.0");
+    expect(
+      isRecord(manifest.peerDependenciesMeta) ? manifest.peerDependenciesMeta.inngest : undefined
+    ).toEqual({ optional: true });
   }
   for (const field of PACKAGE_DEPENDENCY_FIELDS) {
     const declarations = manifest[field];
@@ -2674,12 +2701,15 @@ function assertPackedManifestExcludesVendors(
     }
     for (const vendorPackage of ABSENT_VENDOR_PACKAGES) {
       if (
-        vendorPackage === "elysia" &&
         productName === "@habitat-ai/sdk" &&
         (field === "peerDependencies" || field === "peerDependenciesMeta")
       ) {
-        expect(isRecord(declarations) ? declarations.elysia : undefined).toEqual(
-          field === "peerDependencies" ? "1.4.30" : { optional: true }
+        expect(isRecord(declarations) ? declarations[vendorPackage] : undefined).toEqual(
+          field === "peerDependencies"
+            ? vendorPackage === "elysia"
+              ? "1.4.30"
+              : "4.18.0"
+            : { optional: true }
         );
         continue;
       }
@@ -2703,6 +2733,9 @@ function assertPackedManifestExcludesVendors(
                 "./runtime/harnesses/elysia",
                 "./dist/runtime/harnesses/elysia.d.ts",
                 "./dist/runtime/harnesses/elysia.js",
+                "./runtime/harnesses/inngest",
+                "./dist/runtime/harnesses/inngest.d.ts",
+                "./dist/runtime/harnesses/inngest.js",
               ].includes(candidate)
             )
         ),
@@ -2990,6 +3023,48 @@ async function assertInstalledProjectionTypes(callerRoot: string): Promise<void>
   }
 }
 
+async function assertInstalledOptionalHostIsolation(callerRoot: string): Promise<void> {
+  const file = path.join(callerRoot, "installed-optional-host-isolation.ts");
+  try {
+    await writeFile(
+      file,
+      [
+        'import { defineApp, startApp, type NativeIntegration } from "@habitat-ai/sdk/app";',
+        'import { defineService } from "@habitat-ai/sdk/service";',
+        'import { defineRuntimeResource } from "@habitat-ai/sdk/runtime/resources";',
+        'import { deriveRuntimeArtifacts } from "@habitat-ai/sdk/runtime/derivation";',
+        'import type { HarnessDescriptor } from "@habitat-ai/sdk/runtime/harnesses";',
+        'import type { RuntimeCatalog } from "@habitat-ai/sdk/runtime/observation";',
+        'type AsyncRegistration = Extract<NativeIntegration, { surface: "async/workflow" | "async/schedule" | "async/consumer" }>;',
+        "declare const registration: AsyncRegistration;",
+        "declare const descriptor: HarnessDescriptor;",
+        "declare const catalog: RuntimeCatalog;",
+        "void [defineApp, startApp, defineService, defineRuntimeResource, deriveRuntimeArtifacts, registration, descriptor, catalog];",
+      ].join("\n")
+    );
+    const program = ts.createProgram({
+      rootNames: [file],
+      options: {
+        module: ts.ModuleKind.NodeNext,
+        moduleResolution: ts.ModuleResolutionKind.NodeNext,
+        target: ts.ScriptTarget.ES2022,
+        strict: true,
+        skipLibCheck: false,
+        noEmit: true,
+      },
+    });
+    const diagnostics = ts
+      .getPreEmitDiagnostics(program)
+      .map(
+        (diagnostic) =>
+          `${diagnostic.file?.fileName ?? ""}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`
+      );
+    expect(diagnostics).toEqual([]);
+  } finally {
+    await rm(file, { force: true });
+  }
+}
+
 async function assertInstalledRuntimeDerivation(callerRoot: string): Promise<void> {
   const entrypointPath = path.join(callerRoot, "cold-installed-runtime-derivation.mjs");
 
@@ -3018,8 +3093,10 @@ async function assertInstalledRuntimeDerivation(callerRoot: string): Promise<voi
         "});",
         "const workflow = defineWorkflow({",
         '  id: "delivery",',
+        '  eventName: "delivery/requested",',
         "  inputSchema: RuntimeSchema.fromTypeBox(Type.Object({ id: Type.String() })),",
         "  steps: [authoredStep],",
+        "  run: () => undefined,",
         "});",
         "const asyncPlugin = defineAsyncWorkflowPlugin.factory()({",
         '  capability: "delivery",',
@@ -4216,19 +4293,23 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       ");",
       "const workflow = defineWorkflow({",
       '  id: "installed-candidate-workflow",',
+      '  eventName: "installed.candidate.workflow.requested",',
       "  inputSchema: payloadSchema,",
       "  steps: [asyncStep],",
+      "  run: () => undefined,",
       "});",
       "const schedule = defineSchedule({",
       '  id: "installed-candidate-schedule",',
       '  cron: "0 0 * * *",',
       "  steps: [asyncStep],",
+      "  run: () => undefined,",
       "});",
       "const consumer = defineConsumer({",
       '  id: "installed-candidate-consumer",',
       '  eventName: "installed.candidate.requested",',
       "  eventSchema: payloadSchema,",
       "  steps: [asyncStep],",
+      "  run: () => undefined,",
       "});",
       "const workflowPlugin = defineAsyncWorkflowPlugin.factory()({",
       '  capability: "installed-candidate",',

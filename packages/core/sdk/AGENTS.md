@@ -33,9 +33,11 @@
   the service-implementation-owned, side-effect-only bootstrap for that exact
   extension and exports no Habitat runner.
 - `@habitat-ai/sdk/plugins/async` exposes cold workflow, schedule, and consumer
-  declarations. `@habitat-ai/sdk/plugins/async/effect` adds only the cold async
-  step Effect descriptor builder; neither face imports or materializes a native
-  async host.
+  declarations with explicit native orchestration callbacks and event/cron
+  triggers. `@habitat-ai/sdk/plugins/async/effect` adds the cold async step
+  descriptor builder and invocation-owned `stepEffect` bridge. Actual step
+  callbacks alone acquire bounded process execution capabilities; memoized
+  steps remain native. Neither face imports or materializes a native host.
 - `@habitat-ai/sdk/plugins/cli` exposes cold topic membership and service uses;
   `plugins/cli/effect` owns command Effect descriptors, and `plugins/cli/schema`
   projects the native schema authoring vocabulary. `plugins/cli/oclif`
@@ -74,6 +76,11 @@
   `createElysiaHarness` factory and exact companion types. Only native mount
   dynamically imports the optional Elysia peer. The factory adds no host
   selector, registration singleton, or second integration representation.
+- `@habitat-ai/sdk/runtime/harnesses/inngest` exposes the cold native Serve or
+  Connect companion. Its configuration selects an existing process resource
+  holding the native client. The same client materializes and mounts exact
+  selected functions. Public mount payload types are opaque and vendor-free;
+  no private function-bundle methods escape through app declarations.
 - `@habitat-ai/sdk/runtime/observation` exposes only diagnostic, catalog,
   topology and telemetry contract types. It exports no collector factory,
   observation port implementation, storage, native sink or control surface.
@@ -89,7 +96,9 @@
   in the same runtime assembly; do not bundle a second copy into the legacy
   private resource package or claim a new public telemetry provider export.
   The standalone Bun `test/fixtures/server-runtime.ts` owns terminal composed
-  server acceptance, including the real OTLP receiver; native harness and
+  server acceptance, including the real OTLP receiver. `async-runtime.ts`
+  owns composed Serve/Connect acceptance with the pinned native Dev Server and
+  real OTLP receipt; native harness and
   process owners retain their isolated tests. Native harness acceptance targets
   invoke this fixture after the SDK build without importing SDK source into a
   private runtime implementation or creating a nested Nx scheduler.
@@ -101,9 +110,10 @@
 - Other low-level service constructors, resource contracts, provider
   factories, and all implementation package identities stay private and must
   be bundled out of both JavaScript and declarations.
-- Third-party runtime libraries remain ordinary npm dependencies. Inngest is
-  absent from dependency, peer, optional, load, and public facade metadata
-  until its runtime-harness owner lands.
+- Third-party runtime libraries remain ordinary npm dependencies. Elysia and
+  Inngest are exact optional peers, loaded only by their selected native hosts.
+  Native async authoring types use the Inngest peer; unrelated app/service
+  declarations must remain usable without either optional host installed.
 - CLI app composition selects concrete filesystem, source-inventory, and
   rule-evaluation providers and the catalog service. Those private packages
   consume public SDK authoring and are not bundled into the SDK. The retained
@@ -141,6 +151,7 @@
   Shipped files are not members merely by being present.
   `runtime-harnesses@1` remains immutable; its complete version-2 successor
   admits the owner-local `elysia/` native host beside generic contracts.
+  Selected version 3 independently carries that closure plus `inngest/`.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
   qualified overlays remain repository-owned.
@@ -202,6 +213,7 @@
 - Public complete runtime derivation: `@habitat-ai/sdk/runtime/derivation`.
 - Public type-only companion contract: `@habitat-ai/sdk/runtime/harnesses`.
 - Public cold Elysia companion: `@habitat-ai/sdk/runtime/harnesses/elysia`.
+- Public cold Inngest companion: `@habitat-ai/sdk/runtime/harnesses/inngest`.
 - Public type-only read models: `@habitat-ai/sdk/runtime/observation`.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and

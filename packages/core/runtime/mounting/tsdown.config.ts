@@ -12,6 +12,7 @@ export default defineConfig({
     neverBundle: true,
     dts: {
       neverBundle: [
+        /^\.\//,
         /^\.\.\/\.\.\/(?:definition|process-runtime|harnesses)\/src(?:\/|$)/,
         /^(?![A-Za-z]:)[^./\\\0]/,
       ],
@@ -28,6 +29,8 @@ export default defineConfig({
       "@standard-schema/spec",
       "dotenv",
       "effect",
+      "inngest",
+      "inngest/types",
       "typebox",
     ],
   },

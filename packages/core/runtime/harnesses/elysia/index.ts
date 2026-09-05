@@ -1,8 +1,6 @@
 import type { OpenAPIGeneratorGenerateOptions } from "@orpc/openapi";
-import type {
-  ElysiaRoutePayload,
-  MountReadySurfaceRuntimeRecord,
-} from "../../process-runtime/src/index";
+import type { ElysiaRoutePayload } from "../../process-runtime/src/adapters/elysia";
+import type { MountReadySurfaceRuntimeRecord } from "../../process-runtime/src/mount-ready-process";
 import type {
   HarnessDescriptor,
   HarnessHealthKind,
@@ -12,7 +10,7 @@ import type {
 import { assertRequiredResourcesReady, createOwnerStop } from "../src/native-contract";
 import { createPublicDocument } from "./public-document";
 
-export type { ElysiaRoutePayload } from "../../process-runtime/src/index";
+export type { ElysiaRoutePayload } from "../../process-runtime/src/adapters/elysia";
 
 export interface ElysiaHarnessConfig {
   readonly id: string;

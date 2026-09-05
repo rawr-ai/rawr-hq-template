@@ -26,13 +26,27 @@ export interface InvocationTracker {
     operation: (own: Continuation) => Promise<Exit.Exit<A, E>>,
     parent?: Continuation
   ): Promise<Exit.Exit<A, E>>;
+  group(): InvocationGroup;
   closeAndDrain(): Promise<void>;
+}
+
+/** One native owner's view of the process's existing invocation leases. */
+export interface InvocationGroup {
+  run<T>(operation: (own: Continuation) => Promise<T>, parent?: Continuation): Promise<T>;
+  closeAndDrain(): Promise<void>;
+}
+
+interface GroupState {
+  open: boolean;
+  pending: number;
+  drain?: Promise<void>;
+  settle?: () => void;
 }
 
 /** Native completion, not caller cancellation, determines when resources can be released. */
 export function createInvocationTracker(): InvocationTracker {
   let open = true;
-  const active = new Set<Continuation>();
+  const active = new Map<Continuation, GroupState | undefined>();
   let settle: (() => void) | undefined;
   let drain: Promise<void> | undefined;
 
@@ -86,17 +100,26 @@ export function createInvocationTracker(): InvocationTracker {
   async function track<T>(
     operation: (own: Continuation) => Promise<T>,
     retain: (value: T, retainOutput: () => () => void) => T,
-    parent?: Continuation
+    parent?: Continuation,
+    rootGroup?: GroupState
   ): Promise<T> {
     assertAdmission(parent);
+    const group = parent === undefined ? rootGroup : active.get(parent);
+    if (parent === undefined && group?.open === false)
+      throw new TypeError("Native invocation admission is closed.");
     const continuation = Object.freeze<Continuation>({ [continuationTypeId]: true });
-    active.add(continuation);
+    active.set(continuation, group);
+    if (group !== undefined) group.pending += 1;
     // A returned native stream extends this same invocation, not a fresh admission lease.
     let requestSettled = false;
     let outputSettled = true;
     const complete = () => {
       if (!requestSettled || !outputSettled) return;
-      active.delete(continuation);
+      if (!active.delete(continuation)) return;
+      if (group !== undefined) {
+        group.pending -= 1;
+        if (!group.open && group.pending === 0) group.settle?.();
+      }
       if (!open && active.size === 0) settle?.();
     };
     try {
@@ -132,6 +155,24 @@ export function createInvocationTracker(): InvocationTracker {
           Exit.isSuccess(exit) ? Exit.succeed(retainOutput(exit.value, retain)) : exit,
         parent
       );
+    },
+    group(): InvocationGroup {
+      assertOpen();
+      const group: GroupState = { open: true, pending: 0 };
+      return Object.freeze({
+        run<T>(operation: (own: Continuation) => Promise<T>, parent?: Continuation): Promise<T> {
+          return track(operation, retainOutput, parent, group);
+        },
+        closeAndDrain(): Promise<void> {
+          if (group.drain !== undefined) return group.drain;
+          group.open = false;
+          group.drain = new Promise<void>((resolve) => {
+            group.settle = resolve;
+            if (group.pending === 0) resolve();
+          });
+          return group.drain;
+        },
+      });
     },
     closeAndDrain(): Promise<void> {
       if (drain !== undefined) return drain;

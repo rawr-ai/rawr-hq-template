@@ -1,11 +1,10 @@
-import type { CompiledSurfacePlan } from "../../compiler/src/index";
-import type {
-  AppRole,
-  ConstructionBoundServiceClient,
-  RuntimeResourceMap,
-  RuntimeSchema,
-} from "../../definition/src/index";
-import type { RuntimeServerSource } from "../../derivation/src/index";
+import type { CompiledSurfacePlan } from "../../compiler/src/compiled-process-plan";
+import type { AppRole } from "../../definition/src/app";
+import type { RuntimeResourceMap } from "../../definition/src/provider";
+import type { RuntimeSchema } from "../../definition/src/schema";
+import type { ConstructionBoundServiceClient } from "../../definition/src/service";
+import type { RuntimeServerSource } from "../../derivation/src/server-source";
+import type { InngestMountPayload } from "./async-payload";
 import type { ExecutionRegistry } from "./execution-registry";
 import type { ProcessExecutionRuntime } from "./execution-runtime";
 import type { ProcessRuntimeAccess, RoleRuntimeAccess } from "./runtime-access";
@@ -47,6 +46,7 @@ export interface SurfaceAdapter<
     readonly resources: RuntimeResourceMap;
     readonly executionRegistry: ExecutionRegistry;
     readonly executionRuntime?: ProcessExecutionRuntime;
+    readonly nativeAsync?: { bundle(): InngestMountPayload };
     readonly nativeServer?: {
       readonly source: RuntimeServerSource;
       readonly requests: NativeServerRequestAssembly;

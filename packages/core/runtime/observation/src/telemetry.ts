@@ -1,11 +1,11 @@
 import { Type } from "typebox";
 import { Check } from "typebox/value";
-import type {
-  RuntimeLaunchIdentity,
-  RuntimeLifecyclePhase,
-  RuntimeSchema,
-} from "../../definition/src/index";
-import { RuntimeLifecyclePhaseSchema } from "../../definition/src/index";
+import type { RuntimeLaunchIdentity } from "../../definition/src/app";
+import {
+  type RuntimeLifecyclePhase,
+  RuntimeLifecyclePhaseSchema,
+} from "../../definition/src/observation";
+import type { RuntimeSchema } from "../../definition/src/schema";
 import { detached, telemetryData } from "./data";
 
 export type RuntimeDiagnosticRedaction = "safe" | "omitted";

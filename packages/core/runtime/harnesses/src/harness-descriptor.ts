@@ -1,8 +1,8 @@
-import type { AppRole, RuntimeLaunchIdentity } from "../../definition/src/index";
-import type { ProcessRuntimeAccess } from "../../process-runtime/src/index";
+import type { AppRole, RuntimeLaunchIdentity } from "../../definition/src/app";
+import type { ProcessRuntimeAccess } from "../../process-runtime/src/runtime-access";
 
-export type { AppRole, RuntimeLaunchIdentity } from "../../definition/src/index";
-export type { ProcessRuntimeAccess } from "../../process-runtime/src/index";
+export type { AppRole, RuntimeLaunchIdentity } from "../../definition/src/app";
+export type { ProcessRuntimeAccess } from "../../process-runtime/src/runtime-access";
 
 export interface HarnessFinding {
   readonly code: string;

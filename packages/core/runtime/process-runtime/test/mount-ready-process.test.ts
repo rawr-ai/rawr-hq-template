@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Check } from "typebox/value";
-
-import { type CompiledSurfacePlan, compileRuntimePlan } from "../../compiler/src/index";
+import { compileRuntimePlan } from "../../compiler/src/compile-runtime-plan";
+import { type CompiledSurfacePlan } from "../../compiler/src/compiled-process-plan";
 import {
   defineAgentToolPlugin,
   defineApp,

@@ -2,12 +2,10 @@ import { isDeepStrictEqual } from "node:util";
 import { Check } from "typebox/value";
 
 import { type Bootgraph, BootgraphSchema, orderBootgraph } from "../../../bootgraph/src/index";
-import {
-  CompiledProcessPlanSchema,
-  type RuntimeCompilationResult,
-  readRuntimeCompilationResourceReferences,
-} from "../../../compiler/src/index";
-import type { ResourceRequirement } from "../../../definition/src/index";
+import type { RuntimeCompilationResult } from "../../../compiler/src/compile-runtime-plan";
+import { CompiledProcessPlanSchema } from "../../../compiler/src/compiled-process-plan";
+import { readRuntimeCompilationResourceReferences } from "../../../compiler/src/runtime-compilation-reference-table";
+import type { ResourceRequirement } from "../../../definition/src/resource";
 
 type Plan = RuntimeCompilationResult["plan"];
 type NormalizedRequirement = Plan["resourceRequirements"][number];

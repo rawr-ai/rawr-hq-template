@@ -187,7 +187,13 @@ function makeOrderedFixture(reverse: boolean, counters: ColdCounters) {
   const inputSchema = RuntimeSchema.fromTypeBox(
     Type.Object({ value: Type.String() }, { additionalProperties: false })
   );
-  const workflow = defineWorkflow({ id: "cold-workflow", inputSchema, steps: [step] as const });
+  const workflow = defineWorkflow({
+    id: "cold-workflow",
+    eventName: "cold/workflow",
+    inputSchema,
+    steps: [step] as const,
+    run: () => undefined,
+  });
   const asyncPlugin = defineAsyncWorkflowPlugin.factory()({
     capability: "cold",
     services,

@@ -1,27 +1,42 @@
-import type { CompiledProcessPlan } from "../../../runtime/compiler/src/index";
-import type { AppRole } from "../../../runtime/definition/src/index";
+import type { CompiledProcessPlan } from "../../../runtime/compiler/src/compiled-process-plan";
+import type { AppRole } from "../../../runtime/definition/src/app";
 import type {
   HarnessDescriptor,
   HarnessMountInput,
   NativeHarnessHandle,
-} from "../../../runtime/harnesses/src/index";
+} from "../../../runtime/harnesses/src/harness-descriptor";
 import {
   createAgentToolsAdapter,
+  type LoweredAgentTool,
+} from "../../../runtime/process-runtime/src/adapters/agent-tools";
+import {
   createDesktopBackgroundAdapter,
+  type LoweredDesktopBackground,
+} from "../../../runtime/process-runtime/src/adapters/desktop-background";
+import {
   createElysiaApiAdapter,
   createElysiaInternalAdapter,
-  createOclifAdapter,
   type ElysiaRoutePayload,
-  type LoweredAgentTool,
+} from "../../../runtime/process-runtime/src/adapters/elysia";
+import {
+  createInngestConsumerAdapter,
+  createInngestScheduleAdapter,
+  createInngestWorkflowAdapter,
+} from "../../../runtime/process-runtime/src/adapters/inngest";
+import {
+  createOclifAdapter,
   type LoweredCliCommand,
-  type LoweredDesktopBackground,
-  type MountReadySurfaceRuntimeRecord,
-  type SurfaceMountAssignment,
-} from "../../../runtime/process-runtime/src/index";
+} from "../../../runtime/process-runtime/src/adapters/oclif";
+import type { InngestMountPayload } from "../../../runtime/process-runtime/src/async-payload";
+import type {
+  MountReadySurfaceRuntimeRecord,
+  SurfaceMountAssignment,
+} from "../../../runtime/process-runtime/src/mount-ready-process";
 
 export type AgentToolMountRecord = MountReadySurfaceRuntimeRecord<readonly LoweredAgentTool[]>;
 export type CliCommandMountRecord = MountReadySurfaceRuntimeRecord<readonly LoweredCliCommand[]>;
 export type ServerMountRecord = MountReadySurfaceRuntimeRecord<ElysiaRoutePayload>;
+export type AsyncMountRecord = MountReadySurfaceRuntimeRecord<InngestMountPayload>;
 export type DesktopBackgroundMountRecord = MountReadySurfaceRuntimeRecord<
   readonly LoweredDesktopBackground[]
 >;
@@ -48,11 +63,16 @@ export type NativeIntegration =
       readonly surface: "server/api" | "server/internal";
       readonly harness: NativeIntegrationHarness<ServerMountRecord>;
     }
+  | {
+      readonly surface: "async/workflow" | "async/schedule" | "async/consumer";
+      readonly harness: NativeIntegrationHarness<AsyncMountRecord>;
+    }
   | { readonly surface: "none"; readonly harness: NativeIntegrationHarness<never> };
 
 type Payload =
   | readonly (LoweredAgentTool | LoweredDesktopBackground | LoweredCliCommand)[]
-  | ElysiaRoutePayload;
+  | ElysiaRoutePayload
+  | InngestMountPayload;
 type Descriptor = HarnessDescriptor<MountReadySurfaceRuntimeRecord<Payload>>;
 
 /** Resolve the selected IDs before any provider or native host can run. */
@@ -91,6 +111,9 @@ export function resolveIntegrations(
         "cli/commands",
         "server/api",
         "server/internal",
+        "async/workflow",
+        "async/schedule",
+        "async/consumer",
         "none",
       ].includes(surface)
     )
@@ -128,7 +151,9 @@ export function resolveIntegrations(
           ? "cli"
           : surface === "desktop/background"
             ? "desktop"
-            : "server";
+            : surface.startsWith("async/")
+              ? "async"
+              : "server";
     if (!harness.roles.includes(role) || !harness.surfaces.includes(surface))
       throw new TypeError("Native integration does not support its surface.");
     const matching = plan.surfaces.filter((item) => item.surface === surface && item.role === role);
@@ -142,7 +167,13 @@ export function resolveIntegrations(
             ? createElysiaApiAdapter({ harness: harness.id })
             : surface === "server/internal"
               ? createElysiaInternalAdapter({ harness: harness.id })
-              : createDesktopBackgroundAdapter({ harness: harness.id });
+              : surface === "async/workflow"
+                ? createInngestWorkflowAdapter({ harness: harness.id })
+                : surface === "async/schedule"
+                  ? createInngestScheduleAdapter({ harness: harness.id })
+                  : surface === "async/consumer"
+                    ? createInngestConsumerAdapter({ harness: harness.id })
+                    : createDesktopBackgroundAdapter({ harness: harness.id });
     for (const item of matching) {
       assignments.push({ surface: item, adapter });
       covered.add(item.surfacePlanId);

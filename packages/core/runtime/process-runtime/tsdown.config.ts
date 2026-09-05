@@ -12,6 +12,7 @@ export default defineConfig({
     neverBundle: true,
     dts: {
       neverBundle: [
+        /^\.\//,
         /^\.\.\/\.\.\/(?:definition|derivation|compiler|substrate\/effect)\/src(?:\/|$)/,
         /^(?![A-Za-z]:)[^./\\\0]/,
       ],
@@ -27,6 +28,8 @@ export default defineConfig({
       "@orpc/shared",
       "@standard-schema/spec",
       "effect",
+      "inngest",
+      "inngest/types",
       "dotenv",
       "node:crypto",
       "node:util",

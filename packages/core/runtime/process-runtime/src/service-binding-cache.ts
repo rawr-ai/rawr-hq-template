@@ -1,11 +1,8 @@
 import { isDeepStrictEqual } from "node:util";
 
-import type { CompiledServiceBindingPlan } from "../../compiler/src/index";
-import {
-  type ConstructionBoundServiceClient,
-  type RuntimeLaunchIdentity,
-  runtimeLaunchIdentity,
-} from "../../definition/src/index";
+import type { CompiledServiceBindingPlan } from "../../compiler/src/compiled-process-plan";
+import { type RuntimeLaunchIdentity, runtimeLaunchIdentity } from "../../definition/src/app";
+import { type ConstructionBoundServiceClient } from "../../definition/src/service";
 
 export interface ServiceBindingCacheKey {
   readonly identity: RuntimeLaunchIdentity;

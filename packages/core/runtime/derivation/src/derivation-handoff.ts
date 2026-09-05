@@ -1,17 +1,14 @@
-import type {
-  AppRole,
-  EffectExecutionPolicy,
-  ResourceRequirement,
-  RuntimeLaunchIdentity,
-  RuntimeProvider,
-  ServiceRuntimeExport,
-} from "../../definition/src/index";
+import type { AppRole, RuntimeLaunchIdentity } from "../../definition/src/app";
+import type { EffectExecutionPolicy } from "../../definition/src/execution";
+import type { RuntimeProvider } from "../../definition/src/provider";
+import type { ResourceRequirement } from "../../definition/src/resource";
+import type { ServiceRuntimeExport } from "../../definition/src/service";
+import type { RuntimeAsyncSource } from "./async-source";
+import { handoffCarrier, type RuntimeDerivationHandoffCarrier } from "./derivation-carrier";
 import type { RuntimeDerivationResult } from "./derive-runtime-artifacts";
 import type { ExecutionDescriptorRef } from "./execution-descriptor-ref";
 import type { NormalizedAuthoringGraph } from "./normalized-authoring-graph";
 import type { RuntimeServerSource } from "./server-source";
-
-const handoffCarrier = Symbol("habitat.runtime-derivation.handoff");
 
 /** Exact cold references travel beside inspectable data, never inside it. */
 export interface RuntimeDerivationHandoff {
@@ -25,16 +22,15 @@ export interface RuntimeDerivationHandoff {
   readonly resourceBindings: readonly (readonly [string, string])[];
   readonly resourceReferences: readonly (readonly [string, ResourceRequirement])[];
   readonly serverSources: readonly (readonly [string, RuntimeServerSource])[];
+  readonly asyncSources: readonly (readonly [string, RuntimeAsyncSource])[];
   readonly executionPolicies: readonly (readonly [ExecutionDescriptorRef, EffectExecutionPolicy])[];
-}
-
-export interface RuntimeDerivationHandoffCarrier {
-  readonly [handoffCarrier]: RuntimeDerivationHandoff;
 }
 
 type RuntimeDerivationFields = Omit<RuntimeDerivationResult, keyof RuntimeDerivationHandoffCarrier>;
 
-function hasHandoff(result: RuntimeDerivationFields): result is RuntimeDerivationResult {
+function hasHandoff(
+  result: RuntimeDerivationFields
+): result is RuntimeDerivationFields & { readonly [handoffCarrier]: RuntimeDerivationHandoff } {
   return Object.hasOwn(result, handoffCarrier);
 }
 

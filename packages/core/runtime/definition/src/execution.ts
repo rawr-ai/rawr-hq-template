@@ -132,6 +132,7 @@ export interface AsyncStepExecutionContext<
   TExecution = unknown,
 > {
   readonly event: TEvent;
+  /** Selected construction-bound clients; the body supplies service-owned invocation data. */
   readonly clients: TClients;
   readonly resources: TResources;
   readonly telemetry: TTelemetry;
@@ -143,9 +144,10 @@ export interface AsyncStepEffectDescriptor<
   TError = unknown,
   TRequirements = unknown,
   TContext extends AsyncStepExecutionContext = AsyncStepExecutionContext,
+  TId extends string = string,
 > {
   readonly kind: "async.step-effect";
-  readonly id: string;
+  readonly id: TId;
   readonly policy: EffectExecutionPolicy;
   readonly effect: (
     context: TContext
@@ -157,15 +159,17 @@ export interface AsyncStepEffectDescriptor<
 export function defineAsyncStepEffect<
   TContext extends AsyncStepExecutionContext = AsyncStepExecutionContext,
   TProgram extends AsyncStepEffectProgram = AsyncStepEffectProgram,
+  const TId extends string = string,
 >(descriptor: {
-  readonly id: string;
+  readonly id: TId;
   readonly policy: EffectExecutionPolicy;
   readonly effect: (context: TContext) => TProgram;
 }): AsyncStepEffectDescriptor<
   AsyncStepProgramOutput<TProgram>,
   AsyncStepProgramError<TProgram>,
   AsyncStepProgramRequirements<TProgram>,
-  TContext
+  TContext,
+  TId
 >;
 export function defineAsyncStepEffect(descriptor: {
   readonly id: string;

@@ -1,13 +1,13 @@
-import type {
-  AsyncStepEffectDescriptor,
-  CommandDescriptor,
-  DesktopBackgroundDescriptor,
-  ExecutionDescriptor,
-  HabitatEffect,
-  ProcedureExecutionContext,
-  ToolDescriptor,
-} from "../../definition/src/index";
-import { attachExecutionProjection, Effect, isHabitatEffect } from "../../definition/src/index";
+import type { ToolDescriptor } from "../../definition/src/agent";
+import type { CommandDescriptor } from "../../definition/src/cli";
+import type { DesktopBackgroundDescriptor } from "../../definition/src/desktop";
+import { Effect, type HabitatEffect, isHabitatEffect } from "../../definition/src/effect";
+import {
+  type AsyncStepEffectDescriptor,
+  attachExecutionProjection,
+  type ExecutionDescriptor,
+} from "../../definition/src/execution";
+import type { ProcedureExecutionContext } from "../../definition/src/execution-context";
 import type { RuntimeSchemaResult } from "../../schema/src/runtime-schema";
 import {
   assertExecutionDescriptorRefOwnData,

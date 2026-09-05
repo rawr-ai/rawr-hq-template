@@ -4,13 +4,11 @@ import { ORPCError } from "@orpc/server";
 import type { StandardHandlerOptions } from "@orpc/server/standard";
 import { Cause, Context, Effect, Exit } from "effect";
 
-import type { CompiledSurfacePlan } from "../../compiler/src/index";
-import type {
-  RuntimeLaunchIdentity,
-  RuntimeObservationPort,
-  RuntimeResourceMap,
-  ServerPluginContext,
-} from "../../definition/src/index";
+import type { CompiledSurfacePlan } from "../../compiler/src/compiled-process-plan";
+import type { RuntimeLaunchIdentity } from "../../definition/src/app";
+import type { RuntimeObservationPort } from "../../definition/src/observation";
+import type { ServerPluginContext } from "../../definition/src/plugin";
+import type { RuntimeResourceMap } from "../../definition/src/provider";
 import {
   type Continuation,
   type InvocationTracker,

@@ -160,7 +160,14 @@ async function start(root: string) {
   const asyncPlugin = defineAsyncSchedulePlugin.factory()({
     capability: "continuation-step",
     services: { child: useService(child) },
-    schedules: [defineSchedule({ id: "child-tick", cron: "* * * * *", steps: [step] })],
+    schedules: [
+      defineSchedule({
+        id: "child-tick",
+        cron: "* * * * *",
+        steps: [step],
+        run: () => undefined,
+      }),
+    ],
   })();
   const app = defineApp({ id: "continuation-app", plugins: [plugin, asyncPlugin] });
   const profile = defineRuntimeProfile({

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { compileRuntimePlan } from "../../compiler/src/index";
+import { compileRuntimePlan } from "../../compiler/src/compile-runtime-plan";
 import {
   defineApp,
   defineAsyncSchedulePlugin,
@@ -50,8 +50,8 @@ function fixture(empty = false) {
     capability: "registry-jobs",
     services: {},
     schedules: [
-      defineSchedule({ id: "daily", cron: "0 0 * * *", steps: [step] }),
-      defineSchedule({ id: "hourly", cron: "0 * * * *", steps: [step] }),
+      defineSchedule({ id: "daily", cron: "0 0 * * *", steps: [step], async run() {} }),
+      defineSchedule({ id: "hourly", cron: "0 * * * *", steps: [step], async run() {} }),
     ],
   })();
   const app = defineApp({ id: "registry.app", plugins: empty ? [] : [plugin] });

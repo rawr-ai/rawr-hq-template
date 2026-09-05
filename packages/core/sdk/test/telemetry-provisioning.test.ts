@@ -11,6 +11,7 @@ import { orderBootgraph } from "../../runtime/bootgraph/src/index";
 import { compileRuntimePlan } from "../../runtime/compiler/src/index";
 import {
   defineApp,
+  defineAsyncWorkflowPlugin,
   defineEntrypoint,
   definePlugin,
   defineProcessCatalog,
@@ -131,15 +132,12 @@ function produceTelemetryFixture(releaseDeadline: () => FlushTelemetryInput, fai
     resourceRequirements: failAfter ? [serverRequirement, laterRequirement] : [serverRequirement],
     project: () => ({ kind: "plugin.projection", facts: {} }),
   });
-  const asyncPlugin = definePlugin({
-    id: "async",
-    role: "async",
-    surface: "async/workflow",
+  const asyncPlugin = defineAsyncWorkflowPlugin.factory()({
     capability: "telemetry",
     services: {},
     resourceRequirements: [asyncRequirement],
-    project: () => ({ kind: "plugin.projection", facts: {} }),
-  });
+    workflows: [],
+  })();
   const app = defineApp({ id: "telemetry-proof", plugins: [server, asyncPlugin] });
   const profile = defineRuntimeProfile({
     id: "telemetry-profile",

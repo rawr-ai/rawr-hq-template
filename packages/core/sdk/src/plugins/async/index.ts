@@ -1,8 +1,10 @@
+export type { AsyncRunContext } from "../../../../runtime/definition/src/async-context";
 export type {
   AsyncConsumerDefinition,
   AsyncConsumerPluginBuilder,
   AsyncConsumerPluginDefinition,
   AsyncConsumerPluginInput,
+  AsyncFunctionOptions,
   AsyncScheduleDefinition,
   AsyncSchedulePluginBuilder,
   AsyncSchedulePluginDefinition,
@@ -11,8 +13,7 @@ export type {
   AsyncWorkflowPluginBuilder,
   AsyncWorkflowPluginDefinition,
   AsyncWorkflowPluginInput,
-  PluginServiceUses,
-} from "../../../../runtime/definition/src/plugin";
+} from "../../../../runtime/definition/src/async-plugin";
 export {
   defineAsyncConsumerPlugin,
   defineAsyncSchedulePlugin,
@@ -20,7 +21,8 @@ export {
   defineConsumer,
   defineSchedule,
   defineWorkflow,
-} from "../../../../runtime/definition/src/plugin";
+} from "../../../../runtime/definition/src/async-plugin";
+export type { PluginServiceUses } from "../../../../runtime/definition/src/plugin";
 export type {
   ServiceContractOf,
   ServiceUse,

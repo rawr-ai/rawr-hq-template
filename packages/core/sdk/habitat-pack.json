@@ -112,9 +112,19 @@
       "path": "dist/blueprints/runtime-harnesses/versions/2/blueprint.toml"
     },
     {
+      "id": "runtime-harnesses",
+      "version": 3,
+      "path": "dist/blueprints/runtime-harnesses/versions/3/blueprint.toml"
+    },
+    {
       "id": "runtime-mounting",
       "version": 1,
       "path": "dist/blueprints/runtime-mounting/blueprint.toml"
+    },
+    {
+      "id": "runtime-mounting",
+      "version": 2,
+      "path": "dist/blueprints/runtime-mounting/versions/2/blueprint.toml"
     },
     {
       "id": "runtime-observation",

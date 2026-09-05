@@ -1,5 +1,5 @@
-import type { CompiledProcessPlan } from "../../../runtime/compiler/src/index";
-import type { RuntimeObservationSeed } from "../../../runtime/observation/src/index";
+import type { CompiledProcessPlan } from "../../../runtime/compiler/src/compiled-process-plan";
+import type { RuntimeObservationSeed } from "../../../runtime/observation/src/catalog";
 
 /** Adapt selected facts only; live status comes from the owner that performs the work. */
 export function selectedObservationSeed(plan: CompiledProcessPlan): RuntimeObservationSeed {

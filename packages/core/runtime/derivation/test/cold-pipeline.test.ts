@@ -197,7 +197,13 @@ describe("selected cold executable handoff", () => {
         capability: "cold",
         services: {},
         workflows: [
-          defineWorkflow({ id: "native.workflow", inputSchema: LaneSchema, steps: [step] }),
+          defineWorkflow({
+            id: "native.workflow",
+            eventName: "native/workflow",
+            inputSchema: LaneSchema,
+            steps: [step],
+            run: () => undefined,
+          }),
         ],
       })();
       const loader = async () => {

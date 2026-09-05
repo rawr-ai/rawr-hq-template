@@ -1,29 +1,21 @@
-import type {
-  ResourceRequirement,
-  RuntimeProvider,
-  ServiceRuntimeExport,
-} from "../../definition/src/index";
+import type { RuntimeProvider } from "../../definition/src/provider";
+import type { ResourceRequirement } from "../../definition/src/resource";
+import type { ServiceRuntimeExport } from "../../definition/src/service";
+import type { RuntimeAsyncSource } from "../../derivation/src/async-source";
 import type { ProviderSelection } from "../../derivation/src/normalized-authoring-graph";
 import type { RuntimeServerSource } from "../../derivation/src/server-source";
 import type { ServiceBindingPlan } from "../../derivation/src/service-binding-plan";
 
-const resourceReferenceCarrier = Symbol("habitat.compilation.resource-references");
-const serverSourceCarrier = Symbol("habitat.compilation.server-sources");
+import {
+  asyncSourceCarrier,
+  type RuntimeCompilationReferenceTable,
+  resourceReferenceCarrier,
+  serverSourceCarrier,
+} from "./compilation-reference-contract";
 
 type ResourceReferenceEntries = readonly (readonly [string, ResourceRequirement])[];
 type ServerSourceEntries = readonly (readonly [string, RuntimeServerSource])[];
-
-export interface RuntimeCompilationReferenceTable {
-  readonly kind: "runtime.compilation-reference-table";
-  readonly [resourceReferenceCarrier]: ResourceReferenceEntries;
-  readonly [serverSourceCarrier]: ServerSourceEntries;
-
-  getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider;
-  getService(bindingId: ServiceBindingPlan["bindingId"]): ServiceRuntimeExport;
-
-  providerEntries(): readonly (readonly [ProviderSelection["selectionId"], RuntimeProvider])[];
-  serviceEntries(): readonly (readonly [ServiceBindingPlan["bindingId"], ServiceRuntimeExport])[];
-}
+type AsyncSourceEntries = readonly (readonly [string, RuntimeAsyncSource])[];
 
 function compareStrings(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
@@ -34,6 +26,7 @@ export function createRuntimeCompilationReferenceTable(input: {
   readonly services: readonly (readonly [ServiceBindingPlan["bindingId"], ServiceRuntimeExport])[];
   readonly resources: ResourceReferenceEntries;
   readonly serverSources: ServerSourceEntries;
+  readonly asyncSources: AsyncSourceEntries;
 }): RuntimeCompilationReferenceTable {
   const providers = new Map<ProviderSelection["selectionId"], RuntimeProvider>();
   const services = new Map<ServiceBindingPlan["bindingId"], ServiceRuntimeExport>();
@@ -66,6 +59,9 @@ export function createRuntimeCompilationReferenceTable(input: {
     [serverSourceCarrier]: Object.freeze(
       input.serverSources.map(([id, source]) => Object.freeze([id, source] as const))
     ),
+    [asyncSourceCarrier]: Object.freeze(
+      input.asyncSources.map(([id, source]) => Object.freeze([id, source] as const))
+    ),
     getProvider(selectionId: ProviderSelection["selectionId"]): RuntimeProvider {
       const provider = providers.get(selectionId);
       if (provider === undefined) throw new TypeError("Provider reference is absent.");
@@ -81,25 +77,60 @@ export function createRuntimeCompilationReferenceTable(input: {
   };
   Object.defineProperty(table, resourceReferenceCarrier, { enumerable: false });
   Object.defineProperty(table, serverSourceCarrier, { enumerable: false });
+  Object.defineProperty(table, asyncSourceCarrier, { enumerable: false });
   return Object.freeze(table);
+}
+
+/** Authored orchestration reaches mounting only through its compiled selected surface. */
+export function readRuntimeCompilationAsyncSources(
+  table: RuntimeCompilationReferenceTable
+): AsyncSourceEntries {
+  if (!hasAsyncSources(table))
+    throw new TypeError("Compilation lost its native async-source handoff.");
+  return table[asyncSourceCarrier];
 }
 
 /** Native projections are available only beside the exact compiled selected surface. */
 export function readRuntimeCompilationServerSources(
   table: RuntimeCompilationReferenceTable
 ): ServerSourceEntries {
-  const entries = table[serverSourceCarrier];
-  if (entries === undefined)
+  if (!hasServerSources(table))
     throw new TypeError("Compilation lost its native server-source handoff.");
-  return entries;
+  return table[serverSourceCarrier];
 }
 
 /** Exact authored requirements are private capabilities, not inspection-table fields. */
 export function readRuntimeCompilationResourceReferences(
   table: RuntimeCompilationReferenceTable
 ): ResourceReferenceEntries {
-  const entries = table[resourceReferenceCarrier];
-  if (entries === undefined)
+  if (!hasResourceReferences(table))
     throw new TypeError("Compilation lost its resource-reference handoff.");
-  return entries;
+  return table[resourceReferenceCarrier];
+}
+
+// The private constructor is the only producer; consumers receive opaque carrier types.
+function hasAsyncSources(
+  table: RuntimeCompilationReferenceTable
+): table is RuntimeCompilationReferenceTable & {
+  readonly [asyncSourceCarrier]: AsyncSourceEntries;
+} {
+  return Object.hasOwn(table, asyncSourceCarrier) && table[asyncSourceCarrier] !== undefined;
+}
+
+function hasServerSources(
+  table: RuntimeCompilationReferenceTable
+): table is RuntimeCompilationReferenceTable & {
+  readonly [serverSourceCarrier]: ServerSourceEntries;
+} {
+  return Object.hasOwn(table, serverSourceCarrier) && table[serverSourceCarrier] !== undefined;
+}
+
+function hasResourceReferences(
+  table: RuntimeCompilationReferenceTable
+): table is RuntimeCompilationReferenceTable & {
+  readonly [resourceReferenceCarrier]: ResourceReferenceEntries;
+} {
+  return (
+    Object.hasOwn(table, resourceReferenceCarrier) && table[resourceReferenceCarrier] !== undefined
+  );
 }

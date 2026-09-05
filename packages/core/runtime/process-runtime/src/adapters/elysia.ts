@@ -7,7 +7,7 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { RPC_DEFAULT_ALLOW_METHODS, RPCMatcher } from "@orpc/server/standard";
 import { mergeHttpPath, pathToHttpPath } from "@orpc/shared";
 
-import type { CompiledSurfacePlan } from "../../../compiler/src/index";
+import type { CompiledSurfacePlan } from "../../../compiler/src/compiled-process-plan";
 import type { NativeServerRequestContext } from "../server-request";
 import type { SurfaceAdapter } from "../surface-adapter";
 

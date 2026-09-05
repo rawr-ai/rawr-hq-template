@@ -2,7 +2,7 @@ import type {
   PluginDefinition,
   ServerApiPluginDefinition,
   ServerInternalPluginDefinition,
-} from "../../definition/src/index";
+} from "../../definition/src/plugin";
 
 /** Native factories are cold references beside the existing selected surface identity. */
 export type RuntimeServerSource =

@@ -1,6 +1,6 @@
 import { ReadonlyObject, type Static, type TUnsafe, Type } from "typebox";
 
-import type { RuntimeConfigSource } from "../../definition/src/index";
+import type { RuntimeConfigSource } from "../../definition/src/profile";
 import { RuntimeSchema } from "../../schema/src/index";
 import { ExecutionDescriptorRefSchema } from "./execution-descriptor-ref";
 import {

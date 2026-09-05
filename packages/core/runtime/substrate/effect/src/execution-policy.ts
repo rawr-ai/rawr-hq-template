@@ -1,11 +1,7 @@
 import { Effect as NativeEffect } from "effect";
 
-import {
-  Effect,
-  type EffectExecutionPolicy,
-  type HabitatTimeoutError,
-  isHabitatEffect,
-} from "../../../definition/src/index";
+import { Effect, type HabitatTimeoutError, isHabitatEffect } from "../../../definition/src/effect";
+import type { EffectExecutionPolicy } from "../../../definition/src/execution";
 
 export function applyExecutionPolicy<A, E, R>(
   effect: NativeEffect.Effect<A, E, R>,

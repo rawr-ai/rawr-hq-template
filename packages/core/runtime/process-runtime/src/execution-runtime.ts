@@ -1,19 +1,17 @@
 import { Clock, Effect, Tracer } from "effect";
 import { ReadonlyObject, type Static, Type } from "typebox";
 import { Check } from "typebox/value";
-
-import type { CompiledSurfacePlan, RuntimeCompilationResult } from "../../compiler/src/index";
+import type { RuntimeCompilationResult } from "../../compiler/src/compile-runtime-plan";
+import type { CompiledSurfacePlan } from "../../compiler/src/compiled-process-plan";
+import type { HabitatTimeoutError } from "../../definition/src/effect";
 import type {
   BoundaryTelemetry,
   EffectExecutionExit,
-  HabitatTimeoutError,
   ProcedureExecutionContext,
-} from "../../definition/src/index";
-import {
-  applyExecutionPolicy,
-  type ProvisionedProcess,
-  type ProvisionedResourceValues,
-} from "../../substrate/effect/src/index";
+} from "../../definition/src/execution-context";
+import { applyExecutionPolicy } from "../../substrate/effect/src/execution-policy";
+import type { ProvisionedResourceValues } from "../../substrate/effect/src/provider-lifecycle";
+import type { ProvisionedProcess } from "../../substrate/effect/src/provisioned-process";
 import {
   type CompiledExecutableBoundary,
   type ExecutionRegistry,
@@ -24,6 +22,7 @@ import {
   type InvocationTracker,
   invocationContinuationContext,
 } from "./invocation-tracker";
+import { withNativeEffectTracing } from "./native-effect-tracing";
 import type { createSurfaceCapabilities } from "./surface-capabilities";
 
 export const ExecutionTraceParentSchema = ReadonlyObject(
@@ -58,6 +57,14 @@ export interface ProcessExecutionRuntime {
   ): Promise<EffectExecutionExit<A, E | HabitatTimeoutError>>;
 }
 
+export interface ProcessExecutionAssembly {
+  readonly runtime: ProcessExecutionRuntime;
+  executeWithin<I, A, E, C>(
+    parent: Continuation,
+    input: ProcessExecutionInput<I, A, E, C>
+  ): Promise<A>;
+}
+
 const telemetry: BoundaryTelemetry = Object.freeze({
   span: <A, E, R>(
     name: string,
@@ -81,12 +88,12 @@ export function createProcessExecutionRuntime(input: {
     surface: CompiledSurfacePlan,
     continuation: Continuation
   ) => ReturnType<typeof createSurfaceCapabilities>;
-}): ProcessExecutionRuntime {
+}): ProcessExecutionAssembly {
   function prepare<I, A, E, C>(
     request: ProcessExecutionInput<I, A, E, C>,
     continuation: Continuation
   ) {
-    const boundary = readCompiledExecutableBoundary(input.registry, request.boundary);
+    const boundary = readCompiledExecutableBoundary(input.registry, request.boundary, continuation);
     const invocation = request.invocation;
     const surface = input.compilation.plan.surfaces.find(
       (candidate) =>
@@ -113,7 +120,8 @@ export function createProcessExecutionRuntime(input: {
         input: invocation.input,
         context: (boundary.ref.boundary === "plugin.agent-tool" ||
         boundary.ref.boundary === "plugin.desktop-background" ||
-        boundary.ref.boundary === "plugin.cli-command"
+        boundary.ref.boundary === "plugin.cli-command" ||
+        boundary.ref.boundary === "plugin.async-step"
           ? { ...invocation.context, ...input.surfaceCapabilities(surface, continuation) }
           : invocation.context) as C,
         execution: Object.freeze({
@@ -136,31 +144,37 @@ export function createProcessExecutionRuntime(input: {
       if (!Effect.isEffect(body))
         throw new TypeError("Execution descriptor returned a non-Effect value.");
       return yield* applyExecutionPolicy(body, boundary.plan.policy);
-    }).pipe(
-      Effect.withSpan("runtime.execution", {
-        attributes: {
-          "habitat.app": identity.app,
-          "habitat.process": identity.process,
-          "habitat.execution": boundary.ref.executionId,
-        },
-        ...(invocation.parentSpan === undefined
-          ? {}
-          : { parent: Tracer.externalSpan(invocation.parentSpan) }),
-      })
+    });
+    const traced = withNativeEffectTracing(
+      program,
+      "runtime.execution",
+      {
+        "habitat.app": identity.app,
+        "habitat.process": identity.process,
+        "habitat.execution": boundary.ref.executionId,
+      },
+      invocation.parentSpan === undefined ? undefined : Tracer.externalSpan(invocation.parentSpan)
     );
     // The cold descriptor table erases R. Native Effect still refuses any unavailable requirement.
-    return program as Effect.Effect<A, E | HabitatTimeoutError, ProvisionedResourceValues>;
+    return traced as Effect.Effect<A, E | HabitatTimeoutError, ProvisionedResourceValues>;
   }
 
-  return Object.freeze<ProcessExecutionRuntime>({
-    execute(request) {
-      return input.admission.run((lease) =>
+  function execute<I, A, E, C>(
+    request: ProcessExecutionInput<I, A, E, C>,
+    parent?: Continuation
+  ): Promise<A> {
+    return input.admission.run(
+      (lease) =>
         input.provisioned.managedRuntime.run(
           Effect.provideContext(prepare(request, lease), invocationContinuationContext(lease)),
           { signal: request.invocation.signal }
-        )
-      );
-    },
+        ),
+      parent
+    );
+  }
+
+  const runtime = Object.freeze<ProcessExecutionRuntime>({
+    execute,
     executeExit(request) {
       return input.admission.runExit((lease) =>
         input.provisioned.managedRuntime.runExit(
@@ -168,6 +182,12 @@ export function createProcessExecutionRuntime(input: {
           { signal: request.invocation.signal }
         )
       );
+    },
+  });
+  return Object.freeze({
+    runtime,
+    executeWithin<I, A, E, C>(parent: Continuation, request: ProcessExecutionInput<I, A, E, C>) {
+      return execute(request, parent);
     },
   });
 }

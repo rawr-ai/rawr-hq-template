@@ -1,15 +1,13 @@
-import {
-  type CompiledSurfacePlan,
-  type RuntimeCompilationResult,
-  readRuntimeCompilationResourceReferences,
-} from "../../compiler/src/index";
+import { type RuntimeCompilationResult } from "../../compiler/src/compile-runtime-plan";
+import { type CompiledSurfacePlan } from "../../compiler/src/compiled-process-plan";
+import { readRuntimeCompilationResourceReferences } from "../../compiler/src/runtime-compilation-reference-table";
+import type { RuntimeResourceMap } from "../../definition/src/provider";
 import type {
-  ConstructionBoundServiceClient,
   ResourceRequirement,
   RuntimeResource,
-  RuntimeResourceMap,
   RuntimeResourceValue,
-} from "../../definition/src/index";
+} from "../../definition/src/resource";
+import type { ConstructionBoundServiceClient } from "../../definition/src/service";
 import type { Continuation, InvocationTracker } from "./invocation-tracker";
 import type { BoundServiceBindingMap } from "./surface-adapter";
 

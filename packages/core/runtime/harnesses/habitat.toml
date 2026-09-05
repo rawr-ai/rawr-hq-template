@@ -2,7 +2,7 @@ schemaVersion = 1
 id = "runtime-harnesses"
 ownerProject = "runtime-harnesses"
 blueprint = "runtime-harnesses"
-blueprintVersion = 2
+blueprintVersion = 3
 
 [roots]
 project = "packages/core/runtime/harnesses"

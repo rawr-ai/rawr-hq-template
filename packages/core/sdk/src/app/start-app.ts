@@ -1,24 +1,22 @@
-import { orderBootgraph } from "../../../runtime/bootgraph/src/index";
-import { compileRuntimePlan } from "../../../runtime/compiler/src/index";
-import type { Entrypoint, RuntimeObservationRecord } from "../../../runtime/definition/src/index";
-import { deriveRuntimeArtifacts } from "../../../runtime/derivation/src/index";
+import { orderBootgraph } from "../../../runtime/bootgraph/src/bootgraph";
+import { compileRuntimePlan } from "../../../runtime/compiler/src/compile-runtime-plan";
+import type { Entrypoint } from "../../../runtime/definition/src/app";
+import type { RuntimeObservationRecord } from "../../../runtime/definition/src/observation";
+import { deriveRuntimeArtifacts } from "../../../runtime/derivation/src/derive-runtime-artifacts";
 import {
-  type MountedProcess,
-  mountProcess,
   type NativeStopPolicy,
   validateFinalizationPolicy,
-} from "../../../runtime/mounting/src/index";
+} from "../../../runtime/mounting/src/finalization";
+import { type MountedProcess, mountProcess } from "../../../runtime/mounting/src/mount-process";
+import type { RuntimeCatalog } from "../../../runtime/observation/src/catalog";
+import { createRuntimeObservation } from "../../../runtime/observation/src/collector";
 import {
-  createRuntimeObservation,
-  type RuntimeCatalog,
   type RuntimeTelemetry,
   type RuntimeTelemetrySink,
-} from "../../../runtime/observation/src/index";
-import { createProcessRuntime } from "../../../runtime/process-runtime/src/index";
-import {
-  provisionProcess,
-  type RuntimeSourceInput,
-} from "../../../runtime/substrate/effect/src/index";
+} from "../../../runtime/observation/src/telemetry";
+import { createProcessRuntime } from "../../../runtime/process-runtime/src/create-process-runtime";
+import type { RuntimeSourceInput } from "../../../runtime/substrate/effect/src/config";
+import { provisionProcess } from "../../../runtime/substrate/effect/src/provision-process";
 import { type NativeIntegration, resolveIntegrations } from "./integrations";
 import { selectedObservationSeed } from "./observation";
 

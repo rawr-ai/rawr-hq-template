@@ -380,13 +380,75 @@ synthetic table injection. Lazy web modules preserve exact loader identity.
 
 - **WHEN** real authored occurrences lower under different workflow/schedule/consumer parents
 - **THEN** each has its canonical full ref and operational descriptor
-- **AND** constructing or calling the cold run surface executes no authored body until the returned Effect executes
+- **AND** constructing or calling the operational descriptor's cold run surface executes no authored body until the returned Effect executes
 
 #### Scenario: Unicode is not representable by canonical encoding
 
 - **WHEN** an identity string contains a lone surrogate, including a trailing high surrogate
 - **THEN** admission refuses rather than hashing replacement bytes
 - **AND** valid Unicode inputs retain their deterministic canonical encoding
+
+### Requirement: Cold async authoring preserves native callbacks and step membership
+
+Every workflow, schedule, and consumer MUST explicitly author `run(ctx)` and
+`steps`. Workflows MUST author `eventName` and `inputSchema`; consumers MUST
+author `eventName` and `eventSchema`; schedules MUST author `cron` and preserve
+native scheduled-event data. `steps` MUST declare permitted descriptor
+membership, not inferred execution order. The selected private
+derivation/compiler handoff MUST retain kind, ID, trigger, exact schema/run
+references, native options, and exact descriptor-to-precompiled-occurrence
+references without executing/parsing callbacks or rediscovering declarations
+at mount. No public executable registry is introduced.
+
+The outer context MUST preserve native `GetFunctionInput<Inngest>` fields,
+tools, and logger with schema-decoded `event.data` and one private
+invocation-bound step capability. Decode MUST occur once before each native
+`run` callback/re-entry, not in `stepEffect` or per local Effect retry. Habitat
+clients, resources, telemetry/execution bags, and managed runtime MUST NOT enter
+that outer context. Only actual native step callbacks receive their decoded
+payload, construction-bound clients, bounded resource map, telemetry, and
+execution identity through `AsyncStepExecutionContext`.
+The step body MUST explicitly supply each selected service's invocation input
+through `.withInvocation(...)` before calling its Effect procedures. The bridge
+MUST NOT infer that input from event data or execution identity. Service-owned
+invocation schemas retain their existing validation and lifetime rules; the
+private invocation-bound step capability is not a service invocation binding.
+
+`stepEffect(ctx).run(descriptor)` MUST accept declared `steps[number]`
+membership and use exact runtime descriptor identity. Its result MUST follow
+native standard-JSON `Jsonify` from `inngest/types`, including `void` to `null`,
+`Date` to string, and native optional-property semantics. Habitat MUST NOT add
+a serializer or profile-selected output codec. Optional `options` MUST project
+native function configuration, including checkpointing, retries, concurrency,
+and cancellation options, without overriding authored ID, generated
+triggers, or `run`; only its top-level own-data record is snapshotted cold.
+Nested native values and callbacks retain exact references. JSON-preserving
+native middleware is permitted at either function or client placement;
+`onFailure` retains native context without Habitat step capabilities.
+
+#### Scenario: A selected declaration contains unused members
+
+- **WHEN** a callback uses native orchestration and invokes only some declared steps
+- **THEN** cold derivation retains every exact occurrence without executing the callback or inventing a sequence
+- **AND** an undeclared or same-named copied descriptor refuses before managed execution
+
+#### Scenario: Native re-entry receives encoded event data
+
+- **WHEN** the native engine invokes a selected workflow or consumer callback
+- **THEN** its owning schema decodes `event.data` once before `run`, and failure refuses before the authored body
+- **AND** local Effect retries reuse the decoded payload while native replay re-enters through the schema boundary
+
+#### Scenario: A native step result is replayed
+
+- **WHEN** a declared step returns a Date, void, or standard-JSON data
+- **THEN** initial and memoized results expose the native JSON form rather than the original runtime object type
+- **AND** arbitrary output-transform middleware cannot claim compatibility with this fixed result contract
+
+#### Scenario: Multiple native functions match one workflow event
+
+- **WHEN** a workflow's explicitly authored event is admitted natively
+- **THEN** every matching native function may receive it without function-ID namespace rewriting or exclusive-targeting claims
+- **AND** native host qualification does not retire the separate WorkflowDispatcher/server-admission obligation in task 13.7
 
 ### Requirement: Compilation lowers one cohesive derivation-owned handoff
 
@@ -755,13 +817,19 @@ classification, cancellation, stop ordering and no surviving handles. It MUST
 NOT substitute an alternate launcher. Elysia acceptance MUST prove graceful
 stop with an admitted gated request, refused new connection and no early release.
 
-Native Inngest Serve/Connect acceptance MUST prove actual retry, memoization,
-history, replay re-entry and real cancellation semantics. A memoized step does
+Native Inngest Serve/Connect acceptance MUST use SDK 4.18.0, Bun 1.3.14, and
+disposable Dev Server 1.44.0 with separate native app IDs for each transport.
+It MUST prove actual retry, memoization, history, replay re-entry and real
+cancellation semantics. A memoized step does
 not rerun its Effect callback; an un-memoized attempt may. Native cancellation
 does not interrupt an already active step, and Habitat MUST NOT invent a signal.
-Serve tracks admitted handler settlement; Connect has zero shutdown-listener
-delta and waits for its owner-local active-callback tracker after native close
-before releasing resources. Native close/flush is not proof of delivery.
+Serve tracks admitted handler settlement. Both transports track finite native
+request attempts through native `wrapRequest` and retain actual managed-step
+leases, not outer authored Promises that may suspend for replay. Connect keeps
+its native default-worker mode, has zero shutdown-listener delta, and waits for
+that scoped drain after native close before releasing resources. Native
+close/flush is not proof of delivery; local Dev Server evidence is not Cloud
+or production-deployment qualification.
 No mock worker, protocol emulator, effect-inngest or custom retry engine substitutes.
 
 Web acceptance MUST exercise real build output and its native mount handoff.
@@ -781,7 +849,7 @@ admitted; absence does not block the core runtime.
 
 - **WHEN** a completed memoized step is replayed
 - **THEN** native registration/replay returns the stored result without entering ProcessExecutionRuntime
-- **AND** active callbacks remain tracked until settlement even if a native lease is no longer renewed
+- **AND** finite native request attempts and active managed steps remain tracked even if a native lease is no longer renewed, without awaiting a replay-suspended outer Promise
 
 #### Scenario: A companion package is unavailable
 
