@@ -2,13 +2,18 @@ import { closeSync, fstatSync, openSync } from "node:fs";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Flags } from "@oclif/core";
 import { Effect } from "effect";
 import { Type } from "typebox";
 import { expect, test } from "vitest";
 import { defineApp, defineEntrypoint, defineProcessCatalog, startApp } from "../src/app/index";
 import { defineCommand } from "../src/plugins/cli/effect/index";
 import { defineCliTopicPlugin } from "../src/plugins/cli/index";
-import { createOclifCommand, type OclifCommandContext } from "../src/plugins/cli/oclif/index";
+import {
+  createOclifCommand,
+  type OclifCommandContext,
+  readOclifCommandSource,
+} from "../src/plugins/cli/oclif/index";
 import { deriveRuntimeArtifacts } from "../src/runtime/derivation/index";
 import type { LoweredCliCommand } from "../src/runtime/harnesses/index";
 import { defineRuntimeProfile, providerSelection } from "../src/runtime/profiles/index";
@@ -167,16 +172,37 @@ test("CLI retains cold source identity, decodes once across native retries, and 
 
 test("native authoring retains metadata without parsing or evaluating the body", () => {
   let called = false;
+  const flags = {
+    operation: Flags.string({
+      relationships: [
+        {
+          type: "all",
+          flags: [
+            {
+              name: "confirm",
+              when: async () => {
+                throw new Error("Cold native relationship evaluated");
+              },
+            },
+          ],
+        },
+      ],
+    }),
+    confirm: Flags.boolean(),
+  };
   const command = createOclifCommand({
     id: "native",
     args: {},
-    flags: {},
+    flags,
     effect: ({ args }) => {
       called = true;
       return Effect.succeed(args);
     },
   });
   expect(command.kind).toBe("cli.command");
+  const source = readOclifCommandSource(command.source);
+  expect(source.flags).toBe(flags);
+  expect(Object.isFrozen(source.metadata)).toBe(true);
   expect(command.inputSchema.decode({ args: {}, flags: {} }).success).toBe(true);
   expect(command.inputSchema.decode({ args: {}, flags: {}, extra: true }).success).toBe(false);
   expect(called).toBe(false);

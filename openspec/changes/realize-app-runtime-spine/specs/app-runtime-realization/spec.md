@@ -125,11 +125,51 @@ source references. One topic-neutral private CLI source bundle projects this
 cold inventory for Oclif's static explicit discovery and packed manifest.
 Live compilation and adapter lowering MUST preserve the same exact selected
 refs; the shared Oclif loader/harness MUST match those lowered callbacks to the
-cold bundle before dispatch. Cold discovery acquires nothing and needs no
+cold bundle before managed execution. Cold discovery acquires nothing and needs no
 public compiler. The app, loader, public CLI package, adapter, and harness MUST NOT
 re-author command bodies, infer topic membership, scan source directories, or
 load an unselected topic. Private topic packages MUST NOT become public release
 members.
+
+The native host MUST defer live Habitat startup until the selected Command's
+single native parse admits input. Native Args/Flags parsers and flag
+relationships retain admission authority; no second parser, validation DSL
+or cached parsed-input replay is admitted. Cold app/provider declarations and
+native discovery/Command construction are allowed before admission. Help,
+external-plugin commands and refused first-party input MUST NOT acquire Habitat
+resources. Command-specific canonical byte inputs MUST retain their exact
+bounded invocation-local bytes rather than a trimmed or process-cached string.
+Startup rollback MUST NOT await the pre-activation native Command that is itself
+awaiting startup; activated command/finally/flush completion still precedes process
+release. Native Config reloads do not constitute a second dispatch path.
+Habitat's managed signal handling MUST begin only at admitted first-party binding,
+before startup. Discovery, asynchronous parsing and external-plugin commands
+retain native signal behavior; an open stdin parser MUST NOT become unkillable
+because Habitat suppresses native termination before it owns managed work.
+
+#### Scenario: Native command input is refused
+
+- **WHEN** native parsing rejects an unknown flag, incompatible mode or malformed
+  command byte input
+- **THEN** no Habitat startup or provider acquisition occurs
+- **AND** Oclif retains native failure presentation and finalization
+
+#### Scenario: Native parsing awaits input when a signal arrives
+
+- **WHEN** a native parser awaits an open stdin pipe before first-party input
+  admission and the terminal process receives a termination signal
+- **THEN** native signal semantics remain unchanged and no Habitat startup occurs
+- **AND** no abandoned parser, fabricated managed exit code or managed cleanup
+  receipt is claimed
+
+#### Scenario: Startup fails or cancellation arrives before activation
+
+- **WHEN** an admitted Command awaits startup and acquisition fails or a signal
+  arrives while acquisition is pending
+- **THEN** owned acquisition settlement and rollback do not wait on that suspended
+  Command, and no command body runs
+- **AND** cancellation retained until acquisition settles does not claim immediate
+  interruption of acquisition or early release of still-owned work
 
 Habitat MUST govern the self-host and each selected first-party topic through
 separate complete positive closed Oclif-app and CLI-topic blueprints. The app

@@ -77,8 +77,11 @@ repository executable modules MUST never load.
 `habitat agent plugins check` MUST parse exactly one of release eligibility,
 staged/clean repository validation, release-input body/envelope
 canonicalization, release-input staged refresh, current-main v3 direct-record
-encode/validate, or current-main selection validation before acquiring any Git,
-filesystem, provider, Oclif, app, or runtime port. Each selected mode MUST invoke
+encode/validate, or current-main selection validation before live Habitat
+resource acquisition or domain Git, filesystem or provider operations. Cold
+app/provider declarations and native Oclif discovery, Command construction and
+the one native parse are permitted; bounded invocation-local stdin admission is
+part of parsing, not lifecycle I/O. Each selected mode MUST invoke
 exactly one typed `@habitat-ai/agent-plugin-lifecycle-service` procedure once.
 
 Each request MUST carry every authority field required by its selected mode.

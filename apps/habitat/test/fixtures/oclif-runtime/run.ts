@@ -1,6 +1,15 @@
-import { startApp } from "@habitat-ai/sdk/app";
+import { writeFileSync } from "node:fs";
+import { type NativeIntegration, startApp } from "@habitat-ai/sdk/app";
 import { createOclifHost } from "../../../dist/host.js";
-import { appRoot, entrypoint, record, sourceBundle } from "./app.js";
+import {
+  appRoot,
+  dataPath,
+  entrypoint,
+  record,
+  sourceBundle,
+  startupFailure,
+  waitForStartupGate,
+} from "./app.js";
 
 const host = createOclifHost({
   harnessId: "native.oclif",
@@ -8,28 +17,84 @@ const host = createOclifHost({
   sourceBundle,
   args: process.argv.slice(2),
 });
-const startup = startApp(entrypoint, {
-  sources: { appRoot },
-  integrations: [host.integration],
-  finalization: { policy: "waitForNativeStop", deadlineMs: 0 },
-  observation: {
-    sink: {
-      publish(event) {
-        if (event.name?.startsWith("oclif.")) record(event.name);
+const integration = startupFailure
+  ? {
+      ...host.integration,
+      harness: {
+        ...host.integration.harness,
+        async mount(input: Parameters<typeof host.integration.harness.mount>[0]) {
+          const handle = await host.integration.harness.mount(input);
+          record("native.mounted");
+          return {
+            ...handle,
+            async stop() {
+              record("native.stop");
+              await handle.stop();
+              record("native.stopped");
+            },
+          };
+        },
       },
+    }
+  : host.integration;
+const laterFailure: NativeIntegration = {
+  surface: "cli/commands",
+  harness: {
+    id: "native.zz-after",
+    roles: ["cli"],
+    surfaces: ["cli/commands"],
+    async mount() {
+      await waitForStartupGate();
+      record("startup.fail");
+      throw new Error("STARTUP_MOUNT_FAILURE");
     },
   },
-}).then((started) => {
-  const root = process.env.HABITAT_FIXTURE_DATA;
-  if (root === undefined) throw new Error("Missing native fixture data root.");
+};
+const startup = () => {
+  record("startup");
+  return startApp(entrypoint, {
+    sources: { appRoot },
+    integrations: [integration, ...(startupFailure ? [laterFailure] : [])],
+    finalization: { policy: "waitForNativeStop", deadlineMs: 0 },
+    observation: {
+      sink: {
+        publish(event) {
+          if (event.name?.startsWith("oclif.")) record(event.name);
+        },
+      },
+    },
+  }).then((started) => {
+    writeFileSync(
+      dataPath("ready-catalog.json"),
+      JSON.stringify({
+        selectedExecutionIds: sourceBundle.entries.map(({ ref }) => ref.executionId),
+        catalog: started.catalog(),
+      })
+    );
+    return started;
+  });
+};
+if (process.env.HABITAT_FIXTURE_ACQUIRE_GATE === "1") {
+  process.on("SIGINT", () => record("signal.received"));
+  process.on("SIGTERM", () => record("signal.received"));
+}
+
+const stdinCache = '{"message":"CACHED_NATIVE_STDIN"}';
+const existingOclif: unknown = Reflect.get(globalThis, "oclif");
+const nativeGlobals = Object.assign(globalThis, {
+  oclif: {
+    ...(typeof existingOclif === "object" && existingOclif !== null ? existingOclif : {}),
+    stdinCache,
+  },
+});
+// Native handle() can terminate synchronously; POSIX signal termination skips this receipt.
+process.once("exit", () => {
   writeFileSync(
-    join(root, "ready-catalog.json"),
+    dataPath("stdin-state.json"),
     JSON.stringify({
-      selectedExecutionIds: sourceBundle.entries.map(({ ref }) => ref.executionId),
-      catalog: started.catalog(),
+      cacheUnchanged: nativeGlobals.oclif.stdinCache === stdinCache,
     })
   );
-  return started;
 });
 if (process.env.HABITAT_FIXTURE_CAPTURE === "1") {
   const previousExitCode = process.exitCode;
@@ -46,6 +111,3 @@ if (process.env.HABITAT_FIXTURE_CAPTURE === "1") {
 } else {
   await host.execute(startup);
 }
-
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";

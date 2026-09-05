@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -17,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
 import { runServer } from "verdaccio";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, aroundEach, beforeAll, describe, expect, it } from "vitest";
 import {
   buildNativeRuntimeFixture,
   nativeRuntimeScenarios,
@@ -389,6 +390,12 @@ let acceptanceRoot = "";
 let consumerRoot = "";
 let gritSubjectPaths: readonly string[] = [];
 let localRegistry: Server | undefined;
+const commandSignal = new AsyncLocalStorage<AbortSignal>();
+const pendingCommands = new Set<{
+  readonly cancel: (reason: unknown) => void;
+  readonly closed: Promise<void>;
+}>();
+let commandsClosed = false;
 const originalRegistryEnvironment = new Map(
   [
     "BUN_CONFIG_REGISTRY",
@@ -399,6 +406,8 @@ const originalRegistryEnvironment = new Map(
   ].map((name) => [name, process.env[name]])
 );
 const installVersion = publishedRegistryVersion ?? CANDIDATE_VERSION;
+
+aroundEach((runTest, { signal }) => commandSignal.run(signal, runTest));
 
 beforeAll(async () => {
   acceptanceRoot = await realpath(await mkdtemp(path.join(temporaryParent, FIXTURE_PREFIX)));
@@ -424,6 +433,12 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
+  commandsClosed = true;
+  const commands = [...pendingCommands];
+  for (const command of commands) {
+    command.cancel(new Error("Installed-package acceptance is tearing down."));
+  }
+  await Promise.all(commands.map((command) => command.closed));
   try {
     await stopCandidateRegistry();
   } finally {
@@ -1061,6 +1076,34 @@ describe("installed Habitat products", () => {
     }
   });
 
+  describe("native admission through the installed CLI host", () => {
+    let nativeRuntimeRoot = "";
+    beforeAll(async () => {
+      const installedCliRoot = await realpath(
+        path.join(consumerRoot, "node_modules/@habitat-ai/cli")
+      );
+      nativeRuntimeRoot = path.join(acceptanceRoot, "installed-native-runtime");
+      await buildNativeRuntimeFixture({
+        workspaceRoot,
+        outputRoot: nativeRuntimeRoot,
+        hostImport: "@habitat-ai/cli/host",
+        dependencyPackageJson: path.join(installedCliRoot, "package.json"),
+      });
+    });
+    for (const [index, scenario] of nativeRuntimeScenarios.entries()) {
+      it.skipIf(process.platform === "win32" && "signal" in scenario)(
+        `settles native scenario ${index}: ${scenario.name}`,
+        async () => {
+          await verifyNativeRuntimeScenario({
+            builtRoot: nativeRuntimeRoot,
+            dataRoot: path.join(acceptanceRoot, `installed-native-scenario-${index}`),
+            scenario,
+          });
+        }
+      );
+    }
+  });
+
   it("installs, executes, and initializes the public SDK and CLI boundary", async () => {
     const consumerBlueprintRoot = path.join(consumerRoot, ".habitat/blueprints");
     const consumerBlueprintInventory = [
@@ -1075,21 +1118,6 @@ describe("installed Habitat products", () => {
     const installedCliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
     const resolvedInstalledCliRoot = await realpath(installedCliRoot);
     const installedCliRequire = createRequire(path.join(resolvedInstalledCliRoot, "package.json"));
-    const nativeRuntimeRoot = path.join(acceptanceRoot, "installed-native-runtime");
-    await buildNativeRuntimeFixture({
-      workspaceRoot,
-      outputRoot: nativeRuntimeRoot,
-      hostImport: "@habitat-ai/cli/host",
-      dependencyPackageJson: path.join(resolvedInstalledCliRoot, "package.json"),
-    });
-    for (const [index, scenario] of nativeRuntimeScenarios.entries()) {
-      if (process.platform === "win32" && "signal" in scenario) continue;
-      await verifyNativeRuntimeScenario({
-        builtRoot: nativeRuntimeRoot,
-        dataRoot: path.join(acceptanceRoot, `installed-native-scenario-${index}`),
-        scenario,
-      });
-    }
     const installedProductRoots = new Map<PublicProduct["name"], string>([
       ["@habitat-ai/cli", installedCliRoot],
       [
@@ -5318,6 +5346,9 @@ async function run(
     readonly timeoutMs?: number;
   } = {}
 ): Promise<CommandResult> {
+  if (commandsClosed) throw new Error("Installed-package acceptance has closed command admission.");
+  const signal = commandSignal.getStore();
+  signal?.throwIfAborted();
   const runtimeRoot = path.join(acceptanceRoot, "runtime");
   const env: NodeJS.ProcessEnv = {
     ...process.env,
@@ -5341,36 +5372,70 @@ async function run(
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, {
       cwd: options.cwd ?? workspaceRoot,
+      detached: process.platform !== "win32",
       env,
       shell: process.platform === "win32",
     });
     const stdout: string[] = [];
     const stderr: string[] = [];
-    let settled = false;
-    const settle = (finish: () => void) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      finish();
+    let nativeClosed = false;
+    let canceled = false;
+    let failure: unknown;
+    const cancel = (reason: unknown) => {
+      if (nativeClosed || canceled) return;
+      canceled = true;
+      failure ??= reason;
+      if (child.pid === undefined) return;
+      try {
+        if (process.platform === "win32") {
+          execFileSync("taskkill", ["/pid", String(child.pid), "/t", "/f"], {
+            stdio: "pipe",
+            windowsHide: true,
+          });
+        } else {
+          process.kill(-child.pid, "SIGKILL");
+        }
+      } catch (error) {
+        if (!(error instanceof Error && "code" in error && error.code === "ESRCH")) {
+          failure = new AggregateError(
+            [failure, error],
+            `${executable} could not terminate cleanly.`
+          );
+        }
+      }
     };
+    const abort = () => cancel(signal?.reason ?? new Error("Installed-package test was canceled."));
+    const closed = new Promise<void>((resolveClosed) => {
+      child.once("close", (exitCode) => {
+        nativeClosed = true;
+        clearTimeout(timer);
+        signal?.removeEventListener("abort", abort);
+        pendingCommands.delete(pending);
+        resolveClosed();
+        if (failure !== undefined) reject(failure);
+        else {
+          resolve({
+            exitCode: exitCode ?? 1,
+            stderr: stderr.join(""),
+            stdout: stdout.join(""),
+          });
+        }
+      });
+    });
+    const pending = { cancel, closed };
+    pendingCommands.add(pending);
     const timer = setTimeout(() => {
-      child.kill("SIGKILL");
-      settle(() => reject(new Error(`${executable} exceeded its acceptance timeout.`)));
+      cancel(new Error(`${executable} exceeded its acceptance timeout.`));
     }, options.timeoutMs ?? 30_000);
+    signal?.addEventListener("abort", abort, { once: true });
+    if (signal?.aborted) abort();
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => stdout.push(chunk));
     child.stderr.on("data", (chunk: string) => stderr.push(chunk));
-    child.on("error", (error) => settle(() => reject(error)));
-    child.on("close", (exitCode) =>
-      settle(() =>
-        resolve({
-          exitCode: exitCode ?? 1,
-          stderr: stderr.join(""),
-          stdout: stdout.join(""),
-        })
-      )
-    );
+    child.once("error", (error) => {
+      failure ??= error;
+    });
   });
 }
 

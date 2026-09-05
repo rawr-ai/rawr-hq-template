@@ -3615,16 +3615,36 @@ CLI commands do not import repositories, mutate databases directly, or acquire p
 in `plugins/cli/effect` retains a RuntimeSchema and opaque native source;
 `plugins/cli/schema` provides native TypeBox aliases. The Oclif companion
 `plugins/cli/oclif` specializes that grammar without another parser or command
-body. It preserves native Args/Flags and metadata, admits the native parsed
+body. It preserves native Args/Flags, flag relationships and metadata, admits the native parsed
 envelope, and optionally presents a successful result through the native Command.
 Its Oclif imports are type-only. The CLI distribution owns actual command
 classes, parsing, discovery, dispatch and lifecycle.
+
+The native host receives lazy startup and invokes it only after the selected
+Command's one native parse has admitted input. Native custom parsers and
+flag relationships own scalar/mode and bounded canonical-byte admission; there is no
+second Habitat validation DSL or parser. Cold app/provider declarations and
+native discovery are harmless before admission, but live Habitat acquisition
+and domain I/O are not. Help, external-plugin commands and input refusals require
+no Habitat process lease. Command-specific exact stdin must use invocation-local
+bytes rather than Oclif's trimmed, process-cached convenience input.
+Habitat installs its signal handlers only when the exact first-party binding is
+invoked after parsing, before startup. Earlier native discovery/parsing and
+external-plugin commands retain native signal behavior. Suppressing termination
+while a native parser waits on stdin is not managed cancellation.
+
+Startup rollback cannot await the pre-activation Command that is awaiting
+startup. Once activated, command completion, native finally and output flush
+still precede process release. A signal during acquisition is retained through
+settlement and mount refusal; without an acquisition-abort contract it does not
+promise immediate interruption. Native Config reloads remain within one native
+dispatch path and do not justify duplicate parsing or cached-input replay.
 
 Derivation's nonportable `cliCommandSources` inventory retains each full CLI
 execution ref with its exact source object. Native source-bundle construction
 projects that cold inventory; it does not select again or grant callback
 authority. Mounting must reconcile that inventory with the compiled lowered
-callbacks and exact source identity before native dispatch. Source and installed
+callbacks and exact source identity before managed execution. Source and installed
 materialization may name different module paths through native Config metadata,
 but cannot change membership, substitute class equivalence for identity, or
 mutate process-global loader settings.

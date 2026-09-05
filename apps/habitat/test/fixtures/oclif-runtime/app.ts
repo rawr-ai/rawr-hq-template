@@ -18,16 +18,30 @@ import {
 } from "../../../dist/host.js";
 
 export const appRoot = fileURLToPath(new URL(".", import.meta.url));
+export const startupFailure = process.env.HABITAT_FIXTURE_STARTUP_FAIL === "1";
+let bodyEntered = false;
 
 export function record(name: string): void {
   const path = process.env.HABITAT_FIXTURE_TRACE;
   if (path !== undefined) appendFileSync(path, `${name}\n`);
 }
 
-function leasePath(): string {
+export function dataPath(name: string): string {
   const root = process.env.HABITAT_FIXTURE_DATA;
   if (root === undefined) throw new TypeError("Missing native fixture directory.");
-  return join(root, "lease");
+  return join(root, name);
+}
+
+function leasePath(): string {
+  return dataPath("lease");
+}
+
+export async function waitForStartupGate(): Promise<void> {
+  record("gate.wait");
+  while (!existsSync(dataPath("gate-open"))) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+  record("gate.open");
 }
 
 const file = defineRuntimeResource<"oclif.file", number>({
@@ -44,7 +58,8 @@ const provider = defineRuntimeProvider({
   build() {
     record("build");
     return providerFx.acquireRelease({
-      acquire: Effect.sync(() => {
+      acquire: Effect.promise(async () => {
+        if (process.env.HABITAT_FIXTURE_ACQUIRE_GATE === "1") await waitForStartupGate();
         const fd = openSync(leasePath(), "wx");
         record("acquire");
         return fd;
@@ -59,10 +74,75 @@ const provider = defineRuntimeProvider({
   },
 });
 const args = {
-  mode: Args.string({ required: true, options: ["success", "failure", "wait"] }),
+  mode: Args.string({
+    required: true,
+    ignoreStdin: true,
+    options: ["success", "failure", "wait"],
+    async parse(value) {
+      record("parse");
+      return value;
+    },
+  }),
 };
+
+interface StdinPayload {
+  readonly message: string;
+  readonly byteLength: number;
+  readonly hex: string;
+}
+
+const stdinPayload = Flags.custom<StdinPayload>({
+  allowStdin: false,
+  async parse(value) {
+    if (value !== "-") throw new Errors.CLIError("STDIN_MARKER_REQUIRED", { exit: 2 });
+    record("stdin.read");
+    const chunks: Buffer[] = [];
+    let byteLength = 0;
+    // The native parser owns this invocation; its text trimming and global stdin cache do not.
+    for await (const chunk of process.stdin) {
+      if (!Buffer.isBuffer(chunk)) throw new TypeError("Expected native stdin bytes.");
+      byteLength += chunk.length;
+      if (byteLength > 128) throw new Errors.CLIError("STDIN_BYTE_LIMIT", { exit: 2 });
+      chunks.push(chunk);
+    }
+    const bytes = Buffer.concat(chunks);
+    let text: string;
+    try {
+      text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {
+      throw new Errors.CLIError("INVALID_STDIN_UTF8", { exit: 2 });
+    }
+    let payload: unknown;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      throw new Errors.CLIError("INVALID_STDIN_JSON", { exit: 2 });
+    }
+    if (
+      typeof payload !== "object" ||
+      payload === null ||
+      !("message" in payload) ||
+      typeof payload.message !== "string"
+    ) {
+      throw new Errors.CLIError("INVALID_STDIN_PAYLOAD", { exit: 2 });
+    }
+    return { message: payload.message, byteLength, hex: bytes.toString("hex") };
+  },
+});
 const flags = {
   count: Flags.integer({ default: 1 }),
+  operation: Flags.string({
+    options: ["inspect", "apply"],
+    default: "inspect",
+    relationships: [
+      {
+        type: "all",
+        flags: [{ name: "confirm", when: async (flags) => flags.operation === "apply" }],
+      },
+    ],
+  }),
+  confirm: Flags.boolean(),
+  input: stdinPayload(),
 };
 const command = createOclifCommand({
   id: "probe",
@@ -73,6 +153,7 @@ const command = createOclifCommand({
   effect(context: OclifCommandContext<typeof args, typeof flags>) {
     return Effect.gen(function* () {
       if (!fstatSync(context.resources.get(required)).isFile()) throw new TypeError("Not a file.");
+      bodyEntered = true;
       record("body");
       if (context.args.mode === "failure") {
         return yield* Effect.fail(new Errors.CLIError("PRIMARY_COMMAND_FAILURE", { exit: 2 }));
@@ -87,7 +168,13 @@ const command = createOclifCommand({
           )
         );
       }
-      return { count: context.flags.count, mode: context.args.mode, output: "x".repeat(70_000) };
+      return {
+        count: context.flags.count,
+        mode: context.args.mode,
+        operation: context.flags.operation,
+        input: context.flags.input,
+        output: "x".repeat(70_000),
+      };
     });
   },
   async present(value) {
@@ -105,9 +192,11 @@ const app = defineApp({ id: "native-oclif-fixture", plugins: [plugin] });
 const profile = defineRuntimeProfile({
   id: "native-fixture",
   providers: [providerSelection({ resource: file, provider })],
-  harnesses: ["native.oclif"],
+  harnesses: ["native.oclif", ...(startupFailure ? ["native.zz-after"] : [])],
 });
-const processSpec = defineProcessCatalog({ cli: { id: "native.cli", roles: ["cli"] } }).cli;
+const processSpec = defineProcessCatalog({
+  cli: { id: "native.cli", roles: ["cli"] },
+}).cli;
 export const entrypoint = defineEntrypoint({
   id: "native.entrypoint",
   app,
@@ -130,8 +219,9 @@ export const sourceBundle = createOclifSourceBundle(
 export const COMMANDS = sourceBundle.COMMANDS;
 
 export const FINALLY_HOOK: Hook.Finally = async function (options) {
-  if (!existsSync(leasePath())) throw new TypeError("Provider released before native finally.");
-  record("finally.lease-open");
+  const leaseOpen = existsSync(leasePath());
+  if (bodyEntered && !leaseOpen) throw new TypeError("Provider released before native finally.");
+  record(leaseOpen ? "finally.lease-open" : "finally.no-lease");
   await nativeFinally.call(this, options);
   if (process.env.HABITAT_FIXTURE_FINALLY_FAIL === "1") {
     throw new Errors.CLIError("SECONDARY_FINALLY_FAILURE", { exit: 7 });

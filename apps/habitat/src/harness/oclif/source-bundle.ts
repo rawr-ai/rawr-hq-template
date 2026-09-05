@@ -41,8 +41,8 @@ export function createOclifSourceBundle(derivation: RuntimeDerivationResult): Oc
       static override flags = source.flags;
 
       async run(): Promise<unknown> {
-        const binding = readOclifBinding(this.config);
         const parsed = await this.parse(this.ctor);
+        const binding = readOclifBinding(this.config);
         const value = await binding.invoke(ref, source, { args: parsed.args, flags: parsed.flags });
         if (binding.presentation) await source.present(value, this);
         return value;

@@ -25,10 +25,10 @@ export interface OclifHostOptions {
 
 export interface OclifHost {
   readonly integration: Extract<NativeIntegration, { surface: "cli/commands" }>;
-  /** Native terminal invocation: presentation, signal cancellation and handle last. */
-  execute(startup: Promise<StartedProcess>): Promise<unknown>;
+  /** Native terminal invocation; managed signal cancellation begins after command parsing. */
+  execute(startup: () => Promise<StartedProcess>): Promise<unknown>;
   /** The same native invocation for an in-process reader, without terminal side effects. */
-  run(startup: Promise<StartedProcess>): Promise<unknown>;
+  run(startup: () => Promise<StartedProcess>): Promise<unknown>;
 }
 
 /** A single native Oclif invocation; no application or first-party topic is selected here. */
@@ -46,6 +46,11 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
   let runSettlement: Promise<void> | undefined;
   let primary: { readonly error: unknown } | undefined;
   let telemetry: RuntimeTelemetry | undefined;
+  let startup: (() => Promise<StartedProcess>) | undefined;
+  let startupPromise: Promise<StartedProcess> | undefined;
+  let started: StartedProcess | undefined;
+  let selected: ReadonlyMap<string, LoweredCliCommand> | undefined;
+  let managedSignals = false;
 
   function event(name: string): void {
     telemetry?.event(name);
@@ -55,14 +60,102 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
     controller.abort();
     if (active) event("oclif.cancel");
   }
+  function onSignal(): void {
+    primary ??= { error: new Errors.ExitError(1) };
+    cancel();
+    // Stop closes admission synchronously, but native completion must remain free to settle.
+    void started?.stop().catch(() => {});
+  }
+  function installManagedSignals(): void {
+    if (!presentation || managedSignals) return;
+    process.on("SIGINT", onSignal);
+    process.on("SIGTERM", onSignal);
+    managedSignals = true;
+  }
   function stopNative(): Promise<void> {
     if (nativeStop !== undefined) return nativeStop;
     nativeStopping = true;
     if (active) cancel();
-    nativeStop = Promise.resolve(runSettlement).then(() => {
+    // A command awaiting startup has no live capabilities. Joining it during
+    // mount rollback would make startup wait for its own suspended caller.
+    nativeStop = Promise.resolve(active ? runSettlement : undefined).then(() => {
       config = undefined;
     });
     return nativeStop;
+  }
+
+  const binding = Object.freeze<OclifRuntimeBinding>({
+    get presentation() {
+      return presentation;
+    },
+    async invoke(ref, source, parsed) {
+      if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
+      if (nativeStopping || startup === undefined) {
+        throw new TypeError("Native Oclif command intake is closed.");
+      }
+      if (!bundle.entries.some((entry) => sameCliRef(entry.ref, ref) && entry.source === source)) {
+        throw new TypeError("Native Oclif command is outside its selected cold source bundle.");
+      }
+      installManagedSignals();
+      const start = startup;
+      startupPromise ??= Promise.resolve()
+        .then(() => {
+          if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
+          if (nativeStopping) throw new TypeError("Native Oclif command intake is closed.");
+          return start();
+        })
+        .then((process) => {
+          started = process;
+          telemetry = process.telemetry;
+          return process;
+        });
+      await startupPromise;
+      if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
+      if (config === undefined || nativeStopping || !mounted) {
+        throw new TypeError("Native Oclif host is not mounted.");
+      }
+      const command = selected?.get(ref.executionId);
+      if (command === undefined || !sameCliRef(ref, command.ref) || command.source !== source) {
+        throw new TypeError("Native Oclif command is outside its compiled invocation binding.");
+      }
+      active = true;
+      return command.invoke(parsed, { signal: controller.signal });
+    },
+    onFinally(error) {
+      if (error !== undefined) primary ??= { error };
+      event("oclif.finally");
+    },
+  });
+
+  async function loadNativeConfig(): Promise<Config> {
+    const loadOptions: OclifLoadOptions = {
+      root: options.root,
+      habitatRuntime: binding,
+      // In-process Nx resolution does not participate in the operator's extension lifecycle.
+      ...(presentation ? {} : { userPlugins: false, devPlugins: false }),
+    };
+    if (options.discoveryModule !== undefined) {
+      loadOptions.pjson = await discoveryPackage(options.root, options.discoveryModule);
+    }
+    if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
+    const loaded = await Config.load(loadOptions);
+    if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
+    const rootPlugin = loaded.plugins.get(loaded.name);
+    const inventory = rootPlugin?.commands.map((command) => command.id).sort();
+    const expected = Object.keys(bundle.COMMANDS).sort();
+    if (
+      inventory === undefined ||
+      inventory.length !== expected.length ||
+      inventory.some((id, index) => id !== expected[index])
+    ) {
+      throw new TypeError("Native Oclif discovery differs from the selected command inventory.");
+    }
+    for (const command of rootPlugin!.commands) {
+      if ((await command.load()) !== bundle.COMMANDS[command.id]) {
+        throw new TypeError("Native Oclif discovery loaded a different command source.");
+      }
+    }
+    return loaded;
   }
 
   const descriptor: NativeIntegrationHarness<CliCommandMountRecord> = Object.freeze({
@@ -72,76 +165,29 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
     async mount(input): Promise<NativeHarnessHandle> {
       if (mounted || nativeStopping) throw new TypeError("An Oclif host can mount only once.");
       if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
+      if (config === undefined || startupPromise === undefined) {
+        throw new TypeError("An Oclif host mounts only after native command admission.");
+      }
       mounted = true;
       const commands = input.mountReadyPayloads.flatMap((record) => record.payload);
-      const selected = new Map<string, LoweredCliCommand>();
+      const compiled = new Map<string, LoweredCliCommand>();
       for (const command of commands) {
         const source = bundle.entries.find((entry) => sameCliRef(entry.ref, command.ref));
         if (
           source === undefined ||
           source.source !== command.source ||
-          selected.has(command.ref.executionId)
+          compiled.has(command.ref.executionId)
         ) {
           throw new TypeError(
             "Native Oclif payload does not match the selected cold source bundle."
           );
         }
-        selected.set(command.ref.executionId, command);
+        compiled.set(command.ref.executionId, command);
       }
-      if (selected.size !== bundle.entries.length) {
+      if (compiled.size !== bundle.entries.length) {
         throw new TypeError("Native Oclif payload omits selected command sources.");
       }
-      const binding = Object.freeze<OclifRuntimeBinding>({
-        get presentation() {
-          return presentation;
-        },
-        invoke(ref, source, parsed) {
-          if (nativeStopping) throw new TypeError("Native Oclif command intake is closed.");
-          const command = selected.get(ref.executionId);
-          if (command === undefined || !sameCliRef(ref, command.ref) || command.source !== source) {
-            throw new TypeError("Native Oclif command is outside its compiled invocation binding.");
-          }
-          return command.invoke(parsed, { signal: controller.signal });
-        },
-        onFinally(error) {
-          if (error !== undefined) primary ??= { error };
-          event("oclif.finally");
-        },
-      });
-      const loadOptions: OclifLoadOptions = {
-        root: options.root,
-        habitatRuntime: binding,
-        // In-process Nx resolution does not participate in the operator's extension lifecycle.
-        ...(presentation ? {} : { userPlugins: false, devPlugins: false }),
-      };
-      try {
-        if (options.discoveryModule !== undefined) {
-          loadOptions.pjson = await discoveryPackage(options.root, options.discoveryModule);
-        }
-        if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
-        config = await Config.load(loadOptions);
-        if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
-        const rootPlugin = config.plugins.get(config.name);
-        const inventory = rootPlugin?.commands.map((command) => command.id).sort();
-        const expected = Object.keys(bundle.COMMANDS).sort();
-        if (
-          inventory === undefined ||
-          inventory.length !== expected.length ||
-          inventory.some((id, index) => id !== expected[index])
-        ) {
-          throw new TypeError(
-            "Native Oclif discovery differs from the selected command inventory."
-          );
-        }
-        for (const command of rootPlugin!.commands) {
-          if ((await command.load()) !== bundle.COMMANDS[command.id]) {
-            throw new TypeError("Native Oclif discovery loaded a different command source.");
-          }
-        }
-      } catch (error) {
-        await stopNative();
-        throw error;
-      }
+      selected = compiled;
       function health(kind: HarnessHealthReport["kind"]): Promise<HarnessHealthReport> {
         return Promise.resolve(
           Object.freeze({
@@ -149,7 +195,11 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
             harnessId: options.harnessId,
             kind,
             status:
-              kind === "liveness" ? "not-applicable" : config === undefined ? "failing" : "passing",
+              kind === "liveness"
+                ? "not-applicable"
+                : config === undefined || nativeStopping
+                  ? "failing"
+                  : "passing",
             findings: Object.freeze([]),
           })
         );
@@ -162,34 +212,22 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
     },
   });
 
-  async function invoke(startup: Promise<StartedProcess>, terminal: boolean): Promise<unknown> {
+  async function invoke(start: () => Promise<StartedProcess>, terminal: boolean): Promise<unknown> {
     if (consumed) throw new TypeError("An Oclif host can execute only once.");
+    if (typeof start !== "function") {
+      throw new TypeError("An Oclif host needs a lazy process startup function.");
+    }
     consumed = true;
+    startup = start;
     presentation = terminal;
     const previousExitCode = process.exitCode;
-    let started: StartedProcess | undefined;
     let value: unknown;
-    const onSignal = () => {
-      primary ??= { error: new Errors.ExitError(1) };
-      cancel();
-      // Stop closes admission synchronously, but native completion must remain free to settle.
-      void started?.stop().catch(() => {});
-    };
-    if (terminal) {
-      process.on("SIGINT", onSignal);
-      process.on("SIGTERM", onSignal);
-    }
     try {
-      started = await startup;
-      telemetry = started.telemetry;
-      if (controller.signal.aborted) throw primary?.error;
-      if (config === undefined || nativeStopping)
-        throw new TypeError("Native Oclif host is not mounted.");
-      const nativeConfig = config;
-      active = true;
       runSettlement = Promise.resolve().then(async () => {
         try {
-          value = await run(args, nativeConfig);
+          config = await loadNativeConfig();
+          if (controller.signal.aborted) throw primary?.error ?? new Errors.ExitError(1);
+          value = await run(args, config);
         } catch (error) {
           primary ??= { error };
         } finally {
@@ -207,14 +245,17 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
       primary ??= { error };
     } finally {
       try {
-        await started?.stop();
+        if (started === undefined) await stopNative();
+        else await started.stop();
       } catch (error) {
         primary ??= { error };
       }
-      if (terminal) {
+      if (managedSignals) {
         process.removeListener("SIGINT", onSignal);
         process.removeListener("SIGTERM", onSignal);
-      } else {
+        managedSignals = false;
+      }
+      if (!terminal) {
         process.exitCode = previousExitCode;
       }
     }
@@ -230,8 +271,8 @@ export function createOclifHost(options: OclifHostOptions): OclifHost {
   }
   return Object.freeze({
     integration: Object.freeze({ surface: "cli/commands" as const, harness: descriptor }),
-    execute: (startup: Promise<StartedProcess>) => invoke(startup, true),
-    run: (startup: Promise<StartedProcess>) => invoke(startup, false),
+    execute: (start: () => Promise<StartedProcess>) => invoke(start, true),
+    run: (start: () => Promise<StartedProcess>) => invoke(start, false),
   });
 }
 
