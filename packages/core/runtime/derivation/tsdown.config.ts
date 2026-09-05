@@ -14,7 +14,7 @@ export default defineConfig({
   deps: {
     neverBundle: true,
     // Keep nominal witnesses anchored to their private TypeScript project owner.
-    dts: { neverBundle: [/^\.\.\/\.\.\/(definition|schema)\/src\//, /^[^./]/] },
+    dts: { neverBundle: [/^\.\.\/\.\.\/(definition|schema)\/src\//, /^(?![A-Za-z]:)[^./\\\0]/] },
     onlyImport: [
       "@orpc/contract",
       "@orpc/server",

@@ -14,7 +14,7 @@ export default defineConfig({
   deps: {
     neverBundle: true,
     dts: {
-      neverBundle: [/^\.\.\/\.\.\/compiler\/src(?:\/|$)/, /^[^./]/],
+      neverBundle: [/^\.\.\/\.\.\/compiler\/src(?:\/|$)/, /^(?![A-Za-z]:)[^./\\\0]/],
     },
     onlyImport: [
       "@orpc/contract",
