@@ -20,6 +20,16 @@
       "factory": "./dist/generators/service.js",
       "schema": "./generators/service/schema.json",
       "description": "Construct one closed Habitat service package."
+    },
+    "cli-command": {
+      "factory": "./dist/generators/cli-command.js",
+      "schema": "./generators/cli-command/schema.json",
+      "description": "Add one native Habitat command to an existing Habitat topic."
+    },
+    "cli-extension": {
+      "factory": "./dist/generators/cli-extension.js",
+      "schema": "./generators/cli-extension/schema.json",
+      "description": "Author one standalone native Oclif extension at an explicit destination."
     }
   }
 }

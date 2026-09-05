@@ -60,6 +60,10 @@
 - Nx plugin: `@habitat-ai/cli/nx-plugin`.
 - Nx generators: `@habitat-ai/cli:preset`, `@habitat-ai/cli:init`, and
   `@habitat-ai/cli:remove-hook`.
+- Source generators: `@habitat-ai/cli:service`, `@habitat-ai/cli:cli-command`,
+  and `@habitat-ai/cli:cli-extension`. The latter two stage a fully validated
+  native Nx Tree without installing or activating output. Native dry-run and
+  preflight refusal publish nothing; native disk-flush errors are not rollback.
 - New repository lifecycle: run the Bun-only `preset` through
   `create-nx-workspace`, then invoke `init` after Nx has initialized Git.
 - Git-hook activation: consumer-root Husky installed by `@habitat-ai/cli:init`.
@@ -79,3 +83,6 @@
   `@habitat-ai/cli:build`, and `@habitat-ai/cli:manifest` through Nx.
 - Run `@habitat-ai/cli:acceptance:oclif-native-plugins` when native extension
   installation or state behavior changes.
+- Run `@habitat-ai/cli:acceptance:generators-installed-package` for source
+  creators. It reuses the isolated-registry native `nx add` fixture and executes
+  the packed generators through native `nx generate`, not source imports.

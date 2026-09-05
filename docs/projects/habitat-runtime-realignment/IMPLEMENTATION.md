@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; Oclif self-host locally accepted, awaiting stack admission.
-Branch: `agent-root-habitat-oclif-self-host`, stacked on accepted mounting.
+Status: `active`; qualified native generators locally accepted, awaiting stack admission.
+Branch: `agent-root-habitat-qualified-generators`, stacked on the submitted self-host.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -9,6 +9,7 @@ Cold adapters [1011](https://github.com/rawr-ai/rawr-hq-template/pull/1011).
 Harness handoff [1012](https://github.com/rawr-ai/rawr-hq-template/pull/1012).
 Observation [1013](https://github.com/rawr-ai/rawr-hq-template/pull/1013).
 Mounting/startup [1014](https://github.com/rawr-ai/rawr-hq-template/pull/1014).
+Oclif self-host [1015](https://github.com/rawr-ai/rawr-hq-template/pull/1015).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -63,11 +64,24 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: tasks 11.1-11.5, the complete Habitat Oclif self-host and retained
-Nx-reader cutover. Root owns CLI definition/derivation/adapter wiring, app/topic
-selection and final law; the runtime peer owns native Oclif hosting and built-child
-proof; the implementation peer owns catalog/resource binding and legacy SDK-root
-retirement. The cold peer independently reviews the composed contracts.
+Current domino: task 11.6, two qualified native Nx source generators. Root owns
+complete-plan preflight/staging, native installed acceptance and packaging. The
+implementation peer owns the existing-topic command generator; the native-runtime
+peer owns the portable Oclif extension generator. The cold peer independently
+reviews identity, convergence and proof claims. No authoring command topic or
+app composition selection is created in this story.
+
+The accepted refinement follows the official Nx Tree contract and pinned
+23.1.1's `generate.js`/`tree.js`, with a real disk-failure regression. Each native
+entrypoint returns void, computes its own qualified plan and delegates only
+kind-agnostic containment, preimages, exact-byte comparison and Tree staging.
+Nx owns dry-run and disk publication; no install callback or invented rollback
+owner is admitted. The updated qualified-artifact-authoring specification is
+explicit about the remaining native disk-failure boundary. Generator discovery
+uses two distinct schemas/entries. Native source metadata and topic membership,
+not generated manifest edits, determine official command discovery.
+
+The accepted self-host underneath retains these contracts:
 
 Keep native Args/Flags, parsing, command classes, dispatch and external-plugin
 loading. A typed CLI companion creates one SDK command Effect descriptor and
@@ -769,6 +783,19 @@ observations in both local and installed children, without inventing execution
 history. Strict OpenSpec validation and diff checks pass. Task 11.6 remains open:
 existing service generators do not substitute for its two new source creators.
 
+Clean-checkout CI for PR 1015 subsequently found that CLI test typechecking
+needed its own build prerequisite for native fixture declarations; prior local
+build output had masked the missing task edge. Windows installed acceptance
+also rejected the fixture's guessed dependency-directory layout. The repair
+resolves each SDK/Oclif/Effect package from the installed CLI's actual package
+context, links that exact cohort and asserts physical identity before manifest
+generation. The local native matrix passes after this repair. Repair commit
+`cf624450578b122b1297e5095c45b46cea6ec57a` is submitted in PR 1015 itself:
+test typechecking passes with the CLI dist directory physically absent before
+the uncached Nx run, and all nine installed tests pass again (179.50 seconds).
+Linux/Windows and required CI must requalify this revision before stack merge;
+its earlier green Linux installation is not a substitute for those gates.
+
 The next generator design loop is bounded by pinned Nx 23.1.1 evidence.
 Its native generator stages a virtual Tree, then flushes paths sequentially;
 a real second-path failure leaves the first path published. Replace the inherited
@@ -780,6 +807,26 @@ Existing topic ownership and explicit command membership supply registration;
 native build generates Oclif manifests. No new Nx project or direct generated
 manifest edit is required. Apply these refinements with the implementing story,
 not by silently treating the old stronger specification as satisfied.
+
+Independent generator review repaired module-binding collisions, later object
+properties replacing command membership, and payload IDs mistaken for SDK
+command IDs. A follow-up caught unresolved SDK metadata hiding a real duplicate
+ID. The source generator now refuses that unqualified form before writes; an
+explicit final ID following earlier metadata still works. This is a bounded
+source-editing support contract, not a new restriction on ordinary SDK authorship
+or an invitation to evaluate arbitrary application code. External extensions
+remain ordinary Oclif packages with no Habitat SDK dependency or invented Nx owner.
+
+Task 11.6 is locally accepted. All 80 focused generator tests, CLI source/test
+typechecks, strict OpenSpec validation and the full 157-task repository CI graph
+pass. The exact installed-generator target passes in 63.88 seconds using packed
+candidate SDK/CLI artifacts: native Nx generation, dry-run and exact-repeat
+non-mutation, divergent-path and foreign-owner refusal, unchanged Nx identity,
+generated command build/body tests and real native host dispatch, plus an
+independently installed/built/tested portable external extension. Independent
+repair review reports no remaining material issue. This is not an npm release
+or task 12.3's installed authoring-command proof. The next complete capability is
+that thin CLI projection, not a new lifecycle or filesystem transaction system.
 
 ### Backend Receipt Reuse
 
