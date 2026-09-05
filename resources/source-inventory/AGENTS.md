@@ -19,6 +19,9 @@
   services.
 - Provider selection and lifetime belong to application composition.
 - Concrete source-control processes and wire formats stay in nested providers.
+- `runtime.ts` declares the process resource through public SDK authoring.
+  The private package's runtime/provider faces retain SDK imports in emitted
+  ESM so application bundling cannot create another provider-plan witness realm.
 
 ## Behavior
 

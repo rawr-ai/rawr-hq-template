@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "plugin-foundation"
+ownerProject = "@habitat-ai/plugin-foundation"
+blueprint = "plugin-cli-topic"
+blueprintVersion = 1
+
+[roots]
+project = "plugins/cli/topics/foundation"
+
+[selections]

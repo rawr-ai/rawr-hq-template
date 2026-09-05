@@ -2,7 +2,6 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "habitat",
   "root": "scripts/habitat",
-  "projectType": "application",
   "tags": ["type:tool", "role:architecture-policy"],
   "targets": {
     "acceptance:product-separation-absence": {
@@ -16,7 +15,7 @@
       ],
       "outputs": [],
       "options": {
-        "command": "bun test scripts/habitat/product-separation-absence.test.ts scripts/habitat/runtime-adapter-law.test.ts scripts/habitat/runtime-harness-law.test.ts scripts/habitat/runtime-observation-law.test.ts scripts/habitat/runtime-mounting-law.test.ts"
+        "command": "bun test scripts/habitat/product-separation-absence.test.ts scripts/habitat/runtime-adapter-law.test.ts scripts/habitat/runtime-harness-law.test.ts scripts/habitat/runtime-observation-law.test.ts scripts/habitat/runtime-mounting-law.test.ts scripts/habitat/app-topic-law.test.ts"
       }
     },
     "check:policy": {

@@ -118,6 +118,10 @@ const expectedPluginExports = [
   "./plugins/agent/schema",
   "./plugins/async",
   "./plugins/async/effect",
+  "./plugins/cli",
+  "./plugins/cli/effect",
+  "./plugins/cli/oclif",
+  "./plugins/cli/schema",
   "./plugins/desktop",
   "./plugins/desktop/effect",
   "./plugins/server",
@@ -126,6 +130,19 @@ const expectedPluginExports = [
 ];
 
 describe("runtime authoring public faces", () => {
+  test("keeps native CLI authoring cold and retires global workspace acquisition", async () => {
+    expect(Object.keys(await import("../src/index"))).toEqual([]);
+    expect(Object.keys(await import("../src/plugins/cli")).sort()).toEqual([
+      "defineCliTopicPlugin",
+      "useService",
+    ]);
+    expect(Object.keys(await import("../src/plugins/cli/effect"))).toEqual(["defineCommand"]);
+    expect(Object.keys(await import("../src/plugins/cli/schema"))).toEqual(["cliSchema"]);
+    expect(Object.keys(await import("../src/plugins/cli/oclif")).sort()).toEqual([
+      "createOclifCommand",
+      "readOclifCommandSource",
+    ]);
+  });
   test("imports the companion harness contract without live values", async () => {
     expect(Object.keys(await import("../src/runtime/harnesses"))).toEqual([]);
     expect(Object.keys(await import("../src/runtime/observation"))).toEqual([]);
@@ -476,6 +493,7 @@ describe("runtime authoring public faces", () => {
     const webEntries = result.webRouteModuleTable.entries();
 
     expect(Object.keys(result).sort()).toEqual([
+      "cliCommandSources",
       "executionDescriptorTable",
       "graph",
       "portableArtifact",

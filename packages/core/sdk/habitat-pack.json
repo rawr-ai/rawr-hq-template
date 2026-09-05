@@ -7,6 +7,11 @@
       "path": "dist/blueprints/app/blueprint.toml"
     },
     {
+      "id": "app",
+      "version": 2,
+      "path": "dist/blueprints/app/versions/2/blueprint.toml"
+    },
+    {
       "id": "package",
       "version": 1,
       "path": "dist/blueprints/package/blueprint.toml"
@@ -15,6 +20,11 @@
       "id": "plugin",
       "version": 1,
       "path": "dist/blueprints/plugin/blueprint.toml"
+    },
+    {
+      "id": "plugin-cli-topic",
+      "version": 1,
+      "path": "dist/blueprints/plugin-cli-topic/blueprint.toml"
     },
     {
       "id": "plugin-nx",

@@ -1,6 +1,7 @@
 export type { RuntimeSchema } from "../../schema/src/runtime-schema";
 export * from "./agent";
 export * from "./app";
+export * from "./cli";
 export * from "./desktop";
 export * from "./effect";
 export * from "./execution";

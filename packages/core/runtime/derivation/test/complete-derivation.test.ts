@@ -398,6 +398,7 @@ describe("complete runtime derivation", () => {
     });
 
     expect(Object.keys(result).sort()).toEqual([
+      "cliCommandSources",
       "executionDescriptorTable",
       "graph",
       "portableArtifact",

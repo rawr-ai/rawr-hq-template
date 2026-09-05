@@ -6,6 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createProjectGraphAsync, readProjectsConfigurationFromProjectGraph } from "@nx/devkit";
+import { parse as parseToml } from "smol-toml";
 import { parseConfigFileTextToJson } from "typescript";
 
 type JsonObject = Record<string, unknown>;
@@ -27,6 +28,9 @@ const RETAINED_DOCUMENT_SEGMENTS = new Set(["archive", "_archive", "quarantine"]
 const EXPECTED_RETAINED_DOCUMENT_COUNT = 155;
 
 const EXPECTED_PROJECT_ROOTS = {
+  "provider-filesystem-effect-platform-node": "resources/filesystem/providers/effect-platform-node",
+  "@habitat-ai/resource-filesystem": "resources/filesystem",
+  "@habitat-ai/plugin-foundation": "plugins/cli/topics/foundation",
   "provider-agent-plugin-package-output-cowork-v1-effect-platform-node":
     "resources/agent-plugin-package-output/providers/cowork-v1-effect-platform-node",
   "provider-native-agent-provider-claude-effect-platform-node":
@@ -69,9 +73,6 @@ const EXPECTED_PROJECT_ROOTS = {
 } as const;
 
 const EXPECTED_SDK_DEPENDENCIES = [
-  "@habitat-ai/catalog-service",
-  "@habitat-ai/resource-rule-evaluation",
-  "@habitat-ai/resource-source-inventory",
   "@habitat-ai/resource-telemetry",
   "provider-telemetry-opentelemetry-node",
   "runtime-bootgraph",
@@ -88,8 +89,16 @@ const EXPECTED_SDK_DEPENDENCIES = [
 
 const EXPECTED_SDK_DEPENDENTS = [
   "@habitat-ai/agent-plugin-lifecycle-service",
+  "@habitat-ai/catalog-service",
   "@habitat-ai/cli",
+  "@habitat-ai/plugin-foundation",
+  "@habitat-ai/resource-filesystem",
+  "@habitat-ai/resource-rule-evaluation",
+  "@habitat-ai/resource-source-inventory",
   "habitat-workspace",
+  "provider-filesystem-effect-platform-node",
+  "provider-rule-evaluation-grit-effect-platform-node",
+  "provider-source-inventory-git-effect-platform-node",
 ] as const;
 
 const FORBIDDEN_PROJECT_AND_PACKAGE_IDS = [
@@ -448,6 +457,8 @@ describe("cumulative product-separation absence", () => {
     const rule = "require_process_runtime_access_owner";
     const packet = `.habitat/overlays/repository/rules/${rule}`;
     const allowed = {
+      "apps/habitat/runtime/profiles/local.ts":
+        'import { defineNodeFilesystemRuntimeProvider } from "@habitat-ai/resource-filesystem/providers/effect-platform-node";\n',
       "apps/example/src/profile.ts":
         'import { defineRuntimeProvider } from "@habitat-ai/sdk/runtime/providers";\nimport { Effect } from "effect";\n',
       "services/example/src/resource.ts":
@@ -469,6 +480,14 @@ describe("cumulative product-separation absence", () => {
         'void import("effect", { with: { note: "@habitat-ai/resource-telemetry/providers/opentelemetry-node" } });\n',
     };
     const forbidden = {
+      "apps/unowned/runtime/profiles/local.ts":
+        'import { provider } from "@habitat-ai/resource-filesystem/providers/effect-platform-node";\n',
+      "apps/habitat/runtime/profiles/nested/helper.ts":
+        'import { provider } from "@habitat-ai/resource-filesystem/providers/effect-platform-node";\n',
+      "apps/habitat/runtime/profiles/private-runtime.ts":
+        'import { provisionProcess } from "../../../../../packages/core/runtime/substrate/effect/src/index";\n',
+      "apps/habitat/runtime/profiles/private-provider.ts":
+        'import { provider } from "../../../../resources/filesystem/providers/effect-platform-node/index";\n',
       "apps/example/src/static.ts":
         'import { createProcessRuntime } from "../../../packages/core/runtime/process-runtime/src/index";\n',
       "services/example/src/reexport.ts":
@@ -562,6 +581,22 @@ describe("cumulative product-separation absence", () => {
       )
     ).toEqual(EXPECTED_PROJECT_ROOTS);
     expect(
+      Object.entries(projects)
+        .filter(([, project]) => project.root === "scripts/habitat")
+        .map(([name]) => name)
+    ).toEqual(["habitat"]);
+    expect(projects.habitat?.tags).toEqual(["type:tool", "role:architecture-policy"]);
+    expect(readJson("scripts/habitat/project.json")).not.toHaveProperty("projectType");
+    expect(projects.habitat?.projectType).not.toBe("application");
+    expect(
+      parseToml(readFileSync(path.join(workspaceRoot, "apps/habitat/habitat.toml"), "utf8"))
+    ).toMatchObject({
+      ownerProject: "@habitat-ai/cli",
+      blueprint: "app",
+      blueprintVersion: 2,
+      roots: { project: "apps/habitat" },
+    });
+    expect(
       [
         ...new Set(
           (graph.dependencies["@habitat-ai/sdk"] ?? [])
@@ -613,6 +648,53 @@ describe("cumulative product-separation absence", () => {
         .map(([source]) => source)
         .sort()
     ).toEqual(EXPECTED_SDK_DEPENDENTS);
+
+    // The self-host composes ordinary SDK consumers; the topic must not import
+    // the CLI back, and resource providers must not acquire a private SDK realm.
+    const selfHostDependencies = {
+      "@habitat-ai/cli": [
+        "@habitat-ai/catalog-service",
+        "@habitat-ai/plugin-foundation",
+        "@habitat-ai/resource-filesystem",
+        "@habitat-ai/resource-rule-evaluation",
+        "@habitat-ai/resource-source-inventory",
+        "@habitat-ai/sdk",
+      ],
+      "@habitat-ai/plugin-foundation": ["@habitat-ai/catalog-service", "@habitat-ai/sdk"],
+      "@habitat-ai/catalog-service": [
+        "@habitat-ai/resource-filesystem",
+        "@habitat-ai/resource-rule-evaluation",
+        "@habitat-ai/resource-source-inventory",
+        "@habitat-ai/sdk",
+        "runtime-schema",
+      ],
+      "@habitat-ai/resource-filesystem": ["@habitat-ai/sdk"],
+      "@habitat-ai/resource-rule-evaluation": ["@habitat-ai/sdk"],
+      "@habitat-ai/resource-source-inventory": ["@habitat-ai/sdk"],
+      "provider-filesystem-effect-platform-node": [
+        "@habitat-ai/resource-filesystem",
+        "@habitat-ai/sdk",
+      ],
+      "provider-rule-evaluation-grit-effect-platform-node": [
+        "@habitat-ai/resource-rule-evaluation",
+        "@habitat-ai/sdk",
+      ],
+      "provider-source-inventory-git-effect-platform-node": [
+        "@habitat-ai/resource-source-inventory",
+        "@habitat-ai/sdk",
+      ],
+    };
+    for (const [owner, expected] of Object.entries(selfHostDependencies)) {
+      expect(
+        [
+          ...new Set(
+            (graph.dependencies[owner] ?? [])
+              .map(({ target }) => target)
+              .filter((target) => target in graph.nodes)
+          ),
+        ].sort()
+      ).toEqual(expected);
+    }
 
     const incomingRuntimeOwners = {
       "runtime-harnesses": ["@habitat-ai/sdk", "runtime-mounting"],

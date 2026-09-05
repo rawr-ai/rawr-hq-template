@@ -112,7 +112,8 @@ export function createProcessExecutionRuntime(input: {
       const context: ProcedureExecutionContext<I, C> = {
         input: invocation.input,
         context: (boundary.ref.boundary === "plugin.agent-tool" ||
-        boundary.ref.boundary === "plugin.desktop-background"
+        boundary.ref.boundary === "plugin.desktop-background" ||
+        boundary.ref.boundary === "plugin.cli-command"
           ? { ...invocation.context, ...input.surfaceCapabilities(surface, continuation) }
           : invocation.context) as C,
         execution: Object.freeze({

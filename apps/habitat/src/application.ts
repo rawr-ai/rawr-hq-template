@@ -1,32 +1,42 @@
-import { createHabitatClientForWorkspace } from "@habitat-ai/sdk";
-import { execute, settings } from "@oclif/core";
-import { bindHabitatClient } from "./lib/binding.js";
+import { type Client, contract } from "@habitat-ai/catalog-service/client";
+import { runHabitatProcess } from "../cli.js";
+import { runtimeSources } from "../runtime/sources.js";
+import { sourceBundle } from "./oclif.js";
 
 /** Inputs fixed by one Habitat process activation. */
 export type ExecuteHabitatOptions = Readonly<{
   appRoot: string;
   workspaceRoot: string;
-  args?: string[];
+  args?: readonly string[];
   development?: boolean;
 }>;
 
-/**
- * Runs one native Oclif invocation over the app-selected Habitat client.
- *
- * Oclif owns command discovery and dispatch; this boundary supplies only the
- * ready workspace client required by the Habitat commands.
- */
-export async function executeHabitat({
-  appRoot,
-  workspaceRoot,
-  args,
-  development,
-}: ExecuteHabitatOptions): Promise<unknown> {
-  settings.enableAutoTranspile = development === true;
-  const client = await createHabitatClientForWorkspace(workspaceRoot);
-  return execute({
-    ...(args === undefined ? {} : { args }),
-    ...(development === undefined ? {} : { development }),
-    loadOptions: bindHabitatClient({ root: appRoot }, client),
+/** Run one app-selected process; the native host owns dispatch and finalization. */
+export function executeHabitat(input: ExecuteHabitatOptions): Promise<unknown> {
+  return runHabitatProcess({
+    ...input,
+    sources: runtimeSources(input.appRoot, input.workspaceRoot),
+    sourceBundle,
+    terminal: true,
   });
+}
+
+/** A bounded native invocation returns only validated data, never an escaped managed client. */
+export async function resolveCatalogForWorkspace(
+  input: Omit<ExecuteHabitatOptions, "args">
+): Promise<Awaited<ReturnType<Client["catalog"]["resolve"]>>> {
+  const value = await runHabitatProcess({
+    ...input,
+    args: ["resolve"],
+    sources: runtimeSources(input.appRoot, input.workspaceRoot),
+    sourceBundle,
+    terminal: false,
+  });
+  const schemas = contract.catalog.resolve["~orpc"].outputSchemas;
+  if (schemas?.length !== 1 || schemas[0] === undefined)
+    throw new TypeError("Catalog resolve must declare its output schema.");
+  const result = await schemas[0]["~standard"].validate(value);
+  if (result.issues !== undefined)
+    throw new TypeError("Native catalog invocation returned an invalid result.");
+  return result.value;
 }

@@ -54,6 +54,11 @@
 
 - `src/client.ts` is the sole public caller face. The private catalog contract
   exposes `resolve` and `check`.
+- That face exposes the complete `serviceRuntimeExport` for managed composition.
+  Its constructor receives filesystem, rule-evaluation and source-inventory
+  resource values plus exact workspace scope/policy-pack config and the bounded
+  native client assembly. It does not acquire or execute. Explicit `createClient`
+  remains the native Promise caller face outside managed execution.
 
 ## Routing
 

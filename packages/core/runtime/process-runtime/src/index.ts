@@ -3,6 +3,7 @@ export {
   createDesktopBackgroundAdapter,
   type LoweredDesktopBackground,
 } from "./adapters/desktop-background";
+export { createOclifAdapter, type LoweredCliCommand } from "./adapters/oclif";
 export {
   type CreateProcessRuntimeInput,
   createProcessRuntime,

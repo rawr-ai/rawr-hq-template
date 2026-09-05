@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "habitat-cli"
+ownerProject = "@habitat-ai/cli"
+blueprint = "app"
+blueprintVersion = 2
+
+[roots]
+project = "apps/habitat"
+
+[selections]

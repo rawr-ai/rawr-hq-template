@@ -1,0 +1,37 @@
+schemaVersion = 1
+id = "plugin-cli-topic"
+version = 1
+
+[[rules]]
+id = "plugin_cli_topic_v1_boundary"
+lane = "enforced"
+message = "CLI topics declare command membership without acquiring providers or selecting an app runtime."
+remediate = "Use the SDK CLI topic factory and service uses; leave process/profile selection and provider acquisition with the app and runtime."
+[rules.runner]
+name = "grit"
+pattern = "plugin_cli_topic_v1_boundary.md"
+patternName = "plugin_cli_topic_v1_boundary"
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/**/*.ts"] }]
+
+[[rules]]
+id = "plugin_cli_topic_v1_structure"
+lane = "enforced"
+message = "CLI topic packages preserve a closed command projection boundary."
+remediate = "Restore the package anchors, topic index, service uses, and command subtree; keep native host lifetime outside the topic."
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

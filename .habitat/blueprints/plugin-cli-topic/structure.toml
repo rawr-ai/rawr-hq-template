@@ -1,0 +1,45 @@
+schemaVersion = 2
+
+[[scopes]]
+name = "cli-topic-project"
+rootRole = "project"
+relativePath = "."
+kind = "directory"
+mode = "closed"
+required = ["AGENTS.md", "habitat.toml", "package.json", "project.json", "src", "tsconfig.json", "tsconfig.build.json"]
+allowed = ["README.md", "test", "tsconfig.test.json", "tsdown.config.ts"]
+
+[[scopes]]
+name = "cli-topic-source"
+rootRole = "project"
+relativePath = "src"
+kind = "directory"
+mode = "closed"
+required = ["index.ts", "services.ts", "commands"]
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts"]
+
+[[scopes]]
+name = "cli-topic-commands"
+rootRole = "project"
+relativePath = "src/commands"
+kind = "directory"
+mode = "closed"
+required = ["*.ts"]
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "cli-topic-command-groups"
+rootRole = "project"
+relativePath = "src/commands/**/[a-z]*([a-z0-9]|-[a-z0-9])"
+kind = "directory"
+mode = "closed"
+allowEmpty = true
+required = ["*.ts"]
+allowed = ["[a-z]*([a-z0-9]|-[a-z0-9]).ts", "[a-z]*([a-z0-9]|-[a-z0-9])"]
+
+[[scopes]]
+name = "cli-topic-source-files"
+rootRole = "project"
+relativePath = "src/**/*.ts"
+kind = "file"
+mode = "closed"

@@ -1,0 +1,23 @@
+{
+  "name": "provider-filesystem-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/filesystem/providers/effect-platform-node",
+  "implicitDependencies": ["@habitat-ai/resource-filesystem"],
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:filesystem",
+    "provider:effect-platform-node"
+  ],
+  "targets": {
+    "check": { "executor": "nx:noop" },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "tsc -p {projectRoot}/tsconfig.json --noEmit" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "bun test {projectRoot}/test" }
+    }
+  }
+}

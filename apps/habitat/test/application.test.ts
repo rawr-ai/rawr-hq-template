@@ -1,12 +1,17 @@
 import { execFileSync, spawn } from "node:child_process";
 import { lstat, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import type { CreateNodesResultArray } from "@nx/devkit";
 import { afterEach, describe, expect, it } from "vitest";
-import { createNodes } from "../src/nx-plugin";
+
+// Oclif dynamically loads native modules, so its caller must share that loader, not Vitest's VM.
+const { createNodes } = createRequire(import.meta.url)(
+  "../dist/nx-plugin.js"
+) as typeof import("../dist/nx-plugin");
 
 type RuleFixture = Readonly<{
   id: string;

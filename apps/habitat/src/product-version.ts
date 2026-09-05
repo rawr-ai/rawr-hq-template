@@ -1,13 +1,18 @@
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 
 const EXACT_SEMVER_PATTERN =
   /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
-const cliPackageJsonPath = fileURLToPath(new URL("../package.json", import.meta.url));
+
+/** Resolves this CLI package through its own export, independent of bundled chunk placement. */
+export function cliPackageRoot(): string {
+  return dirname(createRequire(import.meta.url).resolve("@habitat-ai/cli/package.json"));
+}
 
 /** Returns the exact SDK version paired with the installed Habitat CLI. */
 export function installedSdkVersion(): string {
-  const manifest = JSON.parse(readFileSync(cliPackageJsonPath, "utf8")) as {
+  const manifest = JSON.parse(readFileSync(join(cliPackageRoot(), "package.json"), "utf8")) as {
     readonly version?: unknown;
     readonly dependencies?: Readonly<Record<string, unknown>>;
   };

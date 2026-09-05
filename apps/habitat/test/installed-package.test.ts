@@ -18,6 +18,11 @@ import { fileURLToPath } from "node:url";
 import * as ts from "typescript";
 import { runServer } from "verdaccio";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  buildNativeRuntimeFixture,
+  nativeRuntimeScenarios,
+  verifyNativeRuntimeScenario,
+} from "./support/oclif-runtime-matrix.js";
 
 type CommandResult = Readonly<{
   exitCode: number;
@@ -58,7 +63,11 @@ const PACKAGE_LOAD_PATH_FIELDS = [
   "typesVersions",
 ] as const;
 const PUBLIC_JAVASCRIPT_EXPORTS = {
-  "@habitat-ai/cli": ["@habitat-ai/cli/command", "@habitat-ai/cli/nx-plugin"],
+  "@habitat-ai/cli": [
+    "@habitat-ai/cli/command",
+    "@habitat-ai/cli/host",
+    "@habitat-ai/cli/nx-plugin",
+  ],
   "@habitat-ai/sdk": [
     "@habitat-ai/sdk",
     "@habitat-ai/sdk/app",
@@ -73,6 +82,10 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/plugins/async",
     "@habitat-ai/sdk/plugins/async/effect",
     "@habitat-ai/sdk/plugins/web",
+    "@habitat-ai/sdk/plugins/cli",
+    "@habitat-ai/sdk/plugins/cli/effect",
+    "@habitat-ai/sdk/plugins/cli/schema",
+    "@habitat-ai/sdk/plugins/cli/oclif",
     "@habitat-ai/sdk/plugins/agent",
     "@habitat-ai/sdk/plugins/agent/effect",
     "@habitat-ai/sdk/plugins/agent/schema",
@@ -93,6 +106,7 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "app",
   "package",
   "plugin",
+  "plugin-cli-topic",
   "plugin-nx",
   "provider",
   "resource",
@@ -933,6 +947,21 @@ describe("installed Habitat products", () => {
     const installedCliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
     const resolvedInstalledCliRoot = await realpath(installedCliRoot);
     const installedCliRequire = createRequire(path.join(resolvedInstalledCliRoot, "package.json"));
+    const nativeRuntimeRoot = path.join(acceptanceRoot, "installed-native-runtime");
+    await buildNativeRuntimeFixture({
+      workspaceRoot,
+      outputRoot: nativeRuntimeRoot,
+      hostImport: "@habitat-ai/cli/host",
+      dependencyPackageJson: path.join(resolvedInstalledCliRoot, "package.json"),
+    });
+    for (const [index, scenario] of nativeRuntimeScenarios.entries()) {
+      if (process.platform === "win32" && "signal" in scenario) continue;
+      await verifyNativeRuntimeScenario({
+        builtRoot: nativeRuntimeRoot,
+        dataRoot: path.join(acceptanceRoot, `installed-native-scenario-${index}`),
+        scenario,
+      });
+    }
     const installedProductRoots = new Map<PublicProduct["name"], string>([
       ["@habitat-ai/cli", installedCliRoot],
       [
@@ -1004,14 +1033,21 @@ describe("installed Habitat products", () => {
       >;
     };
     expect(sdkManifest.dependencies).toMatchObject({
-      "@effect/platform-node": "4.0.0-beta.101",
-      "@effect/platform-node-shared": "4.0.0-beta.101",
       "@orpc/contract": "2.0.0-beta.32",
       "@orpc/experimental-effect": "2.0.0-beta.32",
       "@orpc/server": "2.0.0-beta.32",
       effect: "4.0.0-beta.101",
     });
     expect(Object.values(sdkManifest.dependencies ?? {})).not.toContain("2.0.0-beta.20");
+    for (const concrete of [
+      "@getgrit/cli",
+      "@effect/platform-node",
+      "@effect/platform-node-shared",
+      "picomatch",
+      "smol-toml",
+    ])
+      expect(sdkManifest.dependencies).not.toHaveProperty(concrete);
+    expect(cliManifest.dependencies?.["@effect/platform-node"]).toBe("4.0.0-beta.101");
     expect(
       Object.keys(sdkManifest.dependencies ?? {}).filter((name) => name.startsWith("@habitat-ai/"))
     ).toEqual([]);
@@ -1053,6 +1089,7 @@ describe("installed Habitat products", () => {
         "workflowDispatcherDescriptors",
       ],
       resultFields: [
+        "cliCommandSources",
         "executionDescriptorTable",
         "graph",
         "portableArtifact",
@@ -1139,6 +1176,14 @@ describe("installed Habitat products", () => {
         'const agent = await import("@habitat-ai/sdk/plugins/agent");',
         'const agentEffect = await import("@habitat-ai/sdk/plugins/agent/effect");',
         'const agentSchema = await import("@habitat-ai/sdk/plugins/agent/schema");',
+        'const cli = await import("@habitat-ai/sdk/plugins/cli");',
+        'const cliEffect = await import("@habitat-ai/sdk/plugins/cli/effect");',
+        'const cliSchema = await import("@habitat-ai/sdk/plugins/cli/schema");',
+        'const cliNative = await import("@habitat-ai/sdk/plugins/cli/oclif");',
+        'if (Object.keys(cli).sort().join(",") !== "defineCliTopicPlugin,useService" || Object.keys(cliEffect).join() !== "defineCommand" || Object.keys(cliSchema).join() !== "cliSchema" || Object.keys(cliNative).sort().join(",") !== "createOclifCommand,readOclifCommandSource") throw new Error("CLI authoring export drift");',
+        'const command = cliNative.createOclifCommand({ id: "cold", args: {}, flags: {}, effect: () => { throw new Error("Cold native command executed"); } });',
+        'const topic = cli.defineCliTopicPlugin.factory()({ capability: "installed-cli", services: {}, commands: [command] })();',
+        'if (topic.commands[0] !== command || cliNative.readOclifCommandSource(command.source) !== command.source) throw new Error("Cold native CLI lost identity");',
         'const desktop = await import("@habitat-ai/sdk/plugins/desktop");',
         'const desktopEffect = await import("@habitat-ai/sdk/plugins/desktop/effect");',
         'const { Type } = await import("typebox");',
@@ -1206,7 +1251,7 @@ describe("installed Habitat products", () => {
         "RuntimeObservationRecordSchema",
         "RuntimeSchema",
       ],
-      sdk: ["createHabitatClientForWorkspace"],
+      sdk: [],
       schema: ["standard"],
       serverEffect: [],
       serverEffectAfter: "function",
@@ -1280,8 +1325,10 @@ describe("installed Habitat products", () => {
     expect(installedPack.protocolVersion).toBe(1);
     expect(installedPack.blueprints?.map(({ id, version }) => `${id}@${version}`)).toEqual([
       "app@1",
+      "app@2",
       "package@1",
       "plugin@1",
+      "plugin-cli-topic@1",
       "plugin-nx@1",
       "provider@1",
       "resource@1",
@@ -1333,6 +1380,7 @@ describe("installed Habitat products", () => {
       return segments.length > 2 && filename === "structure.toml";
     });
     expect(nestedStructureFiles).toEqual([
+      "app/versions/2/structure.toml",
       "resource/versions/2/structure.toml",
       "resource/versions/3/structure.toml",
       "runtime-bootgraph/versions/2/structure.toml",
@@ -1489,10 +1537,13 @@ describe("installed Habitat products", () => {
     };
     expect(oclifManifest.version).toBe(productVersion("@habitat-ai/cli"));
     expect(oclifManifest.commands).toEqual({
-      check: expect.objectContaining({ relativePath: ["dist", "commands", "check.js"] }),
-      hook: expect.objectContaining({ relativePath: ["dist", "commands", "hook.js"] }),
-      resolve: expect.objectContaining({ relativePath: ["dist", "commands", "resolve.js"] }),
+      check: expect.objectContaining({ id: "check", pluginName: "@habitat-ai/cli" }),
+      hook: expect.objectContaining({ id: "hook", pluginName: "@habitat-ai/cli" }),
+      resolve: expect.objectContaining({ id: "resolve", pluginName: "@habitat-ai/cli" }),
     });
+    for (const command of Object.values(oclifManifest.commands ?? {})) {
+      expect(command).not.toHaveProperty("relativePath");
+    }
 
     const habitat = path.join(consumerRoot, "node_modules/.bin/habitat");
     const help = await run(habitat, ["--help"], { cwd: consumerRoot });
@@ -1685,8 +1736,14 @@ describe("installed Habitat products", () => {
     });
     expect(resolvedCatalog.catalog.policyPack.blueprints).toEqual([
       { id: "app", path: "dist/blueprints/app/blueprint.toml", version: 1 },
+      { id: "app", path: "dist/blueprints/app/versions/2/blueprint.toml", version: 2 },
       { id: "package", path: "dist/blueprints/package/blueprint.toml", version: 1 },
       { id: "plugin", path: "dist/blueprints/plugin/blueprint.toml", version: 1 },
+      {
+        id: "plugin-cli-topic",
+        path: "dist/blueprints/plugin-cli-topic/blueprint.toml",
+        version: 1,
+      },
       { id: "plugin-nx", path: "dist/blueprints/plugin-nx/blueprint.toml", version: 1 },
       { id: "provider", path: "dist/blueprints/provider/blueprint.toml", version: 1 },
       { id: "resource", path: "dist/blueprints/resource/blueprint.toml", version: 1 },
@@ -1794,6 +1851,31 @@ describe("installed Habitat products", () => {
     ]);
     expect(resolvedCatalog.catalog.blueprints).toEqual(
       expect.arrayContaining([
+        expect.objectContaining({
+          definition: expect.objectContaining({
+            id: "app",
+            version: 1,
+            rules: [expect.objectContaining({ id: "app_v1_structure" })],
+          }),
+          provenance: expect.objectContaining({
+            kind: "policy-pack",
+            packageRelativePath: "dist/blueprints/app/blueprint.toml",
+          }),
+        }),
+        expect.objectContaining({
+          definition: expect.objectContaining({
+            id: "app",
+            version: 2,
+            rules: [
+              expect.objectContaining({ id: "app_v2_selection" }),
+              expect.objectContaining({ id: "app_v2_structure" }),
+            ],
+          }),
+          provenance: expect.objectContaining({
+            kind: "policy-pack",
+            packageRelativePath: "dist/blueprints/app/versions/2/blueprint.toml",
+          }),
+        }),
         expect.objectContaining({
           definition: expect.objectContaining({ id: "root-pattern-acceptance", version: 3 }),
           provenance: expect.objectContaining({ kind: "local" }),
@@ -2978,6 +3060,7 @@ async function assertInstalledRuntimeDerivation(callerRoot: string): Promise<voi
       graphTopologyIdentity: true,
       loaderCalls: 0,
       resultKeys: [
+        "cliCommandSources",
         "executionDescriptorTable",
         "graph",
         "portableArtifact",

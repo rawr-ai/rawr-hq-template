@@ -1,61 +1,47 @@
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
-
-import type { HabitatClient } from "@habitat-ai/sdk";
+import type { Client } from "@habitat-ai/catalog-service/client";
 import { Config } from "@oclif/core";
 import { describe, expect, it, vi } from "vitest";
-import { bindHabitatClient, habitatClientFrom } from "../../src/lib/binding";
+import type { OclifRuntimeBinding } from "../../src/harness/oclif/binding";
+import type { OclifSourceBundle } from "../../src/host";
 
-type CheckInput = Parameters<HabitatClient["catalog"]["check"]>[0];
+const { sourceBundle } = createRequire(import.meta.url)("../../dist/oclif.js") as {
+  readonly sourceBundle: OclifSourceBundle;
+};
 
-const resolved: Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>> = {
+const resolved: Awaited<ReturnType<Client["catalog"]["resolve"]>> = {
   _tag: "Resolved",
   catalog: {
     schemaVersion: 3,
-    policyPack: {
-      name: "@habitat-ai/sdk",
-      version: "0.3.1",
-      protocolVersion: 1,
-      blueprints: [],
-    },
+    policyPack: { name: "@habitat-ai/sdk", version: "0.3.1", protocolVersion: 1, blueprints: [] },
     blueprints: [],
     instances: [],
     applications: [],
     compatibility: { schemaVersion: 2, ownerRoots: {}, rules: [] },
   },
 };
-
-const completed: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
+const completed: Awaited<ReturnType<Client["catalog"]["check"]>> = {
   _tag: "Completed",
   applications: [],
   ok: true,
 };
 
-function projectionClient(options?: {
-  readonly check?: HabitatClient["catalog"]["check"];
-  readonly resolve?: HabitatClient["catalog"]["resolve"];
-}): HabitatClient {
-  return {
-    catalog: {
-      check: options?.check ?? (async () => completed),
-      resolve: options?.resolve ?? (async () => resolved),
-    },
-  };
-}
-
-async function loadProjection(client?: HabitatClient): Promise<Config> {
-  const options: Config["options"] = {
-    name: "habitat-projection-test",
+function loadProjection(binding?: OclifRuntimeBinding): Promise<Config> {
+  return Config.load({
     root: fileURLToPath(new URL("../..", import.meta.url)),
-  };
-  return Config.load(client === undefined ? options : bindHabitatClient(options, client));
+    ...(binding === undefined ? {} : { habitatRuntime: binding }),
+  });
 }
 
-describe("Habitat Oclif projection binding", () => {
-  it("preserves the app-selected client through native Oclif config loading", async () => {
-    const client = projectionClient();
-    const config = await loadProjection(client);
-
-    expect(habitatClientFrom(config)).toBe(client);
+describe("Habitat native Oclif projection", () => {
+  it("retains native vendor commands alongside only the selected topic inventory", async () => {
+    const config = await loadProjection({
+      presentation: false,
+      onFinally() {},
+      invoke: async () => resolved,
+    });
+    expect(Object.keys(sourceBundle.COMMANDS).sort()).toEqual(["check", "hook", "resolve"]);
     expect([...config.commandIDs].sort()).toEqual([
       "check",
       "help",
@@ -72,71 +58,36 @@ describe("Habitat Oclif projection binding", () => {
       "plugins:update",
       "resolve",
     ]);
-    await expect(config.runCommand("resolve")).resolves.toMatchObject({ _tag: "Resolved" });
-    await expect(config.runCommand("check")).resolves.toEqual(completed);
-    await expect(config.runCommand("hook", ["agent-stop"])).resolves.toEqual(completed);
+    await expect(config.runCommand("resolve")).resolves.toEqual(resolved);
   });
 
-  it("projects native selector flags without widening explicit empty values", async () => {
-    const inputs: CheckInput[] = [];
-    const check: HabitatClient["catalog"]["check"] = async (input) => {
-      inputs.push(input);
-      return completed;
-    };
-    const config = await loadProjection(projectionClient({ check }));
-
-    await config.runCommand("check", ["--rule", "one"]);
-    await config.runCommand("check", [
-      "--owner",
-      "owner",
-      "--instance",
-      "instance",
-      "--rule",
-      "one",
-      "--rule",
-      "two",
-      "--runner",
-      "grit",
-    ]);
-    await config.runCommand("check", ["--owner="]);
-    await config.runCommand("hook", ["agent-stop"]);
-
-    expect(inputs).toEqual([
-      { selectors: { rule: "one" } },
-      {
-        selectors: {
-          instance: "instance",
-          owner: "owner",
-          rules: ["one", "two"],
-          runner: "grit",
-        },
+  it("uses native argument and repeated-flag parsing with exact source/ref dispatch", async () => {
+    const calls: Parameters<OclifRuntimeBinding["invoke"]>[] = [];
+    const config = await loadProjection({
+      presentation: false,
+      onFinally() {},
+      invoke: async (...input) => {
+        calls.push(input);
+        return completed;
       },
-      { selectors: { owner: "" } },
-      { selectors: { runner: "habitat" } },
-    ]);
+    });
+    await config.runCommand("check", ["--owner=", "--rule", "one", "--rule", "two"]);
+    await config.runCommand("hook", ["agent-stop"]);
+    expect(calls[0]?.[2]).toMatchObject({ args: {}, flags: { owner: "", rule: ["one", "two"] } });
+    expect(calls[1]?.[2]).toMatchObject({ args: { name: "agent-stop" } });
+    for (const [ref, source] of calls) {
+      expect(
+        sourceBundle.entries.find((entry) => entry.ref.executionId === ref.executionId)?.source
+      ).toBe(source);
+    }
+    await expect(config.runCommand("hook", ["not-a-hook"])).rejects.toThrow();
   });
 
-  it("prints total failures before native Oclif exits nonzero", async () => {
-    const rejected: Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>> = {
+  it("awaits topic presentation before native exit and leaves program result shape unchanged", async () => {
+    const rejected = {
       _tag: "Rejected",
       issues: [{ code: "authority-blueprint-missing", message: "missing", path: ".habitat" }],
     };
-    const failed: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
-      _tag: "Completed",
-      applications: [],
-      ok: false,
-    };
-    const catalogRejected: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
-      _tag: "CatalogRejected",
-      issues: [{ code: "authority-blueprint-missing", message: "missing", path: ".habitat" }],
-    };
-    const selectionRejected: Awaited<ReturnType<HabitatClient["catalog"]["check"]>> = {
-      _tag: "SelectionRejected",
-      issues: [{ code: "selector-empty", message: "empty", selector: "owner" }],
-    };
-    const resolveInputs: Parameters<HabitatClient["catalog"]["resolve"]>[0][] = [];
-    const checkResults = [failed, catalogRejected, selectionRejected];
-    let checkIndex = 0;
     const writes: string[] = [];
     const output = vi.spyOn(process.stdout, "write").mockImplementation(((
       chunk: string | Uint8Array,
@@ -144,43 +95,26 @@ describe("Habitat Oclif projection binding", () => {
       callback?: (error?: Error | null) => void
     ) => {
       writes.push(typeof chunk === "string" ? chunk : Buffer.from(chunk).toString("utf8"));
-      const complete = typeof encodingOrCallback === "function" ? encodingOrCallback : callback;
-      complete?.();
+      (typeof encodingOrCallback === "function" ? encodingOrCallback : callback)?.();
       return true;
     }) as typeof process.stdout.write);
-
     try {
-      const config = await loadProjection(
-        projectionClient({
-          check: async () => checkResults[checkIndex++] ?? failed,
-          resolve: async (input) => {
-            resolveInputs.push(input);
-            return rejected;
-          },
-        })
-      );
-      await expect(config.runCommand("resolve")).rejects.toMatchObject({ oclif: { exit: 1 } });
-      await expect(config.runCommand("check")).rejects.toMatchObject({ oclif: { exit: 1 } });
-      await expect(config.runCommand("check")).rejects.toMatchObject({ oclif: { exit: 1 } });
-      await expect(config.runCommand("check")).rejects.toMatchObject({ oclif: { exit: 1 } });
-      await expect(config.runCommand("hook", ["agent-stop"])).rejects.toMatchObject({
-        oclif: { exit: 1 },
+      const config = await loadProjection({
+        presentation: true,
+        onFinally() {},
+        invoke: async () => rejected,
       });
-      expect(resolveInputs).toEqual([{}]);
-      expect(writes).toEqual(
-        [rejected, failed, catalogRejected, selectionRejected, failed].map(
-          (result) => `${JSON.stringify(result, null, 2)}\n`
-        )
-      );
+      await expect(config.runCommand("resolve")).rejects.toMatchObject({ oclif: { exit: 1 } });
+      expect(writes).toEqual([`${JSON.stringify(rejected, null, 2)}\n`]);
     } finally {
       output.mockRestore();
     }
   });
 
-  it("refuses native command dispatch without an app-owned binding", async () => {
+  it("refuses command execution without a selected process binding", async () => {
     const config = await loadProjection();
     await expect(config.runCommand("resolve")).rejects.toThrow(
-      "The Habitat app did not supply its service binding."
+      "Native Oclif dispatch has no selected Habitat process binding."
     );
   });
 });

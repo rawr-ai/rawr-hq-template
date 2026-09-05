@@ -37,6 +37,10 @@ export function assertSurfaceReferenceRelation(
       }
       return;
     case "plugin.cli-command":
+      if (surface.role !== "cli" || surface.surface !== "cli/commands") {
+        throw new TypeError("A CLI command ref requires its cli/commands surface.");
+      }
+      return;
     case "plugin.web-surface":
       throw new TypeError("The execution ref has no admitted definition-owned lane carrier.");
   }

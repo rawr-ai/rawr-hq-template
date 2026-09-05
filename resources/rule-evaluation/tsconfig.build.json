@@ -5,5 +5,10 @@
     "outDir": "dist",
     "rootDir": "."
   },
-  "files": ["contract.ts", "providers/grit-effect-platform-node/index.ts"]
+  "files": [
+    "contract.ts",
+    "providers/grit-effect-platform-node/index.ts",
+    "runtime.ts",
+    "providers/grit-effect-platform-node/runtime.ts"
+  ]
 }

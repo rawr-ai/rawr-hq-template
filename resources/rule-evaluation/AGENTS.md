@@ -20,6 +20,9 @@
 - Provider selection and lifetime belong to application composition.
 - Concrete evaluator processes, temporary catalogs, and wire formats stay in
   nested providers.
+- `runtime.ts` and the provider's `runtime.ts` are ordinary private package
+  faces authored through public SDK subpaths. The composing distribution keeps
+  that SDK external; no private definition or second witness realm is embedded.
 
 ## Behavior
 

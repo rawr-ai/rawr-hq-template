@@ -8,13 +8,16 @@ import type {
 import {
   createAgentToolsAdapter,
   createDesktopBackgroundAdapter,
+  createOclifAdapter,
   type LoweredAgentTool,
+  type LoweredCliCommand,
   type LoweredDesktopBackground,
   type MountReadySurfaceRuntimeRecord,
   type SurfaceMountAssignment,
 } from "../../../runtime/process-runtime/src/index";
 
 export type AgentToolMountRecord = MountReadySurfaceRuntimeRecord<readonly LoweredAgentTool[]>;
+export type CliCommandMountRecord = MountReadySurfaceRuntimeRecord<readonly LoweredCliCommand[]>;
 export type DesktopBackgroundMountRecord = MountReadySurfaceRuntimeRecord<
   readonly LoweredDesktopBackground[]
 >;
@@ -26,6 +29,10 @@ export type NativeIntegrationHarness<T> = Omit<HarnessDescriptor<T>, "mount"> & 
 
 export type NativeIntegration =
   | {
+      readonly surface: "cli/commands";
+      readonly harness: NativeIntegrationHarness<CliCommandMountRecord>;
+    }
+  | {
       readonly surface: "agent/tools";
       readonly harness: NativeIntegrationHarness<AgentToolMountRecord>;
     }
@@ -35,7 +42,7 @@ export type NativeIntegration =
     }
   | { readonly surface: "none"; readonly harness: NativeIntegrationHarness<never> };
 
-type Payload = readonly (LoweredAgentTool | LoweredDesktopBackground)[];
+type Payload = readonly (LoweredAgentTool | LoweredDesktopBackground | LoweredCliCommand)[];
 type Descriptor = HarnessDescriptor<MountReadySurfaceRuntimeRecord<Payload>>;
 
 /** Resolve the selected IDs before any provider or native host can run. */
@@ -68,7 +75,7 @@ export function resolveIntegrations(
       !harness.roles.some((role: AppRole) => plan.roles.includes(role)) ||
       new Set(harness.roles).size !== harness.roles.length ||
       new Set(harness.surfaces).size !== harness.surfaces.length ||
-      !["agent/tools", "desktop/background", "none"].includes(surface)
+      !["agent/tools", "desktop/background", "cli/commands", "none"].includes(surface)
     )
       throw new TypeError("Native integration does not match the selected process.");
     const previous = identities.get(harness.id);
@@ -97,7 +104,8 @@ export function resolveIntegrations(
         throw new TypeError("An empty-payload integration must declare no surfaces.");
       continue;
     }
-    const role = surface === "agent/tools" ? "agent" : "desktop";
+    const role =
+      surface === "agent/tools" ? "agent" : surface === "cli/commands" ? "cli" : "desktop";
     if (!harness.roles.includes(role) || !harness.surfaces.includes(surface))
       throw new TypeError("Native integration does not support its surface.");
     const matching = plan.surfaces.filter((item) => item.surface === surface && item.role === role);
@@ -105,7 +113,9 @@ export function resolveIntegrations(
     const adapter =
       surface === "agent/tools"
         ? createAgentToolsAdapter({ harness: harness.id })
-        : createDesktopBackgroundAdapter({ harness: harness.id });
+        : surface === "cli/commands"
+          ? createOclifAdapter({ harness: harness.id })
+          : createDesktopBackgroundAdapter({ harness: harness.id });
     for (const item of matching) {
       assignments.push({ surface: item, adapter });
       covered.add(item.surfacePlanId);

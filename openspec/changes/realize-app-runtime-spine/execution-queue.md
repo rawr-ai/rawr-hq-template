@@ -38,6 +38,11 @@ native law acceptance. Tasks 10.6/10.7 are now independently reviewed and locall
 accepted: real terminal startup, native stop-before-release and observation;
 full CI (143 tasks), all nine installed tests and uncached native law acceptance
 (12 tests, 94 assertions) pass.
+Tasks 11.1-11.5, 11.7 and 11.8 are now locally accepted on the Oclif self-host
+child: all retained commands and Nx readers use one explicit process lifecycle;
+full CI passes 157 tasks, all nine installed tests pass, and the built/installed
+native matrix proves execution, observations, output and cleanup. The separate
+native extension lifecycle passes with one candidate SDK module realm.
 No package release or consumer acceptance is claimed.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
@@ -55,10 +60,12 @@ public release and consumer acceptance remain separate states.
 
 ## Current Boundary
 
-Tasks 10.5-10.7 complete non-authorizing observation, process-local mounting and
-real terminal SDK startup. Tasks 10.2-10.4 are submitted in PR 1012 and observation
-in PR 1013. Admit the verified mounting child, then co-land 11.1-11.5 as the
-complete Oclif self-host and retained-reader cutover. The one native sweep removed the four merged
+Tasks 10.2-10.7 are submitted in PRs 1012-1014 with passing required and
+Linux/Windows installed checks. Admit the locally verified Oclif self-host child
+as one complete retained-reader cutover, then implement task 11.6's native
+generators. Its planning loop must replace the inherited disk-atomicity claim
+with honest native Nx staging and flush semantics; see the implementation record.
+The one native sweep removed the four merged
 predecessors and the targeted child restack preserved an identical tree.
 All held worktree heads and staged telemetry work remain unchanged.
 The verified binding story uses official oRPC beta.32 native clients and Effect

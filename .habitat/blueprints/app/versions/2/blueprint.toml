@@ -1,0 +1,37 @@
+schemaVersion = 1
+id = "app"
+version = 2
+
+[[rules]]
+id = "app_v2_selection"
+lane = "enforced"
+message = "App, profile, process, and entrypoint declarations retain their SDK-owned authoring lineage."
+remediate = "Declare composition with defineApp, profiles with defineRuntimeProfile, processes with defineProcessCatalog, and entrypoints with defineEntrypoint; keep provider selection in profiles."
+[rules.runner]
+name = "grit"
+pattern = "app_v2_selection.md"
+patternName = "app_v2_selection"
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["*.ts", "runtime/processes.ts", "runtime/profiles/*.ts"] }]
+
+[[rules]]
+id = "app_v2_structure"
+lane = "enforced"
+message = "Applications preserve their closed composition, process, profile, and entrypoint topology."
+remediate = "Restore the complete app package anchors and runtime selection directories; native host implementation remains under src."
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

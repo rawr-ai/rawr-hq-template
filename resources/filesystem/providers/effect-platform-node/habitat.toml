@@ -1,0 +1,8 @@
+schemaVersion = 1
+id = "provider-filesystem-effect-platform-node"
+ownerProject = "provider-filesystem-effect-platform-node"
+blueprint = "provider"
+blueprintVersion = 1
+[roots]
+project = "resources/filesystem/providers/effect-platform-node"
+[selections]

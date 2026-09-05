@@ -138,7 +138,8 @@ test("derives cold tool/background occurrences with exact private projection ref
     descriptor.run(invocation(ref, { value: "cold" }));
   }
   expect(bodies).toBe(0);
-  expect(Object.keys(result)).toHaveLength(5);
+  expect(Object.keys(result)).toHaveLength(6);
+  expect(result.cliCommandSources).toEqual([]);
   expect(JSON.stringify(result.portableArtifact)).not.toContain(tool.description);
   expect(JSON.stringify(result.graph)).not.toContain("inputSchema");
 });
@@ -223,7 +224,7 @@ test("caches a rejected tool decode without invoking the body or inventing a typ
   expect(checks).toBe(0);
   const first = await execute(program);
   expect(Exit.isFailure(first) && Cause.hasDies(first.cause)).toBe(true);
-  expect(Exit.isFailure(first) && Cause.pretty(first.cause)).toContain("Tool input failed");
+  expect(Exit.isFailure(first) && Cause.pretty(first.cause)).toContain("Executable input failed");
   const afterFirst = checks;
   expect(afterFirst).toBeGreaterThan(0);
   const second = await execute(program);

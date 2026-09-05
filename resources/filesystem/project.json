@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat-ai/resource-filesystem",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/filesystem/providers/**/*.ts",
+      "!{workspaceRoot}/resources/filesystem/providers/**/test/**",
+      "!{workspaceRoot}/resources/filesystem/providers/**/*.test.*"
+    ]
+  },
+  "targets": { "check": { "executor": "nx:noop" } }
+}

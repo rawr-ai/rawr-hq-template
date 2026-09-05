@@ -1,13 +1,14 @@
-import type { HabitatClient } from "@habitat-ai/sdk";
+import type { Client as HabitatClient } from "@habitat-ai/catalog-service/client";
 import type { CreateNodesFunction, CreateNodesResultArray } from "@nx/devkit";
 import { describe, expect, it, vi } from "vitest";
-import {
-  createHabitatNxPlugin,
-  type HabitatClientForWorkspace,
-  type HabitatNxBinding,
-} from "../../src/nx/projection";
+import { createHabitatNxPlugin, type HabitatNxBinding } from "../../src/nx/projection";
 
 type ResolveCatalogResult = Awaited<ReturnType<HabitatClient["catalog"]["resolve"]>>;
+type FixtureClientForWorkspace = (root: string) =>
+  | {
+      readonly catalog: Pick<HabitatClient["catalog"], "resolve">;
+    }
+  | Promise<{ readonly catalog: Pick<HabitatClient["catalog"], "resolve"> }>;
 type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["catalog"];
 type ResolvedApplication = ResolvedCatalog["applications"][number];
 type ResolvedGritApplication = ResolvedApplication & {
@@ -348,9 +349,12 @@ const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
 ];
 
 function createHandler(
-  clientForWorkspace: HabitatClientForWorkspace
+  clientForWorkspace: FixtureClientForWorkspace
 ): CreateNodesFunction<undefined> {
-  const plugin = createHabitatNxPlugin({ clientForWorkspace, runtimeInputs });
+  const plugin = createHabitatNxPlugin({
+    resolveForWorkspace: async (root) => (await clientForWorkspace(root)).catalog.resolve({}),
+    runtimeInputs,
+  });
   expect("name" in plugin).toBe(false);
   expect(plugin.createNodes[0]).toBe(
     "{.habitat/blueprints/*/blueprint.toml,.habitat/blueprints/*/versions/*/blueprint.toml,.habitat/index.json,.habitat/**/rule.json,**/habitat.toml}"

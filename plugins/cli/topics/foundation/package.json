@@ -1,0 +1,35 @@
+{
+  "name": "@habitat-ai/plugin-foundation",
+  "version": "0.3.1",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@habitat-ai/catalog-service": "workspace:*",
+    "@habitat-ai/sdk": "workspace:*",
+    "@oclif/core": "4.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin",
+      "role:cli",
+      "capability:foundation"
+    ]
+  }
+}
