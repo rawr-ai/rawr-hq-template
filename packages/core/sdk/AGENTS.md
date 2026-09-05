@@ -32,6 +32,10 @@
   official Effect-oRPC extension. `@habitat-ai/sdk/plugins/server/effect` is
   the service-implementation-owned, side-effect-only bootstrap for that exact
   extension and exports no Habitat runner.
+  Explicit named `useWorkflowDispatcher` groups expose typed event admission
+  through already selected client resources without selecting target async
+  execution. Admission contracts remain usable without the optional Inngest peer;
+  the native client owns sending, serialization, retries and event fan-out.
 - `@habitat-ai/sdk/plugins/async` exposes cold workflow, schedule, and consumer
   declarations with explicit native orchestration callbacks and event/cron
   triggers. `@habitat-ai/sdk/plugins/async/effect` adds the cold async step
@@ -108,6 +112,9 @@
   separately typechecking and building the public-import-only child entries.
   Fixture IPC and explicit stop, failure and restart controls are test-only,
   not a product app, repository Nx project, or production lifecycle controller.
+  `workflow-admission.ts` owns server-only publication acceptance against the
+  native Dev Server and independent native receivers, including exact payload
+  forwarding, event ID receipts and canceled/unawaited native send drain.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime

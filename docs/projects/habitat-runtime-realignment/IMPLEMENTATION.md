@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; independently built process isolation qualified locally; native async merged, exact-main pending.
-Branch: `agent-root-habitat-process-isolation`, based on the admitted native async story.
+Status: `active`; workflow admission locally qualified and entering remote admission; process isolation landed and exact-main accepted.
+Branch: `agent-root-habitat-workflow-admission`; Graphite parent `main`.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -14,6 +14,7 @@ Qualified generators [1016](https://github.com/rawr-ai/rawr-hq-template/pull/101
 Installed authoring [1017](https://github.com/rawr-ai/rawr-hq-template/pull/1017).
 Native server [1018](https://github.com/rawr-ai/rawr-hq-template/pull/1018).
 Native async [1019](https://github.com/rawr-ai/rawr-hq-template/pull/1019).
+Built process isolation [1020](https://github.com/rawr-ai/rawr-hq-template/pull/1020).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -68,12 +69,17 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: task 13.5, independently built same-app children through an
+Current domino: task 13.7, explicit server-only workflow event admission.
+The accepted design below is a capability relation and native send boundary,
+not a workflow engine, generic event bus or new provider lifecycle.
+
+The qualified predecessor is task 13.5, independently built same-app children through an
 ordinary packed SDK. One app and finite process catalog select separate thin
 server and async entrypoints; the test driver is not a production supervisor.
 Prove actual operations, independent stop/restart and leases, failed acquisition
 with nonempty rollback before mount, and exact process-local health/identity.
-The next capability is the separately named task 13.7 WorkflowDispatcher.
+Its candidate `0290cd07bc3a0c4b1cc1218d072fdc1f5006744d` merged in PR 1020;
+exact main is `46bb598f865069c4c600b96c4a7928ad3bb8f8da`.
 
 The accepted local predecessor is tasks 13.3/13.4 together, complete native Inngest Serve/Connect
 qualification.
@@ -598,21 +604,19 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
-Admit native async PR 1019 and the complete task 13.5 process-isolation node
-through required, installed and exact-main checks. Preserve the accepted
-execution and mounting owners. The independent child receipt uses the same
-ordinary packed SDK in one isolated vendor realm and actual native hosts;
-neither a process drain nor a completed step guarantees a durable run can make
-later requests to a stopped listener.
+Native async and built process isolation have passed required, installed and
+exact-main checks. Task 13.7 has passed independent review, installed-package
+proof and complete repository CI; admit that complete story through Graphite
+and its exact-main gate. Preserve the accepted execution
+and mounting owners; neither process drain nor a completed step guarantees a
+durable run can make later requests to a stopped listener.
 
-The next opening assigns the currently unimplemented canonical
-`WorkflowDispatcher` consumer explicitly. Sections 15.8/19.1/24.4 prescribe
-process-owned materialization and server-only event admission, but tasks
-13.3-13.5 qualify native hosts without that consumer. Current derivation and
-compiler only attach the descriptor to its async execution owner; they do not
-yet represent server admission reachability. Keep this obligation unretired
-and separate from `FunctionBundle`, rather than silently treating native host
-acceptance or task 15's audit as its implementation.
+The implementation below corrects admission reachability without adding it to
+`FunctionBundle` or selecting target async execution. Task 13.6 is dispositioned
+with its independent-artifact condition unsatisfied, not an MCP attachment claim.
+Next qualify the web module/build handoff and actual web-local Effect body as one
+complete story. Remaining CLI verticals and the final observability/release
+audit retain their own actual acceptance obligations.
 
 ### Accepted Binding And Execution
 
@@ -1125,7 +1129,12 @@ uncached SDK build with its previous dist moved out passed all 12 build tasks,
 so the public-import child sources do not create a declaration bootstrap cycle.
 The final full repository CI passes all 165 tasks for 35 projects (89 cache hits,
 2m25s), including another real packed-child receipt. Strict OpenSpec validation
-and diff hygiene pass. Remote admission of this node remains pending.
+and diff hygiene pass. Candidate `0290cd07bc3a0c4b1cc1218d072fdc1f5006744d`
+passed required run `33981413686` and installed run `33981413729` on Linux
+(4m57s) and Windows (19m18s). Graphite merged PR 1020 to
+`46bb598f865069c4c600b96c4a7928ad3bb8f8da`; exact-main run `33982459421`
+passed. One force/no-restack/noninteractive sweep removed the consumed branch
+and reparented the active admission work without modifying it or held work.
 
 Native async candidate `fdee504dea0b61f3ca0cd865567c33392fc82780` passed installed
 acceptance on Linux (6m17s) and Windows (21m32s). Its first required run failed
@@ -1134,8 +1143,130 @@ only an unchanged cache-precision test's 60-second aggregate timeout; all other
 and actual local async CI. The unchanged failed-job retry passed. Graphite merged
 PR 1019 at `485e798e8480e937169a50cfee5d19abd86b05f8`; one
 force/no-restack/noninteractive sweep removed its consumed branch and preserved
-the active child and unrelated held work. Exact-main run `33981290836` is pending.
+the active child and unrelated held work. Exact-main run `33981290836` passed.
 No speculative runtime change or timeout increase was made.
+
+### Workflow Admission Design
+
+Three perspectives reviewed task 13.7: exact cold identity/reachability, native
+process lifetime, and the external SDK ergonomics proposal already recorded
+below. The proposal supplies no missing dispatcher syntax. The owner-delegated
+decision is one named `useWorkflowDispatcher(plugin, { workflows, client })`
+helper on the server authoring face, mirroring the existing service-use map.
+`plugin` is the exact app-member workflow plugin occurrence; `workflows` is an
+explicit nonempty exact-member subset; `client` is an existing required resource
+reference. `context.workflows.<name>.send(workflow, payload)` admits only that
+group's exact workflow references and infers payload from the selected target.
+
+The helper implies its client requirement in the caller's ordinary resource
+requirements, deduping an identical reference but preserving existing conflict
+refusal for conflicting requirements. This is not a security ACL: authors
+holding the native resource can call it through the ordinary resource lane.
+No dispatcher-only resource owner or hidden filtering is introduced.
+
+Derive admission only for explicit uses. Remove the automatic unused dispatcher
+descriptor produced solely by selecting async execution. Preserve the exact
+eight-field descriptor and digest for target plugin occurrence plus sorted
+requested workflow subset. Different subsets have distinct descriptors;
+identical subsets may reuse one descriptor, even with different caller/client
+bindings. Live capabilities remain keyed by caller and local use name, never
+only by descriptor ID. Exact target, schema, client and caller references remain
+in the private selected handoff. Target membership must not select its async
+execution surface, steps, services, execution resources or harness.
+
+After provisioning, use the exact acquired native client. Call schema
+`validate` once before send and forward the original payload, not a decoder or
+validator replacement. Native serialization and the receiver's decode retain
+their own boundaries; no arbitrary codec round-trip guarantee is added. Return
+only frozen native `eventIds` and preserve native rejection. A narrow optional
+`{ id }` argument forwards the native source-event ID for publication retries;
+it adds no Habitat deduplication or exactly-once promise. Add no run IDs,
+success flag, admission timestamp, routing/control options or implied exclusive target.
+Sending an event can fan out to every native matching function. Retain the
+native Promise through the existing admitted invocation/descendant tracker,
+including unawaited sends and caller interruption; Inngest supplies no send
+AbortSignal, so Habitat must not pretend to cancel it.
+
+Root owns canonical examples, SDK exports, installed/native end-to-end proof
+and final synthesis. Definition owns the helper and typed server context;
+derivation/compiler owns exact cross-owner reachability; process-runtime owns
+materialization and descendant lifetime. Discriminating tests must cover
+server-only startup with execution resources absent, foreign/copied/unlisted
+targets, disjoint named groups/client instances, schema refusal without decode,
+real event IDs/fan-out and a gated native send surviving cancellation and stop.
+
+Native event-ownership review refined the initial no-options proposal: omitting
+the source-event ID would force ordinary outbox/publication retries to bypass
+the curated dispatcher. The team admitted only that existing native identity
+field, not a speculative options bag or a Habitat idempotency mechanism.
+
+### Workflow Admission Qualification
+
+The cold relation, process binding and terminal SDK face are implemented. A
+server-only native fixture has no provider for the target's execution-only
+resource and no async integration. It starts successfully, admits through two
+distinct acquired Inngest clients, and observes actual Dev Server event IDs and
+both independent native matching functions. Exact named subsets share metadata
+without sharing client binding; copied/unlisted workflows and invalid payloads
+send nothing. Native middleware sees the original Date-bearing object, while
+the receiver sees native JSON. No Habitat decoder or async body runs.
+
+Two real native sends remain pending in middleware after acknowledgement.
+An interrupted Effect caller finalizes and an unawaited caller returns, but
+process stop retains both clients and their live file dependency until both
+native Promises settle. Results freeze native event IDs; no run-completion or
+Cloud guarantee is inferred. The observer explicitly uses checkpointing and
+the already qualified Dev Server output query rather than misreading its
+event-level output placeholder.
+
+Independent review accepted and repaired two API defects: inherited structural
+`options.id` was silently dropped, and the omitted workflow context generic
+allowed undeclared names. The native ID getter now reads once and forwards
+unchanged; the default context has no workflow groups. Definition/API and
+native request/dispatcher regressions cover both. Fixture cleanup also now
+covers every acquired-resource interval and unconditionally closes the file
+on failed startup without demanding a native mount that never happened.
+These repairs do not add an options engine, security ACL or lifecycle owner.
+
+Ordinary CI includes the noncached `acceptance:workflow-admission` target.
+Installed declaration, API and native-peer isolation checks extend the existing
+packed consumer, rather than introducing another distribution or test harness.
+The final native fixture and complete repository CI pass: 166 tasks for 35
+projects, 75 cache hits, 4m51s. The final installed run passes all nine tests
+(210.83 seconds), including cold optional-peer isolation and the repaired
+positive/negative authoring consumer. Strict OpenSpec and diff hygiene pass.
+Remote candidate admission remains open.
+Its first run passed eight of nine tests; the new no-host consumer alone failed
+because its test imported an undeclared optional Inngest peer. That consumer now
+uses the public peer-free sender contract; native compatibility stays in the
+actual native proofs rather than weakening no-host isolation.
+
+The first CI run hit missing harness declaration outputs. An unchanged uncached
+owner rebuild passed all eight producer tasks, followed by the complete passing
+CI. An isolated probe reproduced a pinned declaration-plugin recovery defect
+when an emit-complete build-info file survives declaration deletion; ordinary
+no-emit/typecheck timing controls passed. The original stale-output trigger is
+not established, so no speculative scheduling or dependency change is admitted.
+Re-entry is a repeat missing-output failure with that producer state captured.
+
+### Conditional MCP Companion
+
+Task 13.6's independent-artifact condition is unsatisfied as of 2026-09-05.
+The [exact npm version](https://registry.npmjs.org/mcp-openapi/1.0.0) returns
+404; the public package name belongs to a different publisher. The independent
+`rawr-ai/mcp-openapi` source exists at clean revision
+`723866bc44998a6fb69f32b305f99f43c90c4c67` with manifest version 1.0.0,
+but its checked GitHub releases/tags are empty and its checkout has no package
+artifact. Magic consumes a `file:vendor/...` tarball, which is explicitly not
+an admissible Habitat source. This is absence of evidenced release provenance,
+not a claim that no companion source exists or an artifact cannot be produced.
+
+Its current public `serve(Config, { signal? }): Promise<void>` and dedicated
+process runbook do not establish a ready mount/health receipt compatible with
+Habitat's generic harness lifecycle. Re-enter only with an independently
+versioned ordinary artifact and qualified public lifecycle. No MCP dependency,
+internal implementation, authoring face, copied artifact or release claim is
+admitted; the generic companion contract remains unchanged and core work proceeds.
 
 ### Backend Receipt Reuse
 

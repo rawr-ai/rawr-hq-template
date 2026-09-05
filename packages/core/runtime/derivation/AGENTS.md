@@ -36,6 +36,11 @@
   frozen cold table snapshots without copying referenced executable owners.
 - Effect descriptor refs and web route-module refs remain distinct; only Effect
   refs enter the seven-field portable artifact.
+- Only explicit named server workflow uses derive admission descriptors. Exact
+  app-member targets and requested subsets stay separate from async execution
+  selection; identical target/subset descriptors may share caller-local uses
+  with distinct ordinary client requirements. Selected admission references
+  stay private beside the unchanged eight-field descriptor.
 
 ## Flow
 

@@ -6,6 +6,7 @@ import {
 import {
   readRuntimeCompilationAsyncSources,
   readRuntimeCompilationServerSources,
+  readRuntimeCompilationWorkflowAdmissions,
 } from "../../compiler/src/runtime-compilation-reference-table";
 import type { RuntimeObservationPort } from "../../definition/src/observation";
 import type {
@@ -34,6 +35,7 @@ import { createServiceBindingCache } from "./service-binding-cache";
 import { createServiceClientAssembly } from "./service-client-assembly";
 import type { AdapterLoweringResult, SurfaceAdapter } from "./surface-adapter";
 import { createSurfaceCapabilities } from "./surface-capabilities";
+import { createWorkflowDispatcherBindings } from "./workflow-dispatcher";
 
 export interface ProcessRuntime {
   readonly kind: "runtime.process";
@@ -81,6 +83,11 @@ export async function createProcessRuntime(
     const { plan, references } = input.compilation;
     const serverSources = new Map(readRuntimeCompilationServerSources(references));
     const asyncSources = new Map(readRuntimeCompilationAsyncSources(references));
+    const workflowDispatchers = createWorkflowDispatcherBindings({
+      admissions: readRuntimeCompilationWorkflowAdmissions(references),
+      values: handoff.values,
+      admission,
+    });
     const registry = createExecutionRegistry({
       processId: plan.identity.process,
       registryInput: plan.executionRegistryInput,
@@ -264,8 +271,8 @@ export async function createProcessRuntime(
                   identity: plan.identity,
                   surface,
                   admission,
-                  capabilities: (continuation) =>
-                    createSurfaceCapabilities({
+                  capabilities: (continuation) => ({
+                    ...createSurfaceCapabilities({
                       compilation: input.compilation,
                       surface,
                       bindings: bound,
@@ -273,6 +280,8 @@ export async function createProcessRuntime(
                       admission,
                       continuation,
                     }),
+                    workflows: workflowDispatchers(surface.surfacePlanId, continuation),
+                  }),
                   observation: input.observation,
                 }),
               },

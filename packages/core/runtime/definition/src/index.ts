@@ -16,3 +16,5 @@ export * from "./resource";
 export type { RuntimeSchema } from "./schema";
 export * from "./service";
 export * from "./tool-schema";
+export * from "./workflow-admission";
+export * from "./workflow-dispatcher-use";

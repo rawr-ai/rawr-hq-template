@@ -16,7 +16,6 @@ import {
   semanticDependencyId,
   serviceBindingId,
   surfacePlanId,
-  workflowDispatcherId,
 } from "../../derivation/src/identity-policy";
 import {
   NormalizedAuthoringGraphRuntimeSchema,
@@ -25,6 +24,7 @@ import {
 import type { ServiceBindingPlan } from "../../derivation/src/service-binding-plan";
 import { assertSurfaceReferenceRelation } from "../../derivation/src/surface-reference-policy";
 import type { RuntimeCompilationReferenceTable } from "./compilation-reference-contract";
+import { compileSurfaceWorkflowAdmissions } from "./compile-workflow-admissions";
 import {
   type CompilationObservationSeed,
   CompilationObservationSeedSchema,
@@ -36,6 +36,7 @@ import {
   type ProviderDependencyNode,
 } from "./compiled-process-plan";
 import { createRuntimeCompilationReferenceTable } from "./runtime-compilation-reference-table";
+import type { RuntimeCompiledWorkflowAdmission } from "./runtime-workflow-admission";
 
 export interface RuntimeCompilationInput {
   readonly derivation: RuntimeDerivationResult;
@@ -223,6 +224,13 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
   const providers = tupleIndex(handoff.providers, "provider reference entries");
   const services = tupleIndex(handoff.services, "service reference entries");
   const resourceBindings = tupleIndex(handoff.resourceBindings, "resource binding entries");
+  const resourceReferences = tupleIndex(handoff.resourceReferences, "resource reference entries");
+  const workflowAdmissions = tupleIndex(handoff.workflowAdmissions, "workflow admission entries");
+  for (const [id, admissions] of workflowAdmissions) {
+    required(surfaces, id, "workflow admission surface");
+    if (!Object.isFrozen(admissions) || admissions.length === 0)
+      refuse("selected workflow admission sources");
+  }
   const serverSources = tupleIndex(handoff.serverSources, "native server source entries");
   for (const [id, source] of serverSources) {
     const surface = required(surfaces, id, "native server source surface");
@@ -530,6 +538,10 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
   const reachedUses = new Set<string>();
   const reachedPlugins = new Set<string>();
   const pendingBindings: string[] = [];
+  const compiledWorkflowAdmissions: (readonly [
+    string,
+    readonly RuntimeCompiledWorkflowAdmission[],
+  ])[] = [];
   for (const surface of surfaces.values()) {
     const plugin = required(plugins, surface.pluginOwnerId, "surface plugin");
     if (
@@ -606,21 +618,21 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
       reachedWeb.add(key);
     }
     sortedUnique(surface.workflowDispatcherDescriptorIds, (id) => [id], "surface workflow order");
-    for (const id of surface.workflowDispatcherDescriptorIds) {
-      const workflow = required(workflows, id, "surface workflow reference");
-      if (
-        workflow.appId !== graph.app.appId ||
-        workflow.pluginOwnerId !== plugin.ownerId ||
-        workflow.role !== surface.role ||
-        workflow.surface !== surface.surface ||
-        workflow.capability !== surface.capability
-      )
-        refuse("workflow identity agreement");
-      const { kind: _kind, descriptorId: _descriptorId, ...identity } = workflow;
-      if (workflowDispatcherId(identity) !== id) refuse("workflow identity");
-      sortedUnique(workflow.workflowIds, (workflowId) => [workflowId], "workflow ids");
-      reachedWorkflows.add(id);
+    const admissions = compileSurfaceWorkflowAdmissions({
+      appId: graph.app.appId,
+      surface,
+      plugin,
+      sources: workflowAdmissions.get(surface.surfacePlanId) ?? [],
+      descriptors: workflows,
+      requirements,
+      resourceReferences,
+      resourceBindings,
+    });
+    if (admissions.length > 0) {
+      if (!serverSources.has(surface.surfacePlanId)) refuse("workflow admission server source");
+      compiledWorkflowAdmissions.push(Object.freeze([surface.surfacePlanId, admissions]));
     }
+    for (const id of surface.workflowDispatcherDescriptorIds) reachedWorkflows.add(id);
   }
   while (pendingBindings.length > 0) {
     const id = pendingBindings.pop()!;
@@ -796,6 +808,7 @@ export function compileRuntimePlan(input: RuntimeCompilationInput): RuntimeCompi
     resources: handoff.resourceReferences,
     serverSources: handoff.serverSources,
     asyncSources: handoff.asyncSources,
+    workflowAdmissions: compiledWorkflowAdmissions,
   });
   return Object.freeze({ plan, references, observationSeed });
 }

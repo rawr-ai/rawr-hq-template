@@ -22,3 +22,19 @@ export type {
   ServiceUses,
 } from "../../../../runtime/definition/src/service";
 export { useService } from "../../../../runtime/definition/src/service";
+export type {
+  WorkflowAdmissionDefinition,
+  WorkflowAdmissionPayload,
+  WorkflowDispatcher,
+  WorkflowDispatcherTarget,
+  WorkflowDispatchOptions,
+  WorkflowDispatchResult,
+  WorkflowEventSender,
+} from "../../../../runtime/definition/src/workflow-admission";
+export type {
+  WorkflowDispatcherClientRequirement,
+  WorkflowDispatchers,
+  WorkflowDispatcherUse,
+  WorkflowDispatcherUses,
+} from "../../../../runtime/definition/src/workflow-dispatcher-use";
+export { useWorkflowDispatcher } from "../../../../runtime/definition/src/workflow-dispatcher-use";

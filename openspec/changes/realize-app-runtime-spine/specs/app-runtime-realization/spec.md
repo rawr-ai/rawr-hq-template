@@ -450,6 +450,50 @@ native middleware is permitted at either function or client placement;
 - **THEN** every matching native function may receive it without function-ID namespace rewriting or exclusive-targeting claims
 - **AND** native host qualification does not retire the separate WorkflowDispatcher/server-admission obligation in task 13.7
 
+### Requirement: Explicit workflow admission is independent of async execution
+
+Server API/internal plugin authoring MUST support optional named `useWorkflowDispatcher` uses of
+an exact app-member workflow plugin, a nonempty exact-member workflow subset,
+and an existing required native-client resource reference. The use MUST imply
+that client's ordinary caller resource requirement without selecting the
+target's async execution surface, steps, services, execution resources or host.
+This declared dependency is not a security ACL over an otherwise exposed native
+resource. Async execution selection alone MUST NOT create unused dispatcher
+metadata.
+
+The exact eight-field dispatcher descriptor and digest MUST retain target
+identity and sorted requested subset. Identical target subsets MAY share one
+descriptor across callers/client selections, but live named bindings and exact
+allowlists MUST remain independent. Caller, target and client references belong
+in the private selected handoff, not new serialized descriptor fields. Derivation
+owns app membership; compilation MUST NOT retain/re-walk a whole app to repeat
+that proof.
+
+#### Scenario: A server-only process admits a workflow event
+
+- **WHEN** a selected server projection declares an exact workflow use while the target's execution-only resources are unavailable
+- **THEN** provisioning acquires only the caller's selected native client and dependencies, and no async function, step, service or host is materialized
+- **AND** the invocation-owned dispatcher validates the payload once, sends the original value with its authored event name, and returns only frozen native event IDs
+- **AND** optional authored `id` is forwarded as native source-event identity, without Habitat deduplication, run identity, exclusive targeting or exactly-once claims
+
+#### Scenario: Named groups share metadata but not client binding or membership
+
+- **WHEN** two named uses refer to an identical target subset with different client selections, or disjoint subsets of one target
+- **THEN** each send resolves its own exact acquired client and exact member allowlist
+- **AND** a copied, foreign or unlisted workflow refuses before native send even if another group contains its ID
+
+#### Scenario: Validation and native serialization retain their boundaries
+
+- **WHEN** a caller supplies a payload to an admitted workflow
+- **THEN** the owning schema's `validate` runs before native send, failure sends nothing, and Habitat neither decodes nor substitutes the validator's returned value
+- **AND** native serialization and the receiving invocation's decode remain authoritative, without an arbitrary codec round-trip guarantee
+
+#### Scenario: A native send outlives its initiating caller
+
+- **WHEN** an admitted send remains pending in native middleware or transport while its caller stops awaiting, is interrupted, or process stop begins
+- **THEN** the existing invocation descendant retains the client until the actual native send Promise settles
+- **AND** native rejection is preserved and no synthetic send AbortSignal or premature release is introduced
+
 ### Requirement: Compilation lowers one cohesive derivation-owned handoff
 
 The private compiler MUST consume the selected library-produced derivation

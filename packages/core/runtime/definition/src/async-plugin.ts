@@ -20,6 +20,7 @@ import {
   type PluginServiceUses,
 } from "./plugin";
 import type { ResourceRequirement } from "./resource";
+import type { WorkflowAdmissionDefinition } from "./workflow-admission";
 
 /** Native configuration; either middleware placement must preserve standard-JSON output. */
 export type AsyncFunctionOptions = Readonly<
@@ -59,11 +60,7 @@ export interface AsyncWorkflowDefinition<
   TId extends string = string,
   TInput = unknown,
   TSteps extends AsyncStepMembership = AsyncStepMembership,
-> {
-  readonly kind: "async.workflow";
-  readonly id: TId;
-  readonly eventName: string;
-  readonly inputSchema: RuntimeSchema<TInput>;
+> extends WorkflowAdmissionDefinition<TId, TInput> {
   readonly steps: TSteps;
   readonly options?: AsyncFunctionOptions;
   run(context: AsyncRunContext<TInput, TSteps>): unknown;

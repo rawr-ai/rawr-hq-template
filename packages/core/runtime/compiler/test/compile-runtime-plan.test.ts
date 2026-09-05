@@ -3,6 +3,7 @@ import { type TSchema } from "typebox";
 import { Check } from "typebox/value";
 import { executionDescriptorRefTuple } from "../../derivation/src/execution-descriptor-ref";
 import { readRuntimeDerivationHandoff } from "../../derivation/src/index";
+import { workflowAdmissionFixture } from "../../derivation/test/helpers/workflow-admission-fixture";
 import * as C from "../src/index";
 import {
   DEEP_READONLY_COMPILER_DTO_TYPE_ORACLES,
@@ -36,6 +37,9 @@ test("sixteen DTO types remain exact, deeply readonly and closed", () => {
   const { plan, observationSeed } = C.compileRuntimePlan({
     derivation: produceHandoff().derivation,
   });
+  const admissionPlan = C.compileRuntimePlan({
+    derivation: workflowAdmissionFixture().derivation,
+  }).plan;
   const cases: readonly [TSchema, object, string][] = [
     [C.BootgraphInputSchema, plan.bootgraphInput, "kind"],
     [C.CompilationObservationSeedSchema, observationSeed, "kind"],
@@ -56,7 +60,7 @@ test("sixteen DTO types remain exact, deeply readonly and closed", () => {
     [C.CompiledResourcePlanSchema, plan.compiledResources[0]!, "kind"],
     [C.CompiledServiceBindingPlanSchema, plan.serviceBindings[0]!, "kind"],
     [C.CompiledSurfacePlanSchema, plan.surfaces[0]!, "kind"],
-    [C.CompiledWorkflowDispatcherPlanSchema, plan.workflowDispatchers[0]!, "kind"],
+    [C.CompiledWorkflowDispatcherPlanSchema, admissionPlan.workflowDispatchers[0]!, "kind"],
     [C.ProviderDependencyClosureSchema, plan.providerDependencyGraph.closure[0]!, "selectionId"],
     [C.ProviderDependencyEdgeSchema, plan.providerDependencyGraph.edges[0]!, "fromSelectionId"],
     [C.ProviderDependencyGraphSchema, plan.providerDependencyGraph, "kind"],

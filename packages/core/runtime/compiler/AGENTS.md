@@ -35,6 +35,10 @@
   `TypeError` before returning a result.
 - Missing optional resources remain derivation findings and produce no selected
   provider artifact in the compiled plan.
+- Named workflow admission consumes derivation's selected cross-owner relation,
+  not a selected target execution surface or a second app-membership walk. The
+  private admission handoff keeps caller/use identity, exact workflow/schema
+  references and the already-resolved client selection outside portable DTOs.
 
 ## Flow
 
