@@ -27,8 +27,11 @@ acceptance and independent final review pass. The admitted-continuation repair
 at `214eeffba` also passes required and Linux/Windows installed CI in PR 1010.
 Task 10.1 is now independently reviewed and locally accepted on its child:
 full repository CI, installed SDK behavior/types and native adapter-law proof
-pass. The stack still awaits remote tip checks and native Graphite merge;
-no candidate is claimed merged or released.
+pass. PR 1011 also passes required and Linux/Windows installed checks.
+Tasks 10.2-10.4 now pass independent review, full repository CI, the real
+loopback HTTP handoff proof and all nine installed SDK/CLI tests on their child.
+The predecessor stack still awaits native Graphite merge; no candidate is
+claimed merged or released.
 
 Opening main has schema, definition, derivation, compiler and bootgraph owners.
 It has no live Effect provisioning, process binding, generic harness owner,
@@ -45,8 +48,11 @@ public release and consumer acceptance remain separate states.
 
 ## Current Boundary
 
-Admit the complete stack including task 10.1's cold adapter lowering and real
-agent-tool/desktop-background authoring, then implement harness/mounting/observation.
+Admit the green predecessor stack through PR 1011 without making its merge
+depend on unfinished mounting or observation. Tasks 10.2-10.4 form a complete,
+independently committable harness-contract and mount-ready handoff story.
+Proceed to task 10.5's non-authorizing observation owner, then complete
+process-local mounting and its terminal SDK composition in 10.6/10.7.
 The verified binding story uses official oRPC beta.32 native clients and Effect
 beta.101, preserving actual request and stream settlement before resource
 release. No community bridge, replacement interpreter or second service runner

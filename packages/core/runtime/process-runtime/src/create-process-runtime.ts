@@ -17,6 +17,11 @@ import {
 import { createExecutionRegistry, type ExecutionRegistry } from "./execution-registry";
 import { createProcessExecutionRuntime, type ProcessExecutionRuntime } from "./execution-runtime";
 import { createInvocationTracker } from "./invocation-tracker";
+import {
+  createMountPreparation,
+  type MountReadyProcess,
+  type PrepareMountsInput,
+} from "./mount-ready-process";
 import { createRuntimeAccess, type RuntimeAccess } from "./runtime-access";
 import { createServiceBindingCache } from "./service-binding-cache";
 import { createServiceClientAssembly } from "./service-client-assembly";
@@ -36,6 +41,7 @@ export interface ProcessRuntime {
     surface: CompiledSurfacePlan,
     adapter: SurfaceAdapter<CompiledSurfacePlan, T>
   ): AdapterLoweringResult<T>;
+  prepareMounts<T>(input: PrepareMountsInput<T>): MountReadyProcess<T>;
   stop(): Promise<void>;
 }
 
@@ -185,45 +191,64 @@ export async function createProcessRuntime(
           continuation,
         }),
     });
-    const access = createRuntimeAccess(input.compilation, input.provisioned, admission);
+    const access = createRuntimeAccess(input.compilation, input.provisioned, () => {
+      // Native stop may still need ready values after executable admission closes.
+      if (stopping !== undefined) throw new TypeError("Process resource access is closed.");
+    });
+    function lower<T>(
+      surface: CompiledSurfacePlan,
+      adapter: SurfaceAdapter<CompiledSurfacePlan, T>
+    ): AdapterLoweringResult<T> {
+      admission.assertOpen();
+      if (
+        !plan.surfaces.includes(surface) ||
+        adapter.role !== surface.role ||
+        adapter.surface !== surface.surface ||
+        adapter.harness.length === 0
+      )
+        throw new TypeError(
+          "Adapter requires an exact selected compiled surface and matching identity."
+        );
+      const roleAccess = access.roles.get(surface.role);
+      if (roleAccess === undefined) throw new TypeError("Adapter role is not selected.");
+      const capabilities = createSurfaceCapabilities({
+        compilation: input.compilation,
+        surface,
+        bindings: bound,
+        values: handoff.values,
+        admission,
+      });
+      return adapter.lower({
+        plan: surface,
+        processAccess: access.process,
+        roleAccess,
+        serviceBindings: capabilities.clients,
+        resources: capabilities.resources,
+        executionRegistry: registry,
+        executionRuntime: execution,
+      });
+    }
+    const prepareMounts = createMountPreparation({
+      plan,
+      processAccess: access.process,
+      hasSelection: handoff.values.has,
+      requiresHealth: (selectionId) =>
+        references.getProvider(selectionId).health?.required === true,
+      assertOpen: admission.assertOpen,
+      lower,
+      closeAdmission: () => {
+        // Native stop may settle admitted work, so close now without awaiting its drain.
+        void admission.closeAndDrain();
+      },
+      stop,
+    });
     return Object.freeze({
       kind: "runtime.process",
       access,
       registry,
       execution,
-      lower<T>(
-        surface: CompiledSurfacePlan,
-        adapter: SurfaceAdapter<CompiledSurfacePlan, T>
-      ): AdapterLoweringResult<T> {
-        admission.assertOpen();
-        if (
-          !plan.surfaces.includes(surface) ||
-          adapter.role !== surface.role ||
-          adapter.surface !== surface.surface ||
-          adapter.harness.length === 0
-        )
-          throw new TypeError(
-            "Adapter requires an exact selected compiled surface and matching identity."
-          );
-        const roleAccess = access.roles.get(surface.role);
-        if (roleAccess === undefined) throw new TypeError("Adapter role is not selected.");
-        const capabilities = createSurfaceCapabilities({
-          compilation: input.compilation,
-          surface,
-          bindings: bound,
-          values: handoff.values,
-          admission,
-        });
-        return adapter.lower({
-          plan: surface,
-          processAccess: access.process,
-          roleAccess,
-          serviceBindings: capabilities.clients,
-          resources: capabilities.resources,
-          executionRegistry: registry,
-          executionRuntime: execution,
-        });
-      },
+      lower,
+      prepareMounts,
       binding<S extends ServiceRuntimeExport>(
         bindingId: string,
         service: S

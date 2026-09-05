@@ -1,0 +1,37 @@
+schemaVersion = 1
+id = "runtime-harnesses"
+version = 1
+
+[[rules]]
+id = "runtime_harnesses_v1_imports"
+lane = "enforced"
+message = "Generic harness contracts cannot acquire providers or own mounting and observation orchestration."
+remediate = "Use bounded definition, compiler, and process-runtime contracts; leave acquisition and cross-owner coordination in their owners."
+[rules.runner]
+name = "grit"
+pattern = "runtime_harnesses_v1_imports.md"
+patternName = "runtime_harnesses_v1_imports"
+[rules.runner.acquisition]
+kind = "check"
+rootRoles = []
+selections = []
+rootPatterns = [{ rootRole = "project", patterns = ["src/**/*.ts"] }]
+
+[[rules]]
+id = "runtime_harnesses_v1_structure"
+lane = "enforced"
+message = "The generic harness owner preserves its package-less closed TypeScript boundary."
+remediate = "Restore required owner anchors and owner-local TypeScript sources and proofs without adding a distributable package or nested owner."
+[rules.runner]
+name = "habitat"
+mode = "structure"
+structure = "structure.toml"
+
+[instance]
+manifest = "habitat.toml"
+anchorRoot = "project"
+selections = []
+[[instance.roots]]
+id = "project"
+required = true
+kind = "directory"

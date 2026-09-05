@@ -88,6 +88,10 @@ production call before task 10.6. SDK integration tests supply the
 already-admitted test-source/build edge.
 The complete `runtime-process-runtime@1` member closes private process binding
 and execution, with a package-less source/proof grammar and no public SDK face.
+Its complete v2 adds the narrow adapter import law without changing v1.
+The complete `runtime-harnesses@1` closes the generic package-less native
+contract owner and its import law. The SDK projects only import-safe companion
+types; this member does not qualify a native host or introduce runtime mounting.
 
 The complete `runtime-substrate-effect@1` member closes the private native
 Effect provisioning owner. Its law carries no public runtime entrypoint.

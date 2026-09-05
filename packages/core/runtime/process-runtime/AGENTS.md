@@ -22,6 +22,8 @@
   maps and native runtime handles remain inside process-runtime implementation;
   neither belongs on a service, plugin or module context.
 - Harness mounting and cross-owner finalization belong to downstream mounting.
+- Prepare every selected surface before handing off mount-ready records. Retain
+  exact launch identity and bounded readiness data, not compiler/provider locals.
 - Adapter contracts live in `src/surface-adapter.ts`; lowering helpers live in
   `src/adapters/**`. The selected version-2 source law forbids raw Effect
   imports there. Deferred payload callbacks may delegate to process execution;
@@ -33,6 +35,9 @@
   construction dependencies before calling synchronous service constructors.
 - Process-owned admission and settlement tracking must drain accepted work
   before releasing its resources; no second provider finalizer registry.
+- Closing executable admission is synchronous and non-releasing. Native cleanup
+  may still read resources until ordinary process stop begins. Explicitly
+  required provider health stays unknown/failing without admitted probe evidence.
 
 ## Interfaces
 

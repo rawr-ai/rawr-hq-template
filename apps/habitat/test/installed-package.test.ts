@@ -78,6 +78,7 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/plugins/agent/schema",
     "@habitat-ai/sdk/plugins/desktop",
     "@habitat-ai/sdk/plugins/desktop/effect",
+    "@habitat-ai/sdk/runtime/harnesses",
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
     "@habitat-ai/sdk/runtime/providers/effect",
@@ -98,6 +99,7 @@ const PACKED_BLUEPRINT_DIRECTORIES = [
   "runtime-compiler",
   "runtime-definition",
   "runtime-derivation",
+  "runtime-harnesses",
   "runtime-process-runtime",
   "runtime-substrate-effect",
   "service",
@@ -1086,7 +1088,7 @@ describe("installed Habitat products", () => {
     }
     await assertInstalledWebProjection(generatedServiceRoot);
     await assertInstalledRuntimeDerivation(generatedServiceRoot);
-    await assertInstalledToolBackgroundTypes(generatedServiceRoot);
+    await assertInstalledProjectionTypes(generatedServiceRoot);
     await assertInstalledProviderAuthoring(generatedServiceRoot);
 
     const coldCliEntrypoint = path.join(consumerRoot, "cold-habitat-cli.mjs");
@@ -1148,6 +1150,7 @@ describe("installed Habitat products", () => {
         'const providers = await import("@habitat-ai/sdk/runtime/providers");',
         'const providerEffect = await import("@habitat-ai/sdk/runtime/providers/effect");',
         'const profiles = await import("@habitat-ai/sdk/runtime/profiles");',
+        'if (Object.keys(await import("@habitat-ai/sdk/runtime/harnesses")).length !== 0) throw new Error("Harness contract exported live values");',
         'const runtimeSchema = await import("@habitat-ai/sdk/runtime/schema");',
         'const telemetry = await import("@habitat-ai/sdk/telemetry");',
         'await import("@habitat-ai/sdk/package.json", { with: { type: "json" } });',
@@ -1283,6 +1286,7 @@ describe("installed Habitat products", () => {
       "runtime-derivation@1",
       "runtime-derivation@2",
       "runtime-derivation@3",
+      "runtime-harnesses@1",
       "runtime-process-runtime@1",
       "runtime-process-runtime@2",
       "runtime-substrate-effect@1",
@@ -1732,6 +1736,11 @@ describe("installed Habitat products", () => {
         id: "runtime-derivation",
         path: "dist/blueprints/runtime-derivation/versions/3/blueprint.toml",
         version: 3,
+      },
+      {
+        id: "runtime-harnesses",
+        path: "dist/blueprints/runtime-harnesses/blueprint.toml",
+        version: 1,
       },
       {
         id: "runtime-process-runtime",
@@ -2729,7 +2738,7 @@ function inspectTypeScriptModuleExports(declarationPath: string): {
   };
 }
 
-async function assertInstalledToolBackgroundTypes(callerRoot: string): Promise<void> {
+async function assertInstalledProjectionTypes(callerRoot: string): Promise<void> {
   const file = path.join(callerRoot, "installed-projection-types.ts");
   try {
     await writeFile(
@@ -2740,6 +2749,10 @@ async function assertInstalledToolBackgroundTypes(callerRoot: string): Promise<v
         'import { toolSchema } from "@habitat-ai/sdk/plugins/agent/schema";',
         'import { defineDesktopBackgroundPlugin } from "@habitat-ai/sdk/plugins/desktop";',
         'import { defineDesktopBackground, type DesktopBackgroundDescriptor } from "@habitat-ai/sdk/plugins/desktop/effect";',
+        'import type { HarnessDescriptor, HarnessMountInput, NativeHarnessHandle, RuntimeLaunchIdentity, ProcessRuntimeAccess, AppRole } from "@habitat-ai/sdk/runtime/harnesses";',
+        'import type { RuntimeLaunchIdentity as AppIdentity } from "@habitat-ai/sdk/app";',
+        "// @ts-expect-error StartedHarness is private mounting state, never a companion contract.",
+        'import type { StartedHarness } from "@habitat-ai/sdk/runtime/harnesses";',
         'const tool = defineTool({ id: "installed", description: "Typed installed tool", input: toolSchema.object({ id: toolSchema.string() }), effect: function* (context) {',
         "  const id: string = context.input.id;",
         "  // @ts-expect-error Unannotated context grants no undeclared clients.",
@@ -2754,7 +2767,20 @@ async function assertInstalledToolBackgroundTypes(callerRoot: string): Promise<v
         "type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;",
         "const toolTypes: Equal<ToolChannels<typeof tool>, [{ id: string }, string, never, never]> = true;",
         "const backgroundTypes: Equal<BackgroundChannels<typeof background>, [number, never, never]> = true;",
-        "void [toolTypes, backgroundTypes];",
+        "const harnessIdentity: Equal<RuntimeLaunchIdentity, AppIdentity> = true;",
+        "const harnessAccess: Equal<HarnessMountInput['processAccess'], ProcessRuntimeAccess> = true;",
+        "const harnessRoles: Equal<HarnessMountInput['roles'], readonly AppRole[]> = true;",
+        "const companion: HarnessDescriptor<{ invoke(): Promise<string> }> = {",
+        '  id: "installed-companion", roles: ["server"], surfaces: ["internal"],',
+        "  async mount(input) {",
+        "    const identity: AppIdentity = input.launchIdentity;",
+        "    const invoke: () => Promise<string> = input.mountReadyPayloads[0].invoke;",
+        "    let stopped: Promise<void> | undefined;",
+        "    const handle: NativeHarnessHandle = { stop: () => stopped ??= Promise.resolve(), readiness: async () => ({ launchIdentity: identity, harnessId: 'installed-companion', kind: 'readiness', status: 'not-applicable', findings: [] }) };",
+        "    void invoke; return handle;",
+        "  },",
+        "};",
+        "void [toolTypes, backgroundTypes, harnessIdentity, harnessAccess, harnessRoles, companion];",
       ].join("\n")
     );
     const program = ts.createProgram({

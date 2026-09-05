@@ -10,6 +10,18 @@ export {
 } from "./create-process-runtime";
 export type { CompiledExecutableBoundary, ExecutionRegistry } from "./execution-registry";
 export type { ProcessExecutionRuntime } from "./execution-runtime";
+export {
+  type MountReadyProcess,
+  type MountReadyProcessHandoff,
+  MountReadySurfaceMetadataSchema,
+  type MountReadySurfaceRuntimeRecord,
+  type MountResourceReadiness,
+  MountResourceReadinessSchema,
+  type PrepareMountsInput,
+  readMountReadyProcessHandoff,
+  readMountReadySurfaceRuntimeRecord,
+  type SurfaceMountAssignment,
+} from "./mount-ready-process";
 export type {
   ProcessRuntimeAccess,
   RoleRuntimeAccess,
