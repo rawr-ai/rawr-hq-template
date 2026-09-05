@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["bun", "node"],
+    "noUnusedLocals": true
+  },
+  "include": ["src/**/*.ts"],
+  "references": [{ "path": "../../packages/core/runtime/schema/tsconfig.json" }]
+}

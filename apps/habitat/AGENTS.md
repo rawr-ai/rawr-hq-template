@@ -45,7 +45,7 @@
 
 ## Flow
 
-- `habitat.app.ts` selects the foundation, authoring and agent-plugin topics; `runtime/processes.ts` and
+- `habitat.app.ts` selects the foundation, authoring, agent-plugin and dev topics; `runtime/processes.ts` and
   `runtime/profiles/**` declare process and provider selections. `cli.ts`
   creates the exact cold entrypoint and supplies lazy SDK startup to the host.
 - The CLI process declares technical telemetry demand. Its profile selects the
@@ -76,6 +76,11 @@
   `habitat cli extension create <id> --destination <path>`, both with `--dry-run`.
   The app supplies separate native generator runners; the invoking directory
   is their exact root. Source creation never installs or activates its output.
+- Development: `habitat dev repo sync-upstream`, `habitat dev stack doctor|drain`,
+  and `habitat dev worktree cleanup`. The service consumes the existing native
+  filesystem/path resource and separately selected child-process resource.
+  Repository locators are invocation inputs, not app identity or discovery roots.
+  Mutators plan by default; native Graphite merge submission is not completion.
 - Nx plugin: `@habitat-ai/cli/nx-plugin`.
 - Nx generators: `@habitat-ai/cli:preset`, `@habitat-ai/cli:init`, and
   `@habitat-ai/cli:remove-hook`.
@@ -116,3 +121,9 @@
 - Run `@habitat-ai/cli:acceptance:generators-installed-package` for source
   creators. It reuses the isolated-registry native `nx add` fixture and executes
   the packed generators through native `nx generate`, not source imports.
+- Run `@habitat-ai/cli:acceptance:dev-native` with
+  `HABITAT_ACCEPTANCE_GRAPHITE_BIN` set to the explicit native POSIX executable
+  for installed Git/worktree operations and native Graphite inspection/refusal.
+  Ordinary installed acceptance includes the real local Git/worktree cases.
+  A successful remote merge request requires a separate authorized live stack;
+  neither the disposable local fixture nor a scripted executable proves it.

@@ -1,5 +1,7 @@
 import { defineNodeAgentPluginPackageOutputRuntimeProvider } from "@habitat-ai/resource-agent-plugin-package-output/providers/cowork-v1-effect-platform-node/runtime";
 import { AgentPluginPackageOutputRuntimeResource } from "@habitat-ai/resource-agent-plugin-package-output/runtime";
+import { defineNodeChildProcessRuntimeProvider } from "@habitat-ai/resource-child-process/providers/effect-platform-node";
+import { ChildProcessRuntimeResource } from "@habitat-ai/resource-child-process/runtime";
 import { defineNodeContentWorkspaceRuntimeProvider } from "@habitat-ai/resource-content-workspace/providers/git-effect-platform-node/runtime";
 import { ContentWorkspaceRuntimeResource } from "@habitat-ai/resource-content-workspace/runtime";
 import { defineNodeFilesystemRuntimeProvider } from "@habitat-ai/resource-filesystem/providers/effect-platform-node";
@@ -55,6 +57,10 @@ export const localProfile = defineRuntimeProfile({
     providerSelection({
       resource: FilesystemRuntimeResource,
       provider: defineNodeFilesystemRuntimeProvider(),
+    }),
+    providerSelection({
+      resource: ChildProcessRuntimeResource,
+      provider: defineNodeChildProcessRuntimeProvider(),
     }),
     providerSelection({
       resource: SourceInventoryRuntimeResource,

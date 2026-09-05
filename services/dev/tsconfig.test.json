@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "rootDir": "." },
+  "include": ["test/**/*.ts"],
+  "references": [{ "path": "../../packages/core/runtime/schema/tsconfig.json" }]
+}

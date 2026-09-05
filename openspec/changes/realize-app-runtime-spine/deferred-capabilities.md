@@ -22,6 +22,7 @@ They are evidence, not a second active authority.
 | D-2 | Generic temporal inquiry, provider lifecycle, and opt-in native Nx projection | A separately scoped owner accepts the generic inquiry contract and qualifies the backend behaviors it actually uses. | Its own accepted SDK integration release, with CLI release accounting when its Nx projection changes. It is neither a core release prerequisite nor automatically dependent on all of D-1. |
 | D-3 | Remaining Rawr workstream, research, session, and governance transfers | Each destination receives owner handoff, reviews unique source behavior against current Rawr, and proves only its actual released Habitat dependencies. | Destination-owned adoption. No global ledger, inquiry, or runtime completion barrier applies to every sink. |
 | D-4 | Native agent/OpenShell and desktop host integration | The selected host and its security/policy boundary are qualified against the retained canonical harness contract, with real invocation, cancellation, shutdown, and lifecycle proof. | Separate accepted host integration/release. Agent/desktop authoring and executable/schema faces remain active task 10.1 work, not deferred. |
+| D-5 | Backend telemetry persistence, native exception export policy, and semantic event integration | The observability owner qualifies the selected backend and export policy before external deployment; EVLog is evaluated against actual native boundary needs. | Separate full-observability qualification, not a replacement for current container-free native OTLP and lifecycle receipts. |
 
 The historical SDK paths, TypeScript names, descriptor literals, provider
 configuration spelling, package metadata, and source layout are a design
@@ -390,6 +391,32 @@ unless a selected required consumer demonstrates a real dependency and the
 active scope is explicitly revised. D-4 is retained system ambition, not a claim
 that native agent/desktop support has shipped.
 
+## D-5: Full Observability
+
+The Habitat telemetry resource/provider and native host owners retain this
+work. Re-enter before enabling an external backend, claiming persisted/queryable
+telemetry, or adopting semantic product events. The source-backed inputs are
+recorded in [Backend Receipt Reuse](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#backend-receipt-reuse);
+the mixed telemetry worktree remains held and its staged changes remain owned.
+
+Qualify real collector processing, ClickHouse/HyperDX storage and record queries
+using uniquely identified events and an explicitly owned local fixture. Reuse
+the existing digest-pinned Podman setup where appropriate, not the old fixture's
+runtime implementation. Current native OTLP receiver receipts prove transport,
+ancestry and finalization, not backend persistence.
+
+Before external export, qualify a deliberate secret-bearing native exception
+against a provider-owned sanitization policy. Preserve native errors and useful
+trace identity; no claim that the present wire telemetry is universally
+secret-free. Evaluate EVLog at native invocation/oRPC/Inngest attempt boundaries,
+with service enrichment and one existing OpenTelemetry Logs pipeline. Do not
+add a second exporter, provider bootstrap or shutdown owner. Any adopted event
+semantics need their own outcome, correlation, failure and shutdown proof.
+
+This is an unretired integration obligation, not permission to activate hosted
+infrastructure or copy another owner's WIP. Generic runtime release does not
+satisfy it; task 15.1 audits existing receipts without introducing this work.
+
 ## Reactivation Record
 
 A reactivated capability must record its owner, exact preserved promises,
@@ -399,7 +426,7 @@ acceptance receipts, and accepted integration release. Record excluded source
 as excluded from adoption, not deleted, unless distinct deletion authorization
 and preservation/ownership checks exist.
 
-Until then D-1, D-2, D-3, and D-4 remain durable obligations with their source or
+Until then D-1 through D-5 remain durable obligations with their source or
 canonical-contract provenance.
 Their unresolved work does not make completed generic runtime proof false, and
 generic runtime release does not claim these integrations complete.

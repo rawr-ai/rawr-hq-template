@@ -63,6 +63,7 @@
     "acceptance:oclif-native-plugins": "vitest run --project habitat-cli-native-plugins-acceptance",
     "acceptance:oclif-native-runtime": "vitest run --project habitat-cli-native-runtime-acceptance",
     "acceptance:oclif-native-telemetry": "HABITAT_NATIVE_AGENT_ACCEPTANCE=1 vitest run --project habitat-cli-installed-package-acceptance --testNamePattern \"adopts the packed CLI|connected agent-plugin native telemetry|real native agent-plugin lifecycle\"",
+    "acceptance:dev-native": "HABITAT_NATIVE_DEV_ACCEPTANCE=1 vitest run --project habitat-cli-installed-package-acceptance --testNamePattern \"adopts the packed CLI|installed developer\"",
     "acceptance:generators-installed-package": "vitest run --project habitat-cli-installed-package-acceptance --testNamePattern \"adopts the packed CLI\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:test": "tsc -p test/tsconfig.json --noEmit",
@@ -164,6 +165,13 @@
         "outputs": []
       },
       "acceptance:oclif-native-telemetry": {
+        "cache": false,
+        "dependsOn": [
+          "manifest"
+        ],
+        "outputs": []
+      },
+      "acceptance:dev-native": {
         "cache": false,
         "dependsOn": [
           "manifest"

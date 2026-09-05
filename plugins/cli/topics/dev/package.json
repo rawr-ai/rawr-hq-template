@@ -1,0 +1,39 @@
+{
+  "name": "@habitat-ai/plugin-dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test test"
+  },
+  "dependencies": {
+    "@habitat-ai/dev-service": "workspace:*",
+    "@habitat-ai/sdk": "workspace:*",
+    "@oclif/core": "4.13.3",
+    "@orpc/contract": "2.0.0-beta.32",
+    "effect": "4.0.0-beta.101"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "bun-types": "1.3.14",
+    "typescript": "^5.9.3"
+  },
+  "nx": {
+    "tags": [
+      "type:plugin",
+      "role:cli",
+      "capability:dev"
+    ]
+  }
+}

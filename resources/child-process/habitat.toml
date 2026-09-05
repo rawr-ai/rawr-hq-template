@@ -1,0 +1,8 @@
+schemaVersion = 1
+id = "@habitat-ai/resource-child-process"
+ownerProject = "@habitat-ai/resource-child-process"
+blueprint = "resource"
+blueprintVersion = 3
+[roots]
+project = "resources/child-process"
+[selections]

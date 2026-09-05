@@ -1,0 +1,47 @@
+{
+  "name": "@habitat-ai/resource-child-process",
+  "version": "0.3.1",
+  "private": true,
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/contract.js",
+  "types": "./dist/contract.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/contract.d.ts",
+      "default": "./dist/contract.js"
+    },
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "default": "./dist/runtime.js"
+    },
+    "./providers/effect-platform-node": {
+      "types": "./dist/providers/effect-platform-node/index.d.ts",
+      "default": "./dist/providers/effect-platform-node/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test test"
+  },
+  "dependencies": {
+    "@effect/platform-node": "4.0.0-beta.101",
+    "@habitat-ai/resource-filesystem": "workspace:*",
+    "@habitat-ai/sdk": "workspace:*",
+    "effect": "4.0.0-beta.101"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "bun-types": "1.3.14"
+  },
+  "nx": {
+    "tags": [
+      "type:resource",
+      "layer:resource-contract",
+      "resource:child-process"
+    ]
+  }
+}

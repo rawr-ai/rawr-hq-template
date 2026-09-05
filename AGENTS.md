@@ -60,6 +60,10 @@
 - Curated agent-plugin lifecycle belongs to `habitat agent plugins
   check|package|status|sync|test|vendors update`, projected by the app-selected
   private `@habitat-ai/plugin-agent-plugins` topic through its one managed service.
+- Generic development operations belong to `habitat dev repo sync-upstream`,
+  `habitat dev stack doctor|drain`, and `habitat dev worktree cleanup`, projected
+  by the selected private dev topic. Stack drain requests a native Graphite merge;
+  actual completion and the one native cleanup sweep remain operator-owned.
 - No Rawr alias or premature Habitat route is admitted.
 - Product composition, web hosts, and runtime mounting consume these lifecycle
   commands and cannot own either channel.

@@ -137,7 +137,7 @@ repository.
   is the first final agent-plugin topic, overlay, app-profile selection, and
   installed agent-plugin acceptance; task 2.11 deletion is not its proof.
 - [ ] 12.2 Re-author the final `services/dev` / `@habitat-ai/dev-service`
-  owner, its explicit filesystem, path, process, and clock ports, and
+  owner, its explicit native filesystem/path and child-process capabilities, and
   `plugins/cli/topics/dev` from accepted contracts plus the task 2.11 frozen
   evidence; then realize `habitat dev repo`, `habitat dev stack`, and `habitat
   dev worktree` through those final owners and the same Oclif/runtime path.
@@ -148,6 +148,15 @@ repository.
   fallback; the removed root doctor, HQ, reflect, routine, tools-export,
   workflow-harden, config, journal, security, hello, and agent-plugin-create
   commands remain absent.
+
+  Native refinement: use existing Effect Platform capabilities rather than a
+  replacement mechanics package. No clock port is needed after removing the
+  old generated-branch and drain-cycle behavior. The implementation opening
+  packet records the intentional fast-forward sync contract, native Graphite
+  request-only boundary and invocation-only scratch evidence. The operator or
+  workstream observes actual merge completion before the single native forced
+  sweep; the service creates no finalization API or job/cleanup ledger and never
+  equates an accepted request with completed merge.
 - [x] 12.3 Create `plugins/cli/topics/authoring` as the private `@habitat-ai/plugin-authoring`, select it into the Habitat app, and realize exactly `habitat cli command create` and `habitat cli extension create` as thin projections over the task 11.6 native `@habitat-ai/cli` Nx generator entrypoints. Extend and pass `@habitat-ai/cli:acceptance:generators-installed-package` through the installed command surface; prove exact topic/source-bundle membership, generated output targeting only Habitat/public-extension contracts, the one Habitat command contract, and absence of every Rawr template, path, package identity, environment variable, command base, preflight-refused write, aggregate factory, or manifest/project drift.
 
 ## 13. Realize Qualified Server And Async Harnesses

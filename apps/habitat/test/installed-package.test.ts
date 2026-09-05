@@ -26,6 +26,11 @@ import {
   runAgentPluginCommand,
 } from "./support/agent-plugin-telemetry-matrix.js";
 import {
+  verifyDevRepository,
+  verifyDevStack,
+  verifyDevWorktrees,
+} from "./support/dev-native-matrix.js";
+import {
   buildNativeRuntimeFixture,
   nativeRuntimeScenarios,
   verifyNativeRuntimeScenario,
@@ -1248,6 +1253,47 @@ describe("installed Habitat products", () => {
     }
   );
 
+  it("qualifies installed developer repository operations against a real local remote", async () => {
+    await withInstalledOperation((signal) =>
+      verifyDevRepository({
+        cliRoot: path.join(consumerRoot, "node_modules/@habitat-ai/cli"),
+        root: path.join(acceptanceRoot, "dev-repository"),
+        runFixtureCommand: run,
+        signal,
+      })
+    );
+  });
+
+  it("qualifies installed developer worktree operations with native refusal and prefix safety", async () => {
+    await withInstalledOperation((signal) =>
+      verifyDevWorktrees({
+        cliRoot: path.join(consumerRoot, "node_modules/@habitat-ai/cli"),
+        root: path.join(acceptanceRoot, "dev-worktrees"),
+        runFixtureCommand: run,
+        signal,
+      })
+    );
+  });
+
+  it.skipIf(process.env.HABITAT_NATIVE_DEV_ACCEPTANCE !== "1")(
+    "qualifies installed developer stack inspection through native Graphite",
+    async () => {
+      const graphiteBinary = process.env.HABITAT_ACCEPTANCE_GRAPHITE_BIN;
+      if (process.platform === "win32" || graphiteBinary === undefined) {
+        throw new Error("Native Graphite acceptance requires an explicit POSIX executable.");
+      }
+      await withInstalledOperation((signal) =>
+        verifyDevStack({
+          cliRoot: path.join(consumerRoot, "node_modules/@habitat-ai/cli"),
+          root: path.join(acceptanceRoot, "dev-stack"),
+          runFixtureCommand: run,
+          graphiteBinary,
+          signal,
+        })
+      );
+    }
+  );
+
   describe("native admission through the installed CLI host", () => {
     let nativeRuntimeRoot = "";
     beforeAll(async () => {
@@ -1913,6 +1959,22 @@ describe("installed Habitat products", () => {
       }),
       "agent:plugins:vendors:update": expect.objectContaining({
         id: "agent:plugins:vendors:update",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "dev:repo:sync-upstream": expect.objectContaining({
+        id: "dev:repo:sync-upstream",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "dev:stack:doctor": expect.objectContaining({
+        id: "dev:stack:doctor",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "dev:stack:drain": expect.objectContaining({
+        id: "dev:stack:drain",
+        pluginName: "@habitat-ai/cli",
+      }),
+      "dev:worktree:cleanup": expect.objectContaining({
+        id: "dev:worktree:cleanup",
         pluginName: "@habitat-ai/cli",
       }),
       check: expect.objectContaining({ id: "check", pluginName: "@habitat-ai/cli" }),

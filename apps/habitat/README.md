@@ -35,6 +35,37 @@ only after native command admission; help and parser refusals acquire nothing.
 Telemetry configures transport, not a HyperDX/ClickHouse backend or product
 analytics pipeline.
 
+## Development Operations
+
+The four generic operations use native Git and Graphite through the selected
+Effect Platform Node resources:
+
+```sh
+habitat dev repo sync-upstream
+habitat dev stack doctor
+habitat dev stack drain
+habitat dev worktree cleanup --prefix wt- --trunk main
+```
+
+Commands target `--repository <path>` or the invoking directory. Mutators plan
+by default; `--apply` executes and `--dry-run` overrides it. Optional repeated
+`--scratch-file` inputs check only those files, with warning or explicit
+`--scratch-mode block`; Habitat assumes no personal document layout.
+
+Upstream sync fast-forwards the current checkout from its Git-configured upstream
+or paired `--remote`/`--branch` override. It creates no integration branch and
+does not maintain Graphite ancestry. Cleanup requires an explicit local trunk,
+preserves current/pinned/detached/locked/trunk worktrees and defaults to merged
+branches only. A failed native removal stops the remaining removals; there is no
+force removal or branch deletion.
+
+Stack drain submits the current downstack and requests one native Graphite
+merge. `Requested` means accepted submission, not completed merging. After the
+operator or workstream verifies actual merge completion, use Graphite's native
+`gt sync --force --no-restack --no-interactive` once. The forced sync has native
+repository-wide update/cleanup scope; protect unrelated work before invoking it.
+Habitat does not implement a polling, resubmission or automatic cleanup loop.
+
 ## Create A Repository
 
 Nx invokes the package's Bun-only `preset` generator while creating the workspace:
