@@ -48,3 +48,10 @@ that assembly test creates no native-owner source dependency back into SDK.
 The async fixture uses the pinned local native Dev Server, not simulated Inngest
 protocol requests. Neither local receipt qualifies Cloud, collector persistence,
 or ClickHouse queryability. Generic contract tests alone do not qualify these paths.
+
+`acceptance:process-isolation` executes the SDK-owned driver after the SDK build
+and is a prerequisite of the ordinary harness test target. It qualifies separately
+built server and async children of one temporary complete app@2 using the packed
+SDK and real native hosts. Child IPC and explicit restart/failure controls are
+test-only; they add no production supervisor, public lifecycle controller, or
+native-owner dependency on SDK source.

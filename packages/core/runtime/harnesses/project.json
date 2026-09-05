@@ -21,7 +21,8 @@
       "dependsOn": [
         "^build",
         "acceptance:server-native-telemetry",
-        "acceptance:async-native-telemetry"
+        "acceptance:async-native-telemetry",
+        "acceptance:process-isolation"
       ],
       "options": { "command": "bun test packages/core/runtime/harnesses/test" }
     },
@@ -50,6 +51,15 @@
       "dependsOn": ["^build", { "projects": ["@habitat-ai/sdk"], "target": "build" }],
       "options": {
         "command": "bun packages/core/sdk/test/fixtures/async-runtime.ts"
+      }
+    },
+    "acceptance:process-isolation": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "dependsOn": ["^build", { "projects": ["@habitat-ai/sdk"], "target": "build" }],
+      "options": {
+        "command": "bun packages/core/sdk/test/fixtures/process-isolation.ts"
       }
     },
     "build": {

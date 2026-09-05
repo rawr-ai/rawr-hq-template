@@ -102,6 +102,12 @@
   process owners retain their isolated tests. Native harness acceptance targets
   invoke this fixture after the SDK build without importing SDK source into a
   private runtime implementation or creating a nested Nx scheduler.
+  `process-isolation.ts` owns the driver for independently built server and
+  async children of one temporary complete app@2. Its setup installs a packed
+  SDK with one native dependency realm and validates native app laws before
+  separately typechecking and building the public-import-only child entries.
+  Fixture IPC and explicit stop, failure and restart controls are test-only,
+  not a product app, repository Nx project, or production lifecycle controller.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -241,5 +247,7 @@
   public npm tag, and build inputs.
 - Run `bunx nx run @habitat-ai/sdk:typecheck` and
   `bunx nx run @habitat-ai/sdk:build`.
+- SDK typechecking retains its own build prerequisite because the independent
+  child fixtures consume the public package declarations from `dist`.
 - Inspect `dist/index.js` and `dist/index.d.ts` for private workspace package
   names, and inspect the packed tarball for `dist/blueprints`.

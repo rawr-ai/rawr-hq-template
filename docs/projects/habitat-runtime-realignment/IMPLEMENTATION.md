@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; native async locally qualified, awaiting remote admission; server admitted.
-Branch: `agent-root-habitat-native-async`, based on the admitted server.
+Status: `active`; independently built process isolation qualified locally; native async merged, exact-main pending.
+Branch: `agent-root-habitat-process-isolation`, based on the admitted native async story.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -13,6 +13,7 @@ Oclif self-host [1015](https://github.com/rawr-ai/rawr-hq-template/pull/1015).
 Qualified generators [1016](https://github.com/rawr-ai/rawr-hq-template/pull/1016).
 Installed authoring [1017](https://github.com/rawr-ai/rawr-hq-template/pull/1017).
 Native server [1018](https://github.com/rawr-ai/rawr-hq-template/pull/1018).
+Native async [1019](https://github.com/rawr-ai/rawr-hq-template/pull/1019).
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -67,8 +68,15 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: tasks 13.3/13.4 together, complete native Inngest Serve/Connect
-qualification, followed by task 13.5's independently built same-app children.
+Current domino: task 13.5, independently built same-app children through an
+ordinary packed SDK. One app and finite process catalog select separate thin
+server and async entrypoints; the test driver is not a production supervisor.
+Prove actual operations, independent stop/restart and leases, failed acquisition
+with nonempty rollback before mount, and exact process-local health/identity.
+The next capability is the separately named task 13.7 WorkflowDispatcher.
+
+The accepted local predecessor is tasks 13.3/13.4 together, complete native Inngest Serve/Connect
+qualification.
 The cold peer owns async authoring and selected source preservation; the runtime
 peer owns native callback/step execution and host lifecycle. Root owns terminal
 SDK, policy, packaging, complete native acceptance and design disposition.
@@ -590,14 +598,14 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
-Qualify the complete Inngest Serve/Connect
-story in tasks 13.3-13.5. Preserve the accepted execution and mounting owners;
-do not infer async orchestration order from declared step membership. Retain the
-actual outer callback and triggers through the selected private handoff.
-Container-free proofs establish coldness, client identity and local lifetime;
-native retry, replay, history and Connect require a disposable development server.
+Admit native async PR 1019 and the complete task 13.5 process-isolation node
+through required, installed and exact-main checks. Preserve the accepted
+execution and mounting owners. The independent child receipt uses the same
+ordinary packed SDK in one isolated vendor realm and actual native hosts;
+neither a process drain nor a completed step guarantees a durable run can make
+later requests to a stopped listener.
 
-The next opening must also assign the currently unimplemented canonical
+The next opening assigns the currently unimplemented canonical
 `WorkflowDispatcher` consumer explicitly. Sections 15.8/19.1/24.4 prescribe
 process-owned materialization and server-only event admission, but tasks
 13.3-13.5 qualify native hosts without that consumer. Current derivation and
@@ -1076,6 +1084,58 @@ function-middleware copying, lifecycle event presence and explicit service
 invocation/schema validation now have discriminating proofs. Remote admission
 remains open; built children, WorkflowDispatcher and Cloud/backend qualification
 are not implied by these receipts.
+
+### Built Process Isolation
+
+Task 13.5 uses one complete owner-local app@2 source fixture, one finite
+server/async process catalog and separate thin entrypoints. A temporary ordinary
+SDK tarball install supplies one exact native vendor realm. The pinned CLI checks
+that installed app@2 selection and structure; each entrypoint independently
+passes strict TypeScript and builds to external-package Bun JavaScript before
+the driver starts either child. No production app or child Nx project is added.
+
+The local native receipt passes five actual child lifetimes: server and async,
+each independently restarted, then an async acquisition failure caused by
+removing a real required backing file. Distinct PIDs and live file-descriptor
+tokens prove separate ownership; exact frozen launch identities agree across
+entrypoint, started process, native mount and catalog. Real Elysia HTTP and
+Inngest event-triggered operations use their own acquired resources. Each
+healthy child stops only after its held operation and native stop settle,
+shares one repeated-stop Promise, and releases its file once. Its sibling's
+held work, identity, lease, native state and counters remain unchanged.
+The failed async start acquires and rolls back its file dependency without
+mounting; the existing server remains healthy and serves another real request.
+Readiness and liveness are distinct and process-local; queries admitted just
+before stop resume fail-closed, and later queries refuse.
+
+The first probe exposed a test assumption, not a new runtime defect: a native
+step completed during drain, then non-checkpointed replay attempted the closed
+SDK listener and Inngest reported `FAILED` with `Unable to reach SDK URL`.
+Acceptance now requires the admitted step's actual completion and finalizer,
+preserves that native run outcome, and never equates drain with durable run
+completion. Initial and restarted native workflows must still complete normally.
+Exceptional test cleanup attempts every owned process and workspace even when
+one cleanup fails; forced termination is never accepted stop evidence.
+
+Independent review found no unresolved runtime or package-identity defect. It
+did identify the test cleanup failure path and missing exact catalog membership
+assertions; both were repaired. The ordinary native harness test now depends on
+the separately named noncached `acceptance:process-isolation` target. A clean,
+uncached SDK build with its previous dist moved out passed all 12 build tasks,
+so the public-import child sources do not create a declaration bootstrap cycle.
+The final full repository CI passes all 165 tasks for 35 projects (89 cache hits,
+2m25s), including another real packed-child receipt. Strict OpenSpec validation
+and diff hygiene pass. Remote admission of this node remains pending.
+
+Native async candidate `fdee504dea0b61f3ca0cd865567c33392fc82780` passed installed
+acceptance on Linux (6m17s) and Windows (21m32s). Its first required run failed
+only an unchanged cache-precision test's 60-second aggregate timeout; all other
+214 CLI tests passed. The same test passed on the server candidate, server main,
+and actual local async CI. The unchanged failed-job retry passed. Graphite merged
+PR 1019 at `485e798e8480e937169a50cfee5d19abd86b05f8`; one
+force/no-restack/noninteractive sweep removed its consumed branch and preserved
+the active child and unrelated held work. Exact-main run `33981290836` is pending.
+No speculative runtime change or timeout increase was made.
 
 ### Backend Receipt Reuse
 
