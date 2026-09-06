@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; native web locally qualified for admission; workflow admission merged and exact-main verified.
-Branch: `agent-root-habitat-native-web`, parent `main` after workflow admission.
+Status: `active`; native web in remote admission; native CLI input admission locally qualified.
+Branch: `agent-root-habitat-cli-admission`, parent `agent-root-habitat-native-web`.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -21,6 +21,18 @@ candidate `66397039ebdb18f84dcd4b21b7a94194eb7374ff`, merged as
 Its required candidate and Linux/Windows installed checks passed; exact-main
 Repository Ratchet [33985315987](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33985315987)
 passed. Graphite's native merge completed before the one consumed-branch sweep.
+Native web [1022](https://github.com/rawr-ai/rawr-hq-template/pull/1022), candidate
+`91d03dcbbfa54da030a0e8d21801333ca8e09b02`, has passed its required check
+[33988159150](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33988159150)
+and Linux installed check; Windows installed qualification is pending in
+[33988159166](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33988159166).
+The first candidate's Windows failure exposed missing runtime-harnesses LF
+attributes: exact LF/CRLF hashes reproduced its expected/received immutable
+proof values. The repaired parent adds the existing `text eol=lf` policy for
+that family without changing any historical file or hash. A real
+`core.autocrlf=true` checkout preserves all 13 tracked harness blueprint files
+byte-for-byte, and the repaired parent passes `bun run check`. This is a
+qualified repair, not an unchanged retry or a Windows pass claim.
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -75,13 +87,79 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: tasks 14.1/14.2 together, native web build/mount handoff and
-request-time web-local Effect execution. The accepted design below separates
-native module loading from actual managed execution. It is not a product web
-app, browser managed runtime, router framework or general SSR platform.
+Current domino: native CLI input admission before live acquisition, a complete
+shared prerequisite for task 12.1. The retained command requirements exposed
+the current eager startup mismatch; weakening refusal to fit that order is not
+accepted. This is an app-owned native lifecycle repair, not a new runtime owner.
 
-Task 13.7, explicit server-only workflow event admission, is locally qualified
-and submitted. Its native send boundary adds no workflow engine, generic event
+Accepted design: `host.execute/run` receives a startup thunk. Native Oclif owns
+discovery, the selected Command and exactly one parse. Its Args/Flags custom
+parsers and flag relationships own scalar/mode/input admission;
+the existing SDK companion preserves them without a second DSL. The admitted
+binding invokes startup once, mount validates exact compiled source/ref identity,
+then the command body runs. Help, external commands and refused first-party
+inputs do not acquire Habitat resources. Cold app/provider declarations and
+native discovery are allowed; no live acquisition or domain I/O precedes input
+admission. Canonical stdin uses bounded invocation-local bytes, not Oclif's
+trimmed, process-cached convenience stdin value.
+
+Discovery and parsing belong to the outer native invocation. Failed startup
+must not stop a harness by awaiting the Command that awaits that startup.
+After activation, preserve command/finally/flush before process release. A signal
+during gated acquisition is retained until acquisition settles and mount can
+refuse with rollback; the current SDK has no acquisition-abort option, so do not
+claim immediate interruption. Tests extend the existing built/installed native
+matrix with zero-acquisition refusals and gated startup failure/cancellation.
+
+Independent review also caught pre-admission signal suppression: a custom native
+parser waiting on open stdin cannot consume the managed execution signal. The
+accepted repair installs Habitat's signal handlers only after native parsing,
+at admitted first-party binding and before startup. Discovery, parsing and
+external commands retain native signal behavior. Do not race and abandon a
+parser, destroy global stdin or force exit to imitate managed cancellation.
+
+The real manifest gate invalidated an initially proposed `Command.constraints`
+projection. In pinned core 4.13.3 / oclif 4.23.29, native constraint instances are
+cyclic and the native command cache serializes them. A nonenumerable property
+avoids serialization but also silently skips validation through the native
+parser's options spread. No compatibility shim is accepted. Native conditional
+flag relationships passed manifest, exact loaded class identity and actual
+refusal/success controls; they supply the needed modes with no new SDK API.
+Reconsider the separate constraints field only after a qualified vendor fix.
+
+The runtime peer owns app host lifecycle; the admission peer owns native matrix
+evidence; root owns the small SDK metadata face, authority and integrated gates.
+The independent service peer investigates task 12.1's retained Clock/Logger/
+Analytics ports, without adding no-op adapters or service-side Effect terminals.
+
+That review found no domain consumer of the mandatory Logger/Analytics ports or
+synthetic invocation trace/command fields: the two root middleware wrappers only
+duplicate generic procedure outcomes. The next service repair removes those
+requirements rather than inventing telemetry adapters. Native runtime/oRPC
+tracing remains; this does not claim equivalent product analytics or Effect log
+export. Parse refusals acquire no telemetry; admitted domain refusals retain
+actual process correlation. ClockPort has one real consumer, vendor provenance
+time, and can use native Effect Clock at that exact operation with a test Clock.
+
+The existing native-provider contract genuinely distinguishes Codex and Claude.
+Use their separate typed runtime resource identities and existing provider
+owners, assembling only the established two-member catalog in the sealed
+service constructor. No composite provider owner, new instance selector or
+pre-acquired provider home is needed. Removing unused root middleware also
+exposes a false service@3 requirement for an unused native base author: a complete
+immutable service@4 successor should allow omission while still validating any
+present native author and all five context lanes. Keep predecessors unchanged.
+Provider interruption needs native qualification: content-workspace's current
+execFile finalizer sends SIGTERM without awaiting close, unlike the scoped
+Effect process precedent. Runtime wrappers alone cannot qualify its shutdown.
+
+Tasks 14.1/14.2 are locally qualified and submitted: native web build/mount
+handoff and request-time web-local Effect execution. The accepted design below
+separates native module loading from actual managed execution. It is not a
+product web app, browser managed runtime, router framework or general SSR platform.
+
+Task 13.7, explicit server-only workflow event admission, is merged and exact-main
+verified. Its native send boundary adds no workflow engine, generic event
 bus or provider lifecycle.
 
 The qualified predecessor is task 13.5, independently built same-app children through an
@@ -615,19 +693,42 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
-Native async and built process isolation have passed required, installed and
-exact-main checks. Task 13.7 has passed independent review, installed-package
-proof and complete repository CI; admit that complete story through Graphite
-and its exact-main gate. Preserve the accepted execution
-and mounting owners; neither process drain nor a completed step guarantees a
-durable run can make later requests to a stopped listener.
+Native async, built process isolation and task 13.7 workflow admission are
+merged and exact-main qualified. Native web is in repaired-candidate remote
+qualification. Finish task 12.0's installed CLI input-admission gate, publish
+the complete node, then let Graphite merge the qualified stack and verify
+actual merge before the single consumed-branch sweep and exact-main gate.
 
-The implementation below corrects admission reachability without adding it to
-`FunctionBundle` or selecting target async execution. Task 13.6 is dispositioned
-with its independent-artifact condition unsatisfied, not an MCP attachment claim.
-Next qualify the web module/build handoff and actual web-local Effect body as one
-complete story. Remaining CLI verticals and the final observability/release
-audit retain their own actual acceptance obligations.
+Proceed to task 12.1 as a complete agent-plugin command/service/resource/profile
+story. The opening packet records accepted semantic simplifications and the
+required real-child cancellation repair. Resolve the remaining aggregate-input
+admission and telemetry demand/public-identity joins from native contracts;
+neither fake dependencies nor a second parser are accepted by default. Keep
+the six commands, owner-local law and installed native/telemetry proof together.
+Task 12.2 and the final audit/release retain their own actual acceptance gates.
+Task 13.6 remains condition-unsatisfied, not an MCP attachment claim.
+
+### Native CLI Input Admission
+
+The final native matrix passes all 23 cases: zero-acquisition input refusals,
+help and external commands; one native parse and acquisition on success;
+invocation-local exact stdin bytes; pre-admission POSIX signal behavior;
+managed acquisition cancellation; and actual later-harness mount failure with
+rollback. Once a command is active, native finally and flush precede release.
+Failure paths in the test driver kill and join owned children before rejecting.
+
+Independent architecture/lifecycle, TypeScript and behavior review has no
+remaining actionable finding after repairing signal ownership and the startup
+rollback cycle. The first broad run found only fixture global typing, an old
+projection error expectation and one formatting hunk; these are repaired.
+The final `bun run ci` passes all 167 tasks for 35 projects (120 cache hits).
+The complete installed suite passes all 10 tests, including the 23-case native
+CLI matrix. Its first run exposed an accidental optional Oclif peer import in
+the no-host consumer; that import was removed, not made a required dependency.
+Actual native flag behavior remains in the native installed matrix, while the
+peer-free consumer proves cold imports. Strict OpenSpec validation and diff
+hygiene pass. Remote gates remain separate; domain-specific agent-plugin/dev
+requests are not yet qualified.
 
 ### Accepted Binding And Execution
 

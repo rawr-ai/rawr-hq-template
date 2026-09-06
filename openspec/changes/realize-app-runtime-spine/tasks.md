@@ -104,6 +104,17 @@ Every task in this section extends the already selected Habitat self-host. No
 downstream product command, app, manifest, or compatibility path enters this
 repository.
 
+- [x] 12.0 Repair native CLI input admission before live Habitat acquisition.
+  Defer host startup through one thunk until the selected Command's one native
+  parse succeeds; preserve native flag relationships without a validation DSL.
+  Preserve exact compiled source/ref reconciliation, native finally/flush before
+  release, and external-plugin/help behavior. Extend the existing built/installed
+  matrix with unknown flag, mode and bounded canonical-byte refusals acquiring
+  nothing, one-parse/one-acquisition success, and gated startup failure or signal
+  cancellation that settles rollback without awaiting its suspended Command.
+  Cold declarations/discovery are allowed; no immediate acquisition interruption
+  is claimed without a corresponding SDK contract. This prerequisite does not
+  implement the agent-plugin or dev verticals.
 - [ ] 12.1 Create the final `plugins/cli/topics/agent-plugins` owner as the private
   `@habitat-ai/plugin-agent-plugins`, re-author the qualified
   `.habitat/overlays/agent-plugin-lifecycle` policy there, and add its command

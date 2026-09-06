@@ -24,8 +24,15 @@
 
 ## Behavior
 
-- Every activation starts one selected process with workspace-bound source data;
-  its native host awaits command work and owns the explicit stop obligation.
+- Cold app and provider declarations precede native discovery and parsing. Only
+  an admitted Habitat command invokes lazy SDK startup for one selected process;
+  help, external plugins, and native input refusals acquire no Habitat resources.
+- Native discovery, parsing, and external plugins retain native signal ownership.
+  Habitat installs its terminal handlers only after exact first-party command
+  admission, before invoking SDK startup, and removes them after finalization.
+- The native host awaits admitted command work, finally, and output flush before
+  process release. Startup cancellation waits for owned acquisition to settle
+  and then refuses mount; it does not invent cancellation of provider acquisition.
 - Oclif and Nx expose the same SDK semantics through their native host
   contracts.
 
@@ -40,7 +47,7 @@
 
 - `habitat.app.ts` selects the foundation and authoring topics; `runtime/processes.ts` and
   `runtime/profiles/**` declare process and provider selections. `cli.ts`
-  creates the exact entrypoint and starts it through the SDK.
+  creates the exact cold entrypoint and supplies lazy SDK startup to the host.
 - `src/application.ts` supplies deployment input and native host mode.
   The foundation topic owns command projections; the app owns native Oclif
   lifecycle. The Nx reader uses the same managed execution without escaping a

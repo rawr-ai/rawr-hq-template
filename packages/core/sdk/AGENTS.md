@@ -46,6 +46,10 @@
   `plugins/cli/effect` owns command Effect descriptors, and `plugins/cli/schema`
   projects the native schema authoring vocabulary. `plugins/cli/oclif`
   provides import-safe native authoring helpers with an optional Oclif type peer.
+  Native Args/Flags parsers and flag relationships remain the admission vocabulary;
+  the companion adds no validation DSL or parser. The native host admits input
+  before invoking live SDK startup. Cold declarations and native discovery are
+  not live Habitat resource acquisition.
   The CLI package, not the SDK, owns native discovery,
   parsing, dispatch, output draining, and host lifecycle.
 - `@habitat-ai/sdk/plugins/web` exposes the cold web app projection builder

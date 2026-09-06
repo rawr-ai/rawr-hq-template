@@ -331,5 +331,5 @@ const invocationSource = `import { startApp } from "@habitat-ai/sdk/app";
 import { createOclifHost } from "@habitat-ai/cli/host";
 import { entrypoint, sourceBundle } from "./discovery.mjs";
 const host = createOclifHost({harnessId:"fixture.oclif",root:process.cwd(),sourceBundle,args:process.argv.slice(2)});
-await host.execute(startApp(entrypoint,{sources:{appRoot:process.cwd()},integrations:[host.integration],finalization:{policy:"waitForNativeStop",deadlineMs:1000}}));
+await host.execute(()=>startApp(entrypoint,{sources:{appRoot:process.cwd()},integrations:[host.integration],finalization:{policy:"waitForNativeStop",deadlineMs:1000}}));
 `;

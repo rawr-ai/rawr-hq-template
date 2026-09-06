@@ -33,10 +33,11 @@ export function runHabitatProcess(input: {
     args: input.args,
     ...(input.development ? { discoveryModule: "./src/oclif.ts" } : {}),
   });
-  const startup = startApp(entrypoint, {
-    sources: input.sources,
-    integrations: [host.integration],
-    finalization: { policy: "waitForNativeStop", deadlineMs: 10_000 },
-  });
+  const startup = () =>
+    startApp(entrypoint, {
+      sources: input.sources,
+      integrations: [host.integration],
+      finalization: { policy: "waitForNativeStop", deadlineMs: 10_000 },
+    });
   return input.terminal ? host.execute(startup) : host.run(startup);
 }

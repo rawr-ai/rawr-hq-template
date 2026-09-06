@@ -26,7 +26,7 @@ afterAll(async () => {
   if (built) await rm(built, { recursive: true, force: true });
 });
 
-describe("native Oclif process lifetime", () => {
+describe("native Oclif admission and process lifetime", () => {
   for (const [index, scenario] of nativeRuntimeScenarios.entries()) {
     // Windows kill() terminates a child rather than delivering POSIX signals to its handlers.
     it.skipIf(process.platform === "win32" && "signal" in scenario)(scenario.name, async () => {

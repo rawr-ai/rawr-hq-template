@@ -6,6 +6,7 @@ export type CliExecutionRef = Extract<ExecutionDescriptorRef, { boundary: "plugi
 
 export interface OclifRuntimeBinding {
   readonly presentation: boolean;
+  /** Successful native parsing admits the first invocation to lazy process startup. */
   invoke(
     ref: CliExecutionRef,
     source: OclifCommandSource,
@@ -20,7 +21,7 @@ export type OclifLoadOptions = Interfaces.Options & {
 
 export function readOclifBinding(config: unknown): OclifRuntimeBinding {
   if (!(config instanceof Config) || !("habitatRuntime" in config.options)) {
-    throw new TypeError("Native Oclif dispatch has no selected Habitat process binding.");
+    throw new TypeError("Native Oclif dispatch has no selected Habitat admission binding.");
   }
   const value = config.options.habitatRuntime;
   if (

@@ -129,10 +129,10 @@ describe("Habitat native Oclif projection", () => {
     }
   });
 
-  it("refuses command execution without a selected process binding", async () => {
+  it("refuses command execution without a selected admission binding", async () => {
     const config = await loadProjection();
     await expect(config.runCommand("resolve")).rejects.toThrow(
-      "Native Oclif dispatch has no selected Habitat process binding."
+      "Native Oclif dispatch has no selected Habitat admission binding."
     );
   });
 });
