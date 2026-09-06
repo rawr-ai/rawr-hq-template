@@ -5,5 +5,6 @@
 .habitat/blueprints/runtime-compiler/** text eol=lf
 .habitat/blueprints/runtime-definition/** text eol=lf
 .habitat/blueprints/runtime-derivation/** text eol=lf
+.habitat/blueprints/runtime-harnesses/** text eol=lf
 .habitat/blueprints/service/** text eol=lf
 docs/system/HABITAT_RUNTIME_REALIZATION.md -whitespace

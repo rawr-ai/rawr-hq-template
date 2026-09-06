@@ -23,4 +23,5 @@ export type {
   DesktopBackgroundMountRecord,
   NativeIntegrationHarness,
   ServerMountRecord,
+  WebMountRecord,
 } from "../../app/integrations";

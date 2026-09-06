@@ -48,11 +48,13 @@
   provides import-safe native authoring helpers with an optional Oclif type peer.
   The CLI package, not the SDK, owns native discovery,
   parsing, dispatch, output draining, and host lifecycle.
-- `@habitat-ai/sdk/plugins/web` exposes only the cold web app projection builder
-  and route projection contracts. Route-module loaders remain lazy definition
-  data and are excluded from serializable projection facts. This face exposes no
-  browser runtime, router vendor, DOM mount protocol, adapter, build execution,
-  app composition, native harness lifecycle, or Effect subpath.
+- `@habitat-ai/sdk/plugins/web` exposes the cold web app projection builder
+  and disjoint module-or-Effect route contracts. Route-module loaders remain
+  lazy definition data and are excluded from serializable projection facts.
+  `plugins/web/effect` exposes cold request-time Response bodies; route IDs
+  supply their occurrence identity. Explicit process resources use ordinary
+  procedure context. Neither face owns a browser runtime, router, DOM mount,
+  build execution, adapter or native lifecycle.
 - Implemented app, Effect, execution, service, resource, provider, profile, and
   runtime-schema authoring faces project cold definition capabilities or inert
   shared invocation types. The curated Effect API uses native Effect values;
@@ -88,6 +90,11 @@
 - `@habitat-ai/sdk/runtime/observation` exposes only diagnostic, catalog,
   topology and telemetry contract types. It exports no collector factory,
   observation port implementation, storage, native sink or control surface.
+- `@habitat-ai/sdk/runtime/harnesses/web` exposes the cold native Bun factory.
+  Native mount loads exact selected HTMLBundle route modules and serves lowered
+  Request-to-Response callbacks. Bun owns matching, assets and transport stop;
+  process invocation tracking separately retains body cancellation cleanup.
+  The underlying source's native cancel promise owns its hidden work.
 - `@habitat-ai/sdk/app` alone exposes `startApp` and its one-process result and
   options. It composes actual derivation, compilation, ordering, provisioning,
   binding, lowering and mounting of the exact supplied entrypoint. Explicit
@@ -115,6 +122,10 @@
   `workflow-admission.ts` owns server-only publication acceptance against the
   native Dev Server and independent native receivers, including exact payload
   forwarding, event ID receipts and canceled/unawaited native send drain.
+  `web-runtime.ts` installs the packed SDK and builds native web fixtures in
+  unsplit and split/minified forms. Both execute without source and fetch real
+  HTML/JavaScript/CSS plus request-time Effect, cancellation and response-body
+  cleanup before resource release. This is not a product app or browser runtime.
 - `@habitat-ai/sdk/telemetry` exposes the provider-neutral telemetry contract
   and declarative OpenTelemetry Node configuration. It exports no acquisition,
   lease, exporter factory, or instrumentation bootstrap; Habitat runtime
@@ -164,7 +175,9 @@
   Shipped files are not members merely by being present.
   `runtime-harnesses@1` remains immutable; its complete version-2 successor
   admits the owner-local `elysia/` native host beside generic contracts.
-  Selected version 3 independently carries that closure plus `inngest/`.
+  Version 3 independently carries that closure plus `inngest/`. Selected
+  version 4 preserves all three predecessors and admits `web/` with matching
+  source acquisition and the same ownership boundary.
 - The selected package owns reusable definitions, versions, runner assets, and
   policy-pack provenance. Repository manifests alone select instances and
   qualified overlays remain repository-owned.
@@ -212,7 +225,8 @@
   implementation bootstrap `@habitat-ai/sdk/plugins/server/effect`.
 - Public host-neutral async authoring: `@habitat-ai/sdk/plugins/async` and
   `@habitat-ai/sdk/plugins/async/effect`.
-- Public cold web projection authoring: `@habitat-ai/sdk/plugins/web`.
+- Public cold web authoring: `@habitat-ai/sdk/plugins/web` and
+  `@habitat-ai/sdk/plugins/web/effect`.
 - Public CLI topic authoring: `@habitat-ai/sdk/plugins/cli`,
   `@habitat-ai/sdk/plugins/cli/effect`, `@habitat-ai/sdk/plugins/cli/schema`,
   and `@habitat-ai/sdk/plugins/cli/oclif`.
@@ -227,6 +241,7 @@
 - Public type-only companion contract: `@habitat-ai/sdk/runtime/harnesses`.
 - Public cold Elysia companion: `@habitat-ai/sdk/runtime/harnesses/elysia`.
 - Public cold Inngest companion: `@habitat-ai/sdk/runtime/harnesses/inngest`.
+- Public cold Bun web companion: `@habitat-ai/sdk/runtime/harnesses/web`.
 - Public type-only read models: `@habitat-ai/sdk/runtime/observation`.
 - Public telemetry substrate: `@habitat-ai/sdk/telemetry`.
 - Public assets: `@habitat-ai/sdk/habitat-pack.json` and

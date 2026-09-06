@@ -83,6 +83,7 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/plugins/async",
     "@habitat-ai/sdk/plugins/async/effect",
     "@habitat-ai/sdk/plugins/web",
+    "@habitat-ai/sdk/plugins/web/effect",
     "@habitat-ai/sdk/plugins/cli",
     "@habitat-ai/sdk/plugins/cli/effect",
     "@habitat-ai/sdk/plugins/cli/schema",
@@ -95,6 +96,7 @@ const PUBLIC_JAVASCRIPT_EXPORTS = {
     "@habitat-ai/sdk/runtime/harnesses",
     "@habitat-ai/sdk/runtime/harnesses/elysia",
     "@habitat-ai/sdk/runtime/harnesses/inngest",
+    "@habitat-ai/sdk/runtime/harnesses/web",
     "@habitat-ai/sdk/runtime/observation",
     "@habitat-ai/sdk/runtime/resources",
     "@habitat-ai/sdk/runtime/providers",
@@ -289,6 +291,39 @@ const IMMUTABLE_SERVICE_CLOSURES = {
     ],
     inventoryRoot: "service/versions/2",
     sha256: "2a94d39de52bbb8bf80f54342b41e8b8a0f5f93730bfb6b940a5ef8ec7d543e4",
+  },
+} as const;
+const IMMUTABLE_RUNTIME_HARNESS_CLOSURES = {
+  runtimeHarnesses1: {
+    excludedInventoryPrefixes: ["versions/"],
+    files: [
+      "runtime-harnesses/blueprint.toml",
+      "runtime-harnesses/runtime_harnesses_v1_imports.md",
+      "runtime-harnesses/skill.md",
+      "runtime-harnesses/structure.toml",
+    ],
+    inventoryRoot: "runtime-harnesses",
+    sha256: "e681560886761cc8baa49ea6b4f4f64e7713013ad17f92cc219bbc4271aa32c9",
+  },
+  runtimeHarnesses2: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "runtime-harnesses/versions/2/blueprint.toml",
+      "runtime-harnesses/versions/2/runtime_harnesses_v2_imports.md",
+      "runtime-harnesses/versions/2/structure.toml",
+    ],
+    inventoryRoot: "runtime-harnesses/versions/2",
+    sha256: "aff118c42b223f38d7d810b3ab158dcf1b3cb0dbb9bc53bc471791f72381ea58",
+  },
+  runtimeHarnesses3: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "runtime-harnesses/versions/3/blueprint.toml",
+      "runtime-harnesses/versions/3/runtime_harnesses_v3_imports.md",
+      "runtime-harnesses/versions/3/structure.toml",
+    ],
+    inventoryRoot: "runtime-harnesses/versions/3",
+    sha256: "e18dfcfd32306e95223117b07f49fbbe219918afee0c50ef2b50299dafbbe000",
   },
 } as const;
 const GENERATED_SERVICE_INVENTORY = [
@@ -600,6 +635,90 @@ describe("installed Habitat products", () => {
       await writeFile(requiredProof, proofBytes);
     }
     await check();
+  }, 180_000);
+
+  it("qualifies packed runtime-harnesses@4 web structure and import acquisitions", async () => {
+    const fixtureId = "runtime-harnesses-v4-acceptance";
+    const relativeRoot = `packages/${fixtureId}`;
+    const fixtureRoot = path.join(consumerRoot, relativeRoot);
+    const habitat = path.join(consumerRoot, "node_modules/.bin/habitat");
+    const check = async (
+      rule: "structure" | "imports",
+      failure?: { readonly code?: string; readonly path?: string }
+    ) => {
+      const ruleId = `runtime_harnesses_v4_${rule}`;
+      const result = await run(habitat, ["check", "--instance", fixtureId, "--rule", ruleId], {
+        cwd: consumerRoot,
+      });
+      expect(result, result.stderr || result.stdout).toMatchObject({
+        exitCode: failure === undefined ? 0 : 1,
+        stderr: "",
+      });
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        _tag: "Completed",
+        ok: failure === undefined,
+        applications: [
+          expect.objectContaining({
+            instanceId: fixtureId,
+            ownerProject: `@fixture/${fixtureId}`,
+            ruleId,
+            runner: rule === "structure" ? "habitat" : "grit",
+            status: failure === undefined ? "pass" : "fail",
+            ...(failure?.code === undefined
+              ? {}
+              : { findings: expect.arrayContaining([expect.objectContaining(failure)]) }),
+          }),
+        ],
+      });
+    };
+
+    await check("structure");
+    await check("imports");
+    for (const file of [
+      "package.json",
+      "web/runtime.js",
+      "web/requests/package.json",
+      "web/requests/project.json",
+      "web/requests/page.html",
+      "web/requests/style.css",
+      "test/fixtures/web/package.json",
+      "test/fixtures/web/project.json",
+      "test/fixtures/web/data.json",
+    ]) {
+      const absolutePath = path.join(fixtureRoot, file);
+      await writeFile(absolutePath, "{}\n");
+      try {
+        await check("structure", { code: "unexpected-child", path: `${relativeRoot}/${file}` });
+      } finally {
+        await rm(absolutePath, { force: true });
+      }
+    }
+    const webIndex = path.join(fixtureRoot, "web/index.ts");
+    const webIndexBytes = await readFile(webIndex);
+    await rm(webIndex);
+    try {
+      await check("structure", { code: "missing-required-child", path: `${relativeRoot}/web` });
+    } finally {
+      await writeFile(webIndex, webIndexBytes);
+    }
+
+    const webSource = path.join(fixtureRoot, "web/requests/route.ts");
+    const webSourceBytes = await readFile(webSource);
+    for (const source of [
+      'import { defineApp } from "@habitat-ai/sdk/app";\n',
+      'export { acquire } from "../../../providers/acquire";\n',
+      'const mounting = require("../../../mounting/src/index");\n',
+      'const observation = import("../../../observation/src/index");\n',
+    ]) {
+      await writeFile(webSource, source);
+      try {
+        await check("imports", {});
+      } finally {
+        await writeFile(webSource, webSourceBytes);
+      }
+    }
+    await check("structure");
+    await check("imports");
   }, 180_000);
 
   it("creates the portable Bun repository before activating post-Git hooks", async () => {
@@ -1367,6 +1486,7 @@ describe("installed Habitat products", () => {
       "runtime-harnesses@1",
       "runtime-harnesses@2",
       "runtime-harnesses@3",
+      "runtime-harnesses@4",
       "runtime-mounting@1",
       "runtime-mounting@2",
       "runtime-observation@1",
@@ -1414,6 +1534,7 @@ describe("installed Habitat products", () => {
       "runtime-derivation/versions/3/structure.toml",
       "runtime-harnesses/versions/2/structure.toml",
       "runtime-harnesses/versions/3/structure.toml",
+      "runtime-harnesses/versions/4/structure.toml",
       "runtime-mounting/versions/2/structure.toml",
       "runtime-process-runtime/versions/2/structure.toml",
       "service/versions/2/structure.toml",
@@ -1535,9 +1656,10 @@ describe("installed Habitat products", () => {
         }
       }
     }
-    for (const { excludedInventoryPrefixes, files, inventoryRoot, sha256 } of Object.values(
-      IMMUTABLE_SERVICE_CLOSURES
-    )) {
+    for (const { excludedInventoryPrefixes, files, inventoryRoot, sha256 } of Object.values({
+      ...IMMUTABLE_SERVICE_CLOSURES,
+      ...IMMUTABLE_RUNTIME_HARNESS_CLOSURES,
+    })) {
       for (const blueprintRoot of [canonicalBlueprintRoot, installedBlueprintRoot]) {
         const closureInventory = (await listFiles(path.join(blueprintRoot, inventoryRoot)))
           .filter(
@@ -1645,6 +1767,12 @@ describe("installed Habitat products", () => {
             blueprintVersion: 2,
             id: "runtime-derivation-acceptance",
             ownerProject: "@fixture/runtime-derivation-acceptance",
+          }),
+          expect.objectContaining({
+            blueprint: "runtime-harnesses",
+            blueprintVersion: 4,
+            id: "runtime-harnesses-v4-acceptance",
+            ownerProject: "@fixture/runtime-harnesses-v4-acceptance",
           }),
           expect.objectContaining({
             blueprint: "service",
@@ -1765,6 +1893,37 @@ describe("installed Habitat products", () => {
             provenance: expect.objectContaining({ kind: "policy-pack" }),
             runner: expect.objectContaining({ name: "habitat" }),
           }),
+          expect.objectContaining({
+            blueprintVersion: 4,
+            instanceId: "runtime-harnesses-v4-acceptance",
+            ruleId: "runtime_harnesses_v4_imports",
+            provenance: expect.objectContaining({ kind: "policy-pack" }),
+            runner: expect.objectContaining({
+              name: "grit",
+              acquisition: {
+                kind: "check",
+                entries: ["elysia/**/*.ts", "inngest/**/*.ts", "src/**/*.ts", "web/**/*.ts"].map(
+                  (pattern) => ({
+                    kind: "file",
+                    path: `packages/runtime-harnesses-v4-acceptance/${pattern}`,
+                    source: { id: "project", kind: "root-pattern", pattern },
+                  })
+                ),
+              },
+            }),
+          }),
+          expect.objectContaining({
+            blueprintVersion: 4,
+            instanceId: "runtime-harnesses-v4-acceptance",
+            ruleId: "runtime_harnesses_v4_structure",
+            provenance: expect.objectContaining({ kind: "policy-pack" }),
+            runner: expect.objectContaining({
+              name: "habitat",
+              structure: expect.objectContaining({
+                provenance: expect.objectContaining({ kind: "policy-pack" }),
+              }),
+            }),
+          }),
         ]),
       },
     });
@@ -1855,6 +2014,11 @@ describe("installed Habitat products", () => {
         id: "runtime-harnesses",
         path: "dist/blueprints/runtime-harnesses/versions/3/blueprint.toml",
         version: 3,
+      },
+      {
+        id: "runtime-harnesses",
+        path: "dist/blueprints/runtime-harnesses/versions/4/blueprint.toml",
+        version: 4,
       },
       {
         id: "runtime-mounting",
@@ -3033,7 +3197,11 @@ async function assertInstalledOptionalHostIsolation(callerRoot: string): Promise
         'import { defineApp, startApp, type NativeIntegration } from "@habitat-ai/sdk/app";',
         'import { defineService } from "@habitat-ai/sdk/service";',
         'import { useWorkflowDispatcher, type ServerPluginContext, type WorkflowAdmissionDefinition, type WorkflowAdmissionPayload, type WorkflowDispatcher, type WorkflowDispatcherTarget, type WorkflowDispatchOptions, type WorkflowDispatchResult, type WorkflowEventSender, type WorkflowDispatcherClientRequirement, type WorkflowDispatchers, type WorkflowDispatcherUse, type WorkflowDispatcherUses } from "@habitat-ai/sdk/plugins/server";',
-        'import { defineRuntimeResource } from "@habitat-ai/sdk/runtime/resources";',
+        'import { defineRuntimeResource, requireResource } from "@habitat-ai/sdk/runtime/resources";',
+        'import { defineWebAppPlugin, type WebAppPluginDefinition, type WebRouteProjection } from "@habitat-ai/sdk/plugins/web";',
+        'import { defineWebEffect, type WebEffectDescriptor, type WebEffectExecutionContext } from "@habitat-ai/sdk/plugins/web/effect";',
+        'import { createBunWebHarness, type BunWebHarnessConfig, type WebHostPayload } from "@habitat-ai/sdk/runtime/harnesses/web";',
+        'import { Context, Effect } from "effect";',
         'import { deriveRuntimeArtifacts } from "@habitat-ai/sdk/runtime/derivation";',
         'import type { HarnessDescriptor } from "@habitat-ai/sdk/runtime/harnesses";',
         'import type { RuntimeCatalog } from "@habitat-ai/sdk/runtime/observation";',
@@ -3042,6 +3210,60 @@ async function assertInstalledOptionalHostIsolation(callerRoot: string): Promise
         "declare const descriptor: HarnessDescriptor;",
         "declare const catalog: RuntimeCatalog;",
         "export type AdmissionIsolation = readonly [ServerPluginContext<{}, WorkflowDispatcherUses>, WorkflowAdmissionPayload<WorkflowAdmissionDefinition>, WorkflowDispatcher, WorkflowDispatcherTarget, WorkflowDispatchOptions, WorkflowDispatchResult, WorkflowEventSender, WorkflowDispatcherClientRequirement, WorkflowDispatchers<WorkflowDispatcherUses>, WorkflowDispatcherUse];",
+        'const webResource = defineRuntimeResource<"installed.web", { readonly title: string }>({ id: "installed.web", title: "Web", purpose: "Installed declaration proof" });',
+        'const webRequirement = requireResource({ resource: webResource, reason: "Render response" });',
+        "interface WebDependency { readonly suffix: string }",
+        'const WebDependency = Context.Service<WebDependency>("installed-web-dependency");',
+        'const webFailure = { _tag: "InstalledWebFailure" as const };',
+        'class InstalledResponse extends Response { readonly variant = "installed" as const; }',
+        "const webEffect = defineWebEffect({ *effect(context) {",
+        "  const request: Request = context.input;",
+        "  const resource: { readonly title: string } = context.context.resources.get(webRequirement);",
+        "  const dependency = yield* Effect.service(WebDependency);",
+        "  const title = yield* Effect.try({ try: () => resource.title, catch: () => webFailure });",
+        '  yield* context.telemetry.event("installed.web");',
+        "  void context.execution.executionId;",
+        "  // @ts-expect-error Web authors receive no undeclared service clients.",
+        "  context.context.clients;",
+        "  // @ts-expect-error Native Request has one location, input.",
+        "  context.request;",
+        "  return new InstalledResponse(`${request.method}:${title}:${dependency.suffix}`);",
+        "} });",
+        "const nativeWebEffect = defineWebEffect({ effect: () => Effect.succeed(new InstalledResponse()) });",
+        'const webLoader = async () => ({ default: "native-module" as const });',
+        'const webPlugin = defineWebAppPlugin.factory()({ capability: "installed-web", routes: [{ id: "page", path: "/", module: webLoader }, { id: "response", path: "/response", effect: webEffect }], resourceRequirements: [webRequirement] })();',
+        'const webConfig: BunWebHarnessConfig = { id: "installed-web", hostname: "127.0.0.1", port: 0 };',
+        "const webHarness = createBunWebHarness(webConfig);",
+        'const webRegistration: NativeIntegration = { surface: "web/app", harness: webHarness };',
+        "type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;",
+        "type WebChannels<T> = T extends WebEffectDescriptor<infer A, infer E, infer R> ? [A, E, R] : never;",
+        "const webChannels: Equal<WebChannels<typeof webEffect>, [InstalledResponse, typeof webFailure, WebDependency]> = true;",
+        "const nativeWebChannels: Equal<WebChannels<typeof nativeWebEffect>, [InstalledResponse, never, never]> = true;",
+        "const webContext: Equal<keyof WebEffectExecutionContext, 'input' | 'context' | 'execution' | 'telemetry'> = true;",
+        'const webPayload: Equal<Parameters<typeof webHarness.mount>[0]["mountReadyPayloads"][number]["payload"], WebHostPayload> = true;',
+        'const webLoaderIdentity: Equal<(typeof webPlugin.routes)[0]["module"], typeof webLoader> = true;',
+        'const webEffectIdentity: Equal<(typeof webPlugin.routes)[1]["effect"], typeof webEffect> = true;',
+        'const webRouteUnion: Equal<WebAppPluginDefinition["routes"][number] extends never ? true : false, false> = true;',
+        'const moduleRoute: WebRouteProjection<Awaited<ReturnType<typeof webLoader>>> = { id: "page", path: "/", module: webLoader };',
+        "// @ts-expect-error Raw promises are not cold web Effect programs.",
+        "defineWebEffect({ effect: async () => new Response() });",
+        "// @ts-expect-error Web Effects must produce native Response values.",
+        'defineWebEffect({ effect: () => Effect.succeed("not-a-response") });',
+        "// @ts-expect-error A route cannot admit both contribution arms.",
+        'defineWebAppPlugin.factory()({ capability: "both", routes: [{ id: "both", path: "/", module: webLoader, effect: webEffect }] });',
+        "// @ts-expect-error A route must admit one contribution arm.",
+        'defineWebAppPlugin.factory()({ capability: "neither", routes: [{ id: "neither", path: "/" }] });',
+        "// @ts-expect-error Native functions do not replace web Effect descriptors.",
+        'defineWebAppPlugin.factory()({ capability: "callback", routes: [{ id: "callback", path: "/", effect: () => Promise.resolve(new Response()) }] });',
+        "// @ts-expect-error Web resource requirements do not admit direct service bindings.",
+        'defineWebAppPlugin.factory()({ capability: "services", routes: [], services: {} });',
+        "// @ts-expect-error Web harnesses cannot register for another native lane.",
+        'const wrongWebRegistration: NativeIntegration = { surface: "server/api", harness: webHarness };',
+        "// @ts-expect-error Frozen route membership is immutable.",
+        'webPlugin.routes[1].id = "changed";',
+        "// @ts-expect-error This strict consumer has no optional Bun ambient typing peer.",
+        "Bun.serve;",
+        "void [webRegistration, webChannels, nativeWebChannels, webContext, webPayload, webLoaderIdentity, webEffectIdentity, webRouteUnion, moduleRoute, wrongWebRegistration];",
         "void useWorkflowDispatcher;",
         "void [defineApp, startApp, defineService, defineRuntimeResource, deriveRuntimeArtifacts, registration, descriptor, catalog];",
       ].join("\n")
@@ -3054,6 +3276,8 @@ async function assertInstalledOptionalHostIsolation(callerRoot: string): Promise
         target: ts.ScriptTarget.ES2022,
         strict: true,
         skipLibCheck: false,
+        types: ["node"],
+        lib: ["lib.es2022.d.ts", "lib.dom.d.ts"],
         noEmit: true,
       },
     });
@@ -3064,6 +3288,14 @@ async function assertInstalledOptionalHostIsolation(callerRoot: string): Promise
           `${diagnostic.file?.fileName ?? ""}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n")}`
       );
     expect(diagnostics).toEqual([]);
+    expect(
+      program
+        .getSourceFiles()
+        .map(({ fileName }) => fileName.replaceAll(path.sep, "/"))
+        .filter((fileName) =>
+          /\/node_modules\/(?:elysia|inngest|bun-types|@types\/bun)(?:\/|$)/.test(fileName)
+        )
+    ).toEqual([]);
   } finally {
     await rm(file, { force: true });
   }
@@ -3393,16 +3625,30 @@ async function assertInstalledWebProjection(callerRoot: string): Promise<void> {
       [
         'import { registerHooks } from "node:module";',
         "let routerVendorResolutions = 0;",
+        "let optionalHostResolutions = 0;",
+        "let nativeHostReads = 0;",
+        'Object.defineProperty(globalThis, "Bun", { get() { nativeHostReads += 1; throw new Error("Cold web authoring must not read the native host."); } });',
         "registerHooks({",
         "  resolve(specifier, context, nextResolve) {",
         '    if (specifier === "@orpc/server" || specifier.startsWith("@orpc/server/")) {',
         "      routerVendorResolutions += 1;",
         '      throw new Error("The cold web face must not resolve the server router vendor.");',
         "    }",
+        '    if (["bun", "elysia", "inngest"].some((host) => specifier === host || specifier.startsWith(`${host}/`) || specifier.startsWith(`${host}:`))) {',
+        "      optionalHostResolutions += 1;",
+        '      throw new Error("Cold web authoring must not import an optional native host.");',
+        "    }",
         "    return nextResolve(specifier, context);",
         "  },",
         "});",
         'const web = await import("@habitat-ai/sdk/plugins/web");',
+        'const webEffect = await import("@habitat-ai/sdk/plugins/web/effect");',
+        'const nativeWeb = await import("@habitat-ai/sdk/runtime/harnesses/web");',
+        "let bodyCalls = 0;",
+        'const effectBody = () => { bodyCalls += 1; throw new Error("Installed web Effect must remain cold."); };',
+        "const effect = webEffect.defineWebEffect({ policy: { retry: { times: 1 } }, effect: effectBody });",
+        'const hostConfig = { id: "installed-web", hostname: "127.0.0.1", port: 0 };',
+        "const harness = nativeWeb.createBunWebHarness(hostConfig);",
         "let loaderCalls = 0;",
         "const loadRouteModule = async () => {",
         "  loaderCalls += 1;",
@@ -3416,6 +3662,7 @@ async function assertInstalledWebProjection(callerRoot: string): Promise<void> {
         '      path: "/installed-candidate",',
         "      module: loadRouteModule,",
         "    },",
+        '    { id: "installed-candidate.response", path: "/installed-response", effect },',
         "  ],",
         "})();",
         "const projection = definition.project({ pluginId: definition.id });",
@@ -3442,18 +3689,25 @@ async function assertInstalledWebProjection(callerRoot: string): Promise<void> {
         "      role: definition.role,",
         "      routeFrozen: Object.isFrozen(definition.routes[0]),",
         "      routeLoaderIdentity: definition.routes[0]?.module === loadRouteModule,",
+        "      routeEffectIdentity: definition.routes[1]?.effect === effect,",
+        "      effectRouteFrozen: Object.isFrozen(definition.routes[1]),",
         "      routesFrozen: Object.isFrozen(definition.routes),",
         "      services: definition.services,",
         "      servicesFrozen: Object.isFrozen(definition.services),",
         "      surface: definition.surface,",
         "    },",
         "    exports: Object.keys(web).sort(),",
+        "    effect: { exports: Object.keys(webEffect).sort(), kind: effect.kind, keys: Object.keys(effect).sort(), frozen: Object.isFrozen(effect), bodyIdentity: effect.effect === effectBody, policyFrozen: Object.isFrozen(effect.policy), retryFrozen: Object.isFrozen(effect.policy.retry) },",
+        "    native: { exports: Object.keys(nativeWeb).sort(), id: harness.id, roles: harness.roles, surfaces: harness.surfaces, frozen: Object.isFrozen(harness), rolesFrozen: Object.isFrozen(harness.roles), surfacesFrozen: Object.isFrozen(harness.surfaces), configFrozen: Object.isFrozen(hostConfig), mount: typeof harness.mount },",
         "    forbiddenRuntimeKeysPresent: forbiddenRuntimeKeys.filter((key) =>",
         "      [web, definition, projection, projection.facts].some((value) =>",
         "        Object.hasOwn(value, key)",
         "      )",
         "    ),",
         "    loaderCalls,",
+        "    bodyCalls,",
+        "    nativeHostReads,",
+        "    optionalHostResolutions,",
         "    routerVendorResolutions,",
         "    projection: {",
         "      factsFrozen: Object.isFrozen(projection.facts),",
@@ -3499,14 +3753,39 @@ async function assertInstalledWebProjection(callerRoot: string): Promise<void> {
         role: "web",
         routeFrozen: true,
         routeLoaderIdentity: true,
+        routeEffectIdentity: true,
+        effectRouteFrozen: true,
         routesFrozen: true,
         services: {},
         servicesFrozen: true,
         surface: "web/app",
       },
       exports: ["defineWebAppPlugin"],
+      effect: {
+        exports: ["defineWebEffect"],
+        kind: "web.effect",
+        keys: ["effect", "kind", "policy"],
+        frozen: true,
+        bodyIdentity: true,
+        policyFrozen: true,
+        retryFrozen: true,
+      },
+      native: {
+        exports: ["createBunWebHarness"],
+        id: "installed-web",
+        roles: ["web"],
+        surfaces: ["web/app"],
+        frozen: true,
+        rolesFrozen: true,
+        surfacesFrozen: true,
+        configFrozen: false,
+        mount: "function",
+      },
       forbiddenRuntimeKeysPresent: [],
       loaderCalls: 0,
+      bodyCalls: 0,
+      nativeHostReads: 0,
+      optionalHostResolutions: 0,
       routerVendorResolutions: 0,
       projection: {
         factsFrozen: true,
@@ -3522,6 +3801,10 @@ async function assertInstalledWebProjection(callerRoot: string): Promise<void> {
               {
                 id: "installed-candidate.index",
                 path: "/installed-candidate",
+              },
+              {
+                id: "installed-candidate.response",
+                path: "/installed-response",
               },
             ],
           },
@@ -4948,6 +5231,7 @@ execFileSync("git", ["config", "user.name", "nested-fixture"], { cwd: root });
     ...runtimeCompilerAcceptanceFiles(),
     ...runtimeDefinitionAcceptanceFiles(),
     ...runtimeDerivationAcceptanceFiles(),
+    ...runtimeHarnessesV4AcceptanceFiles(),
     ...runtimePolicySuccessorAcceptanceFiles(),
     "tools/hook-check/project.json": `${JSON.stringify(
       {
@@ -5236,6 +5520,75 @@ project = "packages/root-pattern-acceptance"
 
 [selections]
 `;
+}
+
+function runtimeHarnessesV4AcceptanceFiles(): Readonly<Record<string, string>> {
+  const fixtureId = "runtime-harnesses-v4-acceptance";
+  const root = `packages/${fixtureId}`;
+  return {
+    [`${root}/AGENTS.md`]: "# Native Web Harness Acceptance Fixture\n",
+    [`${root}/habitat.toml`]: `schemaVersion = 1
+id = "${fixtureId}"
+ownerProject = "@fixture/${fixtureId}"
+blueprint = "runtime-harnesses"
+blueprintVersion = 4
+
+[roots]
+project = "${root}"
+
+[selections]
+`,
+    [`${root}/project.json`]: `${JSON.stringify(
+      {
+        name: `@fixture/${fixtureId}`,
+        projectType: "library",
+        root,
+        sourceRoot: `${root}/src`,
+        tags: ["type:runtime", "role:runtime-harnesses-acceptance"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.json`]: `${JSON.stringify(
+      {
+        compilerOptions: { noEmit: true },
+        include: ["src/**/*.ts", "elysia/**/*.ts", "inngest/**/*.ts", "web/**/*.ts"],
+      },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsconfig.test.json`]: `${JSON.stringify(
+      { extends: "./tsconfig.json", include: ["test/**/*.ts"] },
+      null,
+      2
+    )}\n`,
+    [`${root}/tsdown.config.ts`]: 'export default { entry: ["src/index.ts", "web/index.ts"] };\n',
+    [`${root}/src/index.ts`]: "export interface HarnessContract { readonly id: string }\n",
+    [`${root}/elysia/index.ts`]: "export {};\n",
+    [`${root}/inngest/index.ts`]: "export {};\n",
+    [`${root}/web/index.ts`]: [
+      'export type { RuntimeObservationPort } from "../../definition/src/observation";',
+      'export { response } from "./requests/route";',
+      "",
+    ].join("\n"),
+    [`${root}/web/requests/route.ts`]: [
+      'import { Effect } from "effect";',
+      'import type { RuntimeObservationRecord } from "../../../definition/src/observation.js";',
+      '// import { defineApp } from "@habitat-ai/sdk/app";',
+      'const sourceText = "../../../providers/acquire";',
+      "export const response = Effect.succeed(new Response(sourceText));",
+      'export const nativeModule = () => import("./native", { with: { type: "@habitat-ai/sdk/app" } });',
+      "",
+    ].join("\n"),
+    [`${root}/web/requests/native.ts`]: "export default {};\n",
+    [`${root}/test/behavior/web.test.ts`]: "export {};\n",
+    [`${root}/test/excluded.ts`]: 'import "@habitat-ai/sdk/app";\n',
+    [`${root}/test/fixtures/web/page.html`]:
+      '<!doctype html><link rel="stylesheet" href="./style.css"><main>Installed native web</main><script type="module" src="./browser.js"></script>\n',
+    [`${root}/test/fixtures/web/style.css`]: "main { color: green; }\n",
+    [`${root}/test/fixtures/web/browser.js`]:
+      'document.querySelector("main").dataset.ready = "true";\n',
+  };
 }
 
 function runtimePolicySuccessorAcceptanceFiles(): Readonly<Record<string, string>> {

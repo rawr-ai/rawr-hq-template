@@ -921,6 +921,26 @@ capability, not a prerequisite for these host-independent interfaces or a claim
 established by their acceptance. Web route-module loading remains separate from
 web-local Effect execution.
 
+Web routes MUST use one explicit disjoint module-or-Effect membership array.
+The route supplies the sole occurrence ID; cold `defineWebEffect` bodies lower
+into the existing operational table with private route path projection. The
+exact separate module table flows through terminal startup and only selected
+compiled refs resolve. Native mount alone invokes module loaders. Request-time
+web Effects receive the original native Request and explicit process resources
+through ordinary procedure context, return a Response, and share native Effect
+execution, cancellation and invocation tracking. No browser runtime, implicit
+resource inference, second registry or source-code discovery is introduced.
+
+The native Bun web companion MUST consume native HTMLBundle module exports and
+bound Effect request callbacks, refuse exact duplicate path ownership, and leave
+asset build/routing/HTTP behavior to Bun. Ahead-of-time installed-package proof
+MUST serve actual HTML, JavaScript and CSS with source unavailable. Graceful
+native stop closes transport admission; process resource release also waits for
+native body reads and asynchronous cancellation cleanup. The underlying source
+owns hidden work through its cancel promise; abandoned internal pull work is not
+an observable lifecycle promise. An empty web face or synthetic mount is not
+native web acceptance.
+
 Selected blueprint definitions MUST remain complete immutable closures.
 Successors permit a bounded positive grammar for owner-local TypeScript source
 and tests while preserving project anchors, private assembly, ownership and
@@ -935,6 +955,19 @@ fake schema for an operational capability, ownerless schema dump or extra generi
 adapter owner is admitted.
 
 #### Scenario: A private owner adds a legitimate helper
+
+- **WHEN** a selected runtime owner admits a new native host directory
+- **THEN** a complete successor law carries its structure and import acquisition together
+- **AND** installed positive and negative proofs cover that host while predecessors remain unchanged
+
+#### Scenario: A web response outlives its Effect callback
+
+- **WHEN** a native request returns a streaming Response and later cancels it
+- **THEN** the same invocation lease remains active until native reads and source cancellation cleanup settle
+- **AND** graceful transport stop alone cannot release its process resources
+- **AND** capability access after that lease ends refuses rather than promising to track hidden abandoned source work
+
+#### Scenario: A private owner adds a source helper
 
 - **WHEN** implementation or test support is decomposed within the selected positive grammar
 - **THEN** its owner-local source/test structure remains conforming

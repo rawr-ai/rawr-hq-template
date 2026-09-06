@@ -71,3 +71,49 @@ test("native async successor admits Inngest glue without crossing lifecycle owne
     },
   });
 }, 60_000);
+
+test("native web successor admits exact definition leaves and Bun glue without lifecycle owners", async () => {
+  await assertNativeRuntimeImportLaw({
+    owner: "runtime-harnesses",
+    version: 4,
+    rule: "runtime_harnesses_v4_imports",
+    allowed: {
+      "owner/src/index.ts":
+        'export type { RuntimeLaunchIdentity } from "../../definition/src/app";',
+      "owner/elysia/index.ts": 'export const mount = async () => import("elysia");',
+      "owner/inngest/index.ts":
+        'import type { Inngest } from "inngest"; export const mount = async () => import("inngest/connect");',
+      "owner/web/index.ts":
+        'import type { HTMLBundle } from "bun"; import type { WebHostPayload } from "../../process-runtime/src/adapters/web"; export const mount = async () => Bun.serve({ fetch: () => new Response() });',
+      "owner/web/observation-port.ts":
+        'import type { RuntimeObservationPort } from "../../definition/src/observation";',
+      "owner/web/nested/observation-port.ts":
+        'export type { RuntimeObservationPort } from "../../../definition/src/observation";',
+      "owner/web/nested/observation-js.ts":
+        "import type { RuntimeObservationPort } from '../../../definition/src/observation.js';",
+      "owner/web/nested/observation-ts.ts":
+        'export type { RuntimeObservationPort } from "../../../definition/src/observation.ts";',
+      "owner/web/nested/observation-dynamic.ts":
+        'void import("../../../definition/src/observation.js");',
+      "owner/web/nested/observation-require.ts": 'require("../../../definition/src/observation");',
+      "owner/web/native-options.ts":
+        'const example = "../../mounting/src/index"; void import("native-web-host", { with: { note: "@habitat-ai/sdk" } });',
+      "owner/test/fixture.test.ts": 'import { startApp } from "@habitat-ai/sdk/app";',
+    },
+    forbidden: {
+      "owner/web/sdk.ts": 'import { startApp } from "@habitat-ai/sdk/app";',
+      "owner/web/sdk-root.ts": 'require("@habitat-ai/sdk");',
+      "owner/web/mounting.ts": 'export * from "../../mounting/src/index";',
+      "owner/web/substrate.ts": 'void import("../../substrate/effect/src/index");',
+      "owner/web/observation.ts":
+        'import { createRuntimeObservation } from "../../observation/src/index";',
+      "owner/web/observation-root.ts": 'void import("../../observation");',
+      "owner/web/observation-require.ts": 'require("../../observation/src/collector");',
+      "owner/web/nested/observation.ts":
+        'export { createRuntimeObservation } from "../../../observation/src/collector";',
+      "owner/web/observation-traversal.ts":
+        'void import("../../definition/src/../../observation/src/collector");',
+      "owner/web/provider.ts": 'import { acquire } from "resources/telemetry/providers/native";',
+    },
+  });
+}, 60_000);

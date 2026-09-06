@@ -5,6 +5,7 @@ export default defineConfig({
     index: "src/index.ts",
     "elysia/index": "elysia/index.ts",
     "inngest/index": "inngest/index.ts",
+    "web/index": "web/index.ts",
   },
   outDir: "dist",
   format: "esm",

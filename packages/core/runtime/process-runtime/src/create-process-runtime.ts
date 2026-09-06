@@ -16,6 +16,7 @@ import type {
   ServiceRuntimeExport,
 } from "../../definition/src/service";
 import type { ExecutionDescriptorTable } from "../../derivation/src/derive-execution-descriptor-table";
+import type { WebRouteModuleTable } from "../../derivation/src/web-route-module-table";
 import {
   type ProvisionedProcess,
   readProvisionedProcessHandoff,
@@ -58,6 +59,7 @@ export interface CreateProcessRuntimeInput {
   readonly compilation: RuntimeCompilationResult;
   readonly provisioned: ProvisionedProcess;
   readonly descriptorTable: ExecutionDescriptorTable;
+  readonly webRouteModuleTable?: WebRouteModuleTable;
   readonly semanticAdapters?: ReadonlyMap<string, unknown>;
   readonly observation?: RuntimeObservationPort;
 }
@@ -247,6 +249,9 @@ export async function createProcessRuntime(
         resources: capabilities.resources,
         executionRegistry: registry,
         executionRuntime: execution,
+        ...(input.webRouteModuleTable === undefined
+          ? {}
+          : { webRouteModuleTable: input.webRouteModuleTable }),
         ...(asyncSource === undefined
           ? {}
           : {

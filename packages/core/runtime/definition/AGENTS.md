@@ -40,6 +40,20 @@
 - A declared dispatcher group's `send` infers payload from the selected workflow
   and returns only native event IDs. Its optional `id` is the native event ID,
   not a Habitat deduplication mechanism, run identity or lifecycle capability.
+- Web route declarations select exactly one preserved module loader or one
+  cold `WebEffectDescriptor`. The route's `id` is its sole authored occurrence
+  identity; a body may be reused by different routes without another registry
+  or discovery inside native modules. Only actual web Effect bodies enter
+  per-occurrence executable derivation.
+- Request-time web Effects use the ordinary procedure context: `input` is the
+  original native `Request`, and `context.resources` is the declared
+  host-process resource view. They return native `Response` values and retain
+  existing execution/telemetry context and policy. Direct service binding,
+  duplicate request bags and browser runtime inference remain absent.
+- Web authoring freezes owned descriptor, policy, route and membership shells,
+  retaining exact body, loader and requirement references. Private lowering
+  constructs a cold operational descriptor with a `web.route` path projection;
+  neither authoring nor lowering runs a body or loader.
 - Provider `build(...)` is synchronous and cold: it returns a cold
   `ProviderEffectPlan`, never an acquisition result.
 - The provider build context contains already decoded provider config, lookup
@@ -89,6 +103,10 @@
 - Cold provider-selection authoring owner: `src/profile.ts`.
 - Peer-free workflow admission contracts: `src/workflow-admission.ts`;
   cold named uses and private accessor: `src/workflow-dispatcher-use.ts`.
+- Cold web Effect authoring and private operational lowering: `src/web.ts`;
+  native module/Effect route membership remains in `src/plugin.ts`.
+- Shared native Effect/generator channel inference and cold policy snapshots:
+  `src/local-effect.ts`; this is a helper leaf, not another execution owner.
 - Current cold provider descriptor module: `src/provider.ts`.
 - Current cold provider-plan module: `src/provider-effect-plan.ts`.
 - Private helper and proof decomposition follows the selected version's

@@ -14,6 +14,12 @@ export {
   createInngestWorkflowAdapter,
 } from "./adapters/inngest";
 export { createOclifAdapter, type LoweredCliCommand } from "./adapters/oclif";
+export {
+  createWebAdapter,
+  type WebEffectRoute,
+  type WebHostPayload,
+  type WebModuleRoute,
+} from "./adapters/web";
 export { materializeInngestFunctions, readInngestFunctionBundle } from "./async-function-bundle";
 export type { InngestMountPayload } from "./async-payload";
 export {

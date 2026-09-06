@@ -42,6 +42,9 @@ export function assertSurfaceReferenceRelation(
       }
       return;
     case "plugin.web-surface":
-      throw new TypeError("The execution ref has no admitted definition-owned lane carrier.");
+      if (surface.role !== "web" || surface.surface !== "web/app") {
+        throw new TypeError("A web execution ref requires its web/app surface.");
+      }
+      return;
   }
 }

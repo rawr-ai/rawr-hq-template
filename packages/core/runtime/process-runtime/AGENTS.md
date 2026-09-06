@@ -39,6 +39,14 @@
   exact acquired clients. Validate once, send the original payload, and retain
   the complete native send Promise on an invocation descendant even when its
   caller is interrupted or does not await it. Event IDs are not run IDs.
+- Web lowering joins only compiled module references to the exact route-module
+  table; loaders stay cold until mounting. Web Effect calls receive the original
+  Request and invocation-bound declared resources, never service or runtime bags.
+- A returned native Response retains the existing invocation through its body's
+  observable reads and cancellation cleanup. Use a branded wrapped body stream,
+  not an override proxy. Native cancellation may settle reads before an authored
+  underlying pull settles; the authored cancel callback must join its own work.
+  Expired capability views refuse later access rather than retaining hidden work.
 - Closing executable admission is synchronous and non-releasing. Native cleanup
   may still read resources until ordinary process stop begins. Explicitly
   required provider health stays unknown/failing without admitted probe evidence.

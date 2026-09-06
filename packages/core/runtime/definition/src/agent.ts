@@ -4,6 +4,13 @@ import type { HabitatEffect } from "./effect";
 import type { EffectExecutionPolicy } from "./execution";
 import type { BoundaryTelemetry, EffectBoundaryContext } from "./execution-context";
 import {
+  freezeLocalExecutionPolicy,
+  type LocalEffectProgram,
+  type LocalProgramError,
+  type LocalProgramOutput,
+  type LocalProgramRequirements,
+} from "./local-effect";
+import {
   assertNoPluginClassificationFields,
   definePlugin,
   type LanePluginInput,
@@ -14,32 +21,6 @@ import {
 import type { RuntimeResourceMap } from "./provider";
 import type { ResourceRequirement } from "./resource";
 import type { ServiceClients, ServiceUses } from "./service";
-
-export type LocalEffectProgram =
-  | HabitatEffect<unknown, unknown, unknown>
-  | Generator<HabitatEffect<unknown, unknown, unknown>, unknown, unknown>;
-export type LocalProgramOutput<P> =
-  P extends HabitatEffect<infer A, unknown, unknown>
-    ? A
-    : P extends Generator<unknown, infer A, unknown>
-      ? A
-      : never;
-type ProgramYield<P> =
-  P extends HabitatEffect<unknown, unknown, unknown>
-    ? P
-    : P extends Generator<infer Y, unknown, unknown>
-      ? Y
-      : never;
-export type LocalProgramError<P> = [ProgramYield<P>] extends [never]
-  ? never
-  : ProgramYield<P> extends HabitatEffect<unknown, infer E, unknown>
-    ? E
-    : never;
-export type LocalProgramRequirements<P> = [ProgramYield<P>] extends [never]
-  ? never
-  : ProgramYield<P> extends HabitatEffect<unknown, unknown, infer R>
-    ? R
-    : never;
 
 export interface ToolExecutionContext<I, U extends ServiceUses = Record<never, never>> {
   readonly input: I;
@@ -64,16 +45,6 @@ export interface ToolDescriptor<
   readonly effect: (
     context: C
   ) => HabitatEffect<A, E, R> | Generator<HabitatEffect<unknown, unknown, unknown>, A, unknown>;
-}
-
-export function freezeLocalExecutionPolicy(
-  policy: EffectExecutionPolicy = {}
-): EffectExecutionPolicy {
-  return Object.freeze({
-    ...policy,
-    ...(policy.retry === undefined ? {} : { retry: Object.freeze({ ...policy.retry }) }),
-    ...(policy.timeout === undefined ? {} : { timeout: Object.freeze({ ...policy.timeout }) }),
-  });
 }
 
 export function defineTool<

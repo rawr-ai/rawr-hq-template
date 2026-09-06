@@ -118,12 +118,14 @@ export function createProcessExecutionRuntime(input: {
       const span = yield* Effect.orDie(Effect.currentSpan);
       const context: ProcedureExecutionContext<I, C> = {
         input: invocation.input,
-        context: (boundary.ref.boundary === "plugin.agent-tool" ||
-        boundary.ref.boundary === "plugin.desktop-background" ||
-        boundary.ref.boundary === "plugin.cli-command" ||
-        boundary.ref.boundary === "plugin.async-step"
-          ? { ...invocation.context, ...input.surfaceCapabilities(surface, continuation) }
-          : invocation.context) as C,
+        context: (boundary.ref.boundary === "plugin.web-surface"
+          ? { resources: input.surfaceCapabilities(surface, continuation).resources }
+          : boundary.ref.boundary === "plugin.agent-tool" ||
+              boundary.ref.boundary === "plugin.desktop-background" ||
+              boundary.ref.boundary === "plugin.cli-command" ||
+              boundary.ref.boundary === "plugin.async-step"
+            ? { ...invocation.context, ...input.surfaceCapabilities(surface, continuation) }
+            : invocation.context) as C,
         execution: Object.freeze({
           appId: identity.app,
           processId: identity.process,
@@ -143,7 +145,10 @@ export function createProcessExecutionRuntime(input: {
       const body = boundary.descriptor.run(context);
       if (!Effect.isEffect(body))
         throw new TypeError("Execution descriptor returned a non-Effect value.");
-      return yield* applyExecutionPolicy(body, boundary.plan.policy);
+      const result = yield* applyExecutionPolicy(body, boundary.plan.policy);
+      if (boundary.ref.boundary === "plugin.web-surface" && !(result instanceof Response))
+        throw new TypeError("A web execution must return a native Response.");
+      return result;
     });
     const traced = withNativeEffectTracing(
       program,
@@ -169,18 +174,22 @@ export function createProcessExecutionRuntime(input: {
           Effect.provideContext(prepare(request, lease), invocationContinuationContext(lease)),
           { signal: request.invocation.signal }
         ),
-      parent
+      parent,
+      { responseBody: request.boundary.ref.boundary === "plugin.web-surface" }
     );
   }
 
   const runtime = Object.freeze<ProcessExecutionRuntime>({
     execute,
     executeExit(request) {
-      return input.admission.runExit((lease) =>
-        input.provisioned.managedRuntime.runExit(
-          Effect.provideContext(prepare(request, lease), invocationContinuationContext(lease)),
-          { signal: request.invocation.signal }
-        )
+      return input.admission.runExit(
+        (lease) =>
+          input.provisioned.managedRuntime.runExit(
+            Effect.provideContext(prepare(request, lease), invocationContinuationContext(lease)),
+            { signal: request.invocation.signal }
+          ),
+        undefined,
+        { responseBody: request.boundary.ref.boundary === "plugin.web-surface" }
       );
     },
   });

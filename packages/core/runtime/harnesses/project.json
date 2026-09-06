@@ -23,7 +23,8 @@
         "acceptance:server-native-telemetry",
         "acceptance:async-native-telemetry",
         "acceptance:process-isolation",
-        "acceptance:workflow-admission"
+        "acceptance:workflow-admission",
+        "acceptance:web"
       ],
       "options": { "command": "bun test packages/core/runtime/harnesses/test" }
     },
@@ -70,6 +71,15 @@
       "dependsOn": ["^build", { "projects": ["@habitat-ai/sdk"], "target": "build" }],
       "options": {
         "command": "bun packages/core/sdk/test/fixtures/workflow-admission.ts"
+      }
+    },
+    "acceptance:web": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "parallelism": false,
+      "dependsOn": ["^build", { "projects": ["@habitat-ai/sdk"], "target": "build" }],
+      "options": {
+        "command": "bun packages/core/sdk/test/fixtures/web-runtime.ts"
       }
     },
     "build": {

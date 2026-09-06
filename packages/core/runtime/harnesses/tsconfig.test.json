@@ -1,7 +1,7 @@
 {
   "extends": "../../../../tsconfig.base.json",
   "compilerOptions": { "noEmit": true, "types": ["bun-types"] },
-  "include": ["src", "elysia", "inngest", "test"],
+  "include": ["src", "elysia", "inngest", "web", "test"],
   "references": [
     { "path": "../definition" },
     { "path": "../compiler" },

@@ -71,6 +71,7 @@ const expectedRuntimeExports = [
   "./runtime/harnesses",
   "./runtime/harnesses/elysia",
   "./runtime/harnesses/inngest",
+  "./runtime/harnesses/web",
   "./runtime/observation",
   "./runtime/profiles",
   "./runtime/providers",
@@ -129,6 +130,7 @@ const expectedPluginExports = [
   "./plugins/server",
   "./plugins/server/effect",
   "./plugins/web",
+  "./plugins/web/effect",
 ];
 
 describe("runtime authoring public faces", () => {
@@ -724,7 +726,7 @@ describe("runtime authoring public faces", () => {
     }
   });
 
-  test("keeps plugin subpaths closed and admits only the explicit optional native peers", () => {
+  test("keeps plugin subpaths closed and admits only the explicit optional native peers", async () => {
     const packageJson = JSON.parse(
       readFileSync(new URL("../package.json", import.meta.url), "utf8")
     ) as {
@@ -771,7 +773,15 @@ describe("runtime authoring public faces", () => {
     });
     expect(packageJson.exports).not.toHaveProperty("./plugins/server/mcp");
     expect(packageJson.exports).not.toHaveProperty("./plugins/async/inngest");
-    expect(packageJson.exports).not.toHaveProperty("./plugins/web/effect");
+    expect(packageJson.exports["./plugins/web/effect"]).toEqual({
+      types: "./dist/plugins/web/effect/index.d.ts",
+      import: "./dist/plugins/web/effect/index.js",
+      default: "./dist/plugins/web/effect/index.js",
+    });
+    expect(Object.keys(await import("../src/plugins/web/effect"))).toEqual(["defineWebEffect"]);
+    expect(Object.keys(await import("../src/runtime/harnesses/web"))).toEqual([
+      "createBunWebHarness",
+    ]);
     expect(dependencyNames.filter((name) => /elysia|inngest/i.test(name)).sort()).toEqual([
       "elysia",
       "inngest",

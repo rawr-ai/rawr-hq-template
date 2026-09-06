@@ -5,6 +5,7 @@ import type { AppRole } from "./app";
 import type { RuntimeResourceMap } from "./provider";
 import type { ResourceRequirement } from "./resource";
 import type { ServiceClients, ServiceUses } from "./service";
+import type { WebEffectDescriptor } from "./web";
 import {
   readWorkflowDispatcherUse,
   type WorkflowDispatcherClientRequirement,
@@ -354,25 +355,41 @@ export const defineServerInternalPlugin: ServerInternalPluginBuilder = Object.fr
       makePluginFactory(input, buildServerInternalPlugin)) as never,
 });
 
-export interface WebRouteProjection<TModule = unknown> {
-  readonly id: string;
-  readonly path: string;
-  readonly module: () => Promise<TModule>;
-}
+export type WebRouteProjection<TModule = unknown> =
+  | {
+      readonly id: string;
+      readonly path: string;
+      readonly module: () => Promise<TModule>;
+      readonly effect?: never;
+    }
+  | {
+      readonly id: string;
+      readonly path: string;
+      readonly effect: WebEffectDescriptor;
+      readonly module?: never;
+    };
 
 export interface WebAppPluginInput<
   TCapability extends string = string,
   TRoutes extends readonly WebRouteProjection[] = readonly WebRouteProjection[],
+  TResources extends readonly ResourceRequirement[] = readonly [],
 > {
   readonly capability: TCapability;
   readonly instance?: string;
   readonly routes: TRoutes;
+  readonly resourceRequirements?: TResources;
 }
 
-type WebRouteProjectionSnapshots<TRoutes extends readonly WebRouteProjection[]> = {
-  readonly [TIndex in keyof TRoutes]: TRoutes[TIndex] extends WebRouteProjection
-    ? Readonly<Pick<TRoutes[TIndex], "id" | "path" | "module">>
+type WebRouteProjectionSnapshot<TRoute extends WebRouteProjection> = TRoute extends {
+  readonly module: () => Promise<unknown>;
+}
+  ? Readonly<Pick<TRoute, "id" | "path" | "module">>
+  : TRoute extends { readonly effect: WebEffectDescriptor }
+    ? Readonly<Pick<TRoute, "id" | "path" | "effect">>
     : never;
+
+type WebRouteProjectionSnapshots<TRoutes extends readonly WebRouteProjection[]> = {
+  readonly [TIndex in keyof TRoutes]: WebRouteProjectionSnapshot<TRoutes[TIndex]>;
 };
 
 type EmptyWebPluginServices = Readonly<Record<never, never>>;
@@ -380,38 +397,57 @@ type EmptyWebPluginServices = Readonly<Record<never, never>>;
 export interface WebAppPluginDefinition<
   TCapability extends string = string,
   TRoutes extends readonly WebRouteProjection[] = readonly WebRouteProjection[],
+  TResources extends readonly ResourceRequirement[] = readonly ResourceRequirement[],
 > extends PluginDefinition<"web", "web/app", TCapability, EmptyWebPluginServices> {
   readonly id: `web.app.${TCapability}`;
   readonly services: EmptyWebPluginServices;
-  readonly resourceRequirements: readonly [];
+  readonly resourceRequirements: TResources;
   readonly routes: WebRouteProjectionSnapshots<TRoutes>;
 }
 
 function assertNoWebAppCompositionFields(input: object): void {
-  for (const field of ["services", "resourceRequirements"] as const) {
-    if (Object.hasOwn(input, field)) {
-      throw new TypeError(`Web app projection does not accept '${field}'.`);
-    }
+  if (Object.hasOwn(input, "services")) {
+    throw new TypeError("Web app projection does not accept 'services'.");
   }
 }
 
 function buildWebAppPlugin<
   const TCapability extends string,
   const TRoutes extends readonly WebRouteProjection[],
->(input: WebAppPluginInput<TCapability, TRoutes>): WebAppPluginDefinition<TCapability, TRoutes> {
+  const TResources extends readonly ResourceRequirement[],
+>(
+  input: WebAppPluginInput<TCapability, TRoutes, TResources>
+): WebAppPluginDefinition<TCapability, TRoutes, TResources> {
   assertNoPluginClassificationFields(input);
   assertNoWebAppCompositionFields(input);
 
   const services = Object.freeze({}) as EmptyWebPluginServices;
-  const resourceRequirements = Object.freeze([]) as readonly [];
+  const resourceRequirements = Object.freeze([
+    ...(input.resourceRequirements ?? []),
+  ]) as unknown as TResources;
+  const routeIds = new Set<string>();
   const routes = Object.freeze(
-    input.routes.map((route) =>
-      Object.freeze({
-        id: route.id,
-        path: route.path,
-        module: route.module,
-      })
-    )
+    input.routes.map((route) => {
+      const { id, path, module, effect } = route;
+      if (routeIds.has(id)) throw new TypeError("Web route occurrence IDs must be unique.");
+      routeIds.add(id);
+      if ((module === undefined) === (effect === undefined))
+        throw new TypeError("A web route requires exactly one module loader or Effect descriptor.");
+      if (module !== undefined) {
+        if (typeof module !== "function") throw new TypeError("A web route requires a loader.");
+        return Object.freeze({ id, path, module });
+      }
+      if (
+        effect === null ||
+        typeof effect !== "object" ||
+        effect.kind !== "web.effect" ||
+        typeof effect.effect !== "function" ||
+        effect.policy === null ||
+        typeof effect.policy !== "object"
+      )
+        throw new TypeError("A web route requires a cold web Effect descriptor.");
+      return Object.freeze({ id, path, effect });
+    })
   ) as unknown as WebRouteProjectionSnapshots<TRoutes>;
   const projectedRoutes = Object.freeze(routes.map(({ id, path }) => Object.freeze({ id, path })));
   const base = definePlugin({
@@ -443,15 +479,17 @@ export interface WebAppPluginBuilder {
   factory(): <
     const TCapability extends string,
     const TRoutes extends readonly WebRouteProjection[],
+    const TResources extends readonly ResourceRequirement[] = readonly [],
   >(
-    input: WebAppPluginInput<TCapability, TRoutes>
-  ) => PluginFactory<void, WebAppPluginDefinition<TCapability, TRoutes>>;
+    input: WebAppPluginInput<TCapability, TRoutes, TResources>
+  ) => PluginFactory<void, WebAppPluginDefinition<TCapability, TRoutes, TResources>>;
   factory<TOptions>(): <
     const TCapability extends string,
     const TRoutes extends readonly WebRouteProjection[],
+    const TResources extends readonly ResourceRequirement[] = readonly [],
   >(
-    input: (options: TOptions) => WebAppPluginInput<TCapability, TRoutes>
-  ) => PluginFactory<TOptions, WebAppPluginDefinition<TCapability, TRoutes>>;
+    input: (options: TOptions) => WebAppPluginInput<TCapability, TRoutes, TResources>
+  ) => PluginFactory<TOptions, WebAppPluginDefinition<TCapability, TRoutes, TResources>>;
 }
 
 export const defineWebAppPlugin: WebAppPluginBuilder = Object.freeze({

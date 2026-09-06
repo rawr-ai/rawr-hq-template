@@ -1787,10 +1787,10 @@ indexes the derived operational `EffectExecutionDescriptor` values fixed by
 
 The closed five-variant ref and table API applies only where the corresponding
 lane carrier and membership make a descriptor reachable. Tool and desktop
-background leaves, like async steps, have no plugin owner until selected;
+background and web Effect leaves, like async steps, have no plugin owner until selected;
 derivation lowers each occurrence to one frozen operational descriptor and
 preserves that descriptor exactly through its table and the registry. Already
-operational admitted CLI/web-local descriptors retain their exact reference.
+operational admitted CLI descriptors retain their exact reference.
 It emits no ref or
 table entry from an unadmitted carrier, and the vocabulary alone does not prove
 lane support. Every descriptor remains cold.
@@ -3730,11 +3730,36 @@ execution grammar. The web plugin retains its projection and executable-body
 authority. Browser rendering, bundling, framework routing, and client-side host
 behavior remain web host concerns.
 
+One explicit `routes` array has disjoint `{ id, path, module }` and
+`{ id, path, effect }` arms. The Effect arm retains the exact cold descriptor
+created by `defineWebEffect({ effect, policy? })` from
+`@habitat-ai/sdk/plugins/web/effect`. It has no second authored ID:
+`route.id` supplies `plugin.web-surface.surfaceId`. Per-occurrence derivation
+lowers it to the ordinary operational descriptor with private `web.route`
+path projection. No body discovery or second registry is admitted.
+
+The qualified native web process executes these bodies at request time. The
+existing `ProcedureExecutionContext` receives the original native `Request` as
+`input` and explicit host-process resources as `context.resources`, beside the
+ordinary execution and telemetry ports. Bodies return a `Response` through
+native Effect values or the curated generator grammar. Plugin-level
+`resourceRequirements` declare those ordinary requirements; no implicit browser
+resources or direct service binding is introduced. The original request signal
+cancels execution. An invocation lease covers Response body settlement and
+asynchronous cancellation cleanup, not merely callback return. This qualification
+does not claim a browser-side Effect runtime or framework-specific SSR.
+An authored stream's `cancel` promise owns settlement of its underlying work;
+native cancellation may close reads while a hidden `pull` Promise remains
+pending. The invocation tracker does not infer or wait for that abandoned work
+outside the source's native cancellation contract.
+
 The preserved `module` loader is not an Effect executable body. Complete
 runtime derivation assigns it a `WebRouteModuleRef` and retains the loader in a
 distinct non-portable `WebRouteModuleTable`. Derivation does not invoke the
 loader, the portable runtime plan carries neither the loader nor its ref, and
 the Effect descriptor table and execution registry never receive it.
+Terminal startup passes that exact module table to selected process lowering.
+Only the compiled refs are resolved; native mount alone invokes the loaders.
 
 ## 13. Resource, provider, and profile model
 
@@ -5348,8 +5373,8 @@ mounts Effect-backed executable surfaces must receive the matching table before
 The table's population is derived only from admitted definition-owned lane
 carriers and membership reachable through `deriveRuntimeArtifacts(...)`.
 The closed five-variant ref vocabulary does not create membership. Admitted
-already-operational CLI/web-local descriptors are preserved exactly by reference;
-async-step, tool and background occurrences are lowered as specified here.
+already-operational CLI descriptors are preserved exactly by reference;
+async-step, tool, background and web Effect occurrences are lowered as specified here.
 No unadmitted lane contributes refs
 or entries.
 
@@ -7839,6 +7864,21 @@ Output: web app mount/build/serve handoff appropriate to the selected web host,
 one `NativeHarnessHandle`, and truthful `HarnessHealthReport` values.
 
 Boundary rule: web hosts own rendering, bundling, routing, and browser-native behavior inside their boundary. They do not own service domain authority, server API projection classification, or provider acquisition.
+
+The qualified `createBunWebHarness` companion is exposed through
+`@habitat-ai/sdk/runtime/harnesses/web`. The mount payload distinguishes lazy
+route-module entries from bound Request-to-Response Effect callbacks. A module
+default export is the native Bun HTMLBundle; exact duplicate path ownership is
+refused before native serving. Otherwise Bun owns route matching, assets and
+HTTP behavior. Native `stop(false)` closes admission and drains transport;
+process invocation tracking separately retains any unfinished body cleanup
+before resources release. Health cannot become passing after stop begins.
+
+Builds use ordinary native deployment tooling. The qualified ahead-of-time
+pattern is a lazy TypeScript route module that statically imports HTML, with
+the built process launched from the artifact root so native output-relative
+assets resolve. The SDK neither parses author callbacks for a build graph nor
+changes cwd, rewrites native manifests, or restores a product web app.
 
 ### 21.5 Agent/OpenShell harness
 

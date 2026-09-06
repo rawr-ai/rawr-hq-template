@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Own import-safe native harness contracts, selected native Elysia and Inngest hosts,
+Own import-safe native harness contracts, selected native Elysia, Inngest and Bun web hosts,
 bounded owner-local health evidence and idempotent stop mechanics.
 
 ## Scope
@@ -36,6 +36,13 @@ Applies to this private package-less `runtime-harnesses` Nx owner.
   request settlement differs from authored orchestration Promise settlement:
   replay discovery may leave that Promise suspended. Qualification must cover
   finite native middleware/request lifetime and actually executing step bodies.
+- Native Bun web loads selected route modules only during mount and delegates
+  their default HTMLBundle and bound Request-to-Response routes to Bun's path map.
+  Refuse duplicate exact paths before loading, otherwise preserve native matching.
+  The qualified AOT entry lazily imports a TypeScript module with a static HTML
+  import, and launches from its artifact root. No runtime bundler or cwd mutation.
+  Graceful stop(false) closes transport; process invocation drain additionally
+  retains asynchronous response cancellation cleanup before resource release.
 - `createOwnerStop` shares one native owner's operation; it does not coordinate
   other owners. A no-op owner still supplies explicit stop; any no-op health
   evidence is not-applicable, never fabricated passing readiness.
