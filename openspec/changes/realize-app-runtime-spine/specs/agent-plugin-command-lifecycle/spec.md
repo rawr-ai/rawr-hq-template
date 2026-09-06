@@ -5,6 +5,62 @@
 
 ## MODIFIED Requirements
 
+### Requirement: CLI parsing preserves closed procedure requests
+
+Native Oclif parsing MUST reject unknown, legacy, retired, cross-mode and
+incomplete flags; unsupported scalar modes/providers; relative path scalars;
+and ambiguous scalar selectors before live Habitat resource acquisition.
+It MUST preserve the selected procedure's discriminated request rather than
+an optional-field bag. Bounded invocation-local stdin is native input admission.
+Cold app/provider declarations and native Command construction are permitted.
+
+The lifecycle service MUST own aggregate domain validation, including target
+uniqueness, canonical-home relationships, member cardinality and uniqueness,
+disposable-root containment, and Git authority consistency. Such validation
+MUST precede every domain resource operation. Acquiring inert process-owned
+capability factories is not a domain resource operation. CLI code MUST NOT
+duplicate these policies or introduce a second aggregate validator.
+
+#### Scenario: Foreign mode fields reject without calls
+
+- **WHEN** a request supplies unknown or retired flags, cross-mode fields, an
+  unsupported provider, a relative home scalar, or incomplete native selectors
+- **THEN** native parsing refuses before managed process startup and every
+  service procedure and resource operation records zero calls
+
+#### Scenario: Aggregate domain input is invalid
+
+- **WHEN** a structurally admitted request contains duplicate canonical targets,
+  duplicate members, or a target outside its disposable test root
+- **THEN** its one typed service procedure returns the domain refusal before
+  any Git, filesystem, package-output or native provider operation
+
+### Requirement: Release-input authoring is pure and canonical
+
+The release-input-record mode MUST consume one nonempty bounded stdin byte
+stream. A body request MUST produce one newline-terminated canonical envelope;
+an envelope request MUST preserve the exact validated canonical bytes. Invalid
+UTF-8, malformed JSON, noncanonical envelopes, digest mismatch, or invalid body
+shape MUST return releases-owned typed issues. The CLI MUST NOT write a record
+or select a repository path. The one procedure MUST perform no lifecycle
+resource operation; it may run within the normally acquired managed process.
+
+#### Scenario: Body and envelope reach one pure procedure
+
+- **WHEN** an operator supplies either a valid body or the resulting canonical
+  envelope through stdin
+- **THEN** exactly one releases-owned procedure returns identical canonical
+  envelope bytes and digest
+- **AND** human output reproduces those bytes without reserialization or an
+  additional newline
+
+#### Scenario: Stdin refusal precedes service construction
+
+- **WHEN** stdin is a terminal, empty, or exceeds the release-input protocol
+  ceiling, or fields from another check mode are supplied
+- **THEN** native parsing rejects before managed process startup and every
+  lifecycle resource and procedure records zero calls
+
 ### Requirement: Curated lifecycle has one exact qualified command ontology
 
 The private `@habitat-ai/plugin-agent-plugins` topic MUST expose curated

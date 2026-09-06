@@ -1,8 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "declaration": true,
     "outDir": "dist",
     "rootDir": "."
   },
-  "files": ["contract.ts", "providers/git-effect-platform-node/index.ts"]
+  "files": [
+    "contract.ts",
+    "runtime.ts",
+    "providers/git-effect-platform-node/index.ts",
+    "providers/git-effect-platform-node/runtime.ts"
+  ]
 }

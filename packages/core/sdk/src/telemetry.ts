@@ -1,11 +1,12 @@
 /**
- * Provider-neutral telemetry value contracts and declarative OpenTelemetry Node configuration.
+ * Cold telemetry declarations, provider-neutral values and explicit native configuration.
  *
  * @remarks
  * This subpath exports no provider acquisition, lease, exporter factory, or
  * instrumentation bootstrap. Habitat runtime provisioning owns those mechanics;
  * author code may add only optional semantic enrichment through its owning surface.
  */
+
 export type {
   EmitTechnicalLogInput,
   FlushTelemetryInput,
@@ -45,3 +46,5 @@ export {
   EnabledOpenTelemetryNodeConfigSchema,
   OpenTelemetryNodeConfigSchema,
 } from "@habitat-ai/resource-telemetry/providers/opentelemetry-node";
+export { defineOpenTelemetryNodeRuntimeProvider } from "../../../../resources/telemetry/providers/opentelemetry-node/runtime";
+export { TelemetryRuntimeResource } from "../../../../resources/telemetry/runtime";

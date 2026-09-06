@@ -450,12 +450,12 @@ describe("provider channel selected content", () => {
   it.each([
     {
       name: "an exact duplicate",
-      path: ".rawr/release-input.json",
+      path: ".habitat/release-input.json",
       detail: "path collision",
     },
     {
       name: "a portable case collision",
-      path: ".RAWR/release-input.json",
+      path: ".HABITAT/release-input.json",
       detail: "path collision",
     },
     {

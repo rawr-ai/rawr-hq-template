@@ -2,6 +2,7 @@
   "$comment": "Habitat-owned compatibility blueprint and qualified overlay owner discovery for the standalone Habitat check edge.",
   "schemaVersion": 2,
   "ownerRoots": {
+    "@habitat-ai/plugin-agent-plugins": "plugins/cli/topics/agent-plugins",
     "habitat": "scripts/habitat",
     "workstream-plugin-pack": "tools/workstream-plugin-pack"
   }

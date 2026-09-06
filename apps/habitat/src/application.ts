@@ -15,7 +15,7 @@ export type ExecuteHabitatOptions = Readonly<{
 export function executeHabitat(input: ExecuteHabitatOptions): Promise<unknown> {
   return runHabitatProcess({
     ...input,
-    sources: runtimeSources(input.appRoot, input.workspaceRoot),
+    sources: () => runtimeSources(input.appRoot, input.workspaceRoot),
     sourceBundle,
     terminal: true,
   });
@@ -28,7 +28,7 @@ export async function resolveCatalogForWorkspace(
   const value = await runHabitatProcess({
     ...input,
     args: ["resolve"],
-    sources: runtimeSources(input.appRoot, input.workspaceRoot),
+    sources: () => runtimeSources(input.appRoot, input.workspaceRoot),
     sourceBundle,
     terminal: false,
   });

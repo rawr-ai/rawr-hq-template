@@ -2184,6 +2184,14 @@ declared Nx dependency. It does not redeclare or widen it.
 
 Profiles select supply.
 
+`ProcessDefinition.resourceRequirements` optionally declares process-owned
+demand using existing `ResourceRequirement` values. `defineProcessCatalog`
+copies and freezes each process's own requirement array, defaulting it to an
+empty array while retaining the exact cold requirements and resource references.
+Only the selected process contributes these roots. An explicitly authored role
+must belong to that process's selected roles. This is not plugin capability
+membership and does not grant a plugin access to process infrastructure.
+
 Runtime profiles live under `apps/<app>/runtime/profiles/*`. They select
 providers and config sources for the app. The profile field that holds generic
 `providerSelection({ resource, provider, config })` results is `providers`,
@@ -3876,7 +3884,7 @@ Process and role are acquisition/scoping semantics on requirements and compiled 
 Requirements declare need.
 
 At the complete-derivation boundary, a `ResourceRequirement` states that a
-plugin, a service-owned resource dependency key, or a provider needs a
+selected process, plugin, a service-owned resource dependency key, or a provider needs a
 resource. Other runtime owners may reuse private definition grammar, but they
 do not enter or widen the exact normalized owner union in §15.2.
 
@@ -3904,7 +3912,7 @@ export function requireResource<
 This generic definition-owned authoring interface remains authoritative at its
 resource authoring face. Complete derivation replaces the resource object with
 its effective `NormalizedResourceRequirementIdentity`, defaults `optional` to
-`false`, identifies the exact plugin, service-owned resource dependency key,
+`false`, identifies the exact process, plugin, service-owned resource dependency key,
 or provider owner, and emits the closed TypeBox-derived `ResourceRequirement` projection
 fixed in §15.2. The normalized public type deliberately has a different shape
 while retaining the same export name on the separate
@@ -4798,6 +4806,11 @@ export const NormalizedResourceRequirementIdentitySchema = ReadonlyObject(Type.O
 
 export const NormalizedRuntimeTopologyEdgeSchema = Type.Union([
   ReadonlyObject(Type.Object({
+    kind: Type.Literal("process.resource"),
+    processId: Type.String(),
+    resource: NormalizedResourceRequirementIdentitySchema,
+  }), closed),
+  ReadonlyObject(Type.Object({
     kind: Type.Literal("app.plugin"),
     appId: Type.String(),
     plugin: NormalizedPluginIdentitySchema,
@@ -4869,8 +4882,7 @@ copy. `deployment` and `source` are opaque selected values: they are copied
 unchanged and never interpreted or re-derived.
 
 `roleRequirements` comes only from `entrypoint.process.roles`.
-`pluginIdentities`, `surfaceRequirements`,
-`resourceRequirementIdentities`, `app.plugin`, and `plugin.resource` facts come
+`pluginIdentities`, `surfaceRequirements`, `app.plugin`, and `plugin.resource` facts come
 from definitions in `entrypoint.app.plugins` whose roles are selected by that
 process. Multi-role processes use the union of those roots. Unrelated app roles
 do not contribute executable requirements; whole-app inspection/validation is
@@ -4882,6 +4894,11 @@ Each surface requirement carries that identity plus the definition's `role`,
 `lifetime: requirement.lifetime ?? requirement.resource.defaultLifetime`, an
 optional `role` only when the requirement authored one, and the authored
 optional `instance`.
+
+The selected process's own requirements emit `process.resource` edges with
+`processId: entrypoint.process.id` and the same effective resource identity.
+`resourceRequirementIdentities` contains both process and plugin roots. No
+sibling process contributes demand or requires provider coverage.
 
 Service topology starts only from complete service exports recovered through
 the selected plugins' private `ServiceUse` carriers and traverses their declared
@@ -4917,13 +4934,14 @@ explicit tuples using ascending ECMAScript code-unit string order:
 | `surfaceRequirements` | `(plugin.pluginId, plugin.instance ?? "", role, surface, capability)` |
 | `resourceRequirementIdentities` | `(resourceId, lifetime, role ?? "", instance ?? "")` |
 | `app.plugin` edge | `(kind, appId, plugin.pluginId, plugin.instance ?? "")` |
+| `process.resource` edge | `(kind, processId, resource.resourceId, resource.lifetime, resource.role ?? "", resource.instance ?? "")` |
 | `plugin.resource` edge | `(kind, plugin.pluginId, plugin.instance ?? "", resource.resourceId, resource.lifetime, resource.role ?? "", resource.instance ?? "")` |
 | `service.service` edge | `(kind, serviceId, dependencyServiceId)` |
 | `service.resource` edge | `(kind, serviceId, resourceId)` |
 | `service.semantic` edge | `(kind, serviceId, adapterId)` |
 
 `resourceRequirementIdentities` is the sorted unique projection of the
-resource identities carried by accepted `plugin.resource` edges. Two distinct
+resource identities carried by accepted `process.resource` and `plugin.resource` edges. Two distinct
 plugin identities may carry the same resource-requirement identity; that shared
 demand is admitted and projects to one resource identity. Repeated projected
 `plugin.resource` edges likewise collapse to one reachability fact; complete
@@ -5053,6 +5071,10 @@ const NormalizedRuntimeConfigRefSchema = ReadonlyObject(Type.Object({
 }), closedComplete);
 
 const ResourceRequirementOwnerSchema = Type.Union([
+  ReadonlyObject(Type.Object({
+    kind: Type.Literal("process"),
+    processId: Type.String(),
+  }), closedComplete),
   ReadonlyObject(Type.Object({
     kind: Type.Literal("plugin"),
     pluginOwnerId: Type.String({
@@ -5291,7 +5313,7 @@ fields are exactly:
 `resource.instance` is absent. This is the exact service role-lifetime
 propagation rule: a role-lifetime dependency carries the enclosing binding
 role, while a process-lifetime dependency carries no `role`. Plugin- and
-provider-owned requirements retain their exact authored `reason`; only the
+provider-owned requirements, as well as process-owned requirements, retain their exact authored `reason`; only the
 service-owned dependency key derives `reason` from `localName`.
 
 Consequently, the same service-owned process-lifetime dependency reached
@@ -5312,6 +5334,12 @@ requirement without a matching provider emits exactly one
 `provider-selection.optional-missing` finding and no selection. An optional
 requirement with matching coverage normalizes that selection normally. Every other
 missing, duplicate, ambiguous, or incompatible selection throws `TypeError`.
+
+Process-owned requirements use owner `{ kind: "process", processId }` and join
+this same provider/config/dependency closure. Compilation requires their owner,
+launch process, foundational topology edge and cold resource reference to agree.
+They use the existing bootgraph and resource map, not a second infrastructure
+acquisition path, and remain absent from plugin/surface resource membership.
 
 Every identity-bearing array is duplicate-free by its complete emitted
 structural identity. The two precedence-bearing config-source arrays preserve
@@ -8359,6 +8387,22 @@ Call-local memoization is not `ServiceBindingCache`.
 ### 23.3 Telemetry
 
 Telemetry separates runtime telemetry, optional telemetry resources, native framework instrumentation, service semantic enrichment, and product analytics.
+
+An app may require `TelemetryRuntimeResource` at its process root and select
+`defineOpenTelemetryNodeRuntimeProvider(...)` through the existing
+`@habitat-ai/sdk/telemetry` face. These are the exact cold resource-owned
+declarations, not acquisition, lease or instrumentation-bootstrap exports.
+Profile membership alone remains inert without demand. Technical telemetry
+does not require a pretend service dependency or synthetic domain logger,
+analytics or correlation ports.
+
+The native Oclif harness starts its command span only after native admission and
+managed acquisition, propagates its native context into the one invocation,
+and records finally/output settlement before ending the span and releasing
+the process. Native input failures and help acquire no telemetry provider.
+Command arguments, stdin payloads and unclassified error text are not span
+attributes. Application deployment configuration is read only inside lazy
+startup; the provider validates it, and the app owns process identity.
 
 | Telemetry layer | Owner |
 | --- | --- |

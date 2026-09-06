@@ -465,7 +465,7 @@ describe("provider disposable-home test", () => {
     expect(treeLimits.length).toBeGreaterThan(0);
     expect(new Set(treeLimits.map(({ paths }) => paths.join("\0")))).toEqual(
       new Set([
-        [".rawr/release-input.json", "plugins/agents"].join("\0"),
+        [".habitat/release-input.json", "plugins/agents"].join("\0"),
         [".agents/plugins", ".claude-plugin"].join("\0"),
       ])
     );

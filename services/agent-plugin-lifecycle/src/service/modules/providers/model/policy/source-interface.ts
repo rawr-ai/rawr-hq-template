@@ -48,7 +48,9 @@ export const MAX_SELECTED_CONTENT_MEMBER_PAYLOAD_BYTES = MAX_PAYLOAD_BYTES_PER_M
 export const MAX_NATIVE_MARKETPLACE_MANIFEST_BYTES = 2 * 1024 * 1024;
 
 /** Fixed release-input path admitted by Provider selection. */
-export const SELECTED_CONTENT_RELEASE_INPUT_PATH = requireReleasePath(".rawr/release-input.json");
+export const SELECTED_CONTENT_RELEASE_INPUT_PATH = requireReleasePath(
+  ".habitat/release-input.json"
+);
 
 /** Fixed agent-plugin source root admitted by Provider selection. */
 export const SELECTED_CONTENT_PLUGIN_ROOT = requireReleasePath("plugins/agents");

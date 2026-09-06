@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 2,
+  "id": "require_agent_plugin_lifecycle_projection",
+  "title": "Require Agent Plugin Lifecycle Public Projection",
+  "placement": { "niche": "agent-plugin-lifecycle", "blueprint": "_self", "category": "boundary" },
+  "operation": { "kind": "check" },
+  "ownerProject": "@habitat-ai/plugin-agent-plugins",
+  "lane": "enforced",
+  "forbids": "a foreign native command ID or alias, direct lifecycle client construction, private lifecycle implementation acquisition, or a second service-use owner",
+  "why": "The topic adapts native CLI inputs into one managed public lifecycle client. The service owns domain validation and operations; the app owns resources and process startup.",
+  "remediate": "Use the exact native SDK command IDs, declare the single public serviceRuntimeExport use in services.ts, and import lifecycle values and types only from the public client face.",
+  "message": "Agent-plugin commands must remain exact native projections of the public lifecycle service.",
+  "pathCoverage": [
+    { "kind": "exact-path", "patterns": ["plugins/cli/topics/agent-plugins/src/**/*.ts"] }
+  ],
+  "hookCheck": true,
+  "supportFiles": {
+    "baseline": ".habitat/overlays/agent-plugin-lifecycle/rules/require_agent_plugin_lifecycle_projection/baseline.json"
+  },
+  "runner": {
+    "name": "grit",
+    "files": {
+      "pattern": ".habitat/overlays/agent-plugin-lifecycle/rules/require_agent_plugin_lifecycle_projection/pattern.md"
+    },
+    "patternName": "require_agent_plugin_lifecycle_projection",
+    "acquisition": { "kind": "check", "roots": ["plugins/cli/topics/agent-plugins/src"] }
+  }
+}

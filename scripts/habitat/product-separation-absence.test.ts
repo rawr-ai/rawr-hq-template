@@ -31,6 +31,7 @@ const EXPECTED_PROJECT_ROOTS = {
   "provider-filesystem-effect-platform-node": "resources/filesystem/providers/effect-platform-node",
   "@habitat-ai/resource-filesystem": "resources/filesystem",
   "@habitat-ai/plugin-foundation": "plugins/cli/topics/foundation",
+  "@habitat-ai/plugin-agent-plugins": "plugins/cli/topics/agent-plugins",
   "provider-agent-plugin-package-output-cowork-v1-effect-platform-node":
     "resources/agent-plugin-package-output/providers/cowork-v1-effect-platform-node",
   "provider-native-agent-provider-claude-effect-platform-node":
@@ -91,6 +92,7 @@ const EXPECTED_SDK_DEPENDENTS = [
   "@habitat-ai/agent-plugin-lifecycle-service",
   "@habitat-ai/catalog-service",
   "@habitat-ai/cli",
+  "@habitat-ai/plugin-agent-plugins",
   "@habitat-ai/plugin-foundation",
   "@habitat-ai/resource-filesystem",
   "@habitat-ai/resource-rule-evaluation",

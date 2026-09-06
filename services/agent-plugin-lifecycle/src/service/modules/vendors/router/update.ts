@@ -1,5 +1,5 @@
 import type { ContentWorkspaceCapture } from "@habitat-ai/resource-content-workspace";
-import { Effect } from "effect";
+import { Clock, Effect } from "effect";
 
 import {
   MAX_PAYLOAD_BYTES_PER_MEMBER,
@@ -343,10 +343,15 @@ export const update = module.update.effect(function* ({ context, input: request 
       );
       continue;
     }
-    let observedAt: Date;
-    try {
-      observedAt = context.clock.now();
-    } catch {
+    const observedAt = yield* Effect.result(
+      Clock.clockWith((clock) =>
+        Effect.try({
+          try: () => new Date(clock.currentTimeMillisUnsafe()),
+          catch: () => "ClockReadFailed" as const,
+        })
+      )
+    );
+    if (observedAt._tag === "Failure") {
       preparationIssues.push(
         vendorIssue(
           "RuntimeFailure",
@@ -360,7 +365,7 @@ export const update = module.update.effect(function* ({ context, input: request 
       candidate.source,
       candidate.upstream,
       materializedAttempt.success,
-      observedAt
+      observedAt.success
     );
     if (!prepared.ok) {
       preparationIssues.push(...prepared.issues);

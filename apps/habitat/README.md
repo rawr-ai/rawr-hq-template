@@ -15,6 +15,26 @@ habitat plugins --help
 `@oclif/plugin-plugins` owns listing, installation, linking, inspection,
 updates, reset, uninstallation, aliases, and its native per-user state.
 
+## Curated Agent Plugins
+
+`habitat agent plugins check|package|status|sync|test|vendors update` projects
+the platform lifecycle service. Use each command's native `--help` for its
+closed request shape. Content repositories, immutable Git identities, provider
+homes and package outputs are explicit inputs, not executable plugin discovery.
+
+Current-main consumes `.habitat/agent-plugin-lifecycle/channels/current-main.json`
+and the selected commit's `.habitat/release-input.json`. Older `.rawr` paths are
+not fallback aliases. Publishing these records in Marketplace is a separate
+repository-owner adoption action; installing the CLI does not migrate them.
+
+Technical telemetry defaults to disabled. `HABITAT_TELEMETRY` accepts explicit
+JSON matching the SDK's `OpenTelemetryNodeConfigSchema`, excluding
+`processIdentity`, which the app supplies. Enabled configuration specifies all
+three OTLP HTTP signal URLs, headers, timeouts and export settings. It is read
+only after native command admission; help and parser refusals acquire nothing.
+Telemetry configures transport, not a HyperDX/ClickHouse backend or product
+analytics pipeline.
+
 ## Create A Repository
 
 Nx invokes the package's Bun-only `preset` generator while creating the workspace:

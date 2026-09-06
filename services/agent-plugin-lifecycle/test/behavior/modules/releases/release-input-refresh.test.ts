@@ -39,7 +39,7 @@ const memberIds = [
   "search",
   "slides",
 ].map((memberId) => parsed(parsePluginId(memberId)));
-const releaseInputPath = parsed(parseReleaseRelativePath(".rawr/release-input.json"));
+const releaseInputPath = parsed(parseReleaseRelativePath(".habitat/release-input.json"));
 const pluginRoot = parsed(parseReleaseRelativePath("plugins/agents"));
 const remoteUrl = "https://example.invalid/marketplace-content.git";
 

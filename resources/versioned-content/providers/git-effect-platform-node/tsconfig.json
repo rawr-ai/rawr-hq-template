@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "files": ["index.ts"]
+  "files": ["index.ts", "runtime.ts"]
 }

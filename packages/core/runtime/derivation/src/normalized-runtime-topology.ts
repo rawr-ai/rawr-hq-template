@@ -67,6 +67,14 @@ export const NormalizedResourceRequirementIdentitySchema = ReadonlyObject(
 export const NormalizedRuntimeTopologyEdgeSchema = Type.Union([
   ReadonlyObject(
     Type.Object({
+      kind: Type.Literal("process.resource"),
+      processId: Type.String(),
+      resource: NormalizedResourceRequirementIdentitySchema,
+    }),
+    closed
+  ),
+  ReadonlyObject(
+    Type.Object({
       kind: Type.Literal("app.plugin"),
       appId: Type.String(),
       plugin: NormalizedPluginIdentitySchema,
@@ -171,6 +179,8 @@ function resourceTuple(resource: NormalizedResourceRequirementIdentity): Tuple {
 
 function edgeTuple(edge: NormalizedRuntimeTopologyEdge): Tuple {
   switch (edge.kind) {
+    case "process.resource":
+      return [edge.kind, edge.processId, ...resourceTuple(edge.resource)];
     case "app.plugin":
       return [edge.kind, edge.appId, edge.plugin.pluginId, edge.plugin.instance ?? ""];
     case "plugin.resource":
@@ -323,6 +333,22 @@ export function deriveNormalizedRuntimeTopology(input: {
     addUniqueTuple(roleKeys, [role], "process role");
   }
 
+  for (const requirement of entrypoint.process.resourceRequirements ?? []) {
+    if (requirement.role !== undefined && !roleKeys.has(tupleKey([requirement.role]))) {
+      refuse("process resource has an unselected role");
+    }
+    addEdge({
+      kind: "process.resource",
+      processId: entrypoint.process.id,
+      resource: {
+        resourceId: requirement.resource.id,
+        lifetime: requirement.lifetime ?? requirement.resource.defaultLifetime,
+        ...(requirement.role === undefined ? {} : { role: requirement.role }),
+        ...(requirement.instance === undefined ? {} : { instance: requirement.instance }),
+      },
+    });
+  }
+
   const serviceRoots: ServiceRuntimeExport[] = [];
 
   for (const plugin of entrypoint.app.plugins) {
@@ -394,7 +420,7 @@ export function deriveNormalizedRuntimeTopology(input: {
   edges.sort((left, right) => compareTuples(edgeTuple(left), edgeTuple(right)));
   const resourceRequirementIdentities = new Map<string, NormalizedResourceRequirementIdentity>();
   for (const edge of edges) {
-    if (edge.kind !== "plugin.resource") continue;
+    if (edge.kind !== "plugin.resource" && edge.kind !== "process.resource") continue;
     const key = tupleKey(resourceTuple(edge.resource));
     if (!resourceRequirementIdentities.has(key)) {
       resourceRequirementIdentities.set(key, edge.resource);

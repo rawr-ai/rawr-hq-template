@@ -57,9 +57,9 @@
 ## Command Surface Policy
 
 - Current external CLI plugin channel: `habitat plugins ...`
-- Curated agent-plugin lifecycle has no current CLI projection in this
-  repository. Task 12.1 must land its Habitat command, manifest, profile, and
-  policy together before `habitat agent plugins ...` becomes operational.
+- Curated agent-plugin lifecycle belongs to `habitat agent plugins
+  check|package|status|sync|test|vendors update`, projected by the app-selected
+  private `@habitat-ai/plugin-agent-plugins` topic through its one managed service.
 - No Rawr alias or premature Habitat route is admitted.
 - Product composition, web hosts, and runtime mounting consume these lifecycle
   commands and cannot own either channel.

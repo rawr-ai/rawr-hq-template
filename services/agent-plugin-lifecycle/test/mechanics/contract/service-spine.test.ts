@@ -6,10 +6,6 @@ import { router } from "../../../src/service/router";
 import { testRequest } from "../../support/modules/providers/fixture";
 import {
   createLifecycleTestClient,
-  createTestAnalytics,
-  createTestLogger,
-  type TestAnalyticsEntry,
-  type TestLogEntry,
   testInvocation,
   unavailableContentWorkspace,
 } from "../../support/service/client";
@@ -61,7 +57,7 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       }),
     });
     const releaseInputPath = parseReleaseRelativePath(
-      ".rawr/release-input.json",
+      ".habitat/release-input.json",
       "contentWorkspace.releaseInputPath"
     );
     if (!releaseInputPath.ok) throw new Error("Invalid service-spine release-input fixture");
@@ -84,15 +80,9 @@ describe("agent plugin lifecycle oRPC service spine", () => {
     expect(Object.keys(router.providers).sort()).toEqual(["status", "sync", "test"]);
   });
 
-  it("preserves baseline analytics and logging around Effect-backed procedures", async () => {
-    const analyticsEntries: TestAnalyticsEntry[] = [];
-    const logEntries: TestLogEntry[] = [];
-    const client = createLifecycleTestClient({
-      analytics: createTestAnalytics({ sink: analyticsEntries }),
-      logger: createTestLogger({ sink: logEntries }),
-    });
-
-    await client.releases.releaseInputRecord(
+  it("runs a pure Effect-backed procedure without synthetic telemetry dependencies", async () => {
+    const client = createLifecycleTestClient();
+    const result = await client.releases.releaseInputRecord(
       {
         kind: "encode-body",
         body: productFixture().releaseInput.body,
@@ -100,36 +90,9 @@ describe("agent plugin lifecycle oRPC service spine", () => {
       testInvocation
     );
 
-    const procedureAnalytics = analyticsEntries.filter(
-      (entry) =>
-        entry.event === "orpc.procedure" && entry.payload.path === "releases.releaseInputRecord"
-    );
-    const procedureLogs = logEntries.filter(
-      (entry) =>
-        entry.event === "agent-plugin-lifecycle.procedure" &&
-        entry.payload.path === "releases.releaseInputRecord"
-    );
-
-    expect(procedureAnalytics).toHaveLength(1);
-    expect(procedureAnalytics[0]).toEqual({
-      event: "orpc.procedure",
-      payload: expect.objectContaining({
-        app: "agent-plugin-lifecycle",
-        path: "releases.releaseInputRecord",
-        outcome: "success",
-        analytics_trace_id: "trace-agent-plugin-lifecycle-test",
-        analytics_command_id: "command-agent-plugin-lifecycle-test",
-      }),
-    });
-    expect(procedureLogs).toHaveLength(1);
-    expect(procedureLogs[0]).toEqual({
-      level: "info",
-      event: "agent-plugin-lifecycle.procedure",
-      payload: expect.objectContaining({
-        path: "releases.releaseInputRecord",
-        outcome: "success",
-        domain: "agent-plugin-lifecycle",
-      }),
-    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Expected canonical release input");
+    expect(result.value.bytes).toBeInstanceOf(Uint8Array);
+    expect(result.value.byteLength).toBe(result.value.bytes.byteLength);
   });
 });

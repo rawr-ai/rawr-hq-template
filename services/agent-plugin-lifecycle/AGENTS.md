@@ -108,9 +108,10 @@
   resources from inherited service dependencies. Its package handler owns
   source observation, derivation, encoding, revalidation, publication, and
   settlement order; pure policy classifies typed facts and public results.
-- Content-workspace, versioned-content, package-output, native-provider, and
-  clock mechanics remain behind host-supplied service dependencies. Vendors
-  owns how an admitted observation instant participates in vendor policy.
+- Content-workspace, versioned-content, package-output and native-provider
+  mechanics remain behind host-supplied service dependencies. Vendors reads
+  native Effect Clock only when preparing a materialized candidate and owns
+  how that admitted observation instant participates in vendor policy.
 - Pure deterministic byte policy may use a portable implementation directly;
   it must not create a resource or provider facade for computation without a
   runtime acquisition or lifecycle protocol.
@@ -151,15 +152,20 @@
 - The public client is the sole caller boundary. It deliberately exposes the
   service contract and bounded input admission without exposing the private
   router, host context lanes, schemas, model, or modules. Content workspace,
-  versioned content, the Vendors observation clock, package output, and ready
+  versioned content, package output, and ready
   native provider resources are host-supplied dependencies.
+- The same public face exports its cold service definition and sealed managed
+  constructor. Native process context owns tracing; unused Logger/Analytics
+  ports and synthetic invocation IDs are not required service dependencies.
+  Unmanaged callers may supply native `effect/context` through per-call options;
+  managed construction preserves the process-owned client assembly unchanged.
 
 ## Routing
 
 - [Repository router](../../AGENTS.md)
 - [Public client](src/client.ts)
 - [Private service contract](src/service/contract.ts)
-- [Service dependency boundary](src/service/base.ts)
+- [Service context boundary](src/service/base.ts)
 - [Native-provider resource contract](../../resources/native-agent-provider/contract.ts)
 
 ## Validation

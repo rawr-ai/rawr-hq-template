@@ -8,11 +8,22 @@
     "directory": "resources/agent-plugin-package-output"
   },
   "files": [
+    "dist",
     "contract.ts",
-    "providers/cowork-v1-effect-platform-node/index.ts"
+    "runtime.ts",
+    "providers/cowork-v1-effect-platform-node/index.ts",
+    "providers/cowork-v1-effect-platform-node/runtime.ts"
   ],
   "type": "module",
   "exports": {
+    "./runtime": {
+      "types": "./dist/runtime.d.ts",
+      "default": "./dist/runtime.js"
+    },
+    "./providers/cowork-v1-effect-platform-node/runtime": {
+      "types": "./dist/providers/cowork-v1-effect-platform-node/runtime.d.ts",
+      "default": "./dist/providers/cowork-v1-effect-platform-node/runtime.js"
+    },
     ".": {
       "types": "./contract.ts",
       "default": "./contract.ts"
@@ -27,6 +38,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@habitat-ai/sdk": "workspace:*",
     "@effect/platform-node": "4.0.0-beta.101",
     "effect": "4.0.0-beta.101",
     "yazl": "^3.3.1"

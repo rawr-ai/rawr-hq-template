@@ -8,6 +8,7 @@ import type {
 import type { NormalizedRuntimeConfigRef, ServiceBindingPlan } from "./service-binding-plan";
 
 type ResourceRequirementOwnerInput =
+  | { readonly kind: "process"; readonly processId: string }
   | { readonly kind: "plugin"; readonly pluginOwnerId: string }
   | { readonly kind: "service"; readonly serviceId: string; readonly localName: string }
   | { readonly kind: "provider"; readonly providerId: string };

@@ -2,11 +2,8 @@ import { once } from "node:events";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { Effect } from "effect";
+import { Value } from "typebox/value";
 import { expect, test } from "vitest";
-import type { FlushTelemetryInput } from "../../../../resources/telemetry/contract";
-import { decodeOpenTelemetryNodeConfig } from "../../../../resources/telemetry/providers/opentelemetry-node/index";
-import { defineOpenTelemetryNodeRuntimeProvider } from "../../../../resources/telemetry/providers/opentelemetry-node/runtime";
-import { TelemetryRuntimeResource } from "../../../../resources/telemetry/runtime";
 import { orderBootgraph } from "../../runtime/bootgraph/src/index";
 import { compileRuntimePlan } from "../../runtime/compiler/src/index";
 import {
@@ -24,7 +21,14 @@ import {
   runtimeLaunchIdentity,
 } from "../../runtime/definition/src/index";
 import { deriveRuntimeArtifacts } from "../../runtime/derivation/src/index";
+import { createProcessRuntime } from "../../runtime/process-runtime/src/create-process-runtime";
 import { provisionProcess } from "../../runtime/substrate/effect/src/index";
+import {
+  defineOpenTelemetryNodeRuntimeProvider,
+  type FlushTelemetryInput,
+  OpenTelemetryNodeConfigSchema,
+  TelemetryRuntimeResource,
+} from "../src/telemetry";
 
 async function receiveOtlp() {
   const requests: { readonly path: string; readonly body: string }[] = [];
@@ -63,7 +67,8 @@ function configuration(endpoint: string, enabled = true) {
     headers: {},
     timeoutMilliseconds: 500,
   });
-  return decodeOpenTelemetryNodeConfig(
+  return Value.Decode(
+    OpenTelemetryNodeConfigSchema,
     enabled
       ? {
           enabled,
@@ -81,7 +86,11 @@ function configuration(endpoint: string, enabled = true) {
 }
 
 /** Only compiled artifacts, exact requirement references and counters leave authoring. */
-function produceTelemetryFixture(releaseDeadline: () => FlushTelemetryInput, failAfter = false) {
+function produceTelemetryFixture(
+  releaseDeadline: () => FlushTelemetryInput,
+  failAfter = false,
+  demand: "plugins" | "process" = "plugins"
+) {
   const serverRequirement = requireResource({
     resource: TelemetryRuntimeResource,
     reason: "server technical telemetry",
@@ -129,13 +138,18 @@ function produceTelemetryFixture(releaseDeadline: () => FlushTelemetryInput, fai
     surface: "server/api",
     capability: "telemetry",
     services: {},
-    resourceRequirements: failAfter ? [serverRequirement, laterRequirement] : [serverRequirement],
+    resourceRequirements:
+      demand === "process"
+        ? []
+        : failAfter
+          ? [serverRequirement, laterRequirement]
+          : [serverRequirement],
     project: () => ({ kind: "plugin.projection", facts: {} }),
   });
   const asyncPlugin = defineAsyncWorkflowPlugin.factory()({
     capability: "telemetry",
     services: {},
-    resourceRequirements: [asyncRequirement],
+    resourceRequirements: demand === "process" ? [] : [asyncRequirement],
     workflows: [],
   })();
   const app = defineApp({ id: "telemetry-proof", plugins: [server, asyncPlugin] });
@@ -154,7 +168,11 @@ function produceTelemetryFixture(releaseDeadline: () => FlushTelemetryInput, fai
     ],
   });
   const processDefinition = defineProcessCatalog({
-    cohost: { id: "cohost", roles: ["server", "async"] },
+    cohost: {
+      id: "cohost",
+      roles: ["server", "async"],
+      resourceRequirements: demand === "process" ? [serverRequirement] : [],
+    },
   }).cohost;
   const entrypoint = defineEntrypoint({
     id: "cohost",
@@ -169,11 +187,11 @@ function produceTelemetryFixture(releaseDeadline: () => FlushTelemetryInput, fai
       source: "sdk-telemetry-proof",
     }),
   });
-  const compilation = compileRuntimePlan({
-    derivation: deriveRuntimeArtifacts({ entrypoint, profileId: profile.id }),
-  });
+  const derivation = deriveRuntimeArtifacts({ entrypoint, profileId: profile.id });
+  const compilation = compileRuntimePlan({ derivation });
   return {
     compilation,
+    derivation,
     bootgraph: orderBootgraph(compilation.plan.bootgraphInput),
     serverRequirement,
     asyncRequirement,
@@ -307,6 +325,76 @@ test("disabled telemetry stays inert through the same real pipeline", async () =
     }
     expect(deadlineCalls).toBe(1);
     expect(receiver.requests).toEqual([]);
+  } finally {
+    await receiver.close();
+  }
+});
+
+test("public telemetry declarations provision from process demand without leaking into plugin access", async () => {
+  const receiver = await receiveOtlp();
+  try {
+    let deadlines = 0;
+    const fixture = produceTelemetryFixture(
+      () => {
+        deadlines++;
+        return { deadlineMonotonicMilliseconds: performance.now() + 2_000 };
+      },
+      false,
+      "process"
+    );
+    expect(fixture.compilation.plan.resourceRequirements).toHaveLength(1);
+    expect(fixture.compilation.plan.resourceRequirements[0]?.owner).toEqual({
+      kind: "process",
+      processId: "cohost",
+    });
+    expect(fixture.compilation.plan.compiledResources).toHaveLength(1);
+    expect(deadlines).toBe(0);
+    const ready = await provisionProcess({
+      ...fixture,
+      sources: { appRoot: tmpdir(), test: { telemetry: configuration(receiver.endpoint) } },
+    });
+    try {
+      const runtime = await createProcessRuntime({
+        compilation: fixture.compilation,
+        provisioned: ready,
+        descriptorTable: fixture.derivation.executionDescriptorTable,
+      });
+      try {
+        const value = ready.processResources.get(fixture.serverRequirement);
+        expect(value.availability).toBe("available");
+        const surface = fixture.compilation.plan.surfaces.find(({ role }) => role === "server");
+        if (surface === undefined) throw new Error("Expected the selected server surface.");
+        runtime.lower(surface, {
+          role: "server",
+          surface: surface.surface,
+          harness: "access-proof",
+          lower({ resources }) {
+            expect(() => resources.has(fixture.serverRequirement)).toThrow(TypeError);
+            expect(() => resources.get(fixture.serverRequirement)).toThrow(TypeError);
+            return { payload: undefined, payloadSchemas: [], findings: [], observations: [] };
+          },
+        });
+        await ready.managedRuntime.run(
+          value.emitTechnicalLog({
+            severity: "info",
+            eventName: "sdk.process-telemetry",
+            message: "Process-root public declaration receipt",
+            attributes: {},
+          })
+        );
+      } finally {
+        await runtime.stop();
+        await runtime.stop();
+      }
+      expect(deadlines).toBe(1);
+      expect(
+        receiver.requests.some(
+          ({ path, body }) => path === "/v1/logs" && body.includes("sdk.process-telemetry")
+        )
+      ).toBe(true);
+    } finally {
+      await ready.managedRuntime.dispose();
+    }
   } finally {
     await receiver.close();
   }

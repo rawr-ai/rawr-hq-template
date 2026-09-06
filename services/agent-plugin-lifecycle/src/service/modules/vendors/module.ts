@@ -7,7 +7,6 @@ import { service } from "../../impl";
 export const module = service.vendors.use(async ({ context, next }) =>
   next({
     context: {
-      clock: context.deps.clock,
       contentWorkspace: context.deps.contentWorkspace,
       versionedContent: context.deps.versionedContent,
     },

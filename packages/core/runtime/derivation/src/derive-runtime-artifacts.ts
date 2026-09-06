@@ -1228,6 +1228,20 @@ export function deriveRuntimeArtifacts(input: RuntimeDerivationInput): RuntimeDe
   const visitedRelations = new Set<string>();
   const roles = new Set(topology.roleRequirements);
 
+  for (const authored of entrypoint.process.resourceRequirements ?? []) {
+    const requirement = normalizedRequirement(authored, {
+      kind: "process",
+      processId: entrypoint.process.id,
+    });
+    insertUnique(
+      resourceRequirements,
+      requirement.requirementId,
+      requirement,
+      "process resource requirement identity"
+    );
+    resourceReferences.set(requirement.requirementId, authored);
+  }
+
   for (const definition of entrypoint.app.plugins) {
     if (!roles.has(definition.role)) continue;
     const identity = Object.freeze({

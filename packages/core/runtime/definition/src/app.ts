@@ -1,5 +1,6 @@
 import type { PluginDefinition } from "./plugin";
 import type { RuntimeProfile } from "./profile";
+import type { ResourceRequirement } from "./resource";
 
 export type AppRole = "server" | "async" | "cli" | "web" | "agent" | "desktop";
 
@@ -30,6 +31,7 @@ export interface ProcessDefinition<
   readonly id: TId;
   readonly roles: TRoles;
   readonly harness?: string;
+  readonly resourceRequirements?: readonly ResourceRequirement[];
 }
 
 export type ProcessCatalog<
@@ -45,12 +47,15 @@ type ProcessCatalogInput = Readonly<
       id: string;
       roles: readonly AppRole[];
       harness?: string;
+      resourceRequirements?: readonly ResourceRequirement[];
     }>
   >
 >;
 
 type DefinedProcessCatalog<TInput extends ProcessCatalogInput> = Readonly<{
-  [TKey in keyof TInput]: ProcessDefinition<TInput[TKey]["id"], TInput[TKey]["roles"]>;
+  [TKey in keyof TInput]: ProcessDefinition<TInput[TKey]["id"], TInput[TKey]["roles"]> & {
+    readonly resourceRequirements: readonly ResourceRequirement[];
+  };
 }>;
 
 export function defineProcessCatalog<const TInput extends ProcessCatalogInput>(
@@ -63,6 +68,7 @@ export function defineProcessCatalog<const TInput extends ProcessCatalogInput>(
         Object.freeze({
           id: process.id,
           roles: Object.freeze([...process.roles]),
+          resourceRequirements: Object.freeze([...(process.resourceRequirements ?? [])]),
           ...(process.harness === undefined ? {} : { harness: process.harness }),
         }),
       ])

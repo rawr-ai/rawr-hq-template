@@ -74,7 +74,7 @@ const contentWorkspace = Object.freeze({
   refName: "refs/heads/main",
   sourceCommit: "a".repeat(40),
   sourceTree: "b".repeat(40),
-  releaseInputPath: ".rawr/release-input.json",
+  releaseInputPath: ".habitat/release-input.json",
   pluginRoot: "plugins/agent",
 });
 const releaseDigest = `rd1_${"c".repeat(64)}`;
@@ -337,8 +337,8 @@ describe("release procedure schema boundary", () => {
       { ...contentWorkspace, sourceCommit: "A".repeat(40) },
       { ...contentWorkspace, sourceCommit: "a".repeat(41) },
       { ...contentWorkspace, sourceTree: "b".repeat(63) },
-      { ...contentWorkspace, releaseInputPath: "/.rawr/release-input.json" },
-      { ...contentWorkspace, releaseInputPath: ".rawr/../release-input.json" },
+      { ...contentWorkspace, releaseInputPath: "/.habitat/release-input.json" },
+      { ...contentWorkspace, releaseInputPath: ".habitat/../release-input.json" },
       { ...contentWorkspace, releaseInputPath: "release:input.json" },
       { ...contentWorkspace, pluginRoot: "plugins\\agents" },
       { ...contentWorkspace, pluginRoot: "plugins/agents/" },
@@ -501,7 +501,7 @@ describe("release procedure schema boundary", () => {
       Value.Check(ReleaseInputRecordInputSchema, {
         kind: "encode-body",
         body: {},
-        path: ".rawr/release-input.json",
+        path: ".habitat/release-input.json",
       })
     ).toBe(false);
 
@@ -540,7 +540,7 @@ describe("release procedure schema boundary", () => {
       })
     ).toBe(false);
 
-    const invalidInputs = [{ kind: "encode-body", body: {}, path: ".rawr/release-input.json" }];
+    const invalidInputs = [{ kind: "encode-body", body: {}, path: ".habitat/release-input.json" }];
     for (const candidate of invalidInputs) {
       const validated = await standard(ReleaseInputRecordInputSchema)["~standard"].validate(
         candidate
@@ -618,7 +618,7 @@ describe("release procedure schema boundary", () => {
     expect(
       Value.Check(ReleaseInputRefreshInputSchema, {
         ...request,
-        outputPath: ".rawr/release-input.json",
+        outputPath: ".habitat/release-input.json",
       })
     ).toBe(false);
 

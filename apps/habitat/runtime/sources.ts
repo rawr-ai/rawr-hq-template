@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import type { StartAppOptions } from "@habitat-ai/sdk/app";
@@ -24,11 +25,44 @@ export function runtimeSources(appRoot: string, workspaceRoot: string): StartApp
         },
       },
       "habitat.source-inventory": {},
+      "habitat.telemetry": telemetryConfiguration(),
       "habitat.rule-evaluation": {
         command: process.platform === "win32" ? "node" : gritEntrypoint,
         args: process.platform === "win32" ? [gritEntrypoint] : [],
         timeoutMs,
       },
+    },
+  };
+}
+
+function telemetryConfiguration(): unknown {
+  const raw = process.env.HABITAT_TELEMETRY;
+  let value: unknown = { enabled: false };
+  if (raw !== undefined) {
+    try {
+      value = JSON.parse(raw);
+    } catch {
+      throw new TypeError("HABITAT_TELEMETRY must contain valid JSON.");
+    }
+  }
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    Array.isArray(value) ||
+    "processIdentity" in value
+  ) {
+    throw new TypeError(
+      "HABITAT_TELEMETRY must be a provider configuration without processIdentity."
+    );
+  }
+  // The provider validates its own configuration; deployment identity belongs to the app.
+  return {
+    ...value,
+    processIdentity: {
+      serviceName: "habitat",
+      processRole: "cli",
+      deploymentEnvironment: "local",
+      processInstanceId: randomUUID(),
     },
   };
 }

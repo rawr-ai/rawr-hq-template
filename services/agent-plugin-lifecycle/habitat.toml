@@ -2,7 +2,7 @@ schemaVersion = 1
 id = "@habitat-ai/agent-plugin-lifecycle-service"
 ownerProject = "@habitat-ai/agent-plugin-lifecycle-service"
 blueprint = "service"
-blueprintVersion = 3
+blueprintVersion = 4
 
 [roots]
 project = "services/agent-plugin-lifecycle"

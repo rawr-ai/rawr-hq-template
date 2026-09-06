@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "files": ["../../contract.ts", "../effect-platform-node-shared.ts", "index.ts"]
+  "files": ["../../contract.ts", "../effect-platform-node-shared.ts", "index.ts", "runtime.ts"]
 }

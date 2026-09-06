@@ -1,7 +1,7 @@
 import { Command, Flags } from "@oclif/core";
 import { writeJsonResult } from "./lib/output.js";
 
-/** Normalized values for the shared machine-output and mutation-control flags. */
+/** Normalized machine output and explicitly opted-in mutation controls. */
 export type HabitatBaseFlags = {
   json: boolean;
   dryRun: boolean;
@@ -33,13 +33,6 @@ export type HabitatResult<TData = unknown> =
 export abstract class HabitatCommand extends Command {
   static baseFlags = {
     json: Flags.boolean({ description: "Output machine-readable JSON" }),
-    "dry-run": Flags.boolean({
-      description: "Print actions without making any changes",
-    }),
-    yes: Flags.boolean({
-      char: "y",
-      description: "Assume yes for prompts/confirmation",
-    }),
   } as const;
 
   protected ok<TData>(

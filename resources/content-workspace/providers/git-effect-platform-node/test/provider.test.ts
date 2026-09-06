@@ -16,9 +16,10 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { NodeFileSystem } from "@effect/platform-node";
+import { NodeServices } from "@effect/platform-node";
 import type { ContentWorkspaceFailure } from "@habitat-ai/resource-content-workspace";
 import { Cause, Effect, Exit, Fiber, FileSystem, PlatformError } from "effect";
+import type { ChildProcessSpawner } from "effect/unstable/process";
 import { makeContentWorkspaceResource, makeNodeContentWorkspaceResource } from "../index";
 
 type NodeContentWorkspaceResult<A> =
@@ -26,7 +27,11 @@ type NodeContentWorkspaceResult<A> =
   | Readonly<{ ok: false; failure: ContentWorkspaceFailure }>;
 
 function runNodeContentWorkspace<A>(
-  operation: Effect.Effect<A, ContentWorkspaceFailure, FileSystem.FileSystem>,
+  operation: Effect.Effect<
+    A,
+    ContentWorkspaceFailure,
+    FileSystem.FileSystem | ChildProcessSpawner.ChildProcessSpawner
+  >,
   transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem = (base) => base
 ): Promise<NodeContentWorkspaceResult<A>> {
   return Effect.runPromise(
@@ -40,13 +45,13 @@ function runNodeContentWorkspace<A>(
 }
 
 function provideTransformedNodeFileSystem<A, E>(
-  operation: Effect.Effect<A, E, FileSystem.FileSystem>,
+  operation: Effect.Effect<A, E, FileSystem.FileSystem | ChildProcessSpawner.ChildProcessSpawner>,
   transform: (base: FileSystem.FileSystem) => FileSystem.FileSystem
 ): Effect.Effect<A, E> {
   return Effect.gen(function* () {
     const base = yield* FileSystem.FileSystem;
     return yield* operation.pipe(Effect.provideService(FileSystem.FileSystem, transform(base)));
-  }).pipe(Effect.provide(NodeFileSystem.layer));
+  }).pipe(Effect.provide(NodeServices.layer));
 }
 
 const gitExecutable = requireExecutable("git");
@@ -2796,12 +2801,16 @@ describe("Git Effect Platform content workspace provider", () => {
     expect(records.some((record) => record.includes("|rev-parse"))).toBe(true);
   });
 
-  test("reports an unavailable Git command as a typed provider failure", async () => {
+  test.each([
+    "rawr-git-command-not-found",
+    "",
+    "invalid\u0000git",
+  ])("reports unavailable or invalid Git command %j as a typed provider failure", async (gitExecutable) => {
     const root = await createRepository();
     const result = await Effect.runPromise(
       Effect.result(
         makeNodeContentWorkspaceResource({
-          gitExecutable: "rawr-git-command-not-found",
+          gitExecutable,
         }).inspectGitWorkspace({
           locator: root,
           remoteSelection: { kind: "All" },
@@ -2818,6 +2827,119 @@ describe("Git Effect Platform content workspace provider", () => {
       path: root,
     });
   });
+
+  test.skipIf(process.platform === "win32")(
+    "waits for native child exit and delayed SIGTERM cleanup before interruption settles",
+    {
+      timeout: 10_000,
+    },
+    async () => {
+      const root = await createFixtureDirectory();
+      const wrapper = path.join(root, "delayed-git");
+      const ready = path.join(root, "ready.json");
+      const events = path.join(root, "events.log");
+      const heartbeat = path.join(root, "heartbeat");
+      await writeFile(
+        wrapper,
+        [
+          `#!${nativeNodeExecutable()}`,
+          'const fs = require("node:fs");',
+          `const events = ${JSON.stringify(events)};`,
+          'process.once("SIGTERM", () => {',
+          '  fs.appendFileSync(events, "term\\n");',
+          '  setTimeout(() => { fs.appendFileSync(events, "cleanup\\n"); process.exit(0); }, 350);',
+          "});",
+          "let count = 0;",
+          `setInterval(() => fs.writeFileSync(${JSON.stringify(heartbeat)}, String(++count)), 10);`,
+          'fs.appendFileSync(events, "ready\\n");',
+          `fs.writeFileSync(${JSON.stringify(ready)}, JSON.stringify({ pid: process.pid, cwd: process.cwd(), args: process.argv.slice(2) }));`,
+          "setTimeout(() => process.exit(94), 5_000);",
+          "",
+        ].join("\n"),
+        { mode: 0o755 }
+      );
+      const fiber = Effect.runFork(
+        makeNodeContentWorkspaceResource({ gitExecutable: wrapper }).inspectWorkspace({
+          locator: root,
+        })
+      );
+      let pid: number | undefined;
+      try {
+        await waitForFile(ready);
+        const launch: unknown = JSON.parse(await readFile(ready, "utf8"));
+        if (
+          typeof launch !== "object" ||
+          launch === null ||
+          !("pid" in launch) ||
+          typeof launch.pid !== "number" ||
+          !Number.isSafeInteger(launch.pid) ||
+          launch.pid <= 0
+        ) {
+          throw new Error("Owned Git child did not report a valid process ID");
+        }
+        pid = launch.pid;
+        expect(launch).toMatchObject({ cwd: root, args: ["rev-parse", "--show-toplevel"] });
+        await Effect.runPromise(Fiber.interrupt(fiber));
+        const exit = await Effect.runPromise(Fiber.await(fiber));
+        expect(Exit.isFailure(exit) && Cause.hasInterrupts(exit.cause)).toBe(true);
+        expect(await readFile(events, "utf8")).toBe("ready\nterm\ncleanup\n");
+        expect(processExists(pid)).toBe(false);
+        const settledHeartbeat = await readFile(heartbeat, "utf8");
+        await Bun.sleep(50);
+        expect(await readFile(heartbeat, "utf8")).toBe(settledHeartbeat);
+      } finally {
+        await Effect.runPromise(Fiber.interrupt(fiber));
+        if (pid !== undefined) await waitForProcessExit(pid);
+      }
+    }
+  );
+
+  test.skipIf(process.platform === "win32")(
+    "keeps stdout and stderr bounds separate and preserves native nonzero failures",
+    async () => {
+      const root = await createFixtureDirectory();
+      const cases = [
+        {
+          name: "stdout",
+          script: "process.stdout.write(Buffer.alloc(1_048_577));",
+          reason: "LimitExceeded",
+          detail: "Git stdout exceeds 1048576 bytes",
+        },
+        {
+          name: "stderr",
+          script: "process.stderr.write(Buffer.alloc(65_537));",
+          reason: "LimitExceeded",
+          detail: "Git stderr exceeds 65536 bytes",
+        },
+        {
+          name: "exit",
+          script: 'process.stderr.write("native rejection\\n"); process.exitCode = 23;',
+          reason: "GitFailed",
+          detail: "native rejection",
+        },
+      ] as const;
+      for (const scenario of cases) {
+        const wrapper = path.join(root, `git-${scenario.name}`);
+        await writeFile(wrapper, `#!${nativeNodeExecutable()}\n${scenario.script}\n`, {
+          mode: 0o755,
+        });
+        const result = await runNodeContentWorkspace(
+          makeContentWorkspaceResource({ gitExecutable: wrapper }).inspectWorkspace({
+            locator: root,
+          })
+        );
+        expect(result).toMatchObject({
+          ok: false,
+          failure: {
+            operation: "inspect",
+            reason: scenario.reason,
+            path: root,
+            detail: scenario.detail,
+          },
+        });
+      }
+    }
+  );
 
   test("attributes capture anchor failures to the evidence operation", async () => {
     const root = await createRepository();
@@ -2844,6 +2966,41 @@ describe("Git Effect Platform content workspace provider", () => {
     });
   });
 });
+
+async function waitForFile(candidate: string): Promise<void> {
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    if (await Bun.file(candidate).exists()) return;
+    await Bun.sleep(10);
+  }
+  throw new Error(`Timed out waiting for owned child evidence: ${candidate}`);
+}
+
+function nativeNodeExecutable(): string {
+  const result = Bun.spawnSync([requireExecutable("node"), "--print", "process.execPath"], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
+  return new TextDecoder().decode(result.stdout).trim();
+}
+
+function processExists(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ESRCH")
+      return false;
+    throw error;
+  }
+}
+
+async function waitForProcessExit(pid: number): Promise<void> {
+  const deadline = Date.now() + 6_000;
+  while (processExists(pid) && Date.now() < deadline) await Bun.sleep(10);
+  if (processExists(pid)) throw new Error("Owned Git child remained live after interruption");
+}
 
 async function createRepository(objectFormat: "sha1" | "sha256" = "sha1"): Promise<string> {
   const root = await createFixtureDirectory();

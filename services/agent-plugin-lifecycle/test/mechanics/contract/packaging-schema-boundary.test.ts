@@ -27,7 +27,7 @@ const contentWorkspace = Object.freeze({
   refName: "refs/heads/main",
   sourceCommit: "a".repeat(40),
   sourceTree: "b".repeat(40),
-  releaseInputPath: ".rawr/release-input.json",
+  releaseInputPath: ".habitat/release-input.json",
   pluginRoot: "plugins/agent",
 });
 const release = Object.freeze({

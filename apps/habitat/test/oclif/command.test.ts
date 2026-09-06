@@ -12,6 +12,8 @@ const outputLines: string[] = [];
 class ContractProbe extends HabitatCommand {
   static flags = {
     ...HabitatCommand.baseFlags,
+    "dry-run": Flags.boolean(),
+    yes: Flags.boolean({ char: "y" }),
     fail: Flags.boolean(),
     human: Flags.boolean(),
   } as const;
@@ -47,7 +49,24 @@ afterEach(() => {
 });
 
 describe("Habitat command contract", () => {
-  it("normalizes shared flags and writes the stable JSON envelope", async () => {
+  it("advertises only JSON universally and rejects unowned mutation controls", async () => {
+    class UniversalProbe extends HabitatCommand {
+      async run() {
+        return this.parse(UniversalProbe);
+      }
+    }
+    expect(Object.keys(HabitatCommand.baseFlags)).toEqual(["json"]);
+    for (const flag of ["--dry-run", "--yes", "-y"]) {
+      await expect(UniversalProbe.run([flag])).rejects.toThrow();
+    }
+    expect(HabitatCommand.extractBaseFlags({ json: true })).toEqual({
+      json: true,
+      dryRun: false,
+      yes: false,
+    });
+  });
+
+  it("normalizes explicitly opted-in flags and writes the stable JSON envelope", async () => {
     const writes = captureStdoutWrites();
     const observed = await ContractProbe.run(["--json", "--dry-run", "-y"]);
 

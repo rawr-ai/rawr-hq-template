@@ -46,7 +46,7 @@ const repositoryIdentity = parsed(parseRepositoryIdentity("git:personal-rawr-hq"
 const contentAuthority = parsed(parseContentAuthority("personal-rawr-hq"));
 const headCommit = parsed(parseGitCommitId("a".repeat(40)));
 const headTree = parsed(parseGitTreeId("b".repeat(40)));
-const releaseInputPath = parsed(parseReleaseRelativePath(".rawr/release-input.json"));
+const releaseInputPath = parsed(parseReleaseRelativePath(".habitat/release-input.json"));
 const pluginRoot = parsed(parseReleaseRelativePath("plugins/agent"));
 const remoteUrl = "https://example.invalid/rawr-hq.git";
 const derivedPayloadPolicyCases = [
@@ -155,7 +155,8 @@ describe("releases.checkRepository", () => {
       refName: "refs/heads/main",
       headCommit,
       headTree,
-      stagedBinding: "a21eb32989f7b0d3c31b3f1d3130a72637b59638026e7586e29aeae279865dd0",
+      // The fixed .habitat release-input path participates in the object binding.
+      stagedBinding: "1cadae06f90070b788988da3389e5fc78a6873a22dc890956e4cfef4226a7fa0",
     });
     expect(selections).toEqual([
       { paths: [releaseInputPath], roots: [] },
@@ -681,7 +682,7 @@ describe("releases.checkRepository", () => {
       refName: "refs/heads/main",
       sourceCommit: headCommit,
       sourceTree: headTree,
-      eligibilityBinding: "550e725dfc307135fd1828e62ef41a3137f2765fa5688d0a321d4b9dfd67d0da",
+      eligibilityBinding: "ab615f9cc959174e87bbaade6db170d5b4c592c48d3459d9545f58863998f409",
     });
     expect(cleanReads).toBe(2);
     expect(stagedReads).toBe(0);
