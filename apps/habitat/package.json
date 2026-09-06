@@ -1,6 +1,6 @@
 {
   "name": "@habitat-ai/cli",
-  "version": "0.5.15",
+  "version": "0.6.0",
   "private": false,
   "repository": {
     "type": "git",
@@ -72,7 +72,7 @@
   "dependencies": {
     "@effect/platform-node": "4.0.0-beta.101",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
-    "@habitat-ai/sdk": "0.5.15",
+    "@habitat-ai/sdk": "0.6.0",
     "@nx/devkit": "23.1.1",
     "@oclif/core": "4.13.3",
     "@oclif/plugin-help": "^6.2.27",

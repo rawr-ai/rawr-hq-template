@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; task 12.1 submitted; task 12.2 fresh native developer-command integration.
-Branch: `agent-root-habitat-dev-runtime`, parent `agent-root-habitat-agent-plugin-runtime`.
+Status: `active`; runtime implementation submitted; paired 0.6.0 release preparation.
+Branch: `agent-root-habitat-runtime-release`, parent `agent-root-habitat-dev-runtime`.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -18,9 +18,19 @@ Built process isolation [1020](https://github.com/rawr-ai/rawr-hq-template/pull/
 Native CLI input admission [1023](https://github.com/rawr-ai/rawr-hq-template/pull/1023),
 candidate `5a55fd5fa`, includes the qualified installed-test lifetime repair.
 Agent-plugin integration [1024](https://github.com/rawr-ai/rawr-hq-template/pull/1024),
-amended candidate `47de460254742a6e728146fdcdb3ff3a9a28dbe5`, carries the
-qualified installed-helper and Windows workflow repair. Local full CI and
+amended candidate `42174ca12b332923c1f2a3ee388d5526d8955c17`, carries the
+qualified installed-helper, Windows environment and argument-transport repairs. Local full CI and
 installed/native acceptance are recorded below; remote requalification remains open.
+Developer commands [1025](https://github.com/rawr-ai/rawr-hq-template/pull/1025),
+candidate `60cd2d542f0208f514872e6f705b3d498c070e60`, requires resubmission. The parent
+backport leaves the qualified developer-command tree unchanged except this
+record's updated parent receipt.
+The fixture backport required one package-manifest ordering conflict resolution;
+the resulting release-tip tree is byte-identical to qualified local precursor
+`0cca8eaec6cc28e194473df2e44681cebe4745f7` before this receipt update. Parent
+repository check (135 tasks) and eight applicable helper tests pass.
+The later source-test case split is also backported; its second restack preserves
+the complete tip tree of `236e6584ea9be248151394c00cc5f521fd9bbac1` exactly.
 Workflow admission [1021](https://github.com/rawr-ai/rawr-hq-template/pull/1021),
 candidate `66397039ebdb18f84dcd4b21b7a94194eb7374ff`, merged as
 `18baa71dfbb6e62a3a0db98b619336e2a0ed1dce` on 2026-09-05.
@@ -114,7 +124,141 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: task 12.2's four retained developer commands, authored fresh from
+Current domino: prepare the public SDK/CLI pair as 0.6.0 through native Nx
+Release, qualify a real upgrade from the published 0.5.15 foundation, and admit
+the complete runtime stack. This new runtime capability warrants a minor
+version. At preparation, neither package version nor `habitat-cli-v0.6.0`
+exists in the public registry/remote. No tag or publication is authorized by a
+local version edit: exact-main qualification still precedes publication.
+
+Native `nx release version` owns the fixed pair and exact CLI-to-SDK pin;
+disable its staging, commit, tag and push options explicitly. Bun 1.3.14's
+native lockfile-only update left the SDK workspace's informational version at
+0.5.15, despite the changed manifest. Correct only that one field to 0.6.0 and
+verify frozen installation; preserve all resolved dependency records. Root's
+installed CLI and its registry SDK stay at 0.5.15 until the new pair is actually
+published, then receive their own ordinary adoption and verification.
+
+Release review covers artifact/public-face closure, native migration and
+idempotence, and the final task-15 scope. No source conversion is promised by
+an empty native package migration plan. No private runtime cohort is published.
+The conditional MCP attachment remains unsatisfied. D-1 through D-5 retain
+their independent acceptance, including backend observability; held source
+retirement and consumer product implementation are not release-prep shortcuts.
+
+Independent release review closes tasks 15.1, 15.2, 15.4 and 15.8: existing
+owner receipts cover current telemetry/lifecycle; four stale command-channel
+paragraphs are corrected; source-boundary reviews have no unresolved accepted
+serious findings; and D-1 through D-5 preserve the actual later owners and gates.
+No held source is retired. Artifact inspection found complete public exports,
+no missing/private external imports, and cold import safety without optional
+hosts. Migration review repaired unconditional `--run-migrations` guidance:
+apply only the plan native Nx actually generates. This audit does not satisfy
+remaining installed, exact-main, publication, consumer-handoff or archive gates.
+
+The exact developer-candidate Linux installed gate took 8m13s (6m39s inside
+Vitest). Native publication runs that gate before publishing and then performs
+uncached registry acceptance, already exceeding the old 15-minute job budget
+at the observed cost. Set the publication job to 25 minutes and stream both Nx
+operations; preserve both gates and every test/subprocess deadline. This avoids
+abandoning a partially published pair because of a known orchestration budget.
+
+Release qualification exposed two test-infrastructure defects and a Windows
+startup failure. Native Darwin probes establish that a zombie-only
+process group can return `EPERM` until reaping; the helper now retains that as
+pending evidence inside its existing bounded join and succeeds only on `ESRCH`.
+Six focused tests and all 238 ordinary app tests pass. Windows developer fixtures
+flattened spaced Git arguments through `shell: true`; replace that transport
+with pinned cross-spawn, retaining native spaced-path and `.cmd` regressions.
+Neither repair changes product lifecycle or weakens process ownership.
+
+Exact parent Windows run 33996130477 and developer run 33996130233 both time
+out at approximately 30.13 seconds for the complete connected-telemetry case.
+Their required and Linux gates pass. A native Windows discriminator on candidate
+`e732fa5c73a9104f82ca7236bc5ab6a11beaf706`, run
+[33998318723](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33998318723/job/101392613968),
+then localized the hang to pinned Oclif 4.13.3's `getShell`: the narrow environment
+stalled for 30.14s, while preserving platform variables with isolated state homes
+returned the native shell in 0.91s. Both children closed after owned cleanup.
+Retain native shell/process variables and isolated APPDATA/LOCALAPPDATA in the
+connected fixture; do not change telemetry, invent SHELL or extend its deadline.
+Remove the temporary probe. That candidate's focused gate also exposed native
+Nx's unquoted forwarded regex pipes, before any test ran; invoke the existing
+Vitest project directly after native Nx manifest building for this temporary
+focused loop. Actual installed Windows qualification remains required.
+
+The first release local installed pass completed 42 of 43 tests; its sole
+failure correctly refused an opt-in Graphite test without the explicit native
+binary. Rerun with that binary supplied. The new 0.5.15-to-0.6.0 foundation
+upgrade, repeat migration, frozen install, current Nx project discovery and
+real runtime startup already pass. The corrected complete local run on
+`e732fa5c73a9104f82ca7236bc5ab6a11beaf706` passes all 47 applicable installed tests
+(two Windows-only argv cases skipped), including both explicitly opted-in native
+agent and Graphite gates. Full local CI passes all 188 tasks across 40 projects;
+the uncached absence gate passes 19 tests/182 assertions. The subsequent fixture
+environment correction passes the six-case local subset, including its required
+native `nx add` adoption step; exact Windows acceptance remains open.
+None of these receipts closes canonical-main or publication gates.
+
+Windows run
+[33999310317](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33999310317/job/101395211944)
+qualifies the connected telemetry case in 17.96 seconds and all four native
+argument-transport regressions. Its two developer cases expose the same old
+narrow environment in their separate fixture; apply the qualified platform
+variables there, preserving isolated state homes and all deadlines. Remove the
+temporary duplicate Windows preflight and require the complete installed gate
+on the repaired candidate. This run's Linux installed gate passes; the failing
+Windows run is diagnostic evidence, not complete platform qualification.
+
+The caller review finds no other ordinary installed caller with this environment
+gap. Before qualifying the separate native Oclif extension roundtrip on Windows,
+align its partial environment with the same platform/state-home distinction;
+that dedicated fixture is not evidence of another observed startup failure.
+
+The full parent Windows run passes all 35 applicable tests but times out in its
+300-second teardown hook; the older developer run also reproduces that teardown
+failure. Add phase timing to distinguish owned-operation settlement, registry
+close and guarded fixture removal before changing mechanics or deadlines. The
+exact repaired release tip `ff632afc3bb36b55c7ab48497aa1767e781af221` passes local
+full CI (188 tasks) and all 47 applicable installed/native cases.
+
+Developer candidate `ac3c36fc47f78299216256ce7913f96e520c2416` passes its required
+gate and both installed platforms in run 34000047577, including full Windows
+teardown. The release predecessor passes connected telemetry and both developer
+cases, but two compound install/upgrade stories exceed their aggregate 180-second
+case budget. Their native commands remain independently bounded. Give only those
+two complete stories the existing 360-second integration allowance; preserve all
+assertions, idempotence checks and command deadlines. The three-case local subset
+(including the required native adoption setup) passes. Splitting these stories
+merely to distribute clocks would introduce more dependent test state, not better
+acceptance. The parent gets one exact failed-job retry after the larger developer
+candidate's complete qualification, not repeated retries until it happens to fit.
+
+The diagnostic release run 34000926664 isolates guarded fixture removal: zero
+pending operations, native registry closed in 2ms, then the 300-second hook
+deadline. Retain native removal and the canonical-root guard; do not introduce
+another deletion implementation without evidence. Give one Windows diagnostic
+run a 600-second cleanup window and 45-minute job ceiling to measure actual
+settlement, with a marker immediately before native recursive removal. A larger
+allowance is not yet a qualified fix. That run also exceeds the old aggregate
+budget for a historical migration, so apply the same 360-second story allowance
+to both native migration rows, not to pure checks or individual commands.
+
+The initial release candidate's required Linux run 33998318747 exposed a test
+composition error, not a command timeout: each invalid-timeout row scheduled
+two separate 4-second-bounded native children inside Vitest's default 5-second
+case. Split native help and admitted resolve into independent cases, preserving
+all three values, assertions and individual deadlines. The application test
+file passes all 11 cases after rebuilding the exact-tip manifest; app test
+TypeScript and formatting also pass. The older source-only
+`application.test.ts:runSourceCli` helper still rejects its own timeout before
+native close; retain that nonblocking test-helper follow-up if source timeout
+or fixture-cleanup behavior is revised. Installed-helper settlement proof does
+not cover that separate helper. No production lifecycle change is implied.
+
+### Developer Commands
+
+Task 12.2's four retained developer commands are authored fresh from
 accepted responsibilities and frozen commit
 `cc494354449465fa4178f36d4d5222b4d4072f5d`. The frozen implementation is evidence,
 not correctness or a source tree to restore. The service owns Git/development
@@ -605,8 +749,9 @@ sync; required checks and exact-main receipts remain separate proof.
 PRs 1008-1021 are landed: cold contracts, native Effect acquisition and service
 execution, adapters, mounting/observation, installed Oclif, authoring, server,
 async, process isolation and workflow admission. Native web and CLI admission
-have passing candidate cross-platform checks; agent-plugin integration awaits
-the amended Windows gate. Task 12.2 now passes its installed real local Git,
+have passing candidate cross-platform checks; agent-plugin and developer
+integration require the Windows repairs described in the opening packet.
+Task 12.2 passes its installed real local Git,
 worktree and Graphite inspection/refusal gate: four tests and 19 command
 invocations with real OTLP ancestry/finalization. Full CI and all 38 installed
 tests pass; the subsequent helper repair passes four focused native tests and
@@ -856,12 +1001,15 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
-Finish task 12.2's complete integrated checks and native helper cleanup repair,
-then commit it as one functioning developer-command node. Backport only the
-qualified Windows job-budget/output repair to the agent-plugin parent and let
-Graphite restack the child. Submit and qualify the exact candidates. Use the
-installed developer command for the authorized clean stack's real merge request,
-observe actual completion, then perform one native consumed-branch sweep.
+Resolve native Windows startup, qualify the transport repairs, and rerun full
+local CI and installed acceptance with explicit qualified binaries. Qualify the
+0.6.0 release-preparation node, including the installed current-pair upgrade.
+Task 12.2 and the qualified helper/workflow backport are committed and
+submitted. Complete exact candidate cross-platform admission, use the installed
+developer command for the authorized clean stack's real merge request, observe
+actual completion, then perform one native consumed-branch sweep. Run exact-main
+checks before tagging and publishing the pair. Only after registry acceptance
+adopt the new CLI in this repository and issue consumer-specific handoffs.
 
 The next domino is task 15's audit and exact-main runtime release, not another
 runtime design pass. Preserve the independently gated consumer capabilities,

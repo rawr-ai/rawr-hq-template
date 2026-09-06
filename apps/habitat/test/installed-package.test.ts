@@ -55,7 +55,7 @@ type PackedProductManifest = Readonly<Record<string, unknown>>;
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.5.15";
+const CANDIDATE_VERSION = "0.6.0";
 const ABSENT_VENDOR_PACKAGES = ["elysia", "inngest"] as const;
 const PACKAGE_DEPENDENCY_FIELDS = [
   "dependencies",
@@ -461,23 +461,41 @@ beforeAll(async () => {
   await installConsumer();
 }, 180_000);
 
-afterAll(async () => {
-  commandsClosed = true;
-  const commands = [...pendingCommands];
-  for (const command of commands) {
-    command.cancel(new Error("Installed-package acceptance is tearing down."));
-  }
-  await Promise.all(commands.map((command) => command.closed));
-  try {
-    await stopCandidateRegistry();
-  } finally {
-    for (const [name, value] of originalRegistryEnvironment) {
-      if (value === undefined) delete process.env[name];
-      else process.env[name] = value;
+afterAll(
+  async () => {
+    const startedAt = performance.now();
+    const checkpoint = (phase: string) => {
+      console.info(
+        `Installed-package teardown: ${phase} (${Math.round(performance.now() - startedAt)}ms).`
+      );
+    };
+    commandsClosed = true;
+    const commands = [...pendingCommands];
+    checkpoint(`joining ${commands.length} owned operations`);
+    for (const command of commands) {
+      command.cancel(new Error("Installed-package acceptance is tearing down."));
     }
-    if (acceptanceRoot !== "") await removeOwnedFixture(acceptanceRoot);
-  }
-}, 300_000);
+    await Promise.all(commands.map((command) => command.closed));
+    checkpoint(
+      `owned operations closed; stopping registry (listening=${localRegistry?.listening ?? false})`
+    );
+    try {
+      await stopCandidateRegistry();
+    } finally {
+      checkpoint("registry close settled; restoring environment");
+      for (const [name, value] of originalRegistryEnvironment) {
+        if (value === undefined) delete process.env[name];
+        else process.env[name] = value;
+      }
+      if (acceptanceRoot !== "") {
+        checkpoint("removing owned fixture");
+        await removeOwnedFixture(acceptanceRoot);
+        checkpoint("owned fixture removed");
+      }
+    }
+  },
+  process.platform === "win32" ? 600_000 : 300_000
+);
 
 describe("installed Habitat products", () => {
   it("adopts the packed CLI into one bare Bun Nx repository through one native nx add", async () => {
@@ -944,166 +962,309 @@ describe("installed Habitat products", () => {
   it.each([
     ["0.5.3", "23.1.0"],
     ["0.5.6", "23.1.1"],
-  ])("migrates CLI %s and its SDK as one native Nx package group", async (previousVersion, previousNxVersion) => {
-    const root = path.join(
-      acceptanceRoot,
-      `migration-consumer-${previousVersion.replaceAll(".", "-")}`
-    );
-    // Nx 23.1.0 cannot parse npm 12's one-item provenance response. The
-    // 23.1.1 row verifies the same target artifact without this documented
-    // compatibility flag. Local Verdaccio candidates have no provenance.
-    const skipNxProvenance =
-      publishedRegistryVersion === undefined || previousNxVersion === "23.1.0";
-    await mkdir(root, { recursive: true });
-    await writeFile(
-      path.join(root, "nx.json"),
-      `${JSON.stringify(
-        {
-          plugins: ["@habitat-ai/cli/nx-plugin"],
-          targetDefaults: {
-            check: {
-              cache: false,
-              dependsOn: [
-                { projects: ["habitat"], target: "lint" },
-                "typecheck",
-                "verify",
-                "check:policy",
-                "^check",
-              ],
-              outputs: [],
+  ])(
+    "migrates CLI %s and its SDK as one native Nx package group",
+    async (previousVersion, previousNxVersion) => {
+      const root = path.join(
+        acceptanceRoot,
+        `migration-consumer-${previousVersion.replaceAll(".", "-")}`
+      );
+      // Nx 23.1.0 cannot parse npm 12's one-item provenance response. The
+      // 23.1.1 row verifies the same target artifact without this documented
+      // compatibility flag. Local Verdaccio candidates have no provenance.
+      const skipNxProvenance =
+        publishedRegistryVersion === undefined || previousNxVersion === "23.1.0";
+      await mkdir(root, { recursive: true });
+      await writeFile(
+        path.join(root, "nx.json"),
+        `${JSON.stringify(
+          {
+            plugins: ["@habitat-ai/cli/nx-plugin"],
+            targetDefaults: {
+              check: {
+                cache: false,
+                dependsOn: [
+                  { projects: ["habitat"], target: "lint" },
+                  "typecheck",
+                  "verify",
+                  "check:policy",
+                  "^check",
+                ],
+                outputs: [],
+              },
             },
           },
+          null,
+          2
+        )}\n`
+      );
+      await writeFile(
+        path.join(root, "package.json"),
+        `${JSON.stringify(
+          {
+            name: "habitat-migration-consumer",
+            private: true,
+            type: "module",
+            packageManager: "bun@1.3.14",
+            devDependencies: {
+              "@habitat-ai/cli": previousVersion,
+              "@habitat-ai/sdk": previousVersion,
+              "@nx/workspace": previousNxVersion,
+              nx: previousNxVersion,
+            },
+          },
+          null,
+          2
+        )}\n`
+      );
+
+      // Bun keeps scoped registries above --registry, so the old pair needs a public-only config.
+      const installedPreviousPair = await run(
+        "bun",
+        ["install", "--ignore-scripts", `--registry=${PUBLIC_NPM_REGISTRY}`],
+        {
+          cwd: root,
+          env: {
+            BUN_INSTALL_CACHE_DIR: path.join(acceptanceRoot, "runtime", "cache", "bun-public"),
+            NPM_CONFIG_USERCONFIG: path.join(acceptanceRoot, "runtime", "public-config", ".npmrc"),
+            XDG_CONFIG_HOME: path.join(acceptanceRoot, "runtime", "public-config"),
+          },
+          timeoutMs: 120_000,
+        }
+      );
+      expect(
+        installedPreviousPair,
+        installedPreviousPair.stderr || installedPreviousPair.stdout
+      ).toMatchObject({ exitCode: 0 });
+
+      const migrated = await run(
+        "bunx",
+        ["nx", "migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
+        {
+          cwd: root,
+          env: {
+            NX_MIGRATE_CLI_VERSION: "23.1.1",
+            ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
+          },
+          timeoutMs: 120_000,
+        }
+      );
+      expect(migrated, migrated.stderr || migrated.stdout).toMatchObject({ exitCode: 0 });
+      expect(JSON.parse(await readFile(path.join(root, "package.json"), "utf8"))).toMatchObject({
+        devDependencies: {
+          "@habitat-ai/cli": installVersion,
+          "@habitat-ai/sdk": installVersion,
         },
-        null,
-        2
-      )}\n`
-    );
+      });
+      expect(await readFile(path.join(root, "migrations.json"), "utf8")).toContain(
+        "0-5-7-repository-foundation"
+      );
+
+      const installedMigratedPair = await run("bun", ["install", "--ignore-scripts"], {
+        cwd: root,
+        timeoutMs: 120_000,
+      });
+      expect(
+        installedMigratedPair,
+        installedMigratedPair.stderr || installedMigratedPair.stdout
+      ).toMatchObject({ exitCode: 0 });
+
+      const applied = await run(
+        "bunx",
+        ["nx", "migrate", "--run-migrations=migrations.json", "--interactive=false"],
+        {
+          cwd: root,
+          env: {
+            NX_DAEMON: "false",
+            NX_MIGRATE_CLI_VERSION: "23.1.1",
+            ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
+          },
+          timeoutMs: 120_000,
+        }
+      );
+      expect(applied, applied.stderr || applied.stdout).toMatchObject({ exitCode: 0 });
+      expect(JSON.parse(await readFile(path.join(root, "package.json"), "utf8"))).toMatchObject({
+        devDependencies: {
+          "@nx/eslint": "23.1.1",
+          "@nx/eslint-plugin": "23.1.1",
+          "@nx/workspace": "23.1.1",
+          "@typescript-eslint/parser": "8.66.0",
+          eslint: "10.0.3",
+        },
+      });
+      expect(JSON.parse(await readFile(path.join(root, "nx.json"), "utf8"))).toMatchObject({
+        plugins: expect.arrayContaining([
+          { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
+        ]),
+        targetDefaults: {
+          check: { dependsOn: expect.arrayContaining(["check:boundaries"]) },
+        },
+      });
+      expect(await readFile(path.join(root, "eslint.config.mjs"), "utf8")).toContain(
+        "@nx/enforce-module-boundaries"
+      );
+
+      const frozenMigratedPair = await run(
+        "bun",
+        ["install", "--frozen-lockfile", "--ignore-scripts"],
+        {
+          cwd: root,
+          timeoutMs: 120_000,
+        }
+      );
+      expect(
+        frozenMigratedPair,
+        frozenMigratedPair.stderr || frozenMigratedPair.stdout
+      ).toMatchObject({ exitCode: 0 });
+      for (const product of products) {
+        expect(
+          JSON.parse(
+            await readFile(path.join(root, "node_modules", product.name, "package.json"), "utf8")
+          )
+        ).toMatchObject({ name: product.name, version: installVersion });
+      }
+    },
+    360_000
+  );
+
+  it("migrates the current 0.5.15 foundation to the exact candidate pair idempotently", async () => {
+    const root = path.join(acceptanceRoot, "migration-consumer-current-foundation");
+    const packagePath = path.join(root, "package.json");
+    const migrationPath = path.join(root, "migrations.json");
+    const publicEnvironment = {
+      BUN_INSTALL_CACHE_DIR: path.join(acceptanceRoot, "runtime", "cache", "bun-public"),
+      NPM_CONFIG_USERCONFIG: path.join(acceptanceRoot, "runtime", "public-config", ".npmrc"),
+      XDG_CONFIG_HOME: path.join(acceptanceRoot, "runtime", "public-config"),
+    };
+    await mkdir(root, { recursive: true });
+    await writeFile(path.join(root, "nx.json"), '{"plugins":["@habitat-ai/cli/nx-plugin"]}\n');
     await writeFile(
-      path.join(root, "package.json"),
+      packagePath,
       `${JSON.stringify(
         {
-          name: "habitat-migration-consumer",
+          name: "habitat-current-foundation-migration-consumer",
           private: true,
           type: "module",
           packageManager: "bun@1.3.14",
           devDependencies: {
-            "@habitat-ai/cli": previousVersion,
-            "@habitat-ai/sdk": previousVersion,
-            "@nx/workspace": previousNxVersion,
-            nx: previousNxVersion,
+            "@habitat-ai/cli": "0.5.15",
+            "@habitat-ai/sdk": "0.5.15",
+            "@nx/workspace": "23.1.1",
+            nx: "23.1.1",
           },
         },
         null,
         2
       )}\n`
     );
-
-    // Bun keeps scoped registries above --registry, so the old pair needs a public-only config.
     const installedPreviousPair = await run(
       "bun",
       ["install", "--ignore-scripts", `--registry=${PUBLIC_NPM_REGISTRY}`],
-      {
-        cwd: root,
-        env: {
-          BUN_INSTALL_CACHE_DIR: path.join(acceptanceRoot, "runtime", "cache", "bun-public"),
-          NPM_CONFIG_USERCONFIG: path.join(acceptanceRoot, "runtime", "public-config", ".npmrc"),
-          XDG_CONFIG_HOME: path.join(acceptanceRoot, "runtime", "public-config"),
-        },
-        timeoutMs: 120_000,
-      }
+      { cwd: root, env: publicEnvironment, timeoutMs: 120_000 }
     );
     expect(
       installedPreviousPair,
       installedPreviousPair.stderr || installedPreviousPair.stdout
     ).toMatchObject({ exitCode: 0 });
-
-    const migrated = await run(
-      "bunx",
-      ["nx", "migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
-      {
-        cwd: root,
-        env: {
-          NX_MIGRATE_CLI_VERSION: "23.1.1",
-          ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
-        },
-        timeoutMs: 120_000,
-      }
-    );
-    expect(migrated, migrated.stderr || migrated.stdout).toMatchObject({ exitCode: 0 });
-    expect(JSON.parse(await readFile(path.join(root, "package.json"), "utf8"))).toMatchObject({
-      devDependencies: {
-        "@habitat-ai/cli": installVersion,
-        "@habitat-ai/sdk": installVersion,
-      },
-    });
-    expect(await readFile(path.join(root, "migrations.json"), "utf8")).toContain(
-      "0-5-7-repository-foundation"
-    );
-
-    const installedMigratedPair = await run("bun", ["install", "--ignore-scripts"], {
+    const git = await run("git", ["init", "--quiet"], { cwd: root });
+    expect(git, git.stderr || git.stdout).toMatchObject({ exitCode: 0 });
+    const nx = path.join(root, "node_modules/.bin/nx");
+    const initialized = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
       cwd: root,
+      env: publicEnvironment,
       timeoutMs: 120_000,
     });
-    expect(
-      installedMigratedPair,
-      installedMigratedPair.stderr || installedMigratedPair.stdout
-    ).toMatchObject({ exitCode: 0 });
-
-    const applied = await run(
-      "bunx",
-      ["nx", "migrate", "--run-migrations=migrations.json", "--interactive=false"],
-      {
-        cwd: root,
-        env: {
-          NX_DAEMON: "false",
-          NX_MIGRATE_CLI_VERSION: "23.1.1",
-          ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
-        },
-        timeoutMs: 120_000,
-      }
-    );
-    expect(applied, applied.stderr || applied.stdout).toMatchObject({ exitCode: 0 });
-    expect(JSON.parse(await readFile(path.join(root, "package.json"), "utf8"))).toMatchObject({
-      devDependencies: {
-        "@nx/eslint": "23.1.1",
-        "@nx/eslint-plugin": "23.1.1",
-        "@nx/workspace": "23.1.1",
-        "@typescript-eslint/parser": "8.66.0",
-        eslint: "10.0.3",
-      },
-    });
-    expect(JSON.parse(await readFile(path.join(root, "nx.json"), "utf8"))).toMatchObject({
-      plugins: expect.arrayContaining([
-        { plugin: "@nx/eslint/plugin", options: { targetName: "check:boundaries" } },
-      ]),
-      targetDefaults: {
-        check: { dependsOn: expect.arrayContaining(["check:boundaries"]) },
-      },
-    });
-    expect(await readFile(path.join(root, "eslint.config.mjs"), "utf8")).toContain(
-      "@nx/enforce-module-boundaries"
-    );
-
-    const frozenMigratedPair = await run(
-      "bun",
-      ["install", "--frozen-lockfile", "--ignore-scripts"],
-      {
-        cwd: root,
-        timeoutMs: 120_000,
-      }
-    );
-    expect(
-      frozenMigratedPair,
-      frozenMigratedPair.stderr || frozenMigratedPair.stdout
-    ).toMatchObject({ exitCode: 0 });
+    expect(initialized, initialized.stderr || initialized.stdout).toMatchObject({ exitCode: 0 });
     for (const product of products) {
       expect(
         JSON.parse(
           await readFile(path.join(root, "node_modules", product.name, "package.json"), "utf8")
         )
-      ).toMatchObject({ name: product.name, version: installVersion });
+      ).toMatchObject({
+        name: product.name,
+        version: "0.5.15",
+      });
     }
-  });
+    const foundationFiles = [
+      "nx.json",
+      "scripts/habitat/project.json",
+      "eslint.config.mjs",
+      "biome.json",
+      "bunfig.toml",
+      "tsconfig.base.json",
+    ];
+    const foundation = await sha256FileSet(root, foundationFiles);
+    const migrationEnvironment = {
+      NX_MIGRATE_CLI_VERSION: "23.1.1",
+      // Only the local unpublished Verdaccio cohort lacks npm provenance.
+      NX_SKIP_PROVENANCE_CHECK: publishedRegistryVersion === undefined ? "true" : undefined,
+    };
+    let migratedState:
+      | { package: string; lock: string; migrations: string | undefined }
+      | undefined;
+    for (const repeated of [false, true]) {
+      const migrated = await run(
+        nx,
+        ["migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
+        { cwd: root, env: migrationEnvironment, timeoutMs: 120_000 }
+      );
+      expect(migrated, migrated.stderr || migrated.stdout).toMatchObject({ exitCode: 0 });
+      expect(JSON.parse(await readFile(packagePath, "utf8"))).toMatchObject({
+        devDependencies: { "@habitat-ai/cli": installVersion, "@habitat-ai/sdk": installVersion },
+      });
+      const migrations = await readFile(migrationPath, "utf8").catch((error: unknown) => {
+        if (error instanceof Error && "code" in error && error.code === "ENOENT") return undefined;
+        throw error;
+      });
+      // This foundation already contains 0.5.7. Do not fabricate or replay that migration.
+      if (migrations !== undefined) expect(JSON.parse(migrations).migrations).toEqual([]);
+      if (!repeated) {
+        const installed = await run("bun", ["install", "--ignore-scripts"], {
+          cwd: root,
+          timeoutMs: 120_000,
+        });
+        expect(installed, installed.stderr || installed.stdout).toMatchObject({ exitCode: 0 });
+      }
+      const frozen = await run("bun", ["install", "--frozen-lockfile", "--ignore-scripts"], {
+        cwd: root,
+        timeoutMs: 120_000,
+      });
+      expect(frozen, frozen.stderr || frozen.stdout).toMatchObject({ exitCode: 0 });
+      for (const product of products) {
+        const installedRoot = await realpath(path.join(root, "node_modules", product.name));
+        expect(installedRoot.startsWith(path.join(root, "node_modules"))).toBe(true);
+        expect(installedRoot.startsWith(workspaceRoot)).toBe(false);
+        expect(
+          JSON.parse(await readFile(path.join(installedRoot, "package.json"), "utf8"))
+        ).toMatchObject({
+          name: product.name,
+          version: installVersion,
+        });
+      }
+      const cliRequire = createRequire(
+        path.join(root, "node_modules/@habitat-ai/cli/package.json")
+      );
+      const cliSdk = await realpath(
+        path.dirname(cliRequire.resolve("@habitat-ai/sdk/package.json"))
+      );
+      expect(cliSdk).toBe(await realpath(path.join(root, "node_modules/@habitat-ai/sdk")));
+      expect(await sha256FileSet(root, foundationFiles)).toBe(foundation);
+      const state = {
+        package: await readFile(packagePath, "utf8"),
+        lock: await readFile(path.join(root, "bun.lock"), "utf8"),
+        migrations,
+      };
+      if (repeated) expect(state).toEqual(migratedState);
+      else migratedState = state;
+    }
+    const projects = await run(nx, ["show", "projects", "--json"], {
+      cwd: root,
+      timeoutMs: 120_000,
+    });
+    expect(projects, projects.stderr || projects.stdout).toMatchObject({ exitCode: 0 });
+    expect(JSON.parse(projects.stdout)).toContain("habitat");
+    await assertInstalledRuntimeStart(root);
+  }, 360_000);
 
   it("exports a connected agent-plugin native telemetry trace from the installed pair", async () => {
     await withInstalledOperation(async (signal) => {
@@ -3126,7 +3287,7 @@ describe("installed Habitat products", () => {
       stderr: "",
     });
     expect(executed.stdout).toContain('"status": "pass"');
-  });
+  }, 360_000);
 });
 
 function assertPackedManifestExcludesVendors(
@@ -5603,6 +5764,9 @@ async function removeOwnedFixture(root: string): Promise<void> {
   ) {
     throw new Error(`Refusing to remove unexpected installed-package fixture: ${root}`);
   }
+  console.info(
+    "Installed-package teardown: ownership validated; starting native recursive removal."
+  );
   await rm(canonical, { recursive: true, force: false });
 }
 

@@ -103,12 +103,19 @@ Later package releases use ordinary Nx migrations:
 ```sh
 bunx nx migrate @habitat-ai/cli@latest
 bun install
-bunx nx migrate --run-migrations
 ```
 
 The first command updates the fixed CLI/SDK pair and writes any applicable
-Habitat migrations. The final command applies those package-owned repository
-changes; no consumer copies or independently maintains the preset wiring.
+Habitat migrations. If Nx generated a nonempty migration plan, review it and
+apply those package-owned repository changes:
+
+```sh
+bunx nx migrate --run-migrations=migrations.json
+```
+
+A package-only upgrade may correctly generate no migration file. Do not replay
+an older plan or synthesize one. No consumer copies or independently maintains
+the preset wiring.
 
 Habitat `0.5.3` used Nx `23.1.0`, whose provenance reader predates npm 12. When
 that exact historical pair is upgraded under npm 12, pin the migration CLI and
@@ -118,7 +125,7 @@ the final command applies the repository changes:
 
 ```sh
 NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
-  bunx nx migrate @habitat-ai/cli@0.5.15
+  bunx nx migrate @habitat-ai/cli@0.6.0
 bun install
 NX_MIGRATE_CLI_VERSION=23.1.1 NX_SKIP_PROVENANCE_CHECK=true \
   bunx nx migrate --run-migrations=migrations.json --no-interactive
