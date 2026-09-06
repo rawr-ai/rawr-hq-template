@@ -7200,10 +7200,10 @@ provisioning. Server API and server internal projections may wrap event
 admission for caller-facing surfaces. Workflow plugins do not expose
 caller-facing product APIs.
 
-This live dispatcher and its server admission relation are owned by the separate
-obligation in [task 13.7](../../openspec/changes/realize-app-runtime-spine/tasks.md).
-Native async authoring and Serve/Connect qualification do not implement or
-retire it. Workflow `eventName` is an explicitly authored native event trigger;
+This live dispatcher and its server admission relation are governed by
+[explicit workflow admission](../../openspec/specs/app-runtime-realization/spec.md#requirement-explicit-workflow-admission-is-independent-of-async-execution),
+qualified independently of native async authoring and Serve/Connect execution.
+Workflow `eventName` is an explicitly authored native event trigger;
 the runtime MUST NOT derive an event namespace from a function ID or claim
 exclusive delivery. Sending that event may fan out to every matching native
 function. The dispatcher must preserve that native admission meaning.

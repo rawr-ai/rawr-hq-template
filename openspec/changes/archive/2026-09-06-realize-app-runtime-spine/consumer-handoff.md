@@ -59,7 +59,7 @@ are not in this release; each retains its independent acceptance and release gat
 
 The published pair supplies these boundaries, qualified by the
 [release receipt](runtime-release-receipt.json) and
-[implementation evidence](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md):
+[implementation evidence](../../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md):
 
 - Explicit public authoring faces: `@habitat-ai/sdk/service`, `service/schema`,
   `effect`, `execution`, the selected `plugins/*` face, and
@@ -92,7 +92,7 @@ The [immutable app@1 source](https://github.com/rawr-ai/rawr-hq-template/blob/f5
 and [complete app@2 source](https://github.com/rawr-ai/rawr-hq-template/blob/f52474a7abc232d881cd1cf272f1d063a265285d/.habitat/blueprints/app/versions/2/blueprint.toml)
 identify the released law. The exact-main `runtime-harnesses:acceptance:process-isolation`
 receipt proves real built server/async children, independent stop/restart, refusal
-before mount and fail-closed health; see [Built Process Isolation](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#built-process-isolation).
+before mount and fail-closed health; see [Built Process Isolation](../../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#built-process-isolation).
 Native drain does not imply durable workflow completion: the admitted work and
 finalizers settle before release, while the native post-stop run outcome is
 retained rather than rewritten as success.
@@ -196,11 +196,11 @@ native settlement/correlation proof for your actual service/server boundary.
 - [Runtime release receipt](runtime-release-receipt.json): source, packages,
   integrity/provenance, registry acceptance and successful workflow disposition.
 - [Active tasks](tasks.md): remaining producer completion and native archive gates.
-- [Deferred capabilities](deferred-capabilities.md): independent D-1 through D-5
+- [Deferred capabilities](../../../../docs/projects/habitat-runtime-realignment/deferred-capabilities.md): independent D-1 through D-5
   owners, reactivation conditions and consumer-specific dependencies.
 - [Classification ledger](classification-ledger.md): source-to-destination
   accounting and named acceptance boundaries.
-- [Runtime realization](../../../docs/system/HABITAT_RUNTIME_REALIZATION.md):
+- [Runtime realization](../../../../docs/system/HABITAT_RUNTIME_REALIZATION.md):
   current canonical runtime mechanics, not product implementation instructions.
 - [Released SDK manifest](https://github.com/rawr-ai/rawr-hq-template/blob/f52474a7abc232d881cd1cf272f1d063a265285d/packages/core/sdk/package.json):
   exact public exports and optional native peer selection.

@@ -71,7 +71,7 @@ Authority inputs:
 - [Runtime realization](../../system/HABITAT_RUNTIME_REALIZATION.md).
 - [Habitat authority](../../../.habitat/AUTHORITY.md) and
   [ontology](../../../.habitat/AUTHORITY-ONTOLOGY.md).
-- [Active runtime change](../../../openspec/changes/realize-app-runtime-spine/authority-amendment.md).
+- [Then-active runtime change](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/authority-amendment.md).
 - [Platform routing](../../../.agents/skills/habitat-platform-authority/SKILL.md).
 
 Authority order: current owner intent within the repository boundary; canonical
@@ -154,22 +154,24 @@ explicit runtime tasks, not concealed by this status.
 
 [Verification](verification.md) records actual commands, positive/negative
 installed acceptance, source/snapshot parity and review repairs. The runtime
-itself remains unfinished by design.
+itself remained unfinished at this preparation checkpoint; the subsequent
+[implementation record](IMPLEMENTATION.md) owns its released outcome.
 
 ## Deferred Inventory
 
-The current runtime has 49 unchecked acceptance obligations, beginning with
-0.1/0.2. [Obligation disposition](../../../openspec/changes/realize-app-runtime-spine/obligation-disposition.md)
+At preparation closure, the runtime had 49 unchecked acceptance obligations,
+beginning with 0.1/0.2. The historical
+[obligation disposition](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/obligation-disposition.md)
 preserves all 115 inherited task IDs and additional spec-level capability
 promises without converting deferrals to completed checkboxes.
 
-[Deferred capabilities](../../../openspec/changes/realize-app-runtime-spine/deferred-capabilities.md)
+[Deferred capabilities](deferred-capabilities.md)
 assign D-1 ledger, D-2 inquiry, D-3 later Rawr transfers, and D-4 native
 agent/desktop hosts to their actual reactivation/acceptance owners and triggers.
-Agent/desktop authoring and web-local execution remain active runtime work.
-Persisted observability and deployment tooling remain initiative outcomes in
-the roadmap. No external fork, consumer migration or historical-source cleanup
-is implied by any deferral.
+Agent/desktop authoring and web-local execution were active runtime work at this
+checkpoint and are now implemented. The live handoff also retains D-5 full
+observability qualification. No external fork, consumer migration or
+historical-source cleanup is implied by any deferral.
 
 ## Review Result
 

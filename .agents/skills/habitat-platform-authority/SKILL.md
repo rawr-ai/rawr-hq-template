@@ -20,11 +20,11 @@ architecture, runtime, vendor, package-version, or release truth.
    [Habitat authority](../../../.habitat/AUTHORITY.md), and
    [authority ontology](../../../.habitat/AUTHORITY-ONTOLOGY.md) for the affected
    boundary.
-4. Read the active
-   [runtime-spine authority amendment](../../../openspec/changes/realize-app-runtime-spine/authority-amendment.md),
-   [design](../../../openspec/changes/realize-app-runtime-spine/design.md), and
-   [tasks](../../../openspec/changes/realize-app-runtime-spine/tasks.md) when the
-   work participates in that change.
+4. Read the accepted [runtime specification](../../../openspec/specs/app-runtime-realization/spec.md)
+   and [harness boundary](../../../openspec/specs/runtime-harness-boundary/spec.md)
+   for implemented runtime contracts. The live
+   [deferred-capability handoff](../../../docs/projects/habitat-runtime-realignment/deferred-capabilities.md)
+   owns parked work and its reactivation gates, not another runtime sequence.
 
 ## Authority Order
 
@@ -33,8 +33,8 @@ On conflict, apply this order:
 1. Current explicit owner intent for the task, within the repository boundary.
 2. Repository-local canonical architecture, runtime realization, and Habitat
    authority/ontology, read with explicit section-level amendments.
-3. The active OpenSpec for those named amendments and execution sequencing;
-   never as a whole-file replacement.
+3. Accepted OpenSpec specifications and any active change for its explicitly
+   named amendments and execution sequencing; never as a whole-file replacement.
 4. Pinned installed vendor source for exact mechanics.
 5. Current code and tests as implementation evidence.
 6. Consumer repositories and dated external documents as directional evidence

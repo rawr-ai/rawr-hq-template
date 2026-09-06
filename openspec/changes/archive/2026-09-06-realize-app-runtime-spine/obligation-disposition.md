@@ -2,8 +2,8 @@
 
 Baseline: `374149800a067e527342e334ff6a3022fbd38cd7`, 2026-09-04.
 The complete original wording and embedded receipts are preserved in
-[baseline tasks](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/tasks.md).
-The [quarantine ledger](../../../docs/projects/habitat-runtime-realignment/quarantine/AGENTS.md)
+[baseline tasks](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/tasks.md).
+The [quarantine ledger](../../../../docs/projects/habitat-runtime-realignment/quarantine/AGENTS.md)
 records exact source identities. Table rows are accounting, not native checkboxes.
 
 Every one of the 115 inherited ids appears once below: 57 were checked and 58

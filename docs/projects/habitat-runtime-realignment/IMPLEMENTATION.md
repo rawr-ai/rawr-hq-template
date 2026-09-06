@@ -1,6 +1,6 @@
 # Habitat Runtime Implementation
 
-Status: `closing`; runtime landed and SDK/CLI 0.6.0 published and registry-qualified.
+Status: `complete`; runtime released, producer adoption qualified and native OpenSpec closure verified.
 
 ## Accepted Release
 
@@ -19,17 +19,42 @@ operations. Native Graphite merged the runtime stack; the final no-restack sweep
 retired its five consumed refs while preserving unrelated branches, worktrees,
 the primary untracked Codex config and all 13 stashes.
 
-The [release receipt](../../../openspec/changes/realize-app-runtime-spine/runtime-release-receipt.json)
+The [release receipt](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/runtime-release-receipt.json)
 records exact artifacts and evidence. The producer adopted the published CLI
 through native Nx migration with frozen installation and repeat/no-op proof.
-The [adoption receipt](../../../openspec/changes/realize-app-runtime-spine/runtime-adoption-receipt.json)
+The [adoption receipt](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/runtime-adoption-receipt.json)
 records the distinct installed registry SDK, unchanged source-workspace SDK and
 147-task producer check. Downstream consumers retain their own acceptance.
-The [seven-lane handoff](../../../openspec/changes/realize-app-runtime-spine/consumer-handoff.md)
+The [seven-lane handoff](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/consumer-handoff.md)
 is informational, not authorization to resume consumer work. The live
 [deferred capabilities](deferred-capabilities.md) retain their owners and gates.
-Native OpenSpec application/archive and admission of these closure records are
-the remaining work, not further runtime implementation.
+These records were published in
+[producer adoption PR 1027](https://github.com/rawr-ai/rawr-hq-template/pull/1027)
+before archive. They do not imply downstream adoption.
+
+## Native Closure
+
+Pinned OpenSpec 1.3.1 applied all 19 deltas and archived the 37-file change as
+`2026-09-06-realize-app-runtime-spine`. The documented full-removal exception
+removed only the three resulting requirement-empty canonical specifications.
+Three approved retained Purpose blocks and four new Purpose summaries were
+completed; native requirement bodies were not manually redesigned. Strict
+canonical validation passed all 18 surviving specifications.
+Independent replay of the pinned native builder matched every resulting
+requirement body. The closure's complete local CI passed all 188 tasks.
+
+The complete uncached separation-absence target passed 19 tests, 185 assertions
+and 30 Nx tasks. It preserves the historical archive inventory, required current
+specifications and retired-owner absences without forbidding future new specs.
+The independent 155-document historical oracle remains unchanged. All 67
+archive-relative Markdown links and 70 live-document links resolve; seven JSON
+receipts remain byte-identical across the move. Current routing goes to accepted
+specifications and the live deferred handoff, not the archived execution queue.
+
+This closes the authorized core runtime workstream. Native archive does not
+authorize publication of unimplemented capabilities, consumer migration or
+held-source retirement. The closure node follows normal Graphite admission;
+release-source identity and historical receipts remain unchanged.
 
 ## Historical Qualification Notes
 
@@ -118,9 +143,12 @@ execution continuity and review disposition, not another specification or queue.
 The owner has now authorized implementation through every complete capability
 that can be defended from current authority and native evidence. The previous
 preparation-only boundary has ended; its historical outcome remains unchanged.
-The [frame](FRAME.md) and accepted [decisions](decisions.md) still govern the
-target. The active [OpenSpec tasks](../../../openspec/changes/realize-app-runtime-spine/tasks.md)
-remain the one execution sequence.
+The [frame](FRAME.md) and accepted [decisions](decisions.md) governed the target.
+The completed [OpenSpec tasks](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/tasks.md)
+preserve execution history. Current contracts live in the accepted
+[runtime specification](../../../openspec/specs/app-runtime-realization/spec.md)
+and canonical system authority; parked work routes through the live
+[deferred-capability handoff](deferred-capabilities.md).
 
 Containment: Habitat's meaning-preserving cold pipeline, process provisioning,
 binding/execution, mounting/observation and native runtime acceptance. Proceed
@@ -1964,7 +1992,7 @@ are superseded by current official oRPC ownership. It supplies neither the
 to invent another runner. Related SDK layer/harness drafts remain contextual,
 not wholesale architecture replacements.
 
-The runtime sequence described above is now implemented and released. Finish
-native OpenSpec closure against the Accepted Release
-section, rather than resuming these historical candidate steps. Consumer
-repositories and held source remain outside this authorization.
+The runtime sequence described above is implemented, released and archived.
+Use accepted canonical specifications and the live deferred handoff rather than
+resuming these historical candidate steps. Consumer repositories and held source
+remain outside this authorization.

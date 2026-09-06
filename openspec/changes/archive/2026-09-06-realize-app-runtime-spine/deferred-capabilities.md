@@ -10,8 +10,8 @@ own runtime delivery. The [classification ledger](classification-ledger.md) owns
 source-to-destination accounting and named acceptance targets; the
 [stack cut sheet](stack-cut-sheet.md) owns held-source disposition. Historical
 exact contracts and receipts remain intact in the
-[quarantined app-runtime requirement](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/specs/app-runtime-realization/spec.md)
-and its [source ledger](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/classification-ledger.md).
+[quarantined app-runtime requirement](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/specs/app-runtime-realization/spec.md)
+and its [source ledger](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/classification-ledger.md).
 They are evidence, not a second active authority.
 
 ## Delivery Boundaries
@@ -44,7 +44,7 @@ held source is
 subtree `859b463650e7ad769a56d1b67f328e84584479ef`. It is evidence to re-author,
 not a merge or copy instruction. The complete baseline contract is the
 quarantined requirement
-[Semantic-ledger authority is closed before source activation](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/specs/app-runtime-realization/spec.md#requirement-semantic-ledger-authority-is-closed-before-source-activation).
+[Semantic-ledger authority is closed before source activation](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/specs/app-runtime-realization/spec.md#requirement-semantic-ledger-authority-is-closed-before-source-activation).
 
 Preserve these public capabilities, irrespective of a later reviewed spelling:
 
@@ -346,11 +346,11 @@ export or declaration-only stub satisfies that obligation. The web-local Effect
 face likewise remains required by tasks 14.1/14.2; it is not part of D-4.
 
 Preserve the canonical
-[agent harness posture](../../../docs/system/HABITAT_ARCHITECTURE.md#135-agent-harness-posture),
-[desktop harness posture](../../../docs/system/HABITAT_ARCHITECTURE.md#136-desktop-harness-posture),
+[agent harness posture](../../../../docs/system/HABITAT_ARCHITECTURE.md#135-agent-harness-posture),
+[desktop harness posture](../../../../docs/system/HABITAT_ARCHITECTURE.md#136-desktop-harness-posture),
 and runtime realization
-[agent/OpenShell](../../../docs/system/HABITAT_RUNTIME_REALIZATION.md#215-agentopenshell-harness)
-and [desktop](../../../docs/system/HABITAT_RUNTIME_REALIZATION.md#216-desktop-harness)
+[agent/OpenShell](../../../../docs/system/HABITAT_RUNTIME_REALIZATION.md#215-agentopenshell-harness)
+and [desktop](../../../../docs/system/HABITAT_RUNTIME_REALIZATION.md#216-desktop-harness)
 contracts:
 
 - The private agent and desktop harness owners consume
@@ -396,7 +396,7 @@ that native agent/desktop support has shipped.
 The Habitat telemetry resource/provider and native host owners retain this
 work. Re-enter before enabling an external backend, claiming persisted/queryable
 telemetry, or adopting semantic product events. The source-backed inputs are
-recorded in [Backend Receipt Reuse](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#backend-receipt-reuse);
+recorded in [Backend Receipt Reuse](../../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#backend-receipt-reuse);
 the mixed telemetry worktree remains held and its staged changes remain owned.
 
 Qualify real collector processing, ClickHouse/HyperDX storage and record queries

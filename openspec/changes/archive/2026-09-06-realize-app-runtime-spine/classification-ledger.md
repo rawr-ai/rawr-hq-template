@@ -7,7 +7,7 @@ accounts for inherited task IDs; the [stack cut sheet](stack-cut-sheet.md)
 protects held sources; [deferred capabilities](deferred-capabilities.md) preserve
 D-1, D-2, D-3, and D-4 outside the qualified core runtime release.
 
-The [intact predecessor ledger](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/classification-ledger.md)
+The [intact predecessor ledger](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/classification-ledger.md)
 preserves the original source inventory, dated receipts, exact former paths, and
 historical disposition evidence. Its project/file/edge totals and accumulating
 authority-correction steps are not current platform law.
@@ -184,7 +184,7 @@ structured package/lock metadata, Oclif manifest, and real loader behavior own
 those checks. No source-spelling blacklist is promoted to enduring law.
 
 The complete finite predecessor identity/path inventory is preserved in the
-[quarantined deletion oracles](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/classification-ledger.md#deletion-and-replacement-oracles).
+[quarantined deletion oracles](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/classification-ledger.md#deletion-and-replacement-oracles).
 It is phase-aware: a later fresh owner at `services/dev`, for example, replaces
 old path absence with positive owner law and exact predecessor identity/reader
 absence. Existing archive/quarantine data stays evidence, not active law.

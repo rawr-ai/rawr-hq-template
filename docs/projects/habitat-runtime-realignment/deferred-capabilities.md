@@ -10,11 +10,11 @@ worktree. The canonical [architecture](../../system/HABITAT_ARCHITECTURE.md),
 [runtime realization](../../system/HABITAT_RUNTIME_REALIZATION.md), and accepted
 [OpenSpec specifications](../../../openspec/specs/) remain normative.
 
-The [original handoff](../../../openspec/changes/realize-app-runtime-spine/deferred-capabilities.md),
-[runtime tasks](../../../openspec/changes/realize-app-runtime-spine/tasks.md),
-[obligation disposition](../../../openspec/changes/realize-app-runtime-spine/obligation-disposition.md),
-[classification ledger](../../../openspec/changes/realize-app-runtime-spine/classification-ledger.md),
-and [stack cut sheet](../../../openspec/changes/realize-app-runtime-spine/stack-cut-sheet.md)
+The [original handoff](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/deferred-capabilities.md),
+[runtime tasks](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/tasks.md),
+[obligation disposition](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/obligation-disposition.md),
+[classification ledger](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/classification-ledger.md),
+and [stack cut sheet](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/stack-cut-sheet.md)
 preserve delivery, source accounting, acceptance targets, and held-source
 disposition as historical provenance. Earlier exact contracts and receipts remain
 intact in the
@@ -278,7 +278,7 @@ no such change is implied by this deferral.
 ### Retained Generic Contract
 
 The source families are recorded in the
-[held temporal source matrix](../../../openspec/changes/realize-app-runtime-spine/stack-cut-sheet.md#temporal-source-disposition),
+[held temporal source matrix](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/stack-cut-sheet.md#temporal-source-disposition),
 especially `602b1207a51c` and `5fcb3257933`. Preserve generic bounded temporal
 read/write and immutable projection/materialization, snapshots and their
 provenance/time semantics, frame-free checkpoint/model/query/hash behavior, and
