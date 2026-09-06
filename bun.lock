@@ -25,7 +25,7 @@
         "@effect/platform-node": "4.0.0-beta.101",
         "@getgrit/cli": "0.1.0-alpha.1743007075",
         "@habitat-ai/agent-plugin-lifecycle-service": "workspace:*",
-        "@habitat-ai/cli": "0.5.15",
+        "@habitat-ai/cli": "0.6.0",
         "@habitat-ai/dev-service": "workspace:*",
         "@habitat-ai/plugin-agent-plugins": "workspace:*",
         "@habitat-ai/plugin-authoring": "workspace:*",
@@ -675,7 +675,7 @@
 
     "@habitat-ai/catalog-service": ["@habitat-ai/catalog-service@workspace:services/catalog"],
 
-    "@habitat-ai/cli": ["@habitat-ai/cli@0.5.15", "", { "dependencies": { "@habitat-ai/sdk": "0.5.15", "@nx/devkit": "23.1.1", "@oclif/core": "^4.13.2", "@oclif/plugin-help": "^6.2.27", "@oclif/plugin-plugins": "^5.4.84", "typebox": "1.3.8" }, "bin": { "habitat": "bin/run.js" } }, "sha512-5Sndfo5US/AR2VqDUBedbkQQJWy+atwcn4iysgp47PmMexBOu/WP56Q6cotOqn1FG0nb4TiPZ/1euCacS7cLCA=="],
+    "@habitat-ai/cli": ["@habitat-ai/cli@0.6.0", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@habitat-ai/sdk": "0.6.0", "@nx/devkit": "23.1.1", "@oclif/core": "4.13.3", "@oclif/plugin-help": "^6.2.27", "@oclif/plugin-plugins": "^5.4.84", "@opentelemetry/api": "1.9.0", "@orpc/contract": "2.0.0-beta.32", "@orpc/experimental-effect": "2.0.0-beta.32", "@orpc/server": "2.0.0-beta.32", "effect": "4.0.0-beta.101", "nx": "23.1.1", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8", "typescript": "5.9.3" }, "bin": { "habitat": "bin/run.js" } }, "sha512-lS+tn1uAVzdfYe7VGJVRxRhvZf+mDofEwEHa9Q54RrXbZkTT6I/5DCosLcBQgD7iJHCNpnUrbVxzMZZ03CldDg=="],
 
     "@habitat-ai/dev-service": ["@habitat-ai/dev-service@workspace:services/dev"],
 
@@ -2429,7 +2429,7 @@
 
     "@cypress/request/uuid": ["uuid@8.3.2", "", { "bin": { "uuid": "dist/bin/uuid" } }, "sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg=="],
 
-    "@habitat-ai/cli/@habitat-ai/sdk": ["@habitat-ai/sdk@0.5.15", "", { "dependencies": { "@effect/platform-node": "4.0.0-beta.101", "@effect/platform-node-shared": "4.0.0-beta.101", "@getgrit/cli": "0.1.0-alpha.1743007075", "@opentelemetry/api": "1.9.0", "@orpc/contract": "2.0.0-beta.23", "@orpc/experimental-effect": "2.0.0-beta.23", "@orpc/server": "2.0.0-beta.23", "@standard-schema/spec": "1.1.0", "effect": "4.0.0-beta.101", "picomatch": "4.0.4", "smol-toml": "1.7.0", "typebox": "1.3.8" } }, "sha512-jn34/4bxmtzR0wGYYV+xv9jDEJO1zPF5PL/6B/5QBWe67FFrFOH19/vpsVbFD2Ls5cFYg2OoVLTGb10oTNAGrw=="],
+    "@habitat-ai/cli/@habitat-ai/sdk": ["@habitat-ai/sdk@0.6.0", "", { "dependencies": { "@effect/opentelemetry": "4.0.0-beta.101", "@opentelemetry/api": "1.9.0", "@opentelemetry/api-logs": "0.213.0", "@opentelemetry/context-async-hooks": "2.6.0", "@opentelemetry/core": "2.6.0", "@opentelemetry/exporter-metrics-otlp-http": "0.213.0", "@opentelemetry/otlp-exporter-base": "0.213.0", "@opentelemetry/otlp-transformer": "0.213.0", "@opentelemetry/resources": "2.6.0", "@opentelemetry/sdk-logs": "0.213.0", "@opentelemetry/sdk-metrics": "2.6.0", "@opentelemetry/sdk-trace-base": "2.6.0", "@opentelemetry/sdk-trace-node": "2.6.0", "@opentelemetry/semantic-conventions": "1.40.0", "@orpc/client": "2.0.0-beta.32", "@orpc/contract": "2.0.0-beta.32", "@orpc/experimental-effect": "2.0.0-beta.32", "@orpc/openapi": "2.0.0-beta.32", "@orpc/opentelemetry": "2.0.0-beta.32", "@orpc/server": "2.0.0-beta.32", "@orpc/shared": "2.0.0-beta.32", "@standard-schema/spec": "1.1.0", "dotenv": "16.4.7", "effect": "4.0.0-beta.101", "rou3": "0.9.1", "typebox": "1.3.8" }, "peerDependencies": { "@oclif/core": "^4.13.3", "elysia": "1.4.30", "inngest": "4.18.0" }, "optionalPeers": ["@oclif/core", "elysia", "inngest"] }, "sha512-sdLw3cR2bhfWYv/ZbsDbexZRw9kc9+qTW1KyGuDITv3kkJ2M+MizG/TPvD+ziLwZu4+MOnXn8MLImEmTiN5G9A=="],
 
     "@inngest/ai/@types/node": ["@types/node@22.20.1", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-EANqOCF9QFyra+4pfxUcX9STKJpCLjMbObVzljIJomAWSnuSIEAvyzEU53GaajbXJEgdh0iEcPL+DGvpUd4k1Q=="],
 
@@ -3185,12 +3185,6 @@
 
     "@babel/helper-compilation-targets/lru-cache/yallist": ["yallist@3.1.1", "", {}, "sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g=="],
 
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract": ["@orpc/contract@2.0.0-beta.23", "", { "dependencies": { "@orpc/client": "2.0.0-beta.23", "@orpc/shared": "2.0.0-beta.23", "@standard-schema/spec": "^1.1.0" } }, "sha512-xbTWVfwlhBtGp/1gKm0KfU94mFRWqER4RnBDNuX3lrnJ0HPqLAkcGJTA8sPT1RvEooxrQ5zKtnRVZQx7FwiMaQ=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect": ["@orpc/experimental-effect@2.0.0-beta.23", "", { "dependencies": { "@orpc/contract": "2.0.0-beta.23", "@orpc/json-schema": "2.0.0-beta.23", "@orpc/server": "2.0.0-beta.23", "@orpc/shared": "2.0.0-beta.23" }, "peerDependencies": { "effect": ">=4.0.0-beta.90" } }, "sha512-lzsm3W6q9XJRx1v6V2rAURG7LgpwnsbbvHM9qHEqYLQJjKzSG1TwyiB6WOaK/tEKXgcj0XgkVYEfkiX88CwRMA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server": ["@orpc/server@2.0.0-beta.23", "", { "dependencies": { "@orpc/client": "2.0.0-beta.23", "@orpc/contract": "2.0.0-beta.23", "@orpc/shared": "2.0.0-beta.23", "@standardserver/core": "^0.6.0", "@standardserver/fetch": "^0.6.0", "@standardserver/node": "^0.6.0", "@standardserver/peer": "^0.6.0", "cookie": "^2.0.1" }, "peerDependencies": { "crossws": ">=0.3.4" }, "optionalPeers": ["crossws"] }, "sha512-BLHEM86bi+9Ly51QaUXJbidE94+CZBnbH2BTFqDqGusA2lV8016W7dnPz618L5dqQ4BwoJ/GnARB0YapGb658A=="],
-
     "@inngest/ai/@types/node/undici-types": ["undici-types@6.21.0", "", {}, "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ=="],
 
     "@inquirer/checkbox/@inquirer/core/mute-stream": ["mute-stream@2.0.0", "", {}, "sha512-WWdIxpyjEn+FhQJQQv9aQAYlHoNVdzIzUySNV1gHUPDSdZJ3yZn7pAAbQcV7B56Mvu881q9FZV+0Vx2xC44VWA=="],
@@ -3505,28 +3499,6 @@
 
     "through2/readable-stream/string_decoder": ["string_decoder@1.1.1", "", { "dependencies": { "safe-buffer": "~5.1.0" } }, "sha512-n/ShnvDi6FHbbVfviro+WojiFzv+s8MPMHBczVePfUpDJLwoLT0ht1l4YwBCbi8pJAveEEdnkHyPyTP/mzRfwg=="],
 
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/client": ["@orpc/client@2.0.0-beta.23", "", { "dependencies": { "@orpc/shared": "2.0.0-beta.23", "@standardserver/core": "^0.6.0", "@standardserver/fetch": "^0.6.0", "@standardserver/peer": "^0.6.0" } }, "sha512-w9czJs6yWPNlyoDPRFvRJeQOBRHylGT3oCHa9kh0KbFXiHRE+qZNicUj4925lfX+sEI2Gktsew/62/R7hG1yPA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/shared": ["@orpc/shared@2.0.0-beta.23", "", { "dependencies": { "@standardserver/shared": "^0.6.0", "radash": "^12.1.1", "type-fest": "^5.3.1" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-eRLhcu8y+mYV8cdmMN1f48nfaTphRyaQWBPhyosRgi0TbkagJ2zbenyXWuS2i0uV8Ueq3JfL0IlSL4O4rzjjmA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema": ["@orpc/json-schema@2.0.0-beta.23", "", { "dependencies": { "@orpc/client": "2.0.0-beta.23", "@orpc/contract": "2.0.0-beta.23", "@orpc/server": "2.0.0-beta.23", "@orpc/shared": "2.0.0-beta.23", "@standard-schema/spec": "^1.1.0", "json-schema-typed": "^8.0.2" } }, "sha512-8F5aVlStL2aVuQTJAgterdo22TnXkNrGCT8h8mjeXx2UiJUgl/Up1qk8SQt68gXeGLRe6sYKAEpSRlLoLbAGnQ=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/shared": ["@orpc/shared@2.0.0-beta.23", "", { "dependencies": { "@standardserver/shared": "^0.6.0", "radash": "^12.1.1", "type-fest": "^5.3.1" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-eRLhcu8y+mYV8cdmMN1f48nfaTphRyaQWBPhyosRgi0TbkagJ2zbenyXWuS2i0uV8Ueq3JfL0IlSL4O4rzjjmA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@orpc/client": ["@orpc/client@2.0.0-beta.23", "", { "dependencies": { "@orpc/shared": "2.0.0-beta.23", "@standardserver/core": "^0.6.0", "@standardserver/fetch": "^0.6.0", "@standardserver/peer": "^0.6.0" } }, "sha512-w9czJs6yWPNlyoDPRFvRJeQOBRHylGT3oCHa9kh0KbFXiHRE+qZNicUj4925lfX+sEI2Gktsew/62/R7hG1yPA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@orpc/shared": ["@orpc/shared@2.0.0-beta.23", "", { "dependencies": { "@standardserver/shared": "^0.6.0", "radash": "^12.1.1", "type-fest": "^5.3.1" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-eRLhcu8y+mYV8cdmMN1f48nfaTphRyaQWBPhyosRgi0TbkagJ2zbenyXWuS2i0uV8Ueq3JfL0IlSL4O4rzjjmA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/core": ["@standardserver/core@0.6.0", "", { "dependencies": { "@standardserver/shared": "0.6.0" } }, "sha512-Cb41o407LOpERtHwMqSDd0zeR6T78njHYNGzyrtyNFOWGnUG1+HGJI1PS12a1w3o3ZYn7OvZlKseiDUdcUkLqA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/fetch": ["@standardserver/fetch@0.6.0", "", { "dependencies": { "@standardserver/core": "0.6.0", "@standardserver/shared": "0.6.0" } }, "sha512-zs43GbR8ntzv6ZaNPiiERa1EBfnplPnPyJPLPsxiihC1NRKexw5JOnWuXk2nhbP1rtoWJ2g16s+WNdxvA/N/iA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/node": ["@standardserver/node@0.6.0", "", { "dependencies": { "@standardserver/core": "0.6.0", "@standardserver/fetch": "0.6.0", "@standardserver/shared": "0.6.0" } }, "sha512-jx59Ig+vHDDtFxUa+ppRa5dDk2z78XBcMFsCbzAoSqjezimzn6aQQEwwF1L7E4xnAq6ijhJ5apv6zuM0p6K1pw=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/peer": ["@standardserver/peer@0.6.0", "", { "dependencies": { "@standardserver/core": "0.6.0", "@standardserver/shared": "0.6.0" } }, "sha512-FeyteqxAJRQR+v1RtFuDdYkgwpvQS583VdsH8kOSbRQjbIslfPjpXTZmC280H//Mv2EejOhWeS5Oy5nRuvQtxQ=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/cookie": ["cookie@2.0.1", "", {}, "sha512-yuToqVvRrj6pfDXREyQAAv8SkAEk/8GS3jQRTiUMm66TVtBYmqQeoEjL2Lmq8Rpo6271vH76InTChTitEAm65w=="],
-
     "@inquirer/prompts/@inquirer/confirm/@inquirer/core/mute-stream": ["mute-stream@2.0.0", "", {}, "sha512-WWdIxpyjEn+FhQJQQv9aQAYlHoNVdzIzUySNV1gHUPDSdZJ3yZn7pAAbQcV7B56Mvu881q9FZV+0Vx2xC44VWA=="],
 
     "@inquirer/prompts/@inquirer/confirm/@inquirer/core/signal-exit": ["signal-exit@4.1.0", "", {}, "sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw=="],
@@ -3659,46 +3631,6 @@
 
     "npm/minipass-pipeline/minipass/yallist": ["yallist@4.0.0", "", {}, "sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A=="],
 
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/client/@standardserver/core": ["@standardserver/core@0.6.0", "", { "dependencies": { "@standardserver/shared": "0.6.0" } }, "sha512-Cb41o407LOpERtHwMqSDd0zeR6T78njHYNGzyrtyNFOWGnUG1+HGJI1PS12a1w3o3ZYn7OvZlKseiDUdcUkLqA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/client/@standardserver/fetch": ["@standardserver/fetch@0.6.0", "", { "dependencies": { "@standardserver/core": "0.6.0", "@standardserver/shared": "0.6.0" } }, "sha512-zs43GbR8ntzv6ZaNPiiERa1EBfnplPnPyJPLPsxiihC1NRKexw5JOnWuXk2nhbP1rtoWJ2g16s+WNdxvA/N/iA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/client/@standardserver/peer": ["@standardserver/peer@0.6.0", "", { "dependencies": { "@standardserver/core": "0.6.0", "@standardserver/shared": "0.6.0" } }, "sha512-FeyteqxAJRQR+v1RtFuDdYkgwpvQS583VdsH8kOSbRQjbIslfPjpXTZmC280H//Mv2EejOhWeS5Oy5nRuvQtxQ=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/shared/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema/@orpc/client": ["@orpc/client@2.0.0-beta.23", "", { "dependencies": { "@orpc/shared": "2.0.0-beta.23", "@standardserver/core": "^0.6.0", "@standardserver/fetch": "^0.6.0", "@standardserver/peer": "^0.6.0" } }, "sha512-w9czJs6yWPNlyoDPRFvRJeQOBRHylGT3oCHa9kh0KbFXiHRE+qZNicUj4925lfX+sEI2Gktsew/62/R7hG1yPA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/shared/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@orpc/shared/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/core/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/fetch/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/node/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/server/@standardserver/peer/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
     "@verdaccio/local-storage-legacy/@verdaccio/core/minimatch/brace-expansion/balanced-match": ["balanced-match@1.0.2", "", {}, "sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/client/@standardserver/core/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/client/@standardserver/fetch/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/contract/@orpc/client/@standardserver/peer/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema/@orpc/client/@standardserver/core": ["@standardserver/core@0.6.0", "", { "dependencies": { "@standardserver/shared": "0.6.0" } }, "sha512-Cb41o407LOpERtHwMqSDd0zeR6T78njHYNGzyrtyNFOWGnUG1+HGJI1PS12a1w3o3ZYn7OvZlKseiDUdcUkLqA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema/@orpc/client/@standardserver/fetch": ["@standardserver/fetch@0.6.0", "", { "dependencies": { "@standardserver/core": "0.6.0", "@standardserver/shared": "0.6.0" } }, "sha512-zs43GbR8ntzv6ZaNPiiERa1EBfnplPnPyJPLPsxiihC1NRKexw5JOnWuXk2nhbP1rtoWJ2g16s+WNdxvA/N/iA=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema/@orpc/client/@standardserver/peer": ["@standardserver/peer@0.6.0", "", { "dependencies": { "@standardserver/core": "0.6.0", "@standardserver/shared": "0.6.0" } }, "sha512-FeyteqxAJRQR+v1RtFuDdYkgwpvQS583VdsH8kOSbRQjbIslfPjpXTZmC280H//Mv2EejOhWeS5Oy5nRuvQtxQ=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema/@orpc/client/@standardserver/core/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema/@orpc/client/@standardserver/fetch/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
-
-    "@habitat-ai/cli/@habitat-ai/sdk/@orpc/experimental-effect/@orpc/json-schema/@orpc/client/@standardserver/peer/@standardserver/shared": ["@standardserver/shared@0.6.0", "", {}, "sha512-pPn3XL6bUOHhT85zN20uFeoZjFdmdTabNvhOCXKRiW2zvzbuWDYyBqjcptjHXI4muamEFqOXiSLoqvh8Gjy+Ag=="],
   }
 }

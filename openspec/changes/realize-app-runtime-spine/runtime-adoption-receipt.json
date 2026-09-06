@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "disposition": "producer-adoption-locally-accepted",
+  "pathSemantics": "releaseReceipt and records.consumerHandoff are relative to this receipt directory and remain valid when the change is archived. records.deferredCapabilities, records.implementation, rootFiles, and installedIdentity.paths are relative to the repository root, not this receipt. Evidence artifact names identify local run outputs, not repository-relative links.",
+  "releaseReceipt": "runtime-release-receipt.json",
+  "source": {
+    "repository": "https://github.com/rawr-ai/rawr-hq-template",
+    "commit": "f52474a7abc232d881cd1cf272f1d063a265285d",
+    "tree": "900632c2d18f09852475cc39b8293458f4bd24ab",
+    "meaning": "Exact published runtime base before this producer root dependency and lockfile adoption."
+  },
+  "root": {
+    "cli": {
+      "previousVersion": "0.5.15",
+      "version": "0.6.0",
+      "integrity": "sha512-lS+tn1uAVzdfYe7VGJVRxRhvZf+mDofEwEHa9Q54RrXbZkTT6I/5DCosLcBQgD7iJHCNpnUrbVxzMZZ03CldDg=="
+    },
+    "producerSdk": "workspace:*",
+    "pairedRegistrySdk": {
+      "version": "0.6.0",
+      "integrity": "sha512-sdLw3cR2bhfWYv/ZbsDbexZRw9kc9+qTW1KyGuDITv3kkJ2M+MizG/TPvD+ziLwZu4+MOnXn8MLImEmTiN5G9A=="
+    }
+  },
+  "installedIdentity": {
+    "versions": {
+      "cli": "0.6.0",
+      "sdk": "0.6.0",
+      "cliSdk": "0.6.0"
+    },
+    "paths": {
+      "cli": "node_modules/.bun/@habitat-ai+cli@0.6.0+230962b8ac7e4ff7/node_modules/@habitat-ai/cli/package.json",
+      "sdk": "packages/core/sdk/package.json",
+      "cliSdk": "node_modules/.bun/@habitat-ai+sdk@0.6.0+d9f3cc8afad538f2/node_modules/@habitat-ai/sdk/package.json"
+    },
+    "cliSdkDependency": "0.6.0",
+    "sharedSdkResolution": false,
+    "meaning": "The producer root retains its workspace SDK. The installed registry CLI resolves its own distinct paired registry SDK at 0.6.0; equal version strings do not imply shared module resolution."
+  },
+  "verification": {
+    "nativeMigration": {
+      "command": "NX_MIGRATE_USE_LOCAL=true bunx nx migrate @habitat-ai/cli@0.6.0 --no-interactive",
+      "conclusion": "success",
+      "packageJsonUpdated": true,
+      "migrationPlanCreated": false,
+      "result": "Native Nx resolved both CLI and SDK at 0.6.0, updated the root CLI dependency, preserved the root workspace SDK, and reported no migrations to run."
+    },
+    "install": {
+      "command": "bun install",
+      "conclusion": "success",
+      "packagesInstalled": 4,
+      "lockfileSaved": true
+    },
+    "frozenInstall": {
+      "command": "bun install --frozen-lockfile",
+      "conclusion": "success",
+      "packageChanges": false
+    },
+    "sameVersionRepeat": {
+      "command": "NX_MIGRATE_USE_LOCAL=true bunx nx migrate @habitat-ai/cli@0.6.0 --no-interactive",
+      "conclusion": "success",
+      "result": "No updates were applied; no package updates or migrations were found.",
+      "migrationPlanCreated": false,
+      "frozenInstallCommand": "bun install --frozen-lockfile",
+      "frozenInstallConclusion": "success",
+      "manifestAndLockByteIdentical": true,
+      "sha256BeforeAndAfter": {
+        "package.json": "6b587811abeccba96d7017b11161490fdb8fd5e092dcb3984041c3c650c41e84",
+        "bun.lock": "760e9e6b06ca2651f09995a8cdc727622d9f153fd698d1453ea041cd85ab8910"
+      }
+    },
+    "productSeparationAbsence": {
+      "target": "habitat:acceptance:product-separation-absence",
+      "conclusion": "success",
+      "nxCache": "disabled",
+      "testsPassed": 19,
+      "testsFailed": 0,
+      "assertions": 182,
+      "testFiles": 6,
+      "nxTasksPassed": 30
+    },
+    "repositoryCheck": {
+      "command": "bun run check",
+      "conclusion": "success",
+      "initialAttempt": {
+        "conclusion": "failure",
+        "failedTargets": ["habitat:lint"],
+        "diagnostic": "The sole reported lint error was formatting in the new runtime-release-receipt.json. Dependent check targets did not run after that failure."
+      },
+      "acceptedRerun": {
+        "conclusion": "success",
+        "projects": 39,
+        "dependencyTasks": 108,
+        "nxTasksPassed": 147,
+        "nxCacheHits": 106,
+        "result": "The repository check passed after native formatting corrected the release receipt."
+      }
+    }
+  },
+  "evidence": {
+    "provenance": "Observed local producer-run artifacts; values were not copied from historical foundation adoption receipts.",
+    "artifactNames": [
+      "runtime-producer-migrate.log",
+      "runtime-producer-install.log",
+      "runtime-producer-installed-identity.json",
+      "runtime-producer-frozen-install.log",
+      "runtime-producer-idempotence-before.txt",
+      "runtime-producer-migrate-repeat.log",
+      "runtime-producer-repeat-frozen-install.log",
+      "runtime-producer-absence.log",
+      "runtime-producer-check.log"
+    ]
+  },
+  "scope": {
+    "producerRepository": "Habitat",
+    "downstreamAdoption": false,
+    "heldSourceRetirement": false,
+    "deferredCapabilitiesActivated": false,
+    "meaning": "This records only Habitat producer adoption of its published package pair. It neither adopts packages in Rawr, Civ7, Magic, or Marketplace nor authorizes consumer transfers or held-source changes."
+  },
+  "rootFiles": ["package.json", "bun.lock"],
+  "records": {
+    "consumerHandoff": "consumer-handoff.md",
+    "deferredCapabilities": "docs/projects/habitat-runtime-realignment/deferred-capabilities.md",
+    "implementation": "docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md"
+  }
+}

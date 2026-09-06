@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "releaseGroup": "habitat-cli",
+  "version": "0.6.0",
+  "disposition": "published-and-registry-accepted; publish-workflow-success",
+  "source": {
+    "repository": "https://github.com/rawr-ai/rawr-hq-template",
+    "commit": "f52474a7abc232d881cd1cf272f1d063a265285d",
+    "tree": "900632c2d18f09852475cc39b8293458f4bd24ab",
+    "tag": "habitat-cli-v0.6.0",
+    "tagObject": "28af61b95cb39fd64f0e5c87b308b536c6d8f13d",
+    "url": "https://github.com/rawr-ai/rawr-hq-template/tree/f52474a7abc232d881cd1cf272f1d063a265285d"
+  },
+  "exactMain": {
+    "workflow": "Repository Ratchet",
+    "requiredJob": "Required lint, typecheck, and topology",
+    "runId": 34009570298,
+    "url": "https://github.com/rawr-ai/rawr-hq-template/actions/runs/34009570298",
+    "conclusion": "success",
+    "remoteTasks": { "passed": 188, "cacheHits": 0 },
+    "localTasks": { "passed": 188, "cacheHits": 142 }
+  },
+  "publication": {
+    "workflow": "Publish Habitat",
+    "runId": 34010186167,
+    "url": "https://github.com/rawr-ai/rawr-hq-template/actions/runs/34010186167",
+    "mechanism": "existing native Nx Release habitat-cli group with npm OIDC",
+    "attempts": [
+      {
+        "runAttempt": 1,
+        "url": "https://github.com/rawr-ai/rawr-hq-template/actions/runs/34010186167/attempts/1",
+        "installedPackageGates": { "ubuntu-latest": "success", "windows-latest": "success" },
+        "nativeNxPublication": "success for both packages at 0.6.0",
+        "conclusion": "failure",
+        "failure": "Post-publication registry visibility polling exhausted six attempts before registry-installed acceptance ran. This failure did not undo publication."
+      },
+      {
+        "runAttempt": 2,
+        "url": "https://github.com/rawr-ai/rawr-hq-template/actions/runs/34010186167/attempts/2",
+        "scope": "failed publish job only",
+        "jobId": 101429682371,
+        "registryVerification": {
+          "conclusion": "success",
+          "completedAt": "2026-09-06T04:58:37Z"
+        },
+        "retainedInstalledPackageGates": {
+          "ubuntu-latest": "success",
+          "windows-latest": "success"
+        },
+        "conclusion": "success"
+      }
+    ],
+    "finalWorkflowConclusion": "success"
+  },
+  "packages": [
+    {
+      "name": "@habitat-ai/cli",
+      "version": "0.6.0",
+      "gitHead": "f52474a7abc232d881cd1cf272f1d063a265285d",
+      "dist": {
+        "tarball": "https://registry.npmjs.org/@habitat-ai/cli/-/cli-0.6.0.tgz",
+        "integrity": "sha512-lS+tn1uAVzdfYe7VGJVRxRhvZf+mDofEwEHa9Q54RrXbZkTT6I/5DCosLcBQgD7iJHCNpnUrbVxzMZZ03CldDg==",
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@habitat-ai%2fcli@0.6.0",
+          "provenance": { "predicateType": "https://slsa.dev/provenance/v1" }
+        }
+      }
+    },
+    {
+      "name": "@habitat-ai/sdk",
+      "version": "0.6.0",
+      "gitHead": "f52474a7abc232d881cd1cf272f1d063a265285d",
+      "dist": {
+        "tarball": "https://registry.npmjs.org/@habitat-ai/sdk/-/sdk-0.6.0.tgz",
+        "integrity": "sha512-sdLw3cR2bhfWYv/ZbsDbexZRw9kc9+qTW1KyGuDITv3kkJ2M+MizG/TPvD+ziLwZu4+MOnXn8MLImEmTiN5G9A==",
+        "attestations": {
+          "url": "https://registry.npmjs.org/-/npm/v1/attestations/@habitat-ai%2fsdk@0.6.0",
+          "provenance": { "predicateType": "https://slsa.dev/provenance/v1" }
+        }
+      }
+    }
+  ],
+  "policyPack": {
+    "name": "@habitat-ai/sdk",
+    "version": "0.6.0",
+    "protocolVersion": 1,
+    "blueprints": [
+      { "id": "app", "version": 1, "path": "dist/blueprints/app/blueprint.toml" },
+      { "id": "app", "version": 2, "path": "dist/blueprints/app/versions/2/blueprint.toml" },
+      { "id": "package", "version": 1, "path": "dist/blueprints/package/blueprint.toml" },
+      { "id": "plugin", "version": 1, "path": "dist/blueprints/plugin/blueprint.toml" },
+      {
+        "id": "plugin-cli-topic",
+        "version": 1,
+        "path": "dist/blueprints/plugin-cli-topic/blueprint.toml"
+      },
+      { "id": "plugin-nx", "version": 1, "path": "dist/blueprints/plugin-nx/blueprint.toml" },
+      { "id": "provider", "version": 1, "path": "dist/blueprints/provider/blueprint.toml" },
+      { "id": "resource", "version": 1, "path": "dist/blueprints/resource/blueprint.toml" },
+      {
+        "id": "resource",
+        "version": 2,
+        "path": "dist/blueprints/resource/versions/2/blueprint.toml"
+      },
+      {
+        "id": "resource",
+        "version": 3,
+        "path": "dist/blueprints/resource/versions/3/blueprint.toml"
+      },
+      {
+        "id": "runtime-bootgraph",
+        "version": 1,
+        "path": "dist/blueprints/runtime-bootgraph/blueprint.toml"
+      },
+      {
+        "id": "runtime-bootgraph",
+        "version": 2,
+        "path": "dist/blueprints/runtime-bootgraph/versions/2/blueprint.toml"
+      },
+      {
+        "id": "runtime-compiler",
+        "version": 1,
+        "path": "dist/blueprints/runtime-compiler/blueprint.toml"
+      },
+      {
+        "id": "runtime-compiler",
+        "version": 2,
+        "path": "dist/blueprints/runtime-compiler/versions/2/blueprint.toml"
+      },
+      {
+        "id": "runtime-definition",
+        "version": 1,
+        "path": "dist/blueprints/runtime-definition/blueprint.toml"
+      },
+      {
+        "id": "runtime-definition",
+        "version": 2,
+        "path": "dist/blueprints/runtime-definition/versions/2/blueprint.toml"
+      },
+      {
+        "id": "runtime-definition",
+        "version": 3,
+        "path": "dist/blueprints/runtime-definition/versions/3/blueprint.toml"
+      },
+      {
+        "id": "runtime-derivation",
+        "version": 1,
+        "path": "dist/blueprints/runtime-derivation/blueprint.toml"
+      },
+      {
+        "id": "runtime-derivation",
+        "version": 2,
+        "path": "dist/blueprints/runtime-derivation/versions/2/blueprint.toml"
+      },
+      {
+        "id": "runtime-derivation",
+        "version": 3,
+        "path": "dist/blueprints/runtime-derivation/versions/3/blueprint.toml"
+      },
+      {
+        "id": "runtime-harnesses",
+        "version": 1,
+        "path": "dist/blueprints/runtime-harnesses/blueprint.toml"
+      },
+      {
+        "id": "runtime-harnesses",
+        "version": 2,
+        "path": "dist/blueprints/runtime-harnesses/versions/2/blueprint.toml"
+      },
+      {
+        "id": "runtime-harnesses",
+        "version": 3,
+        "path": "dist/blueprints/runtime-harnesses/versions/3/blueprint.toml"
+      },
+      {
+        "id": "runtime-harnesses",
+        "version": 4,
+        "path": "dist/blueprints/runtime-harnesses/versions/4/blueprint.toml"
+      },
+      {
+        "id": "runtime-mounting",
+        "version": 1,
+        "path": "dist/blueprints/runtime-mounting/blueprint.toml"
+      },
+      {
+        "id": "runtime-mounting",
+        "version": 2,
+        "path": "dist/blueprints/runtime-mounting/versions/2/blueprint.toml"
+      },
+      {
+        "id": "runtime-observation",
+        "version": 1,
+        "path": "dist/blueprints/runtime-observation/blueprint.toml"
+      },
+      {
+        "id": "runtime-process-runtime",
+        "version": 1,
+        "path": "dist/blueprints/runtime-process-runtime/blueprint.toml"
+      },
+      {
+        "id": "runtime-process-runtime",
+        "version": 2,
+        "path": "dist/blueprints/runtime-process-runtime/versions/2/blueprint.toml"
+      },
+      {
+        "id": "runtime-substrate-effect",
+        "version": 1,
+        "path": "dist/blueprints/runtime-substrate-effect/blueprint.toml"
+      },
+      { "id": "service", "version": 1, "path": "dist/blueprints/service/blueprint.toml" },
+      {
+        "id": "service",
+        "version": 2,
+        "path": "dist/blueprints/service/versions/2/blueprint.toml"
+      },
+      {
+        "id": "service",
+        "version": 3,
+        "path": "dist/blueprints/service/versions/3/blueprint.toml"
+      },
+      { "id": "service", "version": 4, "path": "dist/blueprints/service/versions/4/blueprint.toml" }
+    ]
+  },
+  "registryAcceptance": {
+    "registry": "https://registry.npmjs.org",
+    "source": "actual registry artifacts, not local candidate tarballs",
+    "target": "@habitat-ai/cli:acceptance:oclif-installed-package",
+    "environment": {
+      "HABITAT_ACCEPTANCE_REGISTRY_VERSION": "0.6.0",
+      "HABITAT_NATIVE_AGENT_ACCEPTANCE": "1",
+      "HABITAT_NATIVE_DEV_ACCEPTANCE": "1"
+    },
+    "conclusion": "success",
+    "platform": "local macOS",
+    "testFilesPassed": 3,
+    "testsPassed": 47,
+    "testsSkipped": 2,
+    "skipReason": "Windows-only .cmd argument transport cases; Windows publication gate passed separately.",
+    "testDurationSeconds": 369.72,
+    "nxTasksPassed": 30,
+    "nxCache": "disabled",
+    "installedIdentity": {
+      "cli": "0.6.0",
+      "sdk": "0.6.0",
+      "cliSdk": "0.6.0",
+      "cliSdkDependency": "0.6.0",
+      "sharedSdkResolution": true
+    },
+    "migration": "Native nx add and grouped upgrades from 0.5.3, 0.5.6 and 0.5.15 passed; current-foundation upgrade and same-version repeat are idempotent.",
+    "nativeOptIns": "Real native agent-plugin lifecycle and native Graphite inspection passed; this is not D-4 native agent/OpenShell host qualification.",
+    "policyIdentity": "policyPack is the exact resolved catalog.policyPack object; dist integrity and attestation fields are npm metadata, not an invented policy-pack digest."
+  },
+  "capabilityProof": {
+    "appBlueprints": "Installed acceptance preserves byte-identical, independently resolvable app@1 and complete independently resolvable app@2 without inheritance or fallback.",
+    "effectSubstrate": "One effect@4.0.0-beta.101 ManagedRuntime and Layer.effectContext lifecycle adapter per started process; native acquisition/release and forced context precede mount.",
+    "processIsolation": {
+      "target": "runtime-harnesses:acceptance:process-isolation",
+      "runId": 34009570298,
+      "conclusion": "success",
+      "proof": "Packed SDK; one finite app catalog; separately built Elysia server and native Inngest async children; independent stops/restarts, identities and resources; missing async resource rolls back without mount while sibling keeps serving; distinct fail-closed readiness/liveness.",
+      "nativeRunAfterStop": "FAILED",
+      "limit": "Admitted native work and finalizers settle before release; drain is not durable workflow completion."
+    },
+    "deployment": "Cold executable references remain cohesive through deployment derivation; each thin entrypoint passes its exact Entrypoint artifact to one startApp.",
+    "companionContract": "@habitat-ai/sdk/runtime/harnesses is public and import-safe without unselected native hosts.",
+    "nativeTelemetry": "Oclif, Elysia/oRPC, Inngest and agent-plugin receipts prove native OTLP transport, connected ancestry and finalization, not backend persistence/queryability or universal secret-free export."
+  },
+  "stackDisposition": {
+    "request": "Installed habitat dev stack drain --apply returned Requested after native gt merge; request alone is not merge completion.",
+    "completion": "Exact main was observed and accepted independently; one final native force/no-restack/noninteractive synchronization sweep removed the five consumed runtime refs.",
+    "preservationCheck": "Passed: held branches/metadata/worktrees unchanged, no unexpected refs or worktrees, stash order identical, local and origin main matched the release source."
+  },
+  "scope": {
+    "publishedPackages": ["@habitat-ai/sdk", "@habitat-ai/cli"],
+    "privateOwnersPublished": false,
+    "semanticLedgerExports": false,
+    "temporalInquiryExports": false,
+    "mcpCompanion": "Task 13.6 independent ordinary-artifact condition unsatisfied; no attachment, dependency, MCP authoring face or lifecycle claim.",
+    "deferred": [
+      "D-1 semantic ledger",
+      "D-2 temporal inquiry",
+      "D-3 consumer adoption and held-source retirement",
+      "D-4 native agent/OpenShell and desktop hosts",
+      "D-5 backend telemetry, exception export policy and EVLog evaluation"
+    ],
+    "historicalFoundationReceipts": "Unchanged; their original bounded release meaning is not replaced.",
+    "archive": "Not performed by this receipt; task 15.9 remains gated on remaining producer closure."
+  },
+  "recordPathSemantics": "receiptRelative paths resolve from this receipt's directory, including after native archive; repositoryRelative paths resolve from the repository root.",
+  "records": {
+    "receiptRelative": {
+      "handoff": "consumer-handoff.md",
+      "tasks": "tasks.md",
+      "classificationLedger": "classification-ledger.md"
+    },
+    "repositoryRelative": {
+      "deferredCapabilities": "docs/projects/habitat-runtime-realignment/deferred-capabilities.md",
+      "implementation": "docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md"
+    }
+  }
+}

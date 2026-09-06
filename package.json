@@ -92,7 +92,7 @@
     "@effect/platform-node": "4.0.0-beta.101",
     "@getgrit/cli": "0.1.0-alpha.1743007075",
     "@habitat-ai/agent-plugin-lifecycle-service": "workspace:*",
-    "@habitat-ai/cli": "0.5.15",
+    "@habitat-ai/cli": "0.6.0",
     "@habitat-ai/dev-service": "workspace:*",
     "@habitat-ai/plugin-agent-plugins": "workspace:*",
     "@habitat-ai/plugin-authoring": "workspace:*",

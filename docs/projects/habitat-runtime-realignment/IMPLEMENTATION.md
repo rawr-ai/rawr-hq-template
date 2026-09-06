@@ -1,6 +1,42 @@
 # Habitat Runtime Implementation
 
-Status: `active`; runtime implementation submitted; paired 0.6.0 release preparation.
+Status: `closing`; runtime landed and SDK/CLI 0.6.0 published and registry-qualified.
+
+## Accepted Release
+
+Runtime PRs 1008 through 1026 have landed. The release source is canonical main
+`f52474a7abc232d881cd1cf272f1d063a265285d`, tree
+`900632c2d18f09852475cc39b8293458f4bd24ab`, tagged `habitat-cli-v0.6.0`.
+Exact-main Repository Ratchet and local CI passed all 188 tasks. Native Nx
+published only `@habitat-ai/sdk@0.6.0` and `@habitat-ai/cli@0.6.0`; tagged Linux
+and Windows installed checks passed. The publication workflow's second attempt
+passed actual registry verification after its first registry-visibility check
+failed after publication. No version, artifact or tag was replaced.
+
+Independent local acceptance against those actual registry packages passed 47
+tests with two Windows-only skips, including native agent-plugin and developer
+operations. Native Graphite merged the runtime stack; the final no-restack sweep
+retired its five consumed refs while preserving unrelated branches, worktrees,
+the primary untracked Codex config and all 13 stashes.
+
+The [release receipt](../../../openspec/changes/realize-app-runtime-spine/runtime-release-receipt.json)
+records exact artifacts and evidence. The producer adopted the published CLI
+through native Nx migration with frozen installation and repeat/no-op proof.
+The [adoption receipt](../../../openspec/changes/realize-app-runtime-spine/runtime-adoption-receipt.json)
+records the distinct installed registry SDK, unchanged source-workspace SDK and
+147-task producer check. Downstream consumers retain their own acceptance.
+The [seven-lane handoff](../../../openspec/changes/realize-app-runtime-spine/consumer-handoff.md)
+is informational, not authorization to resume consumer work. The live
+[deferred capabilities](deferred-capabilities.md) retain their owners and gates.
+Native OpenSpec application/archive and admission of these closure records are
+the remaining work, not further runtime implementation.
+
+## Historical Qualification Notes
+
+The following candidate identities and pending checks describe their original
+execution points. The accepted release above supersedes their status, not their
+evidence or the preserved historical receipts.
+
 Branch: `agent-root-habitat-runtime-release`, parent `agent-root-habitat-dev-runtime`.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
@@ -1928,9 +1964,7 @@ are superseded by current official oRPC ownership. It supplies neither the
 to invent another runner. Related SDK layer/harness drafts remain contextual,
 not wholesale architecture replacements.
 
-Read this record, the current OpenSpec queue and the selected owner's authority.
-Admit each complete verified story through Graphite. Request one native stack
-merge when its candidates are green and sweep consumed branches only after
-actual merge. Continue from the native server into complete async qualification,
-using the SDK authorship inputs and native contracts at each actual boundary.
-Consumer repositories and held source remain outside this authorization.
+The runtime sequence described above is now implemented and released. Finish
+native OpenSpec closure against the Accepted Release
+section, rather than resuming these historical candidate steps. Consumer
+repositories and held source remain outside this authorization.
