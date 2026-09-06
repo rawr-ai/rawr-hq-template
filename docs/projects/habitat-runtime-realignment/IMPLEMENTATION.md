@@ -1,7 +1,7 @@
 # Habitat Runtime Implementation
 
-Status: `active`; native web qualified; repaired CLI admission and task 12.1 locally qualified for candidate admission.
-Branch: `agent-root-habitat-agent-plugin-runtime`, parent `agent-root-habitat-cli-admission`.
+Status: `active`; task 12.1 submitted; task 12.2 fresh native developer-command integration.
+Branch: `agent-root-habitat-dev-runtime`, parent `agent-root-habitat-agent-plugin-runtime`.
 PR: cold predecessor [1008](https://github.com/rawr-ai/rawr-hq-template/pull/1008);
 acquisition [1009](https://github.com/rawr-ai/rawr-hq-template/pull/1009).
 Binding/execution [1010](https://github.com/rawr-ai/rawr-hq-template/pull/1010).
@@ -17,6 +17,10 @@ Native async [1019](https://github.com/rawr-ai/rawr-hq-template/pull/1019).
 Built process isolation [1020](https://github.com/rawr-ai/rawr-hq-template/pull/1020).
 Native CLI input admission [1023](https://github.com/rawr-ai/rawr-hq-template/pull/1023),
 candidate `5a55fd5fa`, includes the qualified installed-test lifetime repair.
+Agent-plugin integration [1024](https://github.com/rawr-ai/rawr-hq-template/pull/1024),
+amended candidate `47de460254742a6e728146fdcdb3ff3a9a28dbe5`, carries the
+qualified installed-helper and Windows workflow repair. Local full CI and
+installed/native acceptance are recorded below; remote requalification remains open.
 Workflow admission [1021](https://github.com/rawr-ai/rawr-hq-template/pull/1021),
 candidate `66397039ebdb18f84dcd4b21b7a94194eb7374ff`, merged as
 `18baa71dfbb6e62a3a0db98b619336e2a0ed1dce` on 2026-09-05.
@@ -47,7 +51,15 @@ test signal, and join exact owned process-tree termination before fixture
 removal. That one-file repair is backported to the CLI admission node and passes
 all 33 installed tests plus app test TypeScript. Graphite restacked task 12.1;
 its resolved tree is byte-identical to the fully qualified integration tree.
-Remote Windows qualification of the repaired candidate remains required.
+The repaired CLI admission candidate passed Windows installed acceptance in
+[33993251347](https://github.com/rawr-ai/rawr-hq-template/actions/runs/33993251347),
+including joined cleanup, in 24m02s overall. The agent-plugin child passed its
+required and Linux checks but exhausted the 25-minute Windows job budget without
+a reported assertion failure. Nx static output hid the active installed-test
+phase. The accepted narrow workflow repair supplies 35 minutes on Windows and
+native streamed task output; per-test, hook and subprocess deadlines remain
+unchanged. Requalify the amended candidate rather than retry unchanged work
+until it happens to fit. This workflow repair belongs on that parent node.
 Commit: see Git history; accepted opening main `80c19fc1291515acbf21e88c97385d5e29d74341`.
 DRA: Codex, owner-delegated Product/Development lead.
 Opened: 2026-09-04.
@@ -102,7 +114,81 @@ be resolved from the authorized frame. Never call a partial story complete.
 
 ## Opening Packet
 
-Current domino: task 12.1's complete agent-plugin lifecycle integration. Its
+Current domino: task 12.2's four retained developer commands, authored fresh from
+accepted responsibilities and frozen commit
+`cc494354449465fa4178f36d4d5222b4d4072f5d`. The frozen implementation is evidence,
+not correctness or a source tree to restore. The service owns Git/development
+policy; the topic owns native admission, presentation and exit classification.
+Reuse the existing filesystem/path resource and add only the independently
+selected native child-process capability. No `dev-node`, new process runtime,
+production fixture switch, fake observability ports or unused clock abstraction.
+
+Accepted refinements after independent service, CLI and native-provider review:
+
+- `repo sync-upstream` becomes an explicit native fast-forward update of the
+  current checkout, from configured Git upstream or an explicit remote/branch
+  pair. The old generated integration branch, personal default ref, broad
+  fetch/prune and mixed Graphite sync/restack sequence are deliberately removed.
+  This operation does not promise Graphite ancestry maintenance.
+- `stack doctor` reports actual current Git/worktree state and native
+  `gt state` JSON ancestry/restack observations. Remove relabel-only selectors,
+  glyph parsing and hardcoded health. `--no-fail` changes exit policy only.
+- `stack drain` requests one native asynchronous merge of the current downstack:
+  `gt submit --publish --no-stack --no-ai --no-edit --no-interactive`, then one
+  `gt merge --no-interactive`. Report `Requested`, never merged or converged.
+  Graphite owns waiting and merging. The operator/workstream verifies actual
+  completion and then runs one native
+  `gt sync --force --no-restack --no-interactive`; the service does not sweep.
+  This deliberately removes the old mutation/sleep loop and false-success
+  classification, rather than recreating an asynchronous job ledger.
+- `worktree cleanup` requires explicit basename prefix and local trunk, protects
+  current, pinned, detached, locked and trunk worktrees, and defaults to merged
+  branches only. Use native NUL-delimited records, physical path identity and
+  ordinary `git worktree remove`; no force, prune or branch deletion.
+- Every command receives an explicit repository path, supplied by native
+  `--repository` or invocation cwd and resolved by Git. Mutation is opt-in;
+  `--dry-run` suppresses `--apply`. Optional scratch evidence is only an explicit
+  list of files, defaulting to warning when supplied and off when absent.
+  Blocking mode reports the same refusal during planning and before mutation.
+  Do not infer personal document roots, inspect file contents, or treat I/O
+  failure as missing evidence.
+
+Review rejected the initially considered service request/finalize API: native
+`gt state` supplies structured ancestry but no PR association. Branch-name lookup
+can select an older merged PR after reuse, while tip equality rejects legitimate
+remote rebases; `gt info` supplies human-formatted association but no complete
+publication proof. A forced sync also has repository-wide scope, not only the
+selected stack. Solving those through a new request ledger, prose parser or
+cleanup authorization model is not requisite for this generic command. Native
+Graphite plus the existing operator/workstream closure remain the right owners.
+There is no deferred service-finalization placeholder or unproved merge claim.
+
+Each result carries truthful plan/attempted-prefix/outcome evidence, not rollback
+claims. Ordinary installed acceptance uses disposable real Git repositories and
+worktrees plus native Graphite observations/refusals. Any full remote merge
+qualification must operate on this already-authorized clean, qualified stack,
+not a hidden hosted fixture or a fake executable presented as Graphite proof.
+The source-qualified candidate passes all 188 CI tasks across 40 projects,
+all 38 installed tests including both native opt-ins, the 19-test cumulative
+absence/law gate, app test TypeScript and strict OpenSpec validation. The native
+dev subset independently passes four tests with 19 instrumented CLI invocations.
+Independent reviews repaired Git-local environment redirection of an explicit
+repository, missing native timeout failure text and exact unattempted worktree
+suffix reporting. Real two-repository tests leave the foreign checkout intact.
+The shared installed helper now terminates the exact Windows process tree on
+first refusal. POSIX refusal also joins the owned group after direct-child
+close; a descendant ignoring SIGTERM cannot escape by closing inherited stdio.
+Four native lifecycle regressions pass on POSIX. The three platform-neutral
+abort/timeout/output cases are included in Windows installed CI, not merely
+the Linux ordinary test job; the POSIX signal-specific case is explicitly skipped there.
+The final repository check also passes. These are local receipts; native remote
+merge-request success and exact candidate/main admission are still distinct.
+Root owns app/SDK assembly, authority and integrated gates; the service peer owns
+the four operations, the native peer owns the selected provider, and the CLI peer
+owns thin projections and exact command membership. New native uncertainty
+feeds this same implementation loop, not a second plan or a placeholder owner.
+
+The qualified predecessor is task 12.1's complete agent-plugin lifecycle integration. Its
 native input-admission prerequisite is locally qualified and submitted; the
 following admission decisions remain its accepted contract.
 
@@ -516,23 +602,21 @@ sync; required checks and exact-main receipts remain separate proof.
 
 ## Current State
 
-The cold pipeline, bootgraph simplification, native acquisition, service
-binding/execution and cold adapters are now landed through PRs 1008-1011 on
-the exact accepted main above. Graphite automatically updated the submitted
-handoff child's remote base. This is source admission, not a package release
-or consumer acceptance. Earlier candidate receipts below retain their original
-meaning and revision.
+PRs 1008-1021 are landed: cold contracts, native Effect acquisition and service
+execution, adapters, mounting/observation, installed Oclif, authoring, server,
+async, process isolation and workflow admission. Native web and CLI admission
+have passing candidate cross-platform checks; agent-plugin integration awaits
+the amended Windows gate. Task 12.2 now passes its installed real local Git,
+worktree and Graphite inspection/refusal gate: four tests and 19 command
+invocations with real OTLP ancestry/finalization. Full CI and all 38 installed
+tests pass; the subsequent helper repair passes four focused native tests and
+the final repository check. A successful remote drain request, actual stack
+merge, final audit, exact-main qualification and runtime release remain open.
 
-Cold pipeline and bootgraph source have passed independent review with no
-remaining P1/P2. Packed SDK/CLI installed acceptance passed all nine tests,
-including the real native service export, callable and declaration checks.
-The complete candidate CI command passed. PR 1008 now includes the Windows
-declaration-resolution correction at `ddefa31e3decd2c502a45bd8ff12000f120401a8`.
-Required CI and both Linux/Windows installed acceptance passed again (Repository
-Ratchet 33939076263, installed-package run 33939076218). Acquisition PR 1009 is
-also green at `2e394920a`: required run 33942339473 and Linux/Windows installed
-run 33942339472 passed. Binding/execution continues on its child branch. This is
-working-stack progress, not a claim that either story has merged or released.
+Earlier node-specific receipts below retain their original revision and proof
+boundary; they are historical implementation evidence, not competing current
+queues. Published SDK/CLI 0.5.15 remains foundation-only. No current source
+acceptance silently promotes it to a released runtime or consumer adoption.
 
 ### Accepted Local Domino: Native Acquisition
 
@@ -772,20 +856,19 @@ cross-platform installed or release claims.
 
 ## Next Packet
 
-Native async, built process isolation and task 13.7 workflow admission are
-merged and exact-main qualified. Native web is in repaired-candidate remote
-qualification. Finish task 12.0's installed CLI input-admission gate, publish
-the complete node, then let Graphite merge the qualified stack and verify
-actual merge before the single consumed-branch sweep and exact-main gate.
+Finish task 12.2's complete integrated checks and native helper cleanup repair,
+then commit it as one functioning developer-command node. Backport only the
+qualified Windows job-budget/output repair to the agent-plugin parent and let
+Graphite restack the child. Submit and qualify the exact candidates. Use the
+installed developer command for the authorized clean stack's real merge request,
+observe actual completion, then perform one native consumed-branch sweep.
 
-Proceed to task 12.1 as a complete agent-plugin command/service/resource/profile
-story. The opening packet records accepted semantic simplifications and the
-required real-child cancellation repair. Resolve the remaining aggregate-input
-admission and telemetry demand/public-identity joins from native contracts;
-neither fake dependencies nor a second parser are accepted by default. Keep
-the six commands, owner-local law and installed native/telemetry proof together.
-Task 12.2 and the final audit/release retain their own actual acceptance gates.
-Task 13.6 remains condition-unsatisfied, not an MCP attachment claim.
+The next domino is task 15's audit and exact-main runtime release, not another
+runtime design pass. Preserve the independently gated consumer capabilities,
+backend persistence/export-policy qualification and held source ownership.
+Task 13.6 remains condition-unsatisfied, not an MCP attachment claim. Only an
+accepted exact main may authorize the SDK/CLI release and informational consumer
+handoffs; applying/archiving OpenSpec is the final isolated operation.
 
 ### Native CLI Input Admission
 

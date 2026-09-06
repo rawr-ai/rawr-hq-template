@@ -1,0 +1,13 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "@habitat-ai/resource-child-process",
+  "namedInputs": {
+    "production": [
+      "default",
+      "{workspaceRoot}/resources/child-process/providers/**/*.ts",
+      "!{workspaceRoot}/resources/child-process/providers/**/test/**",
+      "!{workspaceRoot}/resources/child-process/providers/**/*.test.*"
+    ]
+  },
+  "targets": { "check": { "executor": "nx:noop" } }
+}

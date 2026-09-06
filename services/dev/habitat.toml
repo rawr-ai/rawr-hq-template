@@ -1,0 +1,10 @@
+schemaVersion = 1
+id = "@habitat-ai/dev-service"
+ownerProject = "@habitat-ai/dev-service"
+blueprint = "service"
+blueprintVersion = 4
+
+[roots]
+project = "services/dev"
+
+[selections]

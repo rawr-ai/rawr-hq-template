@@ -1,0 +1,23 @@
+{
+  "name": "provider-child-process-effect-platform-node",
+  "projectType": "library",
+  "sourceRoot": "resources/child-process/providers/effect-platform-node",
+  "implicitDependencies": ["@habitat-ai/resource-child-process"],
+  "tags": [
+    "type:provider",
+    "layer:resource-provider",
+    "resource:child-process",
+    "provider:effect-platform-node"
+  ],
+  "targets": {
+    "check": { "executor": "nx:noop" },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": { "command": "tsc -p {projectRoot}/tsconfig.json --noEmit" }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": { "command": "bun test {projectRoot}/test" }
+    }
+  }
+}

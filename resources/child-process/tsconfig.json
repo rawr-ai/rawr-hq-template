@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "types": ["node", "bun-types"] },
+  "files": ["contract.ts", "runtime.ts", "test/contract.test.ts"]
+}

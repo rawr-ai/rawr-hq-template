@@ -30,8 +30,14 @@ const EXPECTED_RETAINED_DOCUMENT_COUNT = 155;
 const EXPECTED_PROJECT_ROOTS = {
   "provider-filesystem-effect-platform-node": "resources/filesystem/providers/effect-platform-node",
   "@habitat-ai/resource-filesystem": "resources/filesystem",
+  "provider-child-process-effect-platform-node":
+    "resources/child-process/providers/effect-platform-node",
+  "@habitat-ai/resource-child-process": "resources/child-process",
   "@habitat-ai/plugin-foundation": "plugins/cli/topics/foundation",
   "@habitat-ai/plugin-agent-plugins": "plugins/cli/topics/agent-plugins",
+  "@habitat-ai/plugin-authoring": "plugins/cli/topics/authoring",
+  "@habitat-ai/plugin-dev": "plugins/cli/topics/dev",
+  "@habitat-ai/dev-service": "services/dev",
   "provider-agent-plugin-package-output-cowork-v1-effect-platform-node":
     "resources/agent-plugin-package-output/providers/cowork-v1-effect-platform-node",
   "provider-native-agent-provider-claude-effect-platform-node":
@@ -92,15 +98,29 @@ const EXPECTED_SDK_DEPENDENTS = [
   "@habitat-ai/agent-plugin-lifecycle-service",
   "@habitat-ai/catalog-service",
   "@habitat-ai/cli",
+  "@habitat-ai/dev-service",
   "@habitat-ai/plugin-agent-plugins",
+  "@habitat-ai/plugin-authoring",
+  "@habitat-ai/plugin-dev",
   "@habitat-ai/plugin-foundation",
+  "@habitat-ai/resource-agent-plugin-package-output",
+  "@habitat-ai/resource-child-process",
+  "@habitat-ai/resource-content-workspace",
   "@habitat-ai/resource-filesystem",
+  "@habitat-ai/resource-native-agent-provider",
   "@habitat-ai/resource-rule-evaluation",
   "@habitat-ai/resource-source-inventory",
+  "@habitat-ai/resource-versioned-content",
   "habitat-workspace",
+  "provider-agent-plugin-package-output-cowork-v1-effect-platform-node",
+  "provider-child-process-effect-platform-node",
+  "provider-content-workspace-git-effect-platform-node",
   "provider-filesystem-effect-platform-node",
+  "provider-native-agent-provider-claude-effect-platform-node",
+  "provider-native-agent-provider-codex-effect-platform-node",
   "provider-rule-evaluation-grit-effect-platform-node",
   "provider-source-inventory-git-effect-platform-node",
+  "provider-versioned-content-git-effect-platform-node",
 ] as const;
 
 const FORBIDDEN_PROJECT_AND_PACKAGE_IDS = [
@@ -146,7 +166,6 @@ const FORBIDDEN_SOURCE_ROOTS = [
   "apps/rawr",
   "apps/server",
   "apps/web",
-  "services/dev",
   "packages/dev-node",
   "plugins/cli/commands/devops",
   "plugins/cli/commands/hello",
@@ -267,6 +286,20 @@ const FORBIDDEN_COMMAND_IDS = [
   "hyperresearch:codex:run-fixture",
 ] as const;
 
+// These retained responsibilities now belong to fresh managed Habitat topics.
+const REAUTHORED_COMMAND_IDS = new Set([
+  "agent:plugins:check",
+  "agent:plugins:package",
+  "agent:plugins:status",
+  "agent:plugins:sync",
+  "agent:plugins:test",
+  "agent:plugins:vendors:update",
+  "dev:repo:sync-upstream",
+  "dev:stack:doctor",
+  "dev:stack:drain",
+  "dev:worktree:cleanup",
+]);
+
 const FORBIDDEN_EXPORT_IDENTITIES = [
   ...FORBIDDEN_PROJECT_AND_PACKAGE_IDS,
   "RawrBaseFlags",
@@ -307,7 +340,7 @@ const dependencyFields = [
   "peerDependencies",
 ] as const;
 
-const ROOT_FORBIDDEN_HOST_DEPENDENCY_IDS = ["elysia", "inngest"] as const;
+const NATIVE_HARNESS_PEER_IDS = ["elysia", "inngest"] as const;
 
 function readJson(relativePath: string): JsonObject {
   const value: unknown = JSON.parse(readFileSync(path.join(workspaceRoot, relativePath), "utf8"));
@@ -656,10 +689,31 @@ describe("cumulative product-separation absence", () => {
     const selfHostDependencies = {
       "@habitat-ai/cli": [
         "@habitat-ai/catalog-service",
+        "@habitat-ai/plugin-agent-plugins",
+        "@habitat-ai/plugin-authoring",
+        "@habitat-ai/plugin-dev",
         "@habitat-ai/plugin-foundation",
+        "@habitat-ai/resource-agent-plugin-package-output",
+        "@habitat-ai/resource-child-process",
+        "@habitat-ai/resource-content-workspace",
         "@habitat-ai/resource-filesystem",
+        "@habitat-ai/resource-native-agent-provider",
         "@habitat-ai/resource-rule-evaluation",
         "@habitat-ai/resource-source-inventory",
+        "@habitat-ai/resource-versioned-content",
+        "@habitat-ai/sdk",
+      ],
+      "@habitat-ai/plugin-dev": ["@habitat-ai/dev-service", "@habitat-ai/sdk"],
+      "@habitat-ai/dev-service": [
+        "@habitat-ai/resource-child-process",
+        "@habitat-ai/resource-filesystem",
+        "@habitat-ai/sdk",
+        "runtime-schema",
+      ],
+      "@habitat-ai/resource-child-process": ["@habitat-ai/resource-filesystem", "@habitat-ai/sdk"],
+      "provider-child-process-effect-platform-node": [
+        "@habitat-ai/resource-child-process",
+        "@habitat-ai/resource-filesystem",
         "@habitat-ai/sdk",
       ],
       "@habitat-ai/plugin-foundation": ["@habitat-ai/catalog-service", "@habitat-ai/sdk"],
@@ -804,6 +858,7 @@ describe("cumulative product-separation absence", () => {
     expect(rootPackage.workspaces).toContain("packages/core/sdk");
     expect(rootPackage.workspaces).not.toContain("packages/core");
     const rootPackageDependencyFindings = dependencyFields.flatMap((field) => {
+      if (field === "devDependencies") return [];
       const dependencies = rootPackage[field];
       if (
         typeof dependencies !== "object" ||
@@ -812,9 +867,9 @@ describe("cumulative product-separation absence", () => {
       ) {
         return [];
       }
-      return ROOT_FORBIDDEN_HOST_DEPENDENCY_IDS.filter(
-        (dependencyId) => dependencyId in dependencies
-      ).map((dependencyId) => `package.json#${field}.${dependencyId}`);
+      return NATIVE_HARNESS_PEER_IDS.filter((dependencyId) => dependencyId in dependencies).map(
+        (dependencyId) => `package.json#${field}.${dependencyId}`
+      );
     });
 
     const sdkPackage = readJson("packages/core/sdk/package.json");
@@ -846,6 +901,7 @@ describe("cumulative product-separation absence", () => {
       throw new Error("bun.lock must contain an object record for the root workspace importer.");
     }
     const rootLockDependencyFindings = dependencyFields.flatMap((field) => {
+      if (field === "devDependencies") return [];
       const dependencies = (rootLockWorkspace as JsonObject)[field];
       if (
         typeof dependencies !== "object" ||
@@ -854,11 +910,17 @@ describe("cumulative product-separation absence", () => {
       ) {
         return [];
       }
-      return ROOT_FORBIDDEN_HOST_DEPENDENCY_IDS.filter(
-        (dependencyId) => dependencyId in dependencies
-      ).map((dependencyId) => `bun.lock#workspaces[\"\"].${field}.${dependencyId}`);
+      return NATIVE_HARNESS_PEER_IDS.filter((dependencyId) => dependencyId in dependencies).map(
+        (dependencyId) => `bun.lock#workspaces[\"\"].${field}.${dependencyId}`
+      );
     });
     expect([...rootPackageDependencyFindings, ...rootLockDependencyFindings]).toEqual([]);
+    for (const peer of NATIVE_HARNESS_PEER_IDS) {
+      const version = (sdkPackage.peerDependencies as JsonObject)[peer];
+      expect(typeof version).toBe("string");
+      expect((rootPackage.devDependencies as JsonObject)[peer]).toBe(version);
+      expect(((rootLockWorkspace as JsonObject).devDependencies as JsonObject)[peer]).toBe(version);
+    }
     expect(lockWorkspaces["packages/core/sdk"]).toMatchObject({
       name: "@habitat-ai/sdk",
       version: "0.5.15",
@@ -986,12 +1048,17 @@ describe("cumulative product-separation absence", () => {
         .filter((commandId): commandId is string => typeof commandId === "string")
         .map((commandId) => commandId.replaceAll(" ", ":"));
     });
-    const residue = commandIds.filter((commandId) =>
-      FORBIDDEN_COMMAND_IDS.some(
-        (forbiddenId) => commandId === forbiddenId || commandId.startsWith(`${forbiddenId}:`)
-      )
+    const residue = commandIds.filter(
+      (commandId) =>
+        !REAUTHORED_COMMAND_IDS.has(commandId) &&
+        FORBIDDEN_COMMAND_IDS.some(
+          (forbiddenId) => commandId === forbiddenId || commandId.startsWith(`${forbiddenId}:`)
+        )
     );
     expect(residue).toEqual([]);
+    expect(new Set(commandIds.filter((id) => REAUTHORED_COMMAND_IDS.has(id)))).toEqual(
+      REAUTHORED_COMMAND_IDS
+    );
     expect(ownerFindings).toEqual([]);
   });
 

@@ -1,0 +1,6 @@
+{
+  "name": "@habitat-ai/dev-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "services/dev/src",
+  "projectType": "library"
+}
