@@ -8,7 +8,7 @@ preserve D-1 ledger, D-2 inquiry, D-3 later Rawr transfers, and D-4 native
 agent/desktop host integration. Active runtime
 order belongs to [tasks](tasks.md) and [execution queue](execution-queue.md).
 
-The [intact predecessor cut sheet](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/stack-cut-sheet.md)
+The [intact predecessor cut sheet](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/stack-cut-sheet.md)
 preserves the historical board inventory and review/activation receipts. Its
 branch totals, topology snapshot, old bootstrap gate, and accumulated execution
 order are not a current census or authority to mutate another owner's work.
@@ -165,7 +165,7 @@ disposition, not an exact source-file count or a presumed authorized fork.
 D-1 retains neutral API semantics, unrestricted ancestry/logical-slot merge,
 F1 and both F2 vectors, strict safety/coldness, independent waiters, lost-answer
 recovery, and live substrate conformance. The
-[intact app-runtime source requirement](../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/specs/app-runtime-realization/spec.md#requirement-semantic-ledger-authority-is-closed-before-source-activation)
+[intact app-runtime source requirement](../../../../docs/projects/habitat-runtime-realignment/quarantine/openspec-baseline/specs/app-runtime-realization/spec.md#requirement-semantic-ledger-authority-is-closed-before-source-activation)
 preserves exact former API spelling and qualification receipts as evidence.
 The [D-1 reactivation requirements](deferred-capabilities.md#d-1-semantic-ledger)
 are active delivery accounting.

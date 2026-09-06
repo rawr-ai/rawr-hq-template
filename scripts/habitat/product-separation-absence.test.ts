@@ -219,38 +219,46 @@ const FORBIDDEN_DOCUMENT_PATHS = [
 ] as const;
 
 const RETAINED_OPENSPEC_PATHS = [
-  "openspec/changes/realize-app-runtime-spine/.openspec.yaml",
-  "openspec/changes/realize-app-runtime-spine/authority-amendment.md",
-  "openspec/changes/realize-app-runtime-spine/classification-ledger.md",
-  "openspec/changes/realize-app-runtime-spine/design.md",
-  "openspec/changes/realize-app-runtime-spine/execution-queue.md",
-  "openspec/changes/realize-app-runtime-spine/foundation-continuation-0-5-15-adoption-receipt.json",
-  "openspec/changes/realize-app-runtime-spine/foundation-continuation-0-5-15-release-receipt.json",
-  "openspec/changes/realize-app-runtime-spine/foundation-continuation-adoption-receipt.json",
-  "openspec/changes/realize-app-runtime-spine/foundation-continuation-release-receipt.json",
-  "openspec/changes/realize-app-runtime-spine/gate-b-release-receipt.json",
-  "openspec/changes/realize-app-runtime-spine/proposal.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-plugin-channel-selection/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-plugin-command-lifecycle/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-plugin-lifecycle-mode-selection/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-plugin-lifecycle-service-topology/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-plugin-packaging/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-plugin-release-derivation/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-plugin-release-product/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/agent-provider-deployment/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/app-runtime-realization/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/blueprint-definition-composition/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/external-cli-extension-boundary/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/habitat-shared-blueprint-resolution/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/legacy-membership-retirement/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/mixed-plugin-lifecycle-retirement/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/qualified-artifact-authoring/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/rawr-cli-application/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/repository-ratchet-runtime/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/repository-separation/spec.md",
-  "openspec/changes/realize-app-runtime-spine/specs/runtime-harness-boundary/spec.md",
-  "openspec/changes/realize-app-runtime-spine/stack-cut-sheet.md",
-  "openspec/changes/realize-app-runtime-spine/tasks.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/.openspec.yaml",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/authority-amendment.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/classification-ledger.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/consumer-handoff.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/deferred-capabilities.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/design.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/execution-queue.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/foundation-continuation-0-5-15-adoption-receipt.json",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/foundation-continuation-0-5-15-release-receipt.json",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/foundation-continuation-adoption-receipt.json",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/foundation-continuation-release-receipt.json",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/gate-b-release-receipt.json",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/obligation-disposition.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/proposal.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/runtime-adoption-receipt.json",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/runtime-release-receipt.json",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-plugin-channel-selection/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-plugin-command-lifecycle/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-plugin-lifecycle-mode-selection/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-plugin-lifecycle-service-topology/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-plugin-packaging/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-plugin-release-derivation/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-plugin-release-product/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/agent-provider-deployment/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/app-runtime-realization/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/blueprint-definition-composition/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/external-cli-extension-boundary/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/habitat-shared-blueprint-resolution/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/legacy-membership-retirement/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/mixed-plugin-lifecycle-retirement/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/qualified-artifact-authoring/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/rawr-cli-application/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/repository-ratchet-runtime/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/repository-separation/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/specs/runtime-harness-boundary/spec.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/stack-cut-sheet.md",
+  "openspec/changes/archive/2026-09-06-realize-app-runtime-spine/tasks.md",
+] as const;
+
+const CANONICAL_OPENSPEC_PATHS = [
   "openspec/specs/agent-plugin-channel-selection/spec.md",
   "openspec/specs/agent-plugin-command-lifecycle/spec.md",
   "openspec/specs/agent-plugin-lifecycle-mode-selection/spec.md",
@@ -258,14 +266,17 @@ const RETAINED_OPENSPEC_PATHS = [
   "openspec/specs/agent-plugin-packaging/spec.md",
   "openspec/specs/agent-plugin-release-derivation/spec.md",
   "openspec/specs/agent-plugin-release-product/spec.md",
+  "openspec/specs/agent-plugin-vendor-management/spec.md",
   "openspec/specs/agent-provider-deployment/spec.md",
+  "openspec/specs/app-runtime-realization/spec.md",
+  "openspec/specs/blueprint-definition-composition/spec.md",
   "openspec/specs/external-cli-extension-boundary/spec.md",
+  "openspec/specs/habitat-check-cache-precision/spec.md",
   "openspec/specs/habitat-shared-blueprint-resolution/spec.md",
-  "openspec/specs/legacy-membership-retirement/spec.md",
-  "openspec/specs/mixed-plugin-lifecycle-retirement/spec.md",
   "openspec/specs/qualified-artifact-authoring/spec.md",
-  "openspec/specs/rawr-cli-application/spec.md",
   "openspec/specs/repository-ratchet-runtime/spec.md",
+  "openspec/specs/repository-separation/spec.md",
+  "openspec/specs/runtime-harness-boundary/spec.md",
 ] as const;
 
 const FORBIDDEN_COMMAND_IDS = [
@@ -833,7 +844,7 @@ describe("cumulative product-separation absence", () => {
     expect(hashWorktreeFiles(destinationPaths)).toEqual(expectedBlobIds);
   });
 
-  it("removes the mixed rawr-core shell and retains active OpenSpec authority", () => {
+  it("removes the mixed rawr-core shell and preserves archived and canonical OpenSpec truth", () => {
     const files = repositoryFiles();
     expect(
       [
@@ -845,7 +856,20 @@ describe("cumulative product-separation absence", () => {
     ).toEqual([]);
     expect(filesAtRoot(files, "packages/core/src")).toEqual([]);
     expect(filesAtRoot(files, "packages/core/test")).toEqual([]);
-    expect(RETAINED_OPENSPEC_PATHS.filter((file) => !files.has(file))).toEqual([]);
+    expect(
+      filesAtRoot(files, "openspec/changes/archive/2026-09-06-realize-app-runtime-spine")
+    ).toEqual(RETAINED_OPENSPEC_PATHS);
+    expect(CANONICAL_OPENSPEC_PATHS.filter((file) => !files.has(file))).toEqual([]);
+    expect(existsSync(path.join(workspaceRoot, "openspec/changes/realize-app-runtime-spine"))).toBe(
+      false
+    );
+    expect(
+      [
+        "openspec/specs/legacy-membership-retirement/spec.md",
+        "openspec/specs/mixed-plugin-lifecycle-retirement/spec.md",
+        "openspec/specs/rawr-cli-application/spec.md",
+      ].filter((file) => existsSync(path.join(workspaceRoot, file)))
+    ).toEqual([]);
   });
 
   it("uses the private root identity and exposes no predecessor package identity", () => {

@@ -141,7 +141,7 @@ Source owners:
 - [Canonical architecture](../../system/HABITAT_ARCHITECTURE.md).
 - [Canonical runtime](../../system/HABITAT_RUNTIME_REALIZATION.md).
 - [Authority ontology](../../../.habitat/AUTHORITY-ONTOLOGY.md).
-- [Runtime change](../../../openspec/changes/realize-app-runtime-spine/authority-amendment.md).
+- [Historical runtime change](../../../openspec/changes/archive/2026-09-06-realize-app-runtime-spine/authority-amendment.md).
 - [Quarantine-first comparison method](../../process/runbooks/QUARANTINE_FIRST_MIGRATION_DOCS_WORKFLOW.md).
 - [Native comparison tool boundary](../../../tools/semantica-workbench/README.md#architecture-change-frame-pilot).
 

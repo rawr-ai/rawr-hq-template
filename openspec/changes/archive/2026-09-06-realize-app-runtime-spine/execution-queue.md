@@ -10,7 +10,7 @@ This queue does not select work in another task.
 Realignment preparation is admitted through PR 1007 and exact-main Repository
 Ratchet at `80c19fc1291515acbf21e88c97385d5e29d74341`. The owner has authorized
 resumed implementation with iterative research and independent steward review.
-The [implementation record](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md)
+The [implementation record](../../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md)
 holds the current frame, team, findings and proof. **0.1: correct the cold
 semantic pipeline** and **0.2: simplify trusted boot admission** are implemented,
 independently reviewed and locally accepted, including full repository CI and
@@ -110,7 +110,7 @@ not a second earlier serial queue.
 ## Independent Work
 
 Before affected SDK authoring work (8.3, 10.1, server/async and web), apply the
-owner's [SDK authorship investigation input](../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#sdk-authorship-investigation-input).
+owner's [SDK authorship investigation input](../../../../docs/projects/habitat-runtime-realignment/IMPLEMENTATION.md#sdk-authorship-investigation-input).
 It requires locating and assessing the Documents/Projects/RAWR "SDK design
 update" and prior incorporation, native-provider anchoring, and bounded semantic
 ablation under requisite variety. It is future design input, not new authority
@@ -154,6 +154,6 @@ proof. Publication requires exact-main accepted artifacts.
 
 The [obligation disposition](obligation-disposition.md) maps all inherited task
 ids. Existing JSON receipts retain their exact historical values; snapshots live
-behind the [quarantine ledger](../../../docs/projects/habitat-runtime-realignment/quarantine/AGENTS.md).
+behind the [quarantine ledger](../../../../docs/projects/habitat-runtime-realignment/quarantine/AGENTS.md).
 No task count, old sole-active sentence or dated exact-main receipt grants
 current implementation or external-mutation authority.

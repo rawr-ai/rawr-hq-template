@@ -1,11 +1,11 @@
 # Runtime Authority Routing
 
 Current semantic owners are
-[HABITAT_ARCHITECTURE](../../../docs/system/HABITAT_ARCHITECTURE.md) and
-[HABITAT_RUNTIME_REALIZATION](../../../docs/system/HABITAT_RUNTIME_REALIZATION.md).
+[HABITAT_ARCHITECTURE](../../../../docs/system/HABITAT_ARCHITECTURE.md) and
+[HABITAT_RUNTIME_REALIZATION](../../../../docs/system/HABITAT_RUNTIME_REALIZATION.md).
 The September 4 owner delegation authorizes their realignment before source
-resumption. The [frame diff](../../../docs/projects/habitat-runtime-realignment/FRAME.md)
-and [decisions](../../../docs/projects/habitat-runtime-realignment/decisions.md)
+resumption. The [frame diff](../../../../docs/projects/habitat-runtime-realignment/FRAME.md)
+and [decisions](../../../../docs/projects/habitat-runtime-realignment/decisions.md)
 record why; they are not additional permanent runtime law.
 
 ## Reconciled Subjects
@@ -43,7 +43,7 @@ deployment state and copied companion artifact are excluded.
 ## Historical Boundary
 
 The baseline mixed documents were preserved intact at
-[the quarantine ledger](../../../docs/projects/habitat-runtime-realignment/quarantine/AGENTS.md).
+[the quarantine ledger](../../../../docs/projects/habitat-runtime-realignment/quarantine/AGENTS.md).
 Existing JSON release/adoption receipts remain unchanged at their original paths.
 The prior 57 checked tasks describe the previous target; task 0.1/0.2 explicitly
 own the known code/spec divergences introduced by this correction.
