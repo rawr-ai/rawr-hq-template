@@ -2,6 +2,10 @@
 
 ## Current Focus
 
+- Consolidate the [SDK assessment and evidence](projects/habitat-sdk-recovery/README.md)
+  under the [governing design philosophy](system/HABITAT_DESIGN_PHILOSOPHY.md).
+  The dedicated historical-frame investigation and validated skill development
+  precede review of both documents and admission of an SDK repair plan.
 - Preserve the accepted Habitat platform, Rawr product and Marketplace content
   boundaries and the released SDK/CLI 0.6.0 runtime.
 - Use the [accepted runtime specification](../openspec/specs/app-runtime-realization/spec.md)

@@ -15,6 +15,9 @@ Canonical gateway docs at `docs/` root:
 
 Current Habitat system authority is scoped, not duplicated:
 
+- `docs/system/HABITAT_DESIGN_PHILOSOPHY.md` owns governing design intent and
+  the criteria for useful Habitat abstractions and vendor-native composition;
+  it is not a second API or runtime-mechanics specification.
 - `docs/system/HABITAT_ARCHITECTURE.md` owns platform architecture, product
   boundaries, layers, kinds, and distribution authority.
 - `docs/system/HABITAT_RUNTIME_REALIZATION.md` owns runtime realization

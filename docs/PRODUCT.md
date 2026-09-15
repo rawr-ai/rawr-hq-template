@@ -5,6 +5,10 @@ runtime realization, foundational Oclif/Nx CLI, architecture law, and reusable
 platform capabilities. `RAWR HQ-Template` is only the current legacy remote
 locator.
 
+The [design philosophy](system/HABITAT_DESIGN_PHILOSOPHY.md) explains the
+governing intent: native vendor semantics inside meaningful Habitat boundaries,
+with abstractions and blueprint constraints that earn their authoring value.
+
 ## Product Roles
 
 - Habitat: public SDK, CLI, blueprints, runtime capabilities, and reusable tooling.
