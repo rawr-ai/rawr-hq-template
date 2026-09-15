@@ -5,6 +5,18 @@ retirement without reviving obsolete Habitat wiring. This retires an old review
 topology, not the still-unfinished observability capability. It does not admit an
 SDK repair plan or bypass historical-frame recovery.
 
+## Completed Reduction
+
+**The 35 obsolete telemetry PRs are closed without merging. Their 35 local and
+35 remote branch refs are retired. One historical source reference remains,
+including the eight unchanged staged files.**
+
+The [exact operation receipt](resources/research/telemetry-retirement-2026-09-15.json)
+records every retired head and PR, source fingerprints, and readback. At that
+checkpoint there were 28 local refs, 26 remote refs and 12 open PRs, including
+the new documentation PR. Its later merge/drain is separate from these 35 source
+retirements. Six worktrees and 13 stashes remain, with no held worktree removed.
+
 ## Decision And Execution Gate
 
 Keep one historical source reference and its existing staged work; close the 35
@@ -17,13 +29,12 @@ not a new executable harness. There is no standalone infrastructure tool in the
 old source: lifecycle/query code and obsolete application fixtures are mixed.
 Its staged files remain incomplete source evidence, not a supported command.
 
-Before mutation, verify the source history, staged index and working-file hashes,
-exact local/remote heads, Graphite descendants, PR identities, and worktree
-occupancy. Disconnect only the source reference from the active Graphite review
-topology, then retire obsolete leaves without restacking children. Close PRs
-through Graphite; use exact leased remote-ref deletion only where its CLI has no
-equivalent. Any unexpected source, child, head change, or protected ref stops
-that retirement. Record final readback separately from this decision.
+The execution verified source history, staged index and working-file hashes,
+exact local/remote heads, Graphite descendants, PR identities, protection and
+worktree occupancy. `gt rename` and `gt untrack` disconnected only the source
+reference; `gt delete --close` retired verified childless ancestors. Each PR
+received an explanatory accounting link. One atomic, expected-SHA-leased remote
+deletion followed closure and dependency rechecks. No source was restacked.
 
 ## Why The Work Paused
 
@@ -76,7 +87,7 @@ placement, not a decision to restore that API after repairs.
 
 ## Source Preservation
 
-The intended holding is `archive/native-telemetry-pre-repair`, at unchanged
+The holding is `archive/native-telemetry-pre-repair`, at unchanged
 `0519fe11cfd8c75a72bd761d980077f23fed194a`, in the existing
 `wt-template-native-platform-telemetry` worktree. It is reference-only and
 deliberately untracked by Graphite after consolidation, so ordinary stack
@@ -139,6 +150,10 @@ Habitat capability be complete first. Fluree and temporal inquiry are unchanged.
 
 The retained receipt model's one negative test passes: empty backend results
 must fail. That is useful evidence, not a successful end-to-end receipt.
+The independent backend-readiness probe also passed and restored its owned
+infrastructure state; see the [bounded recipe and receipt](backend-reuse.md).
+The uncached repository check passed all 147 tasks before publication. Final
+source/PR/ref checks confirmed the reduction and preserved unrelated holdings.
 The [D-5 handoff](../habitat-runtime-realignment/deferred-capabilities.md#d-5-full-observability)
 continues to own the unfinished capability. No SDK or vendor dependency changes
 are part of this retirement.

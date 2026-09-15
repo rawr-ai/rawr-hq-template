@@ -1,5 +1,9 @@
 # Cleanup And Capability Lineage
 
+The subsequent [telemetry source retirement](telemetry-retirement.md) reduced
+its 36 refs to one historical holding and closed the 35 obsolete PRs. Counts
+below preserve the preceding merged-branch cleanup checkpoint.
+
 Informative checkpoint, September 15, 2026. This is the current cleanup outcome
 and a capability-level reading of the retained work, not a new SDK repair plan.
 The earlier [repository census](repository-state.md) remains historical evidence.

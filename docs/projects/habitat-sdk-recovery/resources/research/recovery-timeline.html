@@ -262,6 +262,16 @@
                 <h3>SDK recovery</h3>
                 <p>Correctness and authoring gaps are recorded. Recover the historical frame and review the findings before selecting repairs.</p>
               </li>
+              <li class="event superseded">
+                <div class="event-meta"><time datetime="2026-09-15">15 September</time><span class="event-kind">Retired review topology</span></div>
+                <h3>35 telemetry PRs closed</h3>
+                <p>36 source refs become one historical holding, with staged work unchanged. No old wiring was merged. <a href="../../telemetry-retirement.md">Read the source accounting</a>.</p>
+              </li>
+              <li class="event adopted">
+                <div class="event-meta"><time datetime="2026-09-15">15 September</time><span class="event-kind">Infrastructure readiness</span></div>
+                <h3>Backend recipe verified</h3>
+                <p>Pinned ClickStack, four tables, three OTLP endpoints, and guarded cleanup passed independently of Habitat. Not producer persistence or event qualification. <a href="../../backend-reuse.md">Reuse recipe</a>.</p>
+              </li>
             </ol>
           </li>
         </ol>
@@ -311,7 +321,7 @@
         <div class="follow-ups">
           <article class="follow-up">
             <h3>Telemetry <span class="record-label">D-5</span></h3>
-            <p>Retain earlier receipts and held work. Qualify missing backend, exception, and semantic-event guarantees through the telemetry resource/provider and native host owners.</p>
+            <p>One historical source holding preserves earlier receipts and staged work. The old review stack is retired. Backend producer proof, export sanitization, and semantic-event qualification remain deferred.</p>
           </article>
           <article class="follow-up">
             <h3>Knowledge ledger and temporal inquiry <span class="record-label">D-1 / D-2</span></h3>
@@ -323,7 +333,7 @@
           </article>
           <article class="follow-up">
             <h3>Historical framing references <span class="record-label">Recovery T-1</span></h3>
-            <p>Civilization 7, Magic Migration, and Habitat/Rawr conversations remain to be identified and prepared as data. Existing summaries and installed skills are not a recovered collaborative method.</p>
+            <p>Both May architecture/toolbox reference branches remain unchanged as owner-requested comparison points. The three original conversations still need preparation and analysis; existing summaries are not the recovered method.</p>
           </article>
         </div>
         <p class="repair-gate"><strong>Before SDK repairs:</strong> prepare and analyze the historical evidence, develop and validate the reusable method, then review both the design philosophy and the SDK assessment with the owner.</p>
@@ -333,6 +343,7 @@
     <footer>
       <div class="wrap">
         <nav aria-label="Supporting records">
+          <a href="../../telemetry-retirement.md">Telemetry retirement</a>
           <a href="../../cleanup-lineage-map.md">Detailed lineage map</a>
           <a href="../../assessment.md">SDK assessment</a>
           <a href="../../SOURCES.md">Assessment source register</a>

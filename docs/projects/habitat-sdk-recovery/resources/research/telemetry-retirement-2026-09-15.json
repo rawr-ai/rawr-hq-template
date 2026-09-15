@@ -1,0 +1,446 @@
+{
+  "schema": "habitat-telemetry-retirement-receipt/v1",
+  "verifiedAt": "2026-09-15T21:59:26.772Z",
+  "repository": "rawr-ai/rawr-hq-template",
+  "mainAtRetirement": "29365b34cbfeca636606af0f6b5d4c4ac07c1066",
+  "graphiteVersion": "1.8.6",
+  "outcome": "35 obsolete review steps closed without merging, local and remote refs retired; one source holding preserved",
+  "execution": {
+    "startedAt": "2026-09-15T21:54:00.886Z",
+    "finishedAt": "2026-09-15T21:56:45.410Z",
+    "closedPullRequests": 35,
+    "localRefsDeleted": 35,
+    "remoteRefsDeleted": 35,
+    "remoteDeletion": "one atomic expected-SHA-leased allowlist after native Graphite PR closure/local deletion"
+  },
+  "countsAtReceipt": {
+    "localBranches": 28,
+    "remoteBranches": 26,
+    "openPullRequests": 12,
+    "graphiteRoots": 9,
+    "worktrees": 6,
+    "stashes": 13,
+    "note": "Includes the active documentation PR/branch; its later merge and native cleanup are separate from retiring the old telemetry source."
+  },
+  "holding": {
+    "branch": "archive/native-telemetry-pre-repair",
+    "sha": "0519fe11cfd8c75a72bd761d980077f23fed194a",
+    "graphiteTracked": false,
+    "worktree": "wt-template-native-platform-telemetry",
+    "status": "reference-only; not a current implementation branch",
+    "stagedIndexUnchanged": true,
+    "stagedWorkingFilesUnchanged": true,
+    "stagedPatchSha256": "ae7b04ec87f796858bee3d03b0c76f6710a24d19416f320b1337ac2f561038db",
+    "indexEntries": [
+      "100644 75be16e2cb21f821864e1f36ce17c4c385df1483 0\ttools/native-platform-telemetry-receipt/AGENTS.md",
+      "100644 6bc389689377c6b49c9b7038daa416db3e4d1940 0\ttools/native-platform-telemetry-receipt/project.json",
+      "100644 d34769bd01b044d0b06f81c749a4a88b72384dc4 0\ttools/native-platform-telemetry-receipt/src/inngest-fixture.ts",
+      "100644 ef253df19e2fc10df2915307e4143a957056f361 0\ttools/native-platform-telemetry-receipt/src/model.ts",
+      "100644 4c4380650b7b34ad24e0bbea7ec2dcd9b5274e38 0\ttools/native-platform-telemetry-receipt/src/receipt.ts",
+      "100644 0d2259d05aa412d3eec4cea36149df688563f6d9 0\ttools/native-platform-telemetry-receipt/src/server-fixture.ts",
+      "100644 afdf5f8dc339c69b21851e11fba8e063f9268798 0\ttools/native-platform-telemetry-receipt/test/model.test.ts",
+      "100644 e970a1a7387c52930c8f7a904608a8d6aee098d5 0\ttools/native-platform-telemetry-receipt/tsconfig.json"
+    ],
+    "workingFiles": [
+      {
+        "path": "tools/native-platform-telemetry-receipt/AGENTS.md",
+        "sha256": "b301bd305ccc13b31ed173f2515ece90f5f8f5ad2badd23e22f6ddef09beed1b"
+      },
+      {
+        "path": "tools/native-platform-telemetry-receipt/project.json",
+        "sha256": "d1c33be157a9092c338278818d14477488f0a4d2b37f52c4fa6c8f919641ca77"
+      },
+      {
+        "path": "tools/native-platform-telemetry-receipt/src/inngest-fixture.ts",
+        "sha256": "3db17461213e7602a9a8a61f66c105faddb90b023a2d1a68d1ed35e711c71158"
+      },
+      {
+        "path": "tools/native-platform-telemetry-receipt/src/model.ts",
+        "sha256": "0a2f1e91fc5e1146a35aecc98b8815943cd6e68fcc34e113d151fab87d6e7d6a"
+      },
+      {
+        "path": "tools/native-platform-telemetry-receipt/src/receipt.ts",
+        "sha256": "d9425e643d458e9da163edce6dc38ee8e210356cd71d6b71ba76306d2baed232"
+      },
+      {
+        "path": "tools/native-platform-telemetry-receipt/src/server-fixture.ts",
+        "sha256": "770f6b8030c4b1b22ade8b700c28c1b4ad004a1ac989101a504db3bc9cd776a5"
+      },
+      {
+        "path": "tools/native-platform-telemetry-receipt/test/model.test.ts",
+        "sha256": "597d0208bef590b32dfbe3b97ac1408a3ab9ed1fba1e1955dcce3edc56c5ec08"
+      },
+      {
+        "path": "tools/native-platform-telemetry-receipt/tsconfig.json",
+        "sha256": "cdb42d6c2675b65c61ef7ec9e538250204db63b42d8fabc5d0fe037828bfe921"
+      }
+    ],
+    "ignoredRuntimeData": "left in place, not copied or deleted"
+  },
+  "preserved": {
+    "otherSourceRefsUnchanged": true,
+    "nonTargetRemoteHeadsUnchanged": true,
+    "mayReferencesUnchanged": true,
+    "rawrTransfersUnchanged": true,
+    "stashIdentitiesUnchanged": true,
+    "noRestackOrReplay": true
+  },
+  "retired": [
+    {
+      "branch": "codex/record-core-telemetry-retirement",
+      "sha": "de9e99c1ddf3cb38613fcb58b19afa8dc6b0ffce",
+      "pr": 878,
+      "parent": "codex/retire-core-telemetry-singleton",
+      "reachableFromHolding": false,
+      "disposition": "adopted; router/receipt-only rewritten variants accounted",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:05.881Z"
+    },
+    {
+      "branch": "codex/retire-core-telemetry-singleton",
+      "sha": "f95c9207130e9794b0de94e3e4417598c4a95fab",
+      "pr": 877,
+      "parent": "codex/record-oclif-telemetry-acceptance",
+      "reachableFromHolding": false,
+      "disposition": "adopted; router/receipt-only rewritten variants accounted",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:11.043Z"
+    },
+    {
+      "branch": "codex/record-oclif-telemetry-acceptance",
+      "sha": "5794758804bf6c09b063d5f37d41f9b24c6adbe7",
+      "pr": 876,
+      "parent": "codex/seal-oclif-telemetry-acceptance",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:15.258Z"
+    },
+    {
+      "branch": "codex/seal-oclif-telemetry-acceptance",
+      "sha": "32be7a6cf4ef7294a3188ffe31b8ef94cf1564fc",
+      "pr": 875,
+      "parent": "codex/record-oclif-telemetry-shutdown",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:20.606Z"
+    },
+    {
+      "branch": "codex/record-oclif-telemetry-shutdown",
+      "sha": "7c9abb9d9e2ac97825564927a406bf7caa6e6558",
+      "pr": 874,
+      "parent": "codex/coordinate-oclif-telemetry-shutdown",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:25.405Z"
+    },
+    {
+      "branch": "codex/coordinate-oclif-telemetry-shutdown",
+      "sha": "9b204417611e08645d2667988e2653c9e9aed7af",
+      "pr": 873,
+      "parent": "codex/record-oclif-command-events",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:30.877Z"
+    },
+    {
+      "branch": "codex/record-oclif-command-events",
+      "sha": "1e9b9d07dcc36231eb71688cea2a8ab0682aa903",
+      "pr": 872,
+      "parent": "codex/observe-oclif-command-events",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:35.425Z"
+    },
+    {
+      "branch": "codex/observe-oclif-command-events",
+      "sha": "cde15660ebc48f6c2fe25a6573608f28b9a0410a",
+      "pr": 871,
+      "parent": "codex/record-oclif-telemetry-lifecycle",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:39.336Z"
+    },
+    {
+      "branch": "codex/record-oclif-telemetry-lifecycle",
+      "sha": "05906b7a21bb70dd3acf4195acc10af9a6429fda",
+      "pr": 870,
+      "parent": "codex/bind-oclif-telemetry-lifecycle",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:43.716Z"
+    },
+    {
+      "branch": "codex/bind-oclif-telemetry-lifecycle",
+      "sha": "48c2e36fd2a2397bb5b9129f57ab79f4b24aed50",
+      "pr": 869,
+      "parent": "codex/seal-server-telemetry-acceptance",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:48.633Z"
+    },
+    {
+      "branch": "codex/seal-server-telemetry-acceptance",
+      "sha": "6517eea0eba1af4f0ccc88543c2c87579052187a",
+      "pr": 868,
+      "parent": "codex/record-server-shutdown",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:52.574Z"
+    },
+    {
+      "branch": "codex/record-server-shutdown",
+      "sha": "2ebbdae9e6e5e1e55b4891e9c08e1f221010bea3",
+      "pr": 867,
+      "parent": "codex/coordinate-server-shutdown",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:54:56.654Z"
+    },
+    {
+      "branch": "codex/coordinate-server-shutdown",
+      "sha": "38228b1d920c8d96b67fdf6eb99bd4f1b806e550",
+      "pr": 866,
+      "parent": "codex/bound-native-shutdown-waiting",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:00.658Z"
+    },
+    {
+      "branch": "codex/bound-native-shutdown-waiting",
+      "sha": "c74cb5a2d94bf448dea86bb710ebedc998f33b1e",
+      "pr": 865,
+      "parent": "codex/record-inngest-attempt-events",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:04.724Z"
+    },
+    {
+      "branch": "codex/record-inngest-attempt-events",
+      "sha": "e74c0edd0b49a2814c4b0c04b85c218d609707bf",
+      "pr": 864,
+      "parent": "codex/observe-inngest-attempts",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:09.102Z"
+    },
+    {
+      "branch": "codex/observe-inngest-attempts",
+      "sha": "027f49efca5c5614917a43750bfbd174ad3a0717",
+      "pr": 863,
+      "parent": "codex/record-host-trace-authority",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:13.508Z"
+    },
+    {
+      "branch": "codex/record-host-trace-authority",
+      "sha": "8a6ba912f422cb7fa2ea17797d9e2c97772d3ec9",
+      "pr": 862,
+      "parent": "codex/ratchet-server-telemetry-context",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:18.109Z"
+    },
+    {
+      "branch": "codex/ratchet-server-telemetry-context",
+      "sha": "64f6d2603e127334c6a980e128d848be6de44e10",
+      "pr": 861,
+      "parent": "codex/separate-example-todo-correlation",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:22.305Z"
+    },
+    {
+      "branch": "codex/separate-example-todo-correlation",
+      "sha": "b6c90e67feae15579a2193def29234d7d8592f25",
+      "pr": 860,
+      "parent": "codex/normalize-host-telemetry-propagation",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:27.640Z"
+    },
+    {
+      "branch": "codex/normalize-host-telemetry-propagation",
+      "sha": "6324d6cc4ff345c358e51afbe06d47fe4779df10",
+      "pr": 859,
+      "parent": "codex/record-host-technical-telemetry",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:32.497Z"
+    },
+    {
+      "branch": "codex/record-host-technical-telemetry",
+      "sha": "7670c5d30dce1524d21e85205074e093f0f73579",
+      "pr": 858,
+      "parent": "codex/bridge-host-technical-telemetry",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:36.944Z"
+    },
+    {
+      "branch": "codex/bridge-host-technical-telemetry",
+      "sha": "cbb3b363d5f48b93950bd508ad1b20156954bc92",
+      "pr": 857,
+      "parent": "codex/record-native-orpc-events",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:41.125Z"
+    },
+    {
+      "branch": "codex/record-native-orpc-events",
+      "sha": "9da469e0f0899b94b4e0dae3ffa7045648478a53",
+      "pr": 856,
+      "parent": "codex/wire-native-orpc-events",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:46.120Z"
+    },
+    {
+      "branch": "codex/wire-native-orpc-events",
+      "sha": "c3d27a337b361ed0a204c0149ca007397e2df7ea",
+      "pr": 855,
+      "parent": "codex/record-hq-telemetry-lifecycle",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:51.298Z"
+    },
+    {
+      "branch": "codex/record-hq-telemetry-lifecycle",
+      "sha": "1fe0eb6a62a37117c6dd02ca315802354cc2566d",
+      "pr": 854,
+      "parent": "codex/wire-hq-telemetry-lifecycle",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:55:55.798Z"
+    },
+    {
+      "branch": "codex/wire-hq-telemetry-lifecycle",
+      "sha": "ede4f03fc49332f701ddba014ca97740f6e1a98f",
+      "pr": 853,
+      "parent": "codex/record-native-telemetry-provider",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:00.747Z"
+    },
+    {
+      "branch": "codex/record-native-telemetry-provider",
+      "sha": "688e1fbe1c54b57c58cd7634c4e6f643096d3907",
+      "pr": 852,
+      "parent": "codex/construct-native-telemetry-topology",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:04.956Z"
+    },
+    {
+      "branch": "codex/construct-native-telemetry-topology",
+      "sha": "9d0ee2d5520098eaed1cd513bfdfd09df6f24a44",
+      "pr": 851,
+      "parent": "codex/record-native-telemetry-contract",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:08.840Z"
+    },
+    {
+      "branch": "codex/record-native-telemetry-contract",
+      "sha": "b345c3439fcff31e648c7dce3529bee90a8837f8",
+      "pr": 850,
+      "parent": "codex/route-native-telemetry-admission",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:13.172Z"
+    },
+    {
+      "branch": "codex/route-native-telemetry-admission",
+      "sha": "a03d24d30beabeb175cb60588f57be15772e042d",
+      "pr": 849,
+      "parent": "codex/implement-native-telemetry-contract",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:17.872Z"
+    },
+    {
+      "branch": "codex/implement-native-telemetry-contract",
+      "sha": "167aba76c8b82a0c6a8264469ef763be8ae9e04e",
+      "pr": 848,
+      "parent": "codex/add-native-telemetry-contract",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:21.715Z"
+    },
+    {
+      "branch": "codex/add-native-telemetry-contract",
+      "sha": "4c9396fddbb4165b5dd0e7d9f86495142fab7741",
+      "pr": 847,
+      "parent": "codex/correct-native-platform-telemetry-resource-boundary",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:26.404Z"
+    },
+    {
+      "branch": "codex/correct-native-platform-telemetry-resource-boundary",
+      "sha": "9eb7fa56ed6fddb0ed4c075304e03c396519df1e",
+      "pr": 846,
+      "parent": "codex/admit-native-platform-telemetry",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:32.284Z"
+    },
+    {
+      "branch": "codex/admit-native-platform-telemetry",
+      "sha": "de6d1aff8f64637c4e587b55b9dcd1ee77f2b363",
+      "pr": 845,
+      "parent": "codex/frame-native-platform-telemetry",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:36.429Z"
+    },
+    {
+      "branch": "codex/frame-native-platform-telemetry",
+      "sha": "420a015652a4a59f47c047d99b685a3f4c25e34f",
+      "pr": 844,
+      "parent": "main",
+      "reachableFromHolding": true,
+      "disposition": "reference-only source retained; review step superseded by current owners",
+      "state": "closed-unmerged",
+      "confirmedAt": "2026-09-15T21:56:41.436Z"
+    }
+  ],
+  "limits": [
+    "Full observability D-5 remains unfinished.",
+    "33 submitted heads remain ancestors of the held tip; two rewritten router/receipt-only variants are accounted in telemetry-retirement.md.",
+    "No source worktree was removed or uncommitted source erased.",
+    "No new backup or whole-worktree archive was created."
+  ]
+}

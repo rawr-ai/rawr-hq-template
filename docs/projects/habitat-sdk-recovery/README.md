@@ -3,10 +3,11 @@
 Status: documentation consolidated; historical-frame investigation deferred;
 no repair implementation plan admitted.
 
-Current re-entry view: [cleanup outcome and capability lineage](cleanup-lineage-map.md),
-with a [visual timeline](resources/research/recovery-timeline.html).
-The subsequent [telemetry source retirement](telemetry-retirement.md) separates
+Current re-entry view: [completed telemetry source retirement](telemetry-retirement.md),
+with a [visual timeline](resources/research/recovery-timeline.html). It separates
 one historical holding from a [recovered backend recipe](backend-reuse.md).
+The earlier [merged-branch cleanup and lineage](cleanup-lineage-map.md) remains
+a dated checkpoint.
 
 This project record keeps the SDK assessment and its evidence in repository
 governance instead of relying on files in Codex task output directories.
