@@ -15,7 +15,8 @@ architecture, runtime, vendor, package-version, or release truth.
    and [the Habitat/Rawr/Marketplace split](../../../AGENTS_SPLIT.md).
 2. Use [the Nx agent workflow](../../../docs/process/NX_AGENT_WORKFLOW.md) and
    `bunx nx show project <project-name> --json` for workspace and project truth.
-3. Read [the canonical architecture](../../../docs/system/HABITAT_ARCHITECTURE.md),
+3. Read [the governing design philosophy](../../../docs/system/HABITAT_DESIGN_PHILOSOPHY.md),
+   [the canonical architecture](../../../docs/system/HABITAT_ARCHITECTURE.md),
    [runtime realization](../../../docs/system/HABITAT_RUNTIME_REALIZATION.md),
    [Habitat authority](../../../.habitat/AUTHORITY.md), and
    [authority ontology](../../../.habitat/AUTHORITY-ONTOLOGY.md) for the affected
@@ -25,14 +26,19 @@ architecture, runtime, vendor, package-version, or release truth.
    for implemented runtime contracts. The live
    [deferred-capability handoff](../../../docs/projects/habitat-runtime-realignment/deferred-capabilities.md)
    owns parked work and its reactivation gates, not another runtime sequence.
+5. For post-release SDK recovery, read the
+   [assessment and evidence](../../../docs/projects/habitat-sdk-recovery/README.md).
+   This is not an admitted repair plan; it records the historical-frame and
+   skill-development prerequisites before implementation.
 
 ## Authority Order
 
 On conflict, apply this order:
 
 1. Current explicit owner intent for the task, within the repository boundary.
-2. Repository-local canonical architecture, runtime realization, and Habitat
-   authority/ontology, read with explicit section-level amendments.
+2. Repository-local canonical design philosophy, architecture, runtime
+   realization, and Habitat authority/ontology, each within its named scope
+   and read with explicit section-level amendments.
 3. Accepted OpenSpec specifications and any active change for its explicitly
    named amendments and execution sequencing; never as a whole-file replacement.
 4. Pinned installed vendor source for exact mechanics.

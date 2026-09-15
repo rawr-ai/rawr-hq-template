@@ -409,6 +409,11 @@ telemetry, or adopting semantic product events. The source-backed inputs are
 recorded in [Backend Receipt Reuse](IMPLEMENTATION.md#backend-receipt-reuse);
 the mixed telemetry worktree remains held and its staged changes remain owned.
 
+The September 15 [source-retirement accounting](../habitat-sdk-recovery/telemetry-retirement.md)
+consolidates the obsolete review stack without completing D-5. Its
+[backend reuse recipe](../habitat-sdk-recovery/backend-reuse.md) preserves the
+infrastructure boundary separately from the old substrate-coupled fixtures.
+
 Qualify real collector processing, ClickHouse/HyperDX storage and record queries
 using uniquely identified events and an explicitly owned local fixture. Reuse
 the existing digest-pinned Podman setup where appropriate, not the old fixture's

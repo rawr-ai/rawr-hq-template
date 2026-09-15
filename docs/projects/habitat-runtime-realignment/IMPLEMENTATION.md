@@ -2,6 +2,12 @@
 
 Status: `complete`; runtime released, producer adoption qualified and native OpenSpec closure verified.
 
+The later [SDK recovery assessment](../habitat-sdk-recovery/assessment.md)
+records post-release correctness, authoring, and consumer-construction gaps.
+This completed workstream remains the bounded release record, not a claim that
+those findings were repaired. The successor is assessment-only until its
+historical-frame and skill-development prerequisites are completed and reviewed.
+
 ## Accepted Release
 
 Runtime PRs 1008 through 1026 have landed. The release source is canonical main
@@ -1873,6 +1879,11 @@ Vite/React product, `apps/web`, new production app, native browser controller or
 full SSR framework claim is restored.
 
 ### Backend Receipt Reuse
+
+Later source accounting and the recovered infrastructure recipe are maintained
+in [Telemetry Source Retirement](../habitat-sdk-recovery/telemetry-retirement.md)
+and [Backend Infrastructure Reuse](../habitat-sdk-recovery/backend-reuse.md).
+They do not change this runtime release's acceptance boundary or complete D-5.
 
 Read-only discovery found a running Podman machine `orpc-efficacy-085`, cached
 ClickStack 2.21.0 images and stopped prior fixtures, but no running telemetry

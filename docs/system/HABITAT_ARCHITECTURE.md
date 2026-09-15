@@ -2,6 +2,11 @@
 
 Status: Canonical
 
+The [design philosophy](HABITAT_DESIGN_PHILOSOPHY.md) records the governing
+intent used to evaluate and evolve these contracts. This specification retains
+exact ontology and boundary authority; the philosophy is not a replacement
+mechanics specification or evidence of implementation conformance.
+
 ## 1. Scope
 
 This specification defines the canonical platform ontology, source ownership,

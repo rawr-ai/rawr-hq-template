@@ -37,6 +37,7 @@ Applies to `docs/**`.
 - `docs/PRODUCT.md`
 - `docs/PROCESS.md`
 - `docs/ROADMAP.md`
+- `docs/system/HABITAT_DESIGN_PHILOSOPHY.md`
 - `docs/system/HABITAT_ARCHITECTURE.md`
 - `docs/system/HABITAT_RUNTIME_REALIZATION.md`
 

@@ -1,0 +1,114 @@
+{
+  "schema": "habitat-retirement-receipt/v1",
+  "verifiedAt": "2026-09-15T21:27:00.781Z",
+  "repository": "rawr-ai/rawr-hq-template",
+  "main": "29365b34cbfeca636606af0f6b5d4c4ac07c1066",
+  "remote": {
+    "before": 685,
+    "deleted": 625,
+    "after": 60,
+    "batches": [
+      {
+        "count": 100,
+        "confirmedDeleted": 100,
+        "retainedOrChanged": [],
+        "unrelatedChanges": [],
+        "startedAt": "2026-09-15T21:19:24.879Z",
+        "finishedAt": "2026-09-15T21:19:30.517Z"
+      },
+      {
+        "count": 100,
+        "confirmedDeleted": 100,
+        "retainedOrChanged": [],
+        "unrelatedChanges": [],
+        "startedAt": "2026-09-15T21:19:33.055Z",
+        "finishedAt": "2026-09-15T21:19:38.208Z"
+      },
+      {
+        "count": 100,
+        "confirmedDeleted": 100,
+        "retainedOrChanged": [],
+        "unrelatedChanges": [],
+        "startedAt": "2026-09-15T21:19:40.816Z",
+        "finishedAt": "2026-09-15T21:19:47.131Z"
+      },
+      {
+        "count": 100,
+        "confirmedDeleted": 100,
+        "retainedOrChanged": [],
+        "unrelatedChanges": [],
+        "startedAt": "2026-09-15T21:19:49.765Z",
+        "finishedAt": "2026-09-15T21:19:54.142Z"
+      },
+      {
+        "count": 100,
+        "confirmedDeleted": 100,
+        "retainedOrChanged": [],
+        "unrelatedChanges": [],
+        "startedAt": "2026-09-15T21:19:56.822Z",
+        "finishedAt": "2026-09-15T21:20:01.622Z"
+      },
+      {
+        "count": 100,
+        "confirmedDeleted": 100,
+        "retainedOrChanged": [],
+        "unrelatedChanges": [],
+        "startedAt": "2026-09-15T21:20:02.843Z",
+        "finishedAt": "2026-09-15T21:20:07.364Z"
+      },
+      {
+        "count": 25,
+        "confirmedDeleted": 25,
+        "retainedOrChanged": [],
+        "unrelatedChanges": [],
+        "startedAt": "2026-09-15T21:20:08.684Z",
+        "finishedAt": "2026-09-15T21:20:10.921Z"
+      }
+    ],
+    "allRetainedRefsUnchanged": true,
+    "allDeletedRefsAbsent": true
+  },
+  "local": {
+    "before": 64,
+    "after": 63,
+    "removed": {
+      "name": "agent-root-task63-proof-wip",
+      "sha": "15863c7f50f96e0051f0c696d50422e4f9add6d3",
+      "disposition": "superseded by accepted task-6.3 proof, not exact patch duplication or direct merge",
+      "acceptedProof": "4753f6d281388f29d754c2c2542c2164e3e6e73e",
+      "acceptedReceipt": "517e31f6635e08984894421698909f91ed9bc222",
+      "laterAcceptedSimplification": "53d1840cd7a8c5a2477cf32c4530171352fafd49"
+    },
+    "otherRefsUnchangedAtVerification": true,
+    "worktrees": 6,
+    "preExistingDirtyWorktrees": 2,
+    "preExistingDirtyStatusPreserved": true,
+    "stashes": 13,
+    "stashRefsUnchanged": true
+  },
+  "graphite": {
+    "version": "1.8.6",
+    "upgradeResult": "already up to date",
+    "rootsBefore": 11,
+    "rootsAfter": 10,
+    "sync": "gt sync --no-restack --no-interactive",
+    "localRetirement": "gt delete agent-root-task63-proof-wip --force --no-interactive"
+  },
+  "recoveryArchive": {
+    "path": "/Users/mateicanavra/Documents/.nosync/DEV/branch-archives/habitat-merged-20260915",
+    "bundleSha256": "175c5e4e49df4c686ac84eaa8e13c6d7c03dbe5f0a09ec553820539862358867",
+    "standaloneRestoreVerified": true,
+    "refCount": 626
+  },
+  "verification": {
+    "repositoryCheck": "bun run check: 147 tasks passed; 0 cache hits",
+    "remotePolicy": "scripts/dev/check-remotes.sh passed",
+    "openPullRequests": 46
+  },
+  "limits": [
+    "No SDK changes, global restack, old-stack merge, open-PR closure, stash deletion, or worktree removal in this pass.",
+    "Git leases protect changed refs, not concurrent PR creation on an unchanged ref.",
+    "Archive created before owner clarified preference against a backup-centered workflow.",
+    "Snapshot evidence; later documentation commits advance the active branch."
+  ]
+}
