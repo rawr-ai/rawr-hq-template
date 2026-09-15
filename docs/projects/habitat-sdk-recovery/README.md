@@ -3,6 +3,10 @@
 Status: documentation consolidated; historical-frame investigation deferred;
 no repair implementation plan admitted.
 
+The [held-work register](held-work-register.md) is the current discovery index
+for its deliberately open Graphite draft. It distinguishes central visibility
+from source publication and identifies the next frame-recovery stage.
+
 Current re-entry view: [completed telemetry source retirement](telemetry-retirement.md),
 with a [visual timeline](resources/research/recovery-timeline.html). It separates
 one historical holding from a [recovered backend recipe](backend-reuse.md).
