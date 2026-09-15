@@ -1,5 +1,9 @@
 # Repository Re-entry Checkpoint
 
+For the subsequent applied pruning and capability timeline, read
+[Cleanup and capability lineage](cleanup-lineage-map.md). Counts below preserve
+the earlier checkpoint rather than pretending it was already the cleaned state.
+
 This document is informative: a September 15, 2026 repository census and
 disposition checkpoint, not permission to merge old implementations or a new SDK
 repair plan. The [SDK assessment](assessment.md) describes product correctness;

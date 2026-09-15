@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="description" content="Dated Habitat lineage from May to September 2026: design, adoption, the bounded runtime release, and retained recovery work.">
+    <title>Habitat Recovery Timeline | 15 September 2026</title>
+    <style>
+      :root {
+        --ink: #21292d;
+        --muted: #526068;
+        --line: #d6dee1;
+        --paper: #ffffff;
+        --wash: #f3f6f7;
+        --blue: #185c91;
+        --green: #216b4a;
+        --amber: #795600;
+        --rose: #94434e;
+      }
+
+      * { box-sizing: border-box; }
+      html { background: var(--paper); }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        letter-spacing: 0;
+      }
+      a { color: var(--blue); text-underline-offset: 3px; }
+      a:hover { text-decoration-thickness: 2px; }
+      a:focus-visible {
+        outline: 3px solid var(--blue);
+        outline-offset: 4px;
+        border-radius: 2px;
+      }
+      p, h1, h2, h3 { margin: 0; }
+      p, a, h1, h2, h3 { overflow-wrap: anywhere; }
+      .wrap { width: min(1180px, 100%); margin-inline: auto; padding-inline: 32px; }
+      .skip-link {
+        position: absolute;
+        top: -100px;
+        left: 16px;
+        padding: 10px 16px;
+        background: var(--paper);
+        z-index: 1;
+      }
+      .skip-link:focus { top: 12px; }
+      header { padding-block: 34px 28px; border-bottom: 1px solid var(--line); }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 6px 24px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      h1 { margin-top: 14px; font-size: 36px; line-height: 1.15; font-weight: 700; }
+      .lead { margin-top: 12px; max-width: 850px; font-size: 18px; }
+      .lead strong { font-weight: 650; }
+      .scope { margin-top: 9px; color: var(--muted); font-size: 14px; }
+      section { padding-block: 30px; }
+      h2 { font-size: 23px; line-height: 1.25; }
+      .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+      .caption { color: var(--muted); font-size: 13px; }
+      .timeline { margin: 23px 0 0; padding: 0; list-style: none; }
+      .month {
+        display: grid;
+        grid-template-columns: 112px minmax(0, 1fr);
+        gap: 24px;
+        position: relative;
+        padding-block: 22px;
+        border-top: 1px solid var(--line);
+      }
+      .month-name { font-size: 20px; font-weight: 650; }
+      .month-year { display: block; font-size: 13px; color: var(--muted); font-weight: 400; }
+      .events {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 24px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .events.single { grid-template-columns: minmax(0, 1fr); }
+      .event { min-width: 0; padding-left: 13px; border-left: 3px solid var(--line); }
+      .event.reference { border-color: var(--blue); }
+      .event.adopted { border-color: var(--green); }
+      .event.held { border-color: var(--amber); }
+      .event.superseded { border-color: var(--rose); }
+      .event-meta { display: flex; flex-wrap: wrap; gap: 3px 9px; font-size: 12px; color: var(--muted); }
+      .event-kind { font-weight: 650; }
+      .reference .event-kind { color: var(--blue); }
+      .adopted .event-kind { color: var(--green); }
+      .held .event-kind { color: var(--amber); }
+      .superseded .event-kind { color: var(--rose); }
+      h3 { margin-top: 5px; font-size: 16px; line-height: 1.35; font-weight: 650; }
+      .event p { margin-top: 5px; color: var(--muted); font-size: 14px; }
+      .event.single-note { max-width: 740px; }
+      .chronology-note { border-top: 1px solid var(--line); padding-top: 14px; max-width: 960px; }
+      .telemetry-band { background: var(--wash); border-block: 1px solid var(--line); }
+      .telemetry-band section { padding-block: 28px; }
+      .telemetry-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 24px; }
+      .capability { min-width: 0; border-top: 3px solid var(--blue); padding-top: 12px; }
+      .capability.delivered { border-color: var(--green); }
+      .capability.pending { border-color: var(--amber); }
+      .status { font-size: 12px; font-weight: 700; color: var(--blue); }
+      .delivered .status { color: var(--green); }
+      .pending .status { color: var(--amber); }
+      .capability h3 { font-size: 18px; margin-top: 5px; }
+      .capability p { font-size: 14px; margin-top: 8px; }
+      .capability ul { margin: 9px 0 0; padding-left: 19px; font-size: 14px; }
+      .capability li + li { margin-top: 5px; }
+      .telemetry-source { margin-top: 20px; font-size: 13px; color: var(--muted); }
+      .follow-ups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 23px 36px; margin-top: 22px; }
+      .follow-up { border-top: 1px solid var(--line); padding-top: 12px; min-width: 0; }
+      .follow-up h3 { margin-top: 0; }
+      .follow-up p { margin-top: 6px; color: var(--muted); font-size: 14px; }
+      .record-label { margin-left: 7px; color: var(--muted); font-size: 12px; font-weight: 400; white-space: nowrap; }
+      .repair-gate { margin-top: 25px; padding-left: 15px; border-left: 3px solid var(--rose); font-size: 14px; }
+      footer { padding-block: 21px 30px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+      footer nav { display: flex; flex-wrap: wrap; gap: 9px 22px; margin-bottom: 10px; }
+      footer p { max-width: 940px; }
+      @media (max-width: 900px) {
+        .month { grid-template-columns: 90px minmax(0, 1fr); gap: 18px; }
+        .events { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .section-head { flex-direction: column; gap: 5px; }
+        .telemetry-grid { gap: 20px; }
+      }
+      @media (max-width: 620px) {
+        .wrap { padding-inline: 20px; }
+        header { padding-block: 25px 23px; }
+        h1 { font-size: 30px; }
+        .lead { font-size: 17px; }
+        section { padding-block: 24px; }
+        h2 { font-size: 21px; }
+        .month { grid-template-columns: minmax(0, 1fr); gap: 15px; padding-block: 20px; }
+        .month-name { display: flex; align-items: baseline; gap: 9px; }
+        .events, .telemetry-grid, .follow-ups { grid-template-columns: minmax(0, 1fr); }
+        .events { gap: 18px; }
+        .telemetry-grid { gap: 24px; }
+        .follow-ups { gap: 19px; }
+        .event-meta, .caption, .status { font-size: 13px; }
+      }
+      @media print {
+        body { font-size: 11pt; }
+        .wrap { width: 100%; padding-inline: 0; }
+        header, section, .telemetry-band section { padding-block: 16px; }
+        h1 { font-size: 25pt; }
+        a { color: inherit; }
+        .skip-link { display: none; }
+        .month, .capability, .follow-up { break-inside: avoid; }
+        .telemetry-band { background: white; }
+        .telemetry-grid { gap: 20px; }
+        footer nav { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#lineage">Skip to dated lineage</a>
+    <header>
+      <div class="wrap">
+        <div class="meta">
+          <span>Habitat / Repository lineage</span>
+          <span>Informative snapshot &middot; <time datetime="2026-09-15">15 September 2026</time></span>
+        </div>
+        <h1>Habitat recovery timeline</h1>
+        <p class="lead"><strong>The bounded runtime shipped.</strong> Earlier design, telemetry work, and product experiments have different dispositions. Their remaining promises were not all completed or abandoned by that release.</p>
+        <p class="scope">Design and source history &rarr; ownership and adoption &rarr; runtime qualification &rarr; current recovery</p>
+      </div>
+    </header>
+
+    <main>
+      <section class="wrap" id="lineage" aria-labelledby="lineage-title">
+        <div class="section-head">
+          <h2 id="lineage-title">What happened, and when</h2>
+          <p class="caption">Dated milestones, not elapsed-time bars or a continuous activity record.</p>
+        </div>
+        <ol class="timeline">
+          <li class="month">
+            <div class="month-name">May <span class="month-year">2026</span></div>
+            <ol class="events single" aria-label="May milestones">
+              <li class="event reference single-note">
+                <div class="event-meta"><span><time datetime="2026-05-07">7</time>&ndash;<time datetime="2026-05-18">18 May</time></span><span class="event-kind">Design references</span></div>
+                <h3>Architecture and specification authoring</h3>
+                <p>Two retained reference branches originate here. They were restacked on 6 August; that later commit date does not make them new August design work.</p>
+              </li>
+            </ol>
+          </li>
+          <li class="month">
+            <div class="month-name">July <span class="month-year">2026</span></div>
+            <ol class="events" aria-label="July milestones">
+              <li class="event reference">
+                <div class="event-meta"><time datetime="2026-07-06">6 July</time><span class="event-kind">Product source</span></div>
+                <h3>Original session metrics</h3>
+                <p>The original session-metrics lineage, distinct from its later transfer and source-freeze checkpoints.</p>
+              </li>
+              <li class="event reference">
+                <div class="event-meta"><span><time datetime="2026-07-23">23</time>&ndash;<time datetime="2026-07-25">25 July</time></span><span class="event-kind">Design</span></div>
+                <h3>Research-experiment design</h3>
+                <p>Design history to preserve and compare with the downstream product, not proof that all product behavior was transferred.</p>
+              </li>
+              <li class="event reference">
+                <div class="event-meta"><span><time datetime="2026-07-26">26</time>&ndash;<time datetime="2026-07-27">27 July</time></span><span class="event-kind">Experiment</span></div>
+                <h3>Fluree and workstream</h3>
+                <p>Shared source history for ledger/provider exploration and product working-frame behavior. Those owners must be separated at adoption.</p>
+              </li>
+            </ol>
+          </li>
+          <li class="month">
+            <div class="month-name">August <span class="month-year">2026</span></div>
+            <ol class="events" aria-label="August milestones">
+              <li class="event reference">
+                <div class="event-meta"><time datetime="2026-08-01">1 August</time><span class="event-kind">Capability source</span></div>
+                <h3>Temporal inquiry</h3>
+                <p>A distinct capability track, not evidence of a released ledger or inquiry integration.</p>
+              </li>
+              <li class="event reference">
+                <div class="event-meta"><time datetime="2026-08-06">6 August</time><span class="event-kind">Earlier implementation</span></div>
+                <h3>Telemetry: 35-PR stack</h3>
+                <p>Substantial older telemetry work. Do not confuse it with September's qualification of the current native runtime.</p>
+              </li>
+              <li class="event adopted">
+                <div class="event-meta"><time datetime="2026-08-07">7 August</time><span class="event-kind">Ownership</span></div>
+                <h3>Telemetry adoption split</h3>
+                <p>Fresh Habitat-owned destinations replace direct adoption of the old mixed source. Backend implementation remains outside the generic runtime prerequisite. <a href="https://github.com/rawr-ai/rawr-hq-template/pull/885">PR #885</a></p>
+              </li>
+              <li class="event held">
+                <div class="event-meta"><time datetime="2026-08-08">8 August</time><span class="event-kind">Source freeze</span></div>
+                <h3>Metrics transfer checkpoint</h3>
+                <p>Preserves the source for comparison and transfer; does not establish completion of every remaining product adoption.</p>
+              </li>
+              <li class="event adopted">
+                <div class="event-meta"><time datetime="2026-08-09">9 August</time><span class="event-kind">Adopted</span></div>
+                <h3>Telemetry provider adopted</h3>
+                <p>Real provider adoption, with full backend observability still a separate proof obligation. <a href="https://github.com/rawr-ai/rawr-hq-template/pull/926">PR #926</a></p>
+              </li>
+              <li class="event superseded">
+                <div class="event-meta"><time datetime="2026-08-11">11 August</time><span class="event-kind">Superseded WIP</span></div>
+                <h3>Earlier bootgraph work</h3>
+                <p>Later superseded by <a href="https://github.com/rawr-ai/rawr-hq-template/pull/995">PR #995</a> and <a href="https://github.com/rawr-ai/rawr-hq-template/pull/996">PR #996</a>. Not a separate current implementation queue.</p>
+              </li>
+            </ol>
+          </li>
+          <li class="month">
+            <div class="month-name">September <span class="month-year">2026</span></div>
+            <ol class="events" aria-label="September milestones">
+              <li class="event adopted">
+                <div class="event-meta"><time datetime="2026-09-05">5 September</time><span class="event-kind">Qualification</span></div>
+                <h3>Current native runtime</h3>
+                <p>Server, async, and CLI qualification supported a narrower runtime release, not completion of every retained integration.</p>
+              </li>
+              <li class="event adopted">
+                <div class="event-meta"><time datetime="2026-09-06">6 September</time><span class="event-kind">Released</span></div>
+                <h3>SDK and CLI 0.6.0 closure</h3>
+                <p><a href="https://github.com/rawr-ai/rawr-hq-template/pull/1028">PR #1028</a> closes the bounded release. Backend observability was explicitly retained as <a href="../../../habitat-runtime-realignment/deferred-capabilities.md#d-5-full-observability">D-5</a>.</p>
+              </li>
+              <li class="event held">
+                <div class="event-meta"><time datetime="2026-09-15">15 September</time><span class="event-kind">Current assessment</span></div>
+                <h3>SDK recovery</h3>
+                <p>Correctness and authoring gaps are recorded. Recover the historical frame and review the findings before selecting repairs.</p>
+              </li>
+            </ol>
+          </li>
+        </ol>
+        <p class="caption chronology-note"><strong>Date caution:</strong> authorship, restacking, adoption, and qualification are different events. Rewritten commit dates can make old work appear new. Spacing and omitted dates do not imply duration or inactivity. Detailed branch provenance belongs in the <a href="../../cleanup-lineage-map.md">companion lineage map</a>.</p>
+      </section>
+
+      <div class="telemetry-band">
+        <section class="wrap" aria-labelledby="telemetry-title">
+          <div class="section-head">
+            <h2 id="telemetry-title">Telemetry: three different claims</h2>
+            <p class="caption">Core capability does not mean full backend qualification.</p>
+          </div>
+          <div class="telemetry-grid">
+            <article class="capability">
+              <p class="status">GOVERNING INTENT</p>
+              <h3>Native telemetry belongs in the platform</h3>
+              <p>Vendor-native telemetry and meaningful lifecycle integration are part of Habitat's capability intent. The older stack is not evidence that the whole concern was abandoned.</p>
+            </article>
+            <article class="capability delivered">
+              <p class="status">BOUNDED DELIVERY</p>
+              <h3>Provider, transport, and lifecycle</h3>
+              <ul>
+                <li>Telemetry provider adoption.</li>
+                <li>Native OTLP transmission and trace ancestry.</li>
+                <li>Finalization and lifecycle receipts for the qualified runtime.</li>
+              </ul>
+            </article>
+            <article class="capability pending">
+              <p class="status">RETAINED OBLIGATION &middot; D-5</p>
+              <h3>Persisted backend and event proof</h3>
+              <ul>
+                <li>Collector processing, storage, and record queries.</li>
+                <li>Secret-bearing native exception sanitization before export.</li>
+                <li>Semantic event integration and its outcome, correlation, and shutdown proof.</li>
+              </ul>
+            </article>
+          </div>
+          <p class="telemetry-source">Transport receipts do not prove stored, queryable backend records or universally secret-free telemetry. <a href="../../../habitat-runtime-realignment/deferred-capabilities.md#d-5-full-observability">Read the retained full-observability contract</a>.</p>
+        </section>
+      </div>
+
+      <section class="wrap" aria-labelledby="remaining-title">
+        <div class="section-head">
+          <h2 id="remaining-title">Keep the remaining work with its owner</h2>
+          <p class="caption">Selected follow-ups, not a complete platform roadmap.</p>
+        </div>
+        <div class="follow-ups">
+          <article class="follow-up">
+            <h3>Telemetry <span class="record-label">D-5</span></h3>
+            <p>Retain earlier receipts and held work. Qualify missing backend, exception, and semantic-event guarantees through the telemetry resource/provider and native host owners.</p>
+          </article>
+          <article class="follow-up">
+            <h3>Knowledge ledger and temporal inquiry <span class="record-label">D-1 / D-2</span></h3>
+            <p>Separate integrations with their own contracts and vendor proof. They are not one global blocker for the already released generic runtime.</p>
+          </article>
+          <article class="follow-up">
+            <h3>Rawr product transfers <span class="record-label">D-3</span></h3>
+            <p>Compare unique workstream, research, session, and governance behavior with current Rawr. Each destination needs its own acceptance; runtime publication is not blanket adoption.</p>
+          </article>
+          <article class="follow-up">
+            <h3>Historical framing references <span class="record-label">Recovery T-1</span></h3>
+            <p>Civilization 7, Magic Migration, and Habitat/Rawr conversations remain to be identified and prepared as data. Existing summaries and installed skills are not a recovered collaborative method.</p>
+          </article>
+        </div>
+        <p class="repair-gate"><strong>Before SDK repairs:</strong> prepare and analyze the historical evidence, develop and validate the reusable method, then review both the design philosophy and the SDK assessment with the owner.</p>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <nav aria-label="Supporting records">
+          <a href="../../cleanup-lineage-map.md">Detailed lineage map</a>
+          <a href="../../assessment.md">SDK assessment</a>
+          <a href="../../SOURCES.md">Assessment source register</a>
+          <a href="../../triage.md">Recovery gates</a>
+          <a href="../../../habitat-runtime-realignment/deferred-capabilities.md">Retained capabilities D-1 to D-5</a>
+        </nav>
+        <p>This is a dated, informative lineage view, not architecture authority, a repair plan, or a branch-deletion receipt. Milestone references identify their historical role; they do not authorize replaying old plans. Native agent and desktop host qualification remains separately recorded under D-4.</p>
+      </div>
+    </footer>
+  </body>
+</html>

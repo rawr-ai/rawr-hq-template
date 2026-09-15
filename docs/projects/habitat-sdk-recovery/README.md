@@ -3,6 +3,9 @@
 Status: documentation consolidated; historical-frame investigation deferred;
 no repair implementation plan admitted.
 
+Current re-entry view: [cleanup outcome and capability lineage](cleanup-lineage-map.md),
+with a [visual timeline](resources/research/recovery-timeline.html).
+
 This project record keeps the SDK assessment and its evidence in repository
 governance instead of relying on files in Codex task output directories.
 It does not reopen the completed runtime-release workstream or claim that the
