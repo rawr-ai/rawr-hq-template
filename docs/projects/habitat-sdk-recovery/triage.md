@@ -7,6 +7,9 @@ the prerequisite investigation from being lost or mistaken for completed work.
 ## T-1: Recover And Validate The Collaborative Framing Method
 
 - State: intentionally not started during consolidation, at the owner's request.
+- Precursor: the [investigation baseline](framing-investigation-baseline.md)
+  records provisional data units, stages, and safeguards. No historical corpus
+  extraction or analysis has begun.
 - Trigger: the owner resumes this dedicated phase after a fresh context reset.
 - Source: September 15 owner clarification, captured in the
   [assessment](assessment.md#recover-the-frame-and-collaborative-method).

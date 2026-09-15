@@ -18,6 +18,10 @@ later authoring and correctness findings are fixed.
    and the earlier authoring proposal, with provenance and supersession.
 4. [Triage](triage.md) and [deferrals](deferrals.md): the later data-driven
    framing-method investigation, repair gate, and repository-naming hold.
+5. [Repository re-entry checkpoint](repository-state.md): current track, branch
+   and worktree inventory, completed narrow cleanup, and held-source return points.
+6. [Framing investigation baseline](framing-investigation-baseline.md): a
+   lightweight data-preparation-first precursor, not the full investigation.
 
 ## Boundary Of This Consolidation
 

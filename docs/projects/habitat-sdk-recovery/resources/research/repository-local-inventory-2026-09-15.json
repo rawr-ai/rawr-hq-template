@@ -1,0 +1,1806 @@
+{
+  "purpose": "Historical repository checkpoint; not current status or a mutation allowlist.",
+  "capturedAt": "2026-09-15T20:58:06.509Z",
+  "evidence": [
+    "git fetch origin --prune",
+    "Git refs, ancestry, worktree status and stash identities",
+    "Read-only Graphite 1.8.6 branch_metadata SQLite table",
+    "GitHub all 1028 PRs, queried with gh pr list --state all --limit 2000"
+  ],
+  "main": "29365b34cbfeca636606af0f6b5d4c4ac07c1066",
+  "originMain": "29365b34cbfeca636606af0f6b5d4c4ac07c1066",
+  "before": {
+    "localBranches": 65,
+    "localOnly": 18,
+    "remoteBranches": 685,
+    "openPrs": 46,
+    "totalPrsFetched": 1028,
+    "worktrees": 7,
+    "dirtyWorktrees": 2,
+    "rootStacks": 12,
+    "stashes": 13
+  },
+  "after": {
+    "localBranches": 64,
+    "localOnly": 17,
+    "remoteBranches": 685,
+    "openPrs": 46,
+    "totalPrsFetched": 1028,
+    "worktrees": 6,
+    "dirtyWorktrees": 2,
+    "rootStacks": 11,
+    "stashes": 13
+  },
+  "roots": [
+    {
+      "root": "agent-af-authority-freeze-execution-frame",
+      "members": ["agent-af-authority-freeze-execution-frame", "codex/spec-toolbox-reference"],
+      "count": 2
+    },
+    {
+      "root": "agent-root-habitat-design-consolidation",
+      "members": ["agent-root-habitat-design-consolidation"],
+      "count": 1
+    },
+    {
+      "root": "agent-root-session-metrics-source-freeze",
+      "members": ["agent-root-session-metrics-source-freeze"],
+      "count": 1
+    },
+    {
+      "root": "agent-root-task63-proof-wip",
+      "members": ["agent-root-task63-proof-wip"],
+      "count": 1
+    },
+    {
+      "root": "codex/close-research-experiment-design-review",
+      "members": ["codex/close-research-experiment-design-review"],
+      "count": 1
+    },
+    {
+      "root": "codex/consolidate-research-experiment-sdk",
+      "members": [
+        "codex/consolidate-research-experiment-sdk",
+        "codex/reframe-research-experiment-platform"
+      ],
+      "count": 2
+    },
+    {
+      "root": "codex/fluree-september-intake",
+      "members": ["codex/fluree-september-intake", "codex/fluree-capability-reassessment"],
+      "count": 2
+    },
+    {
+      "root": "codex/frame-native-platform-telemetry",
+      "members": [
+        "codex/frame-native-platform-telemetry",
+        "codex/admit-native-platform-telemetry",
+        "codex/correct-native-platform-telemetry-resource-boundary",
+        "codex/add-native-telemetry-contract",
+        "codex/implement-native-telemetry-contract",
+        "codex/route-native-telemetry-admission",
+        "codex/record-native-telemetry-contract",
+        "codex/construct-native-telemetry-topology",
+        "codex/record-native-telemetry-provider",
+        "codex/wire-hq-telemetry-lifecycle",
+        "codex/record-hq-telemetry-lifecycle",
+        "codex/wire-native-orpc-events",
+        "codex/record-native-orpc-events",
+        "codex/bridge-host-technical-telemetry",
+        "codex/record-host-technical-telemetry",
+        "codex/normalize-host-telemetry-propagation",
+        "codex/separate-example-todo-correlation",
+        "codex/ratchet-server-telemetry-context",
+        "codex/record-host-trace-authority",
+        "codex/observe-inngest-attempts",
+        "codex/record-inngest-attempt-events",
+        "codex/bound-native-shutdown-waiting",
+        "codex/coordinate-server-shutdown",
+        "codex/record-server-shutdown",
+        "codex/seal-server-telemetry-acceptance",
+        "codex/bind-oclif-telemetry-lifecycle",
+        "codex/record-oclif-telemetry-lifecycle",
+        "codex/observe-oclif-command-events",
+        "codex/record-oclif-command-events",
+        "codex/coordinate-oclif-telemetry-shutdown",
+        "codex/record-oclif-telemetry-shutdown",
+        "codex/seal-oclif-telemetry-acceptance",
+        "codex/record-oclif-telemetry-acceptance",
+        "codex/retire-core-telemetry-singleton",
+        "codex/record-core-telemetry-retirement",
+        "codex/prove-native-telemetry-receipt"
+      ],
+      "count": 36
+    },
+    {
+      "root": "codex/integrate-habitat-frame-lineage",
+      "members": [
+        "codex/integrate-habitat-frame-lineage",
+        "codex/project-habitat-temporal-inquiry"
+      ],
+      "count": 2
+    },
+    {
+      "root": "codex/session-intelligence-metrics-openspec",
+      "members": [
+        "codex/session-intelligence-metrics-openspec",
+        "codex/shared-session-selection",
+        "codex/session-metrics-service",
+        "codex/session-metrics-cli",
+        "codex/session-metrics-agent-guidance",
+        "codex/session-metrics-orchestration-openspec",
+        "codex/session-metrics-orchestration-service",
+        "codex/session-metrics-orchestration-cli",
+        "codex/session-metrics-orchestration-guidance"
+      ],
+      "count": 9
+    },
+    {
+      "root": "fluree-workstream-experiment",
+      "members": [
+        "fluree-workstream-experiment",
+        "fluree-ws-guarded-proposals",
+        "fluree-ws-conformance-suites",
+        "fluree-ws-constant-cost-head",
+        "fluree-ws-constant-cost-existence",
+        "fluree-ws-port-shape-law"
+      ],
+      "count": 6
+    }
+  ],
+  "branches": [
+    {
+      "name": "agent-af-authority-freeze-execution-frame",
+      "sha": "1256d088569f9f6ef6f2d177605fb59d4b45063d",
+      "upstream": "",
+      "date": "2026-08-06T23:27:54-04:00",
+      "parent": "main",
+      "children": ["codex/spec-toolbox-reference"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 145,
+        "rightOnly": 5
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "agent-root-habitat-design-consolidation",
+      "sha": "4c3f59e57f37ff048248e4adda6635b8789d9405",
+      "upstream": "",
+      "date": "2026-09-15T16:38:13-04:00",
+      "parent": "main",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 0,
+        "rightOnly": 1
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "agent-root-session-metrics-source-freeze",
+      "sha": "0495c03a85b8322f63a0ed7dcff855b3a382848c",
+      "upstream": "",
+      "date": "2026-08-08T11:57:46-04:00",
+      "parent": "main",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 120,
+        "rightOnly": 1
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "agent-root-task63-proof-wip",
+      "sha": "15863c7f50f96e0051f0c696d50422e4f9add6d3",
+      "upstream": "",
+      "date": "2026-08-11T08:09:38-04:00",
+      "parent": "main",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 40,
+        "rightOnly": 1
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/add-native-telemetry-contract",
+      "sha": "4c9396fddbb4165b5dd0e7d9f86495142fab7741",
+      "upstream": "origin/codex/add-native-telemetry-contract",
+      "date": "2026-08-06T06:06:27-04:00",
+      "parent": "codex/correct-native-platform-telemetry-resource-boundary",
+      "children": ["codex/implement-native-telemetry-contract"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 4
+      },
+      "remote": {
+        "sha": "4c9396fddbb4165b5dd0e7d9f86495142fab7741",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 847,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/correct-native-platform-telemetry-resource-boundary",
+          "headRefOid": "4c9396fddbb4165b5dd0e7d9f86495142fab7741"
+        }
+      ]
+    },
+    {
+      "name": "codex/admit-native-platform-telemetry",
+      "sha": "de6d1aff8f64637c4e587b55b9dcd1ee77f2b363",
+      "upstream": "",
+      "date": "2026-08-06T05:49:43-04:00",
+      "parent": "codex/frame-native-platform-telemetry",
+      "children": ["codex/correct-native-platform-telemetry-resource-boundary"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 2
+      },
+      "remote": {
+        "sha": "de6d1aff8f64637c4e587b55b9dcd1ee77f2b363",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 845,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/frame-native-platform-telemetry",
+          "headRefOid": "de6d1aff8f64637c4e587b55b9dcd1ee77f2b363"
+        }
+      ]
+    },
+    {
+      "name": "codex/bind-oclif-telemetry-lifecycle",
+      "sha": "48c2e36fd2a2397bb5b9129f57ab79f4b24aed50",
+      "upstream": "",
+      "date": "2026-08-06T15:33:47-04:00",
+      "parent": "codex/seal-server-telemetry-acceptance",
+      "children": ["codex/record-oclif-telemetry-lifecycle"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 26
+      },
+      "remote": {
+        "sha": "48c2e36fd2a2397bb5b9129f57ab79f4b24aed50",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 869,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/seal-server-telemetry-acceptance",
+          "headRefOid": "48c2e36fd2a2397bb5b9129f57ab79f4b24aed50"
+        }
+      ]
+    },
+    {
+      "name": "codex/bound-native-shutdown-waiting",
+      "sha": "c74cb5a2d94bf448dea86bb710ebedc998f33b1e",
+      "upstream": "origin/codex/bound-native-shutdown-waiting",
+      "date": "2026-08-06T15:32:29-04:00",
+      "parent": "codex/record-inngest-attempt-events",
+      "children": ["codex/coordinate-server-shutdown"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 22
+      },
+      "remote": {
+        "sha": "c74cb5a2d94bf448dea86bb710ebedc998f33b1e",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 865,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-inngest-attempt-events",
+          "headRefOid": "c74cb5a2d94bf448dea86bb710ebedc998f33b1e"
+        }
+      ]
+    },
+    {
+      "name": "codex/bridge-host-technical-telemetry",
+      "sha": "cbb3b363d5f48b93950bd508ad1b20156954bc92",
+      "upstream": "origin/codex/bridge-host-technical-telemetry",
+      "date": "2026-08-06T08:47:13-04:00",
+      "parent": "codex/record-native-orpc-events",
+      "children": ["codex/record-host-technical-telemetry"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 14
+      },
+      "remote": {
+        "sha": "cbb3b363d5f48b93950bd508ad1b20156954bc92",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 857,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-native-orpc-events",
+          "headRefOid": "cbb3b363d5f48b93950bd508ad1b20156954bc92"
+        }
+      ]
+    },
+    {
+      "name": "codex/close-research-experiment-design-review",
+      "sha": "d9d5c95437c882e4eb295e3013634fc1806d801a",
+      "upstream": "origin/codex/close-research-experiment-design-review",
+      "date": "2026-07-25T03:20:55-04:00",
+      "parent": "main",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 651,
+        "rightOnly": 52
+      },
+      "remote": {
+        "sha": "d9d5c95437c882e4eb295e3013634fc1806d801a",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 769,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/reframe-research-experiment-platform",
+          "headRefOid": "d9d5c95437c882e4eb295e3013634fc1806d801a"
+        }
+      ]
+    },
+    {
+      "name": "codex/consolidate-research-experiment-sdk",
+      "sha": "223835fccedcb80523b761c571130852bdb106a2",
+      "upstream": "origin/codex/consolidate-research-experiment-sdk",
+      "date": "2026-07-23T04:25:19-04:00",
+      "parent": "main",
+      "children": ["codex/reframe-research-experiment-platform"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 651,
+        "rightOnly": 50
+      },
+      "remote": {
+        "sha": "223835fccedcb80523b761c571130852bdb106a2",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 531,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "main",
+          "headRefOid": "223835fccedcb80523b761c571130852bdb106a2"
+        }
+      ]
+    },
+    {
+      "name": "codex/construct-native-telemetry-topology",
+      "sha": "9d0ee2d5520098eaed1cd513bfdfd09df6f24a44",
+      "upstream": "",
+      "date": "2026-08-06T07:25:23-04:00",
+      "parent": "codex/record-native-telemetry-contract",
+      "children": ["codex/record-native-telemetry-provider"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 8
+      },
+      "remote": {
+        "sha": "9d0ee2d5520098eaed1cd513bfdfd09df6f24a44",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 851,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-native-telemetry-contract",
+          "headRefOid": "9d0ee2d5520098eaed1cd513bfdfd09df6f24a44"
+        }
+      ]
+    },
+    {
+      "name": "codex/coordinate-oclif-telemetry-shutdown",
+      "sha": "9b204417611e08645d2667988e2653c9e9aed7af",
+      "upstream": "origin/codex/coordinate-oclif-telemetry-shutdown",
+      "date": "2026-08-06T15:35:45-04:00",
+      "parent": "codex/record-oclif-command-events",
+      "children": ["codex/record-oclif-telemetry-shutdown"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 30
+      },
+      "remote": {
+        "sha": "9b204417611e08645d2667988e2653c9e9aed7af",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 873,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/record-oclif-command-events",
+          "headRefOid": "9b204417611e08645d2667988e2653c9e9aed7af"
+        }
+      ]
+    },
+    {
+      "name": "codex/coordinate-server-shutdown",
+      "sha": "38228b1d920c8d96b67fdf6eb99bd4f1b806e550",
+      "upstream": "",
+      "date": "2026-08-06T15:32:29-04:00",
+      "parent": "codex/bound-native-shutdown-waiting",
+      "children": ["codex/record-server-shutdown"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 23
+      },
+      "remote": {
+        "sha": "38228b1d920c8d96b67fdf6eb99bd4f1b806e550",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 866,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/bound-native-shutdown-waiting",
+          "headRefOid": "38228b1d920c8d96b67fdf6eb99bd4f1b806e550"
+        }
+      ]
+    },
+    {
+      "name": "codex/correct-native-platform-telemetry-resource-boundary",
+      "sha": "9eb7fa56ed6fddb0ed4c075304e03c396519df1e",
+      "upstream": "origin/codex/correct-native-platform-telemetry-resource-boundary",
+      "date": "2026-08-06T06:03:43-04:00",
+      "parent": "codex/admit-native-platform-telemetry",
+      "children": ["codex/add-native-telemetry-contract"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 3
+      },
+      "remote": {
+        "sha": "9eb7fa56ed6fddb0ed4c075304e03c396519df1e",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 846,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/admit-native-platform-telemetry",
+          "headRefOid": "9eb7fa56ed6fddb0ed4c075304e03c396519df1e"
+        }
+      ]
+    },
+    {
+      "name": "codex/fluree-capability-reassessment",
+      "sha": "55ce5a7fb23bb79632236558c14e8988111c228a",
+      "upstream": "",
+      "date": "2026-09-15T01:30:44-04:00",
+      "parent": "codex/fluree-september-intake",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 0,
+        "rightOnly": 2
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/fluree-september-intake",
+      "sha": "053fdc88b25137e2c60c687ba26be07b50235000",
+      "upstream": "",
+      "date": "2026-09-15T00:49:18-04:00",
+      "parent": "main",
+      "children": ["codex/fluree-capability-reassessment"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 0,
+        "rightOnly": 1
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/frame-native-platform-telemetry",
+      "sha": "420a015652a4a59f47c047d99b685a3f4c25e34f",
+      "upstream": "",
+      "date": "2026-08-06T04:37:05-04:00",
+      "parent": "main",
+      "children": ["codex/admit-native-platform-telemetry"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 1
+      },
+      "remote": {
+        "sha": "420a015652a4a59f47c047d99b685a3f4c25e34f",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 844,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "main",
+          "headRefOid": "420a015652a4a59f47c047d99b685a3f4c25e34f"
+        }
+      ]
+    },
+    {
+      "name": "codex/implement-native-telemetry-contract",
+      "sha": "167aba76c8b82a0c6a8264469ef763be8ae9e04e",
+      "upstream": "",
+      "date": "2026-08-06T06:26:40-04:00",
+      "parent": "codex/add-native-telemetry-contract",
+      "children": ["codex/route-native-telemetry-admission"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 5
+      },
+      "remote": {
+        "sha": "167aba76c8b82a0c6a8264469ef763be8ae9e04e",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 848,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/add-native-telemetry-contract",
+          "headRefOid": "167aba76c8b82a0c6a8264469ef763be8ae9e04e"
+        }
+      ]
+    },
+    {
+      "name": "codex/integrate-habitat-frame-lineage",
+      "sha": "602b1207a51c35e5d50a3e309a6336fdabbd5ab5",
+      "upstream": "origin/codex/integrate-habitat-frame-lineage",
+      "date": "2026-08-01T01:19:36Z",
+      "parent": "main",
+      "children": ["codex/project-habitat-temporal-inquiry"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 255,
+        "rightOnly": 1
+      },
+      "remote": {
+        "sha": "602b1207a51c35e5d50a3e309a6336fdabbd5ab5",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 727,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "main",
+          "headRefOid": "602b1207a51c35e5d50a3e309a6336fdabbd5ab5"
+        }
+      ]
+    },
+    {
+      "name": "codex/normalize-host-telemetry-propagation",
+      "sha": "6324d6cc4ff345c358e51afbe06d47fe4779df10",
+      "upstream": "origin/codex/normalize-host-telemetry-propagation",
+      "date": "2026-08-06T09:06:15-04:00",
+      "parent": "codex/record-host-technical-telemetry",
+      "children": ["codex/separate-example-todo-correlation"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 16
+      },
+      "remote": {
+        "sha": "6324d6cc4ff345c358e51afbe06d47fe4779df10",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 859,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-host-technical-telemetry",
+          "headRefOid": "6324d6cc4ff345c358e51afbe06d47fe4779df10"
+        }
+      ]
+    },
+    {
+      "name": "codex/observe-inngest-attempts",
+      "sha": "027f49efca5c5614917a43750bfbd174ad3a0717",
+      "upstream": "origin/codex/observe-inngest-attempts",
+      "date": "2026-08-06T15:30:00-04:00",
+      "parent": "codex/record-host-trace-authority",
+      "children": ["codex/record-inngest-attempt-events"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 20
+      },
+      "remote": {
+        "sha": "027f49efca5c5614917a43750bfbd174ad3a0717",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 863,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-host-trace-authority",
+          "headRefOid": "027f49efca5c5614917a43750bfbd174ad3a0717"
+        }
+      ]
+    },
+    {
+      "name": "codex/observe-oclif-command-events",
+      "sha": "cde15660ebc48f6c2fe25a6573608f28b9a0410a",
+      "upstream": "origin/codex/observe-oclif-command-events",
+      "date": "2026-08-06T15:35:11-04:00",
+      "parent": "codex/record-oclif-telemetry-lifecycle",
+      "children": ["codex/record-oclif-command-events"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 28
+      },
+      "remote": {
+        "sha": "cde15660ebc48f6c2fe25a6573608f28b9a0410a",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 871,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/record-oclif-telemetry-lifecycle",
+          "headRefOid": "cde15660ebc48f6c2fe25a6573608f28b9a0410a"
+        }
+      ]
+    },
+    {
+      "name": "codex/project-habitat-temporal-inquiry",
+      "sha": "5fcb3257933b9c9017e7923b85b244dfa7b239d0",
+      "upstream": "origin/codex/project-habitat-temporal-inquiry",
+      "date": "2026-08-01T01:19:38Z",
+      "parent": "codex/integrate-habitat-frame-lineage",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 255,
+        "rightOnly": 2
+      },
+      "remote": {
+        "sha": "5fcb3257933b9c9017e7923b85b244dfa7b239d0",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 728,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/integrate-habitat-frame-lineage",
+          "headRefOid": "5fcb3257933b9c9017e7923b85b244dfa7b239d0"
+        }
+      ]
+    },
+    {
+      "name": "codex/prove-native-telemetry-receipt",
+      "sha": "0519fe11cfd8c75a72bd761d980077f23fed194a",
+      "upstream": "",
+      "date": "2026-08-06T15:54:47-04:00",
+      "parent": "codex/record-core-telemetry-retirement",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 35
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/ratchet-server-telemetry-context",
+      "sha": "64f6d2603e127334c6a980e128d848be6de44e10",
+      "upstream": "",
+      "date": "2026-08-06T13:33:26-04:00",
+      "parent": "codex/separate-example-todo-correlation",
+      "children": ["codex/record-host-trace-authority"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 18
+      },
+      "remote": {
+        "sha": "64f6d2603e127334c6a980e128d848be6de44e10",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 861,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/separate-example-todo-correlation",
+          "headRefOid": "64f6d2603e127334c6a980e128d848be6de44e10"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-core-telemetry-retirement",
+      "sha": "de9e99c1ddf3cb38613fcb58b19afa8dc6b0ffce",
+      "upstream": "origin/codex/record-core-telemetry-retirement",
+      "date": "2026-08-06T15:39:24-04:00",
+      "parent": "codex/retire-core-telemetry-singleton",
+      "children": ["codex/prove-native-telemetry-receipt"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 35
+      },
+      "remote": {
+        "sha": "de9e99c1ddf3cb38613fcb58b19afa8dc6b0ffce",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 878,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/retire-core-telemetry-singleton",
+          "headRefOid": "de9e99c1ddf3cb38613fcb58b19afa8dc6b0ffce"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-host-technical-telemetry",
+      "sha": "7670c5d30dce1524d21e85205074e093f0f73579",
+      "upstream": "",
+      "date": "2026-08-06T08:47:45-04:00",
+      "parent": "codex/bridge-host-technical-telemetry",
+      "children": ["codex/normalize-host-telemetry-propagation"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 15
+      },
+      "remote": {
+        "sha": "7670c5d30dce1524d21e85205074e093f0f73579",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 858,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/bridge-host-technical-telemetry",
+          "headRefOid": "7670c5d30dce1524d21e85205074e093f0f73579"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-host-trace-authority",
+      "sha": "8a6ba912f422cb7fa2ea17797d9e2c97772d3ec9",
+      "upstream": "",
+      "date": "2026-08-06T13:33:54-04:00",
+      "parent": "codex/ratchet-server-telemetry-context",
+      "children": ["codex/observe-inngest-attempts"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 19
+      },
+      "remote": {
+        "sha": "8a6ba912f422cb7fa2ea17797d9e2c97772d3ec9",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 862,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/ratchet-server-telemetry-context",
+          "headRefOid": "8a6ba912f422cb7fa2ea17797d9e2c97772d3ec9"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-hq-telemetry-lifecycle",
+      "sha": "1fe0eb6a62a37117c6dd02ca315802354cc2566d",
+      "upstream": "origin/codex/record-hq-telemetry-lifecycle",
+      "date": "2026-08-06T07:53:24-04:00",
+      "parent": "codex/wire-hq-telemetry-lifecycle",
+      "children": ["codex/wire-native-orpc-events"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 11
+      },
+      "remote": {
+        "sha": "1fe0eb6a62a37117c6dd02ca315802354cc2566d",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 854,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/wire-hq-telemetry-lifecycle",
+          "headRefOid": "1fe0eb6a62a37117c6dd02ca315802354cc2566d"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-inngest-attempt-events",
+      "sha": "e74c0edd0b49a2814c4b0c04b85c218d609707bf",
+      "upstream": "origin/codex/record-inngest-attempt-events",
+      "date": "2026-08-06T15:31:42-04:00",
+      "parent": "codex/observe-inngest-attempts",
+      "children": ["codex/bound-native-shutdown-waiting"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 21
+      },
+      "remote": {
+        "sha": "e74c0edd0b49a2814c4b0c04b85c218d609707bf",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 864,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/observe-inngest-attempts",
+          "headRefOid": "e74c0edd0b49a2814c4b0c04b85c218d609707bf"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-native-orpc-events",
+      "sha": "9da469e0f0899b94b4e0dae3ffa7045648478a53",
+      "upstream": "",
+      "date": "2026-08-06T08:23:54-04:00",
+      "parent": "codex/wire-native-orpc-events",
+      "children": ["codex/bridge-host-technical-telemetry"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 13
+      },
+      "remote": {
+        "sha": "9da469e0f0899b94b4e0dae3ffa7045648478a53",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 856,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/wire-native-orpc-events",
+          "headRefOid": "9da469e0f0899b94b4e0dae3ffa7045648478a53"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-native-telemetry-contract",
+      "sha": "b345c3439fcff31e648c7dce3529bee90a8837f8",
+      "upstream": "origin/codex/record-native-telemetry-contract",
+      "date": "2026-08-06T06:29:17-04:00",
+      "parent": "codex/route-native-telemetry-admission",
+      "children": ["codex/construct-native-telemetry-topology"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 7
+      },
+      "remote": {
+        "sha": "b345c3439fcff31e648c7dce3529bee90a8837f8",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 850,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/route-native-telemetry-admission",
+          "headRefOid": "b345c3439fcff31e648c7dce3529bee90a8837f8"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-native-telemetry-provider",
+      "sha": "688e1fbe1c54b57c58cd7634c4e6f643096d3907",
+      "upstream": "origin/codex/record-native-telemetry-provider",
+      "date": "2026-08-06T07:25:53-04:00",
+      "parent": "codex/construct-native-telemetry-topology",
+      "children": ["codex/wire-hq-telemetry-lifecycle"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 9
+      },
+      "remote": {
+        "sha": "688e1fbe1c54b57c58cd7634c4e6f643096d3907",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 852,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/construct-native-telemetry-topology",
+          "headRefOid": "688e1fbe1c54b57c58cd7634c4e6f643096d3907"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-oclif-command-events",
+      "sha": "1e9b9d07dcc36231eb71688cea2a8ab0682aa903",
+      "upstream": "",
+      "date": "2026-08-06T15:35:45-04:00",
+      "parent": "codex/observe-oclif-command-events",
+      "children": ["codex/coordinate-oclif-telemetry-shutdown"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 29
+      },
+      "remote": {
+        "sha": "1e9b9d07dcc36231eb71688cea2a8ab0682aa903",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 872,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/observe-oclif-command-events",
+          "headRefOid": "1e9b9d07dcc36231eb71688cea2a8ab0682aa903"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-oclif-telemetry-acceptance",
+      "sha": "5794758804bf6c09b063d5f37d41f9b24c6adbe7",
+      "upstream": "origin/codex/record-oclif-telemetry-acceptance",
+      "date": "2026-08-06T15:38:35-04:00",
+      "parent": "codex/seal-oclif-telemetry-acceptance",
+      "children": ["codex/retire-core-telemetry-singleton"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 33
+      },
+      "remote": {
+        "sha": "5794758804bf6c09b063d5f37d41f9b24c6adbe7",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 876,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/seal-oclif-telemetry-acceptance",
+          "headRefOid": "5794758804bf6c09b063d5f37d41f9b24c6adbe7"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-oclif-telemetry-lifecycle",
+      "sha": "05906b7a21bb70dd3acf4195acc10af9a6429fda",
+      "upstream": "origin/codex/record-oclif-telemetry-lifecycle",
+      "date": "2026-08-06T15:35:11-04:00",
+      "parent": "codex/bind-oclif-telemetry-lifecycle",
+      "children": ["codex/observe-oclif-command-events"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 27
+      },
+      "remote": {
+        "sha": "05906b7a21bb70dd3acf4195acc10af9a6429fda",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 870,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/bind-oclif-telemetry-lifecycle",
+          "headRefOid": "05906b7a21bb70dd3acf4195acc10af9a6429fda"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-oclif-telemetry-shutdown",
+      "sha": "7c9abb9d9e2ac97825564927a406bf7caa6e6558",
+      "upstream": "origin/codex/record-oclif-telemetry-shutdown",
+      "date": "2026-08-06T15:36:20-04:00",
+      "parent": "codex/coordinate-oclif-telemetry-shutdown",
+      "children": ["codex/seal-oclif-telemetry-acceptance"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 31
+      },
+      "remote": {
+        "sha": "7c9abb9d9e2ac97825564927a406bf7caa6e6558",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 874,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/coordinate-oclif-telemetry-shutdown",
+          "headRefOid": "7c9abb9d9e2ac97825564927a406bf7caa6e6558"
+        }
+      ]
+    },
+    {
+      "name": "codex/record-server-shutdown",
+      "sha": "2ebbdae9e6e5e1e55b4891e9c08e1f221010bea3",
+      "upstream": "origin/codex/record-server-shutdown",
+      "date": "2026-08-06T15:33:07-04:00",
+      "parent": "codex/coordinate-server-shutdown",
+      "children": ["codex/seal-server-telemetry-acceptance"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 24
+      },
+      "remote": {
+        "sha": "2ebbdae9e6e5e1e55b4891e9c08e1f221010bea3",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 867,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/coordinate-server-shutdown",
+          "headRefOid": "2ebbdae9e6e5e1e55b4891e9c08e1f221010bea3"
+        }
+      ]
+    },
+    {
+      "name": "codex/reframe-research-experiment-platform",
+      "sha": "5f99837f5244e34be4eb58db5ec3e3bfefd7c88f",
+      "upstream": "",
+      "date": "2026-07-25T02:44:41-04:00",
+      "parent": "codex/consolidate-research-experiment-sdk",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 651,
+        "rightOnly": 51
+      },
+      "remote": {
+        "sha": "5f99837f5244e34be4eb58db5ec3e3bfefd7c88f",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 768,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/consolidate-research-experiment-sdk",
+          "headRefOid": "5f99837f5244e34be4eb58db5ec3e3bfefd7c88f"
+        }
+      ]
+    },
+    {
+      "name": "codex/retire-core-telemetry-singleton",
+      "sha": "f95c9207130e9794b0de94e3e4417598c4a95fab",
+      "upstream": "origin/codex/retire-core-telemetry-singleton",
+      "date": "2026-08-06T15:38:35-04:00",
+      "parent": "codex/record-oclif-telemetry-acceptance",
+      "children": ["codex/record-core-telemetry-retirement"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 34
+      },
+      "remote": {
+        "sha": "f95c9207130e9794b0de94e3e4417598c4a95fab",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 877,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/record-oclif-telemetry-acceptance",
+          "headRefOid": "f95c9207130e9794b0de94e3e4417598c4a95fab"
+        }
+      ]
+    },
+    {
+      "name": "codex/route-native-telemetry-admission",
+      "sha": "a03d24d30beabeb175cb60588f57be15772e042d",
+      "upstream": "origin/codex/route-native-telemetry-admission",
+      "date": "2026-08-06T06:28:01-04:00",
+      "parent": "codex/implement-native-telemetry-contract",
+      "children": ["codex/record-native-telemetry-contract"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 6
+      },
+      "remote": {
+        "sha": "a03d24d30beabeb175cb60588f57be15772e042d",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 849,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/implement-native-telemetry-contract",
+          "headRefOid": "a03d24d30beabeb175cb60588f57be15772e042d"
+        }
+      ]
+    },
+    {
+      "name": "codex/seal-oclif-telemetry-acceptance",
+      "sha": "32be7a6cf4ef7294a3188ffe31b8ef94cf1564fc",
+      "upstream": "",
+      "date": "2026-08-06T15:36:20-04:00",
+      "parent": "codex/record-oclif-telemetry-shutdown",
+      "children": ["codex/record-oclif-telemetry-acceptance"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 32
+      },
+      "remote": {
+        "sha": "32be7a6cf4ef7294a3188ffe31b8ef94cf1564fc",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 875,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "codex/record-oclif-telemetry-shutdown",
+          "headRefOid": "32be7a6cf4ef7294a3188ffe31b8ef94cf1564fc"
+        }
+      ]
+    },
+    {
+      "name": "codex/seal-server-telemetry-acceptance",
+      "sha": "6517eea0eba1af4f0ccc88543c2c87579052187a",
+      "upstream": "origin/codex/seal-server-telemetry-acceptance",
+      "date": "2026-08-06T15:33:47-04:00",
+      "parent": "codex/record-server-shutdown",
+      "children": ["codex/bind-oclif-telemetry-lifecycle"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 25
+      },
+      "remote": {
+        "sha": "6517eea0eba1af4f0ccc88543c2c87579052187a",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 868,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-server-shutdown",
+          "headRefOid": "6517eea0eba1af4f0ccc88543c2c87579052187a"
+        }
+      ]
+    },
+    {
+      "name": "codex/separate-example-todo-correlation",
+      "sha": "b6c90e67feae15579a2193def29234d7d8592f25",
+      "upstream": "origin/codex/separate-example-todo-correlation",
+      "date": "2026-08-06T09:17:49-04:00",
+      "parent": "codex/normalize-host-telemetry-propagation",
+      "children": ["codex/ratchet-server-telemetry-context"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 17
+      },
+      "remote": {
+        "sha": "b6c90e67feae15579a2193def29234d7d8592f25",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 860,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/normalize-host-telemetry-propagation",
+          "headRefOid": "b6c90e67feae15579a2193def29234d7d8592f25"
+        }
+      ]
+    },
+    {
+      "name": "codex/session-intelligence-metrics-openspec",
+      "sha": "5dcf4dbebe850ceb34d606dc8f35efc71d34a987",
+      "upstream": "",
+      "date": "2026-07-16T22:07:57-04:00",
+      "parent": "main",
+      "children": ["codex/shared-session-selection"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 944,
+        "rightOnly": 1
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/session-metrics-agent-guidance",
+      "sha": "083159c498b650ce80055e0c8fa4557a5bb1db31",
+      "upstream": "",
+      "date": "2026-07-06T02:34:11-04:00",
+      "parent": "codex/session-metrics-cli",
+      "children": ["codex/session-metrics-orchestration-openspec"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 964,
+        "rightOnly": 5
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/session-metrics-cli",
+      "sha": "7fa0f9ba58e5ee8e3fb13a1b1960b47edf35ae30",
+      "upstream": "",
+      "date": "2026-07-06T02:28:36-04:00",
+      "parent": "codex/session-metrics-service",
+      "children": ["codex/session-metrics-agent-guidance"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 964,
+        "rightOnly": 4
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/session-metrics-orchestration-cli",
+      "sha": "5eb03afe47028a902e054bba5ebb396fdc30410b",
+      "upstream": "",
+      "date": "2026-07-06T05:27:31-04:00",
+      "parent": "codex/session-metrics-orchestration-service",
+      "children": ["codex/session-metrics-orchestration-guidance"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 964,
+        "rightOnly": 8
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/session-metrics-orchestration-guidance",
+      "sha": "9ee1ab1c8851db5c5cd0b246ecc028a45a5352c8",
+      "upstream": "",
+      "date": "2026-07-06T05:33:33-04:00",
+      "parent": "codex/session-metrics-orchestration-cli",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 964,
+        "rightOnly": 9
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/session-metrics-orchestration-openspec",
+      "sha": "1e4deb97c372feb6737ed8dcccd3ab4d0cafb348",
+      "upstream": "",
+      "date": "2026-07-06T05:03:45-04:00",
+      "parent": "codex/session-metrics-agent-guidance",
+      "children": ["codex/session-metrics-orchestration-service"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 964,
+        "rightOnly": 6
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/session-metrics-orchestration-service",
+      "sha": "236af012ec8b20522745f629f87f62384bb2138d",
+      "upstream": "",
+      "date": "2026-07-06T05:18:21-04:00",
+      "parent": "codex/session-metrics-orchestration-openspec",
+      "children": ["codex/session-metrics-orchestration-cli"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 964,
+        "rightOnly": 7
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/session-metrics-service",
+      "sha": "019cf1ab6a5e3130951687c42ee7ad0515e3eace",
+      "upstream": "",
+      "date": "2026-07-16T22:07:57-04:00",
+      "parent": "codex/shared-session-selection",
+      "children": ["codex/session-metrics-cli"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 944,
+        "rightOnly": 3
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/shared-session-selection",
+      "sha": "d1f4b1f284e6f70dfa1253d61909b9800a5ba581",
+      "upstream": "",
+      "date": "2026-07-16T22:07:57-04:00",
+      "parent": "codex/session-intelligence-metrics-openspec",
+      "children": ["codex/session-metrics-service"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 944,
+        "rightOnly": 2
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/spec-toolbox-reference",
+      "sha": "1b07e2bebe72c30b11acedc34e138f15eaa84b92",
+      "upstream": "",
+      "date": "2026-08-06T23:27:55-04:00",
+      "parent": "agent-af-authority-freeze-execution-frame",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 145,
+        "rightOnly": 6
+      },
+      "remote": null,
+      "prs": []
+    },
+    {
+      "name": "codex/wire-hq-telemetry-lifecycle",
+      "sha": "ede4f03fc49332f701ddba014ca97740f6e1a98f",
+      "upstream": "origin/codex/wire-hq-telemetry-lifecycle",
+      "date": "2026-08-06T07:53:00-04:00",
+      "parent": "codex/record-native-telemetry-provider",
+      "children": ["codex/record-hq-telemetry-lifecycle"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 10
+      },
+      "remote": {
+        "sha": "ede4f03fc49332f701ddba014ca97740f6e1a98f",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 853,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-native-telemetry-provider",
+          "headRefOid": "ede4f03fc49332f701ddba014ca97740f6e1a98f"
+        }
+      ]
+    },
+    {
+      "name": "codex/wire-native-orpc-events",
+      "sha": "c3d27a337b361ed0a204c0149ca007397e2df7ea",
+      "upstream": "",
+      "date": "2026-08-06T08:23:27-04:00",
+      "parent": "codex/record-hq-telemetry-lifecycle",
+      "children": ["codex/record-native-orpc-events"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 146,
+        "rightOnly": 12
+      },
+      "remote": {
+        "sha": "c3d27a337b361ed0a204c0149ca007397e2df7ea",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 855,
+          "state": "OPEN",
+          "isDraft": false,
+          "baseRefName": "codex/record-hq-telemetry-lifecycle",
+          "headRefOid": "c3d27a337b361ed0a204c0149ca007397e2df7ea"
+        }
+      ]
+    },
+    {
+      "name": "fluree-workstream-experiment",
+      "sha": "be005ba63d4429b1dd5528d356ba8c4f0deed65d",
+      "upstream": "",
+      "date": "2026-07-26T01:28:41-04:00",
+      "parent": "main",
+      "children": ["fluree-ws-guarded-proposals"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 430,
+        "rightOnly": 5
+      },
+      "remote": {
+        "sha": "be005ba63d4429b1dd5528d356ba8c4f0deed65d",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 548,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "main",
+          "headRefOid": "be005ba63d4429b1dd5528d356ba8c4f0deed65d"
+        }
+      ]
+    },
+    {
+      "name": "fluree-ws-conformance-suites",
+      "sha": "b45ffd14dd5713ddead9c37f82c0cae27ad577b0",
+      "upstream": "",
+      "date": "2026-07-26T01:28:43-04:00",
+      "parent": "fluree-ws-guarded-proposals",
+      "children": ["fluree-ws-constant-cost-head"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 430,
+        "rightOnly": 7
+      },
+      "remote": {
+        "sha": "b45ffd14dd5713ddead9c37f82c0cae27ad577b0",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 550,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "fluree-ws-guarded-proposals",
+          "headRefOid": "b45ffd14dd5713ddead9c37f82c0cae27ad577b0"
+        }
+      ]
+    },
+    {
+      "name": "fluree-ws-constant-cost-existence",
+      "sha": "a1062c4216456a2bf6392148a477bfff1ec35353",
+      "upstream": "origin/fluree-ws-constant-cost-existence",
+      "date": "2026-07-26T03:41:13-04:00",
+      "parent": "fluree-ws-constant-cost-head",
+      "children": ["fluree-ws-port-shape-law"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 430,
+        "rightOnly": 9
+      },
+      "remote": {
+        "sha": "a1062c4216456a2bf6392148a477bfff1ec35353",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 552,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "fluree-ws-constant-cost-head",
+          "headRefOid": "a1062c4216456a2bf6392148a477bfff1ec35353"
+        }
+      ]
+    },
+    {
+      "name": "fluree-ws-constant-cost-head",
+      "sha": "8d66093190bc1ae26dca5226a67c9b56fcc8de55",
+      "upstream": "origin/fluree-ws-constant-cost-head",
+      "date": "2026-07-26T01:28:43-04:00",
+      "parent": "fluree-ws-conformance-suites",
+      "children": ["fluree-ws-constant-cost-existence"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 430,
+        "rightOnly": 8
+      },
+      "remote": {
+        "sha": "8d66093190bc1ae26dca5226a67c9b56fcc8de55",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 551,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "fluree-ws-conformance-suites",
+          "headRefOid": "8d66093190bc1ae26dca5226a67c9b56fcc8de55"
+        }
+      ]
+    },
+    {
+      "name": "fluree-ws-guarded-proposals",
+      "sha": "d28639ae83d4fbd297f680abdc03d91a0040751e",
+      "upstream": "origin/fluree-ws-guarded-proposals",
+      "date": "2026-07-26T01:28:42-04:00",
+      "parent": "fluree-workstream-experiment",
+      "children": ["fluree-ws-conformance-suites"],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 430,
+        "rightOnly": 6
+      },
+      "remote": {
+        "sha": "d28639ae83d4fbd297f680abdc03d91a0040751e",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 549,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "fluree-workstream-experiment",
+          "headRefOid": "d28639ae83d4fbd297f680abdc03d91a0040751e"
+        }
+      ]
+    },
+    {
+      "name": "fluree-ws-port-shape-law",
+      "sha": "85d8e0a376586726f6624215076decc4884757b6",
+      "upstream": "",
+      "date": "2026-07-27T16:20:53-04:00",
+      "parent": "fluree-ws-constant-cost-existence",
+      "children": [],
+      "containedInMain": false,
+      "versusMain": {
+        "leftOnly": 430,
+        "rightOnly": 46
+      },
+      "remote": {
+        "sha": "a3717cb8982e0ebaf473bbfee915b66a760af004",
+        "leftOnly": 36,
+        "rightOnly": 0
+      },
+      "prs": [
+        {
+          "number": 553,
+          "state": "OPEN",
+          "isDraft": true,
+          "baseRefName": "fluree-ws-constant-cost-existence",
+          "headRefOid": "a3717cb8982e0ebaf473bbfee915b66a760af004"
+        }
+      ]
+    },
+    {
+      "name": "main",
+      "sha": "29365b34cbfeca636606af0f6b5d4c4ac07c1066",
+      "upstream": "origin/main",
+      "date": "2026-09-06T01:22:32-04:00",
+      "parent": null,
+      "children": [
+        "agent-af-authority-freeze-execution-frame",
+        "agent-root-habitat-design-consolidation",
+        "agent-root-session-metrics-source-freeze",
+        "agent-root-task63-proof-wip",
+        "codex/close-research-experiment-design-review",
+        "codex/consolidate-research-experiment-sdk",
+        "codex/fluree-september-intake",
+        "codex/frame-native-platform-telemetry",
+        "codex/integrate-habitat-frame-lineage",
+        "codex/session-intelligence-metrics-openspec",
+        "fluree-workstream-experiment"
+      ],
+      "containedInMain": true,
+      "versusMain": {
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "remote": {
+        "sha": "29365b34cbfeca636606af0f6b5d4c4ac07c1066",
+        "leftOnly": 0,
+        "rightOnly": 0
+      },
+      "prs": []
+    }
+  ],
+  "worktrees": [
+    {
+      "path": "/Users/mateicanavra/Documents/.nosync/DEV/habitat/rawr-hq-template",
+      "head": "55ce5a7fb23bb79632236558c14e8988111c228a",
+      "branch": "codex/fluree-capability-reassessment",
+      "exists": true,
+      "status": "?? .codex/config.toml"
+    },
+    {
+      "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-root-habitat-design-consolidation",
+      "head": "4c3f59e57f37ff048248e4adda6635b8789d9405",
+      "branch": "agent-root-habitat-design-consolidation",
+      "exists": true,
+      "status": ""
+    },
+    {
+      "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-root-session-metrics-source-freeze",
+      "head": "0495c03a85b8322f63a0ed7dcff855b3a382848c",
+      "branch": "agent-root-session-metrics-source-freeze",
+      "exists": true,
+      "status": ""
+    },
+    {
+      "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-fluree-workstream",
+      "head": "85d8e0a376586726f6624215076decc4884757b6",
+      "branch": "fluree-ws-port-shape-law",
+      "exists": true,
+      "status": ""
+    },
+    {
+      "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-native-platform-telemetry",
+      "head": "0519fe11cfd8c75a72bd761d980077f23fed194a",
+      "branch": "codex/prove-native-telemetry-receipt",
+      "exists": true,
+      "status": "A  tools/native-platform-telemetry-receipt/AGENTS.md\nA  tools/native-platform-telemetry-receipt/project.json\nA  tools/native-platform-telemetry-receipt/src/inngest-fixture.ts\nA  tools/native-platform-telemetry-receipt/src/model.ts\nA  tools/native-platform-telemetry-receipt/src/receipt.ts\nA  tools/native-platform-telemetry-receipt/src/server-fixture.ts\nA  tools/native-platform-telemetry-receipt/test/model.test.ts\nA  tools/native-platform-telemetry-receipt/tsconfig.json"
+    },
+    {
+      "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-template-session-intelligence-metrics-openspec",
+      "head": "9ee1ab1c8851db5c5cd0b246ecc028a45a5352c8",
+      "branch": "codex/session-metrics-orchestration-guidance",
+      "exists": true,
+      "status": ""
+    }
+  ],
+  "stashes": [
+    {
+      "labelAtCapture": "stash@{0}",
+      "sha": "331f7e68be85516f94764f8c6bfff3ebec731e65",
+      "description": "On agent-root-implement-semantic-ledger: task-6.4 WIP before semantic-ledger authority correction"
+    },
+    {
+      "labelAtCapture": "stash@{1}",
+      "sha": "a962bae3af05c3521344c65b7479ae7f4dd02aa3",
+      "description": "On codex/finalize-habitat-foundation: wip/foundation-linearization-2026-08-07"
+    },
+    {
+      "labelAtCapture": "stash@{2}",
+      "sha": "d8d3ae25cad4026527543bd53bb4efbf74ff7072",
+      "description": "On codex/cutover-habitat-consumer-0-2-2: habitat consumer cutover after 0.2.2 self-hosting proof"
+    },
+    {
+      "labelAtCapture": "stash@{3}",
+      "sha": "1adf59634435a52e2f79f72be2fd75a2dacb2bf6",
+      "description": "On codex/fix-habitat-node-projection: habitat consumer cutover after 0.2.1 initializer"
+    },
+    {
+      "labelAtCapture": "stash@{4}",
+      "sha": "d2b64de1a41719980eaec43e3ca8b26385b35e7c",
+      "description": "On codex/habitat-product-blueprints: wip: rejected composite Habitat candidate for source recut"
+    },
+    {
+      "labelAtCapture": "stash@{5}",
+      "sha": "6818834bbf64e1120119e6b200424a009120009c",
+      "description": "On codex/seed-habitat-blueprint-frames: wip: lifecycle service burn-down after documentation landing"
+    },
+    {
+      "labelAtCapture": "stash@{6}",
+      "sha": "e0f8b8c52636ca1ab54b42d68526e03b36868a26",
+      "description": "On codex/normalize-lifecycle-payload-schema: wip: payload TypeBox family before service-law correction"
+    },
+    {
+      "labelAtCapture": "stash@{7}",
+      "sha": "27e5e844eb3d028216e337ae43e6cbfc50d30f72",
+      "description": "On codex/c6-make-export-root-authority-monotonic: superseded reversible export-root implementation"
+    },
+    {
+      "labelAtCapture": "stash@{8}",
+      "sha": "f0a8ae34a4f281c6c9c037ac695a0f3b7ef5f3f2",
+      "description": "On codex/c5-bind-operation-typed-clients: c5 public bindings after provider authority split 2026-07-17"
+    },
+    {
+      "labelAtCapture": "stash@{9}",
+      "sha": "ff37475217a5f5d8408e6a9317b1289a047807aa",
+      "description": "On codex/c5-bind-operation-typed-clients: c5 repairs before semantic split 2026-07-17"
+    },
+    {
+      "labelAtCapture": "stash@{10}",
+      "sha": "7f7879c48691a0b7c0d38e471be555904eaef3a7",
+      "description": "On codex/c5-require-installed-lifecycle-convergence: c5: pre-habitat-history-rewrite safety snapshot"
+    },
+    {
+      "labelAtCapture": "stash@{11}",
+      "sha": "65a7c2df2b5c1b158b0a3ab2446b94dfc51433b9",
+      "description": "On matei/reorganize-project-docs: WIP: exec plan edits"
+    },
+    {
+      "labelAtCapture": "stash@{12}",
+      "sha": "06132bf114bf4013176d1628c73114e199233650",
+      "description": "On phase-03-structural-tranche-node-4-coordination-state-extraction: wip(node4): manifest-thinning plus coordination-runtime-store experiment"
+    }
+  ],
+  "cleanup": [
+    {
+      "action": "gt delete",
+      "branch": "agent-root-implement-semantic-ledger",
+      "sha": "25130e77a2b1ac9a82b44bde705589b26bae4de1",
+      "proof": "Contained in main; childless; no worktree or open PR. Separate WIP stash preserved."
+    },
+    {
+      "action": "git worktree remove",
+      "path": "/Users/mateicanavra/Documents/.nosync/DEV/worktrees/wt-agent-root-habitat-runtime-cold",
+      "sha": "29365b34cbfeca636606af0f6b5d4c4ac07c1066",
+      "proof": "Detached at main, clean; only reproducible ignored dependencies/build/cache."
+    }
+  ]
+}
