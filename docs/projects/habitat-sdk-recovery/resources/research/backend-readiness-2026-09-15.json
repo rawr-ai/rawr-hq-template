@@ -1,0 +1,60 @@
+{
+  "schema": "habitat-backend-readiness/v1",
+  "scope": "Disposable local infrastructure readiness only; no SDK, application fixture, or telemetry events.",
+  "startedAt": "2026-09-15T21:48:50.810Z",
+  "finishedAt": "2026-09-15T21:49:16.901Z",
+  "status": "ready",
+  "podmanVersion": "podman version 6.0.1",
+  "requestedImage": "docker.io/clickhouse/clickstack-local@sha256:6d0019b129a0a0b36ff9d33b7cf628be977704bf6e74814f4add06efb74cf315",
+  "observedImage": {
+    "id": "f11455c43c3846ecf9a961d469578d35bce181937b56996d0251c8dd1963cb85",
+    "digest": "sha256:6d0019b129a0a0b36ff9d33b7cf628be977704bf6e74814f4add06efb74cf315",
+    "repoDigests": [
+      "docker.io/clickhouse/clickstack-local@sha256:3a8ab22562c27007d41eb8411b244f5b3ad39ba3b9dfa3d32ea4ee1661e66a92",
+      "docker.io/clickhouse/clickstack-local@sha256:6d0019b129a0a0b36ff9d33b7cf628be977704bf6e74814f4add06efb74cf315"
+    ]
+  },
+  "initialMachineState": "stopped",
+  "container": {
+    "id": "cbe4560c481632b1da5a80e3b4df51ecbf6e92e5370c940ccb43a14be9491cc3",
+    "imageId": "f11455c43c3846ecf9a961d469578d35bce181937b56996d0251c8dd1963cb85",
+    "imageDigest": "sha256:6d0019b129a0a0b36ff9d33b7cf628be977704bf6e74814f4add06efb74cf315",
+    "name": "habitat-readiness-af5f286d-e824-4bff-9702-d230e2db3e4b"
+  },
+  "endpoint": "http://127.0.0.1:42089",
+  "tables": ["otel_logs", "otel_metrics_histogram", "otel_metrics_sum", "otel_traces"],
+  "otlpRequest": {
+    "method": "POST",
+    "contentType": "application/json",
+    "body": {}
+  },
+  "otlpResponses": [
+    {
+      "signal": "traces",
+      "status": 200,
+      "body": "{\"partialSuccess\":{}}"
+    },
+    {
+      "signal": "metrics",
+      "status": 200,
+      "body": "{\"partialSuccess\":{}}"
+    },
+    {
+      "signal": "logs",
+      "status": 200,
+      "body": "{\"partialSuccess\":{}}"
+    }
+  ],
+  "cleanup": {
+    "containerRemoved": true,
+    "preExistingContainerIdentitiesPreserved": true,
+    "finalMachineState": "stopped",
+    "preExistingContainerCount": 5,
+    "preExistingStatesPreserved": true
+  },
+  "limitations": [
+    "Empty OTLP requests prove endpoint admission, not event delivery or persistence.",
+    "No Habitat, oRPC, Effect, EVLog, or Inngest integration was exercised.",
+    "No image pull, VM creation/configuration, or pre-existing container mutation was requested."
+  ]
+}

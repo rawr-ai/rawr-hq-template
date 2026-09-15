@@ -1880,6 +1880,11 @@ full SSR framework claim is restored.
 
 ### Backend Receipt Reuse
 
+Later source accounting and the recovered infrastructure recipe are maintained
+in [Telemetry Source Retirement](../habitat-sdk-recovery/telemetry-retirement.md)
+and [Backend Infrastructure Reuse](../habitat-sdk-recovery/backend-reuse.md).
+They do not change this runtime release's acceptance boundary or complete D-5.
+
 Read-only discovery found a running Podman machine `orpc-efficacy-085`, cached
 ClickStack 2.21.0 images and stopped prior fixtures, but no running telemetry
 containers or reachable backend. No infrastructure was started or modified.

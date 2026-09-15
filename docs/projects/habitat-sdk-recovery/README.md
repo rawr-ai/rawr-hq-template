@@ -5,6 +5,8 @@ no repair implementation plan admitted.
 
 Current re-entry view: [cleanup outcome and capability lineage](cleanup-lineage-map.md),
 with a [visual timeline](resources/research/recovery-timeline.html).
+The subsequent [telemetry source retirement](telemetry-retirement.md) separates
+one historical holding from a [recovered backend recipe](backend-reuse.md).
 
 This project record keeps the SDK assessment and its evidence in repository
 governance instead of relying on files in Codex task output directories.
