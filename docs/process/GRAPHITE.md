@@ -33,6 +33,26 @@ For canonical merge/prune and repository/interface workflows, use:
 - `docs/process/runbooks/STACK_DRAIN_LOOP.md`
 - `docs/process/CROSS_REPO_WORKFLOWS.md`
 
+## Project memory snapshots
+
+Project memory's current state, including updates and removals, is one file:
+the primary checkout's `.fluree-memory/repo.ttl`, with its
+`.fluree-memory/.gitignore`. The primary checkout is authoritative and `.fluree/`
+is derived from the file. Memories record files (`--refs`), not branches, so a
+snapshot travels whole.
+
+- **With the PR.** A PR carries a byte-for-byte copy of the primary checkout's
+  file, taken when the PR is committed. Copy it; do not regenerate it, and never
+  run `fluree init` in the worktree.
+- **Nothing in flight.** Memory changes with no PR to carry them go in a small
+  memory-sync PR from `main`, created through Graphite like any other branch.
+- **Never overwrite the primary checkout's file from a branch.** After a snapshot
+  merges, move the primary file aside before pulling, then confirm the pulled
+  file matches or carries forward memories added since the copy.
+- Coordinate writers before staging, merging, or switching in the primary
+  checkout; Fluree's lock serializes only its own CLI writes, not Git or manual
+  edits.
+
 ## Related workflow docs
 
 - Repository separation and artifact interfaces: `docs/process/CROSS_REPO_WORKFLOWS.md`

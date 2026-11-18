@@ -148,7 +148,38 @@
 - Ongoing doc and process health cadence:
   [Maintenance cadence](docs/process/MAINTENANCE_CADENCE.md).
 - Documentation architecture contract: [Docs architecture](docs/DOCS.md).
+- Project memory snapshots in Git:
+  [Memory snapshots](docs/process/GRAPHITE.md#project-memory-snapshots).
 - Quarantined docs live under `quarantine/` directories and are provenance only.
+
+## Project Memory
+
+- Decisions with their rationale, constraints, and costly traps that code,
+  docs, and Git cannot show live in Fluree project memory, committed as
+  `.fluree-memory/repo.ttl`. Recall with specific keywords before substantial
+  work. Select the primary checkout's workspace from Git, so the same command
+  works there and in any linked worktree on any machine:
+
+```sh
+fluree --config "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.fluree/config.toml" memory recall "specific keywords" --limit 5
+```
+
+- Use the same config for `memory add`, `update`, `status`, and `audit`. Record
+  with `--scope repo` and the right kind (`decision` with `--rationale` and
+  `--alternatives`, `constraint` with `--severity`, otherwise `fact`),
+  lowercase tags, and repo-relative `--refs`. Update an existing memory instead
+  of adding a duplicate. Phrase memories to stay true at HEAD: no progress,
+  status, commit hashes, or session notes.
+- This repository is public: repo memories carry no machine names, home paths,
+  personal names, or credentials. Those belong in each agent's own host-local
+  global store, which stays separate.
+- `.fluree/` is local and ignored. A fresh clone or a second machine recreates
+  it with `fluree init` in its primary checkout. Never initialize a second
+  store in a worktree, and never delete a lock or storage to get past an error.
+- Snapshots reach Git with the PR the memory belongs to, or in a small
+  memory-sync PR from `main` when nothing is in flight. The primary checkout's
+  file is authoritative and is never overwritten from a branch; see
+  [Memory snapshots](docs/process/GRAPHITE.md#project-memory-snapshots).
 
 ## Validation
 
