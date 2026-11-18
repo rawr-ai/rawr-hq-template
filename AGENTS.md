@@ -164,6 +164,11 @@
 fluree --config "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.fluree/config.toml" memory recall "specific keywords" --limit 5
 ```
 
+- The recall command needs an initialized workspace in the primary checkout; a
+  linked worktree does not imply one. Where `.fluree/` does not exist yet (a
+  fresh clone or a second machine), run `fluree init` once in the primary
+  checkout. Without `--scope`, recall returns both repo and user memories from
+  the selected workspace, which is intended for an agent's own recall.
 - Use the same config for `memory add`, `update`, `status`, and `audit`. Record
   with `--scope repo` and the right kind (`decision` with `--rationale` and
   `--alternatives`, `constraint` with `--severity`, otherwise `fact`),
@@ -176,11 +181,11 @@ fluree --config "$(dirname "$(git rev-parse --path-format=absolute --git-common-
   paths, or personal details. Host-local and cross-project context belongs in
   the machine's shared global memory workspace, which is separate from this
   project store. `--scope` is a partition inside the workspace `--config`
-  selects and does not choose a workspace; `--scope user` captures are written
-  to the ignored `.fluree-memory/.local/`.
-- `.fluree/` is local and ignored. A fresh clone or a second machine recreates
-  it with `fluree init` in its primary checkout. Never initialize a second
-  store in a worktree, and never delete a lock or storage to get past an error.
+  selects and does not choose a workspace. `--scope user` captures are stored in
+  `.fluree-memory/.local/`, which the committed `.fluree-memory/.gitignore`
+  excludes, so they stay local to the machine and are never committed.
+- `.fluree/` is local and ignored. Never initialize a second store in a
+  worktree, and never delete a lock or storage to get past an error.
 - Snapshots reach Git with the PR the memory belongs to, or in a small
   memory-sync PR from `main` when nothing is in flight. The primary checkout's
   file is authoritative and is never overwritten from a branch; see

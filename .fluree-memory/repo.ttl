@@ -4,7 +4,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 mem:constraint-01m7qrnss9twhf6mb2a7tebppq a mem:Constraint ;
-    mem:content "Agents collaborating on Habitat hide nothing from each other. A file, source or locator left out of a packet or message is noise reduction, not confidentiality: do not turn an omission into a read ban or a leakage finding, and name files, paths and sources when that makes a message clearer. Isolation applies only as experiment design to the specific fresh evaluator or scorer of a held-out test, which must not see the held-out answers. Credentials never go in messages." ;
+    mem:content "Agents authorized to collaborate on Habitat share working material with each other freely. A file, source or locator left out of a packet or message is noise reduction, not confidentiality: do not turn an omission into a read ban or a leakage finding, and name files, paths and sources when that makes a message clearer. This covers authorized sharing only: it does not override a restriction the owner imposes later, an external privacy boundary or a security control. Isolation otherwise applies only as experiment design, to the fresh evaluator or scorer of a held-out or prospective test. Credentials never go in messages or memory." ;
     mem:tag "agent-bus" ;
     mem:tag "agents" ;
     mem:tag "collaboration" ;
@@ -16,10 +16,11 @@ mem:constraint-01m7qrnss9twhf6mb2a7tebppq a mem:Constraint ;
     mem:severity "should" ;
     mem:branch "main" ;
     mem:createdAt "2026-11-18T16:43:40.201017+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-18T17:01:58.645173+00:00"^^xsd:dateTime ;
     mem:rationale "Owner correction after an agent treated a file omitted from a review copy as confidential and banned collaborators from reading it." .
 
 mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
-    mem:content "Habitat recovery coordination: the Codex recovery director integrates priorities and decisions; the Claude director owns Claude staffing and independent challenge; the owner keeps product intent and admission of repairs and releases. Each working lane pairs a Codex lead with a Claude lead, one owning the artifact and the other challenging it. On the agent bus, directory habitat routes it: topic habitat carries director decisions only, and each lane works in its own concern topic. A second runtime agreeing is not an independent verdict." ;
+    mem:content "Habitat recovery uses one integrating director and a separate staffing-and-challenge director on the other runtime; the owner keeps product intent and admission of repairs and releases. Each working lane pairs a lead who owns the artifact with a lead on the other runtime who challenges it independently before the design is settled. A second runtime agreeing is not an independent verdict, and a director's agreement is not a method review. Current names, topics and routing live in the recovery workstream record, not here." ;
     mem:tag "agent-bus" ;
     mem:tag "claude" ;
     mem:tag "codex" ;
@@ -32,6 +33,7 @@ mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:artifactRef "docs/projects/habitat-sdk-recovery/triage.md" ;
     mem:branch "main" ;
     mem:createdAt "2026-11-18T16:43:40.244600+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-18T17:01:58.680146+00:00"^^xsd:dateTime ;
     mem:rationale "Two runtimes work the recovery; one integrator avoids split direction while a separate staffing owner keeps independent challenge." ;
     mem:alternatives "single director for both runtimes,per-lane directors with no integrator" .
 
