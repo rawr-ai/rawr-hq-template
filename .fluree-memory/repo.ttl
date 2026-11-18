@@ -1,0 +1,107 @@
+# Fluree Memory — repo-scoped
+# Auto-managed by `fluree memory`. Manual edits are supported.
+@prefix mem: <https://ns.flur.ee/memory#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+mem:constraint-01m7qrnss9twhf6mb2a7tebppq a mem:Constraint ;
+    mem:content "Agents authorized to collaborate on Habitat share working material with each other freely. A file, source or locator left out of a packet or message is noise reduction, not confidentiality: do not turn an omission into a read ban or a leakage finding, and name files, paths and sources when that makes a message clearer. This covers authorized sharing only: it does not override an applicable owner restriction, an external privacy boundary or a security control. Isolation otherwise applies only as experiment design, to the fresh evaluator or scorer of a held-out or prospective test. Credentials never go in messages or memory." ;
+    mem:tag "agent-bus" ;
+    mem:tag "agents" ;
+    mem:tag "collaboration" ;
+    mem:tag "evaluation" ;
+    mem:tag "held-out" ;
+    mem:tag "openness" ;
+    mem:tag "references" ;
+    mem:scope mem:repo ;
+    mem:severity "should" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:43:40.201017+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-18T17:14:48.815123+00:00"^^xsd:dateTime ;
+    mem:rationale "Owner correction after an agent treated a file omitted from a review copy as confidential and banned collaborators from reading it." .
+
+mem:constraint-01m7qt6zg3g0rjr1gmhest1rcc a mem:Constraint ;
+    mem:content "A default claude -p instance is not an isolated evaluator or scorer: it has the full tool list, connected MCP servers, skills, plugins, hooks and global and project instructions, and only permission refusals hold back its reads. For a held-out or prospective evaluation, launch from an empty directory on a path naming no project with --safe-mode, --tools \"\", --strict-mcp-config, --disable-slash-commands, --no-session-persistence, --system-prompt and input on stdin. Accept it only with zero tools, MCP servers and skills in init, no hook events under --include-hook-events, and a same-host canary preflight, because init has no field for CLAUDE.md or injected instructions." ;
+    mem:tag "claude-code" ;
+    mem:tag "claude-p" ;
+    mem:tag "evaluation" ;
+    mem:tag "headless" ;
+    mem:tag "held-out" ;
+    mem:tag "isolation" ;
+    mem:tag "scorer" ;
+    mem:scope mem:repo ;
+    mem:severity "must" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T17:10:31.683239+00:00"^^xsd:dateTime ;
+    mem:rationale "A fresh session or a promise not to search does not remove ambient context. In Claude Code 2.1.322 probes, a default launch read canary CLAUDE.md files from its directory and parent, while the locked launch did not; a launch path containing a project name also reached the model." .
+
+mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
+    mem:content "Habitat recovery uses one integrating director and a separate staffing-and-challenge director on the other runtime; the owner keeps product intent and admission of repairs and releases. Each working lane pairs a lead who owns the artifact with a lead on the other runtime who challenges it independently before the design is settled. A second runtime agreeing is not an independent verdict, and a director's agreement is not a method review. Current names, topics and routing live in the recovery workstream record, not here." ;
+    mem:tag "agent-bus" ;
+    mem:tag "claude" ;
+    mem:tag "codex" ;
+    mem:tag "coordination" ;
+    mem:tag "directors" ;
+    mem:tag "leads" ;
+    mem:tag "recovery" ;
+    mem:tag "staffing" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "docs/projects/habitat-sdk-recovery/triage.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:43:40.244600+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-18T17:01:58.680146+00:00"^^xsd:dateTime ;
+    mem:rationale "Two runtimes work the recovery; one integrator avoids split direction while a separate staffing owner keeps independent challenge." ;
+    mem:alternatives "single director for both runtimes,per-lane directors with no integrator" .
+
+mem:fact-01m7qsab9edfzxd3h6emtvsy07 a mem:Fact ;
+    mem:content "Habitat invocation continuation fails open: when the Effect fiber carries no continuation, assertAdmission falls back to assertOpen, which passes while the process is open. A lost effect/context lease therefore leaves ordinary oRPC traffic correct. Compatibility oracles for the oRPC-Effect bridge must also witness retained-view expiry or drain, and carry a marker through an authored Effect Context tag." ;
+    mem:tag "bridge" ;
+    mem:tag "compatibility-oracle" ;
+    mem:tag "effect" ;
+    mem:tag "effect-context" ;
+    mem:tag "fail-open" ;
+    mem:tag "invocation-continuation" ;
+    mem:tag "orpc" ;
+    mem:tag "process-runtime" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/invocation-tracker.ts" ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/server-request.ts" ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/service-client-assembly.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:54:53.486247+00:00"^^xsd:dateTime ;
+    mem:rationale "Marker-only request tests stay green with the Effect lane dead, so they give false confidence in a dependency change." .
+
+mem:fact-01m7qsabbk5rfgj5553gzc9680 a mem:Fact ;
+    mem:content "The Habitat SDK declares effect, @effect/opentelemetry and @orpc packages as exact dependencies, not peers, so a consumer's root versions or peer resolution cannot select the SDK's runtime cohort. A consumer can show candidate versions at top level while SDK dist and bridge import sites run the pinned cohort. Cohort qualification needs an SDK artifact built for that cohort, with versions resolved from the SDK dist and bridge import sites; name plus version does not identify the artifact." ;
+    mem:tag "artifact-identity" ;
+    mem:tag "cohort" ;
+    mem:tag "effect" ;
+    mem:tag "exact-dependencies" ;
+    mem:tag "mixed-cohort" ;
+    mem:tag "orpc" ;
+    mem:tag "packed-consumer" ;
+    mem:tag "peer-resolution" ;
+    mem:tag "sdk" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/sdk/package.json" ;
+    mem:artifactRef "packages/core/sdk/tsdown.config.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:54:53.555599+00:00"^^xsd:dateTime ;
+    mem:rationale "A consumer-side override test can report the claimed versions while exercising a different or mixed runtime." .
+
+mem:fact-01m7qsabdzp8tffg46vremcefh a mem:Fact ;
+    mem:content "The OpenTelemetry Node provider lazily imports its enabled module and turns any load failure into a degraded lease with PROVIDER_MODULE_LOAD_FAILED, so the process still starts and serves. A vendor export break can be silent at runtime when it gets past tsc. Dependency-compatibility checks that enable telemetry must assert exported oRPC spans and empty diagnostics, and treat a degraded provider as failure." ;
+    mem:tag "PROVIDER_MODULE_LOAD_FAILED" ;
+    mem:tag "degraded-lease" ;
+    mem:tag "false-green" ;
+    mem:tag "getOpenTelemetryConfig" ;
+    mem:tag "opentelemetry" ;
+    mem:tag "orpc" ;
+    mem:tag "packed-consumer" ;
+    mem:tag "telemetry" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/degraded.ts" ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/enabled.ts" ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/index.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:54:53.631135+00:00"^^xsd:dateTime ;
+    mem:rationale "Telemetry failure is contained by design, so a server smoke or request oracle cannot detect it." .

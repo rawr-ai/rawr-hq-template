@@ -148,7 +148,50 @@
 - Ongoing doc and process health cadence:
   [Maintenance cadence](docs/process/MAINTENANCE_CADENCE.md).
 - Documentation architecture contract: [Docs architecture](docs/DOCS.md).
+- Project memory snapshots in Git:
+  [Memory snapshots](docs/process/GRAPHITE.md#project-memory-snapshots).
 - Quarantined docs live under `quarantine/` directories and are provenance only.
+
+## Project Memory
+
+- Decisions with their rationale, constraints, and costly traps that code,
+  docs, and Git cannot show live in Fluree project memory, committed as
+  `.fluree-memory/repo.ttl`. Recall with specific keywords before substantial
+  work. Select the primary checkout's workspace from Git, so the same command
+  works there and in any linked worktree on any machine. It assumes a
+  conventional primary checkout whose linked worktrees share its Git directory:
+
+```sh
+fluree --config "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.fluree/config.toml" memory recall "specific keywords" --limit 5
+```
+
+- The recall command needs an initialized workspace in the primary checkout; a
+  linked worktree does not imply one. Where `.fluree/` does not exist yet (a
+  fresh clone or a second machine), run `fluree init` once in the primary
+  checkout. Without `--scope`, recall returns both repo and user memories from
+  the selected workspace, which is intended for an agent's own recall.
+- Use the same config for `memory add`, `update`, `status`, and `audit`. Record
+  with `--scope repo` and the right kind (`decision` with `--rationale` and
+  `--alternatives`, `constraint` with `--severity`, otherwise `fact`),
+  lowercase tags, and repo-relative `--refs`. Update an existing memory instead
+  of adding a duplicate. Phrase memories to stay true at HEAD: no progress,
+  status, commit hashes, or session notes.
+- Credentials, tokens, and raw sensitive tool responses never go into any
+  memory store, project or global; they stay in the approved secret store.
+- This repository is public, so machine names, home paths, and personal details
+  stay out of repo memories. Host context specific to this project goes in this
+  workspace's user scope (`--scope user`), stored under `.fluree-memory/.local/`,
+  which the committed `.fluree-memory/.gitignore` excludes, so it stays local to
+  the machine and is never committed. Host facts useful across projects go in
+  the machine's shared global memory workspace, which is separate from this
+  project store. `--scope` is a partition inside the workspace `--config`
+  selects and does not choose a workspace.
+- `.fluree/` is local and ignored. Never initialize a second store in a
+  worktree, and never delete a lock or storage to get past an error.
+- Snapshots reach Git with the PR the memory belongs to, or in a small
+  memory-sync PR from `main` when nothing is in flight. The primary checkout's
+  file is authoritative and is never overwritten from a branch; see
+  [Memory snapshots](docs/process/GRAPHITE.md#project-memory-snapshots).
 
 ## Validation
 
