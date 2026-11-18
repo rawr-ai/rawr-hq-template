@@ -170,9 +170,14 @@ fluree --config "$(dirname "$(git rev-parse --path-format=absolute --git-common-
   lowercase tags, and repo-relative `--refs`. Update an existing memory instead
   of adding a duplicate. Phrase memories to stay true at HEAD: no progress,
   status, commit hashes, or session notes.
-- This repository is public: repo memories carry no machine names, home paths,
-  personal names, or credentials. Those belong in each agent's own host-local
-  global store, which stays separate.
+- Credentials, tokens, and raw sensitive tool responses never go into any
+  memory store, project or global; they stay in the approved secret store.
+- This repository is public, so repo memories carry no machine names, home
+  paths, or personal details. Host-local and cross-project context belongs in
+  the machine's shared global memory workspace, which is separate from this
+  project store. `--scope` is a partition inside the workspace `--config`
+  selects and does not choose a workspace; `--scope user` captures are written
+  to the ignored `.fluree-memory/.local/`.
 - `.fluree/` is local and ignored. A fresh clone or a second machine recreates
   it with `fluree init` in its primary checkout. Never initialize a second
   store in a worktree, and never delete a lock or storage to get past an error.
