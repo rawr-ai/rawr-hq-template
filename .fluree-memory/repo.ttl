@@ -4,7 +4,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
 mem:constraint-01m7qrnss9twhf6mb2a7tebppq a mem:Constraint ;
-    mem:content "Agents authorized to collaborate on Habitat share working material with each other freely. A file, source or locator left out of a packet or message is noise reduction, not confidentiality: do not turn an omission into a read ban or a leakage finding, and name files, paths and sources when that makes a message clearer. This covers authorized sharing only: it does not override a restriction the owner imposes later, an external privacy boundary or a security control. Isolation otherwise applies only as experiment design, to the fresh evaluator or scorer of a held-out or prospective test. Credentials never go in messages or memory." ;
+    mem:content "Agents authorized to collaborate on Habitat share working material with each other freely. A file, source or locator left out of a packet or message is noise reduction, not confidentiality: do not turn an omission into a read ban or a leakage finding, and name files, paths and sources when that makes a message clearer. This covers authorized sharing only: it does not override an applicable owner restriction, an external privacy boundary or a security control. Isolation otherwise applies only as experiment design, to the fresh evaluator or scorer of a held-out or prospective test. Credentials never go in messages or memory." ;
     mem:tag "agent-bus" ;
     mem:tag "agents" ;
     mem:tag "collaboration" ;
@@ -16,8 +16,23 @@ mem:constraint-01m7qrnss9twhf6mb2a7tebppq a mem:Constraint ;
     mem:severity "should" ;
     mem:branch "main" ;
     mem:createdAt "2026-11-18T16:43:40.201017+00:00"^^xsd:dateTime ;
-    mem:updatedAt "2026-11-18T17:01:58.645173+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-18T17:14:48.815123+00:00"^^xsd:dateTime ;
     mem:rationale "Owner correction after an agent treated a file omitted from a review copy as confidential and banned collaborators from reading it." .
+
+mem:constraint-01m7qt6zg3g0rjr1gmhest1rcc a mem:Constraint ;
+    mem:content "A default claude -p instance is not an isolated evaluator or scorer: it has the full tool list, connected MCP servers, skills, plugins, hooks and global and project instructions, and only permission refusals hold back its reads. For a held-out or prospective evaluation, launch from an empty directory on a path naming no project with --safe-mode, --tools \"\", --strict-mcp-config, --disable-slash-commands, --no-session-persistence, --system-prompt and input on stdin. Accept it only with zero tools, MCP servers and skills in init, no hook events under --include-hook-events, and a same-host canary preflight, because init has no field for CLAUDE.md or injected instructions." ;
+    mem:tag "claude-code" ;
+    mem:tag "claude-p" ;
+    mem:tag "evaluation" ;
+    mem:tag "headless" ;
+    mem:tag "held-out" ;
+    mem:tag "isolation" ;
+    mem:tag "scorer" ;
+    mem:scope mem:repo ;
+    mem:severity "must" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T17:10:31.683239+00:00"^^xsd:dateTime ;
+    mem:rationale "A fresh session or a promise not to search does not remove ambient context. In Claude Code 2.1.322 probes, a default launch read canary CLAUDE.md files from its directory and parent, while the locked launch did not; a launch path containing a project name also reached the model." .
 
 mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:content "Habitat recovery uses one integrating director and a separate staffing-and-challenge director on the other runtime; the owner keeps product intent and admission of repairs and releases. Each working lane pairs a lead who owns the artifact with a lead on the other runtime who challenges it independently before the design is settled. A second runtime agreeing is not an independent verdict, and a director's agreement is not a method review. Current names, topics and routing live in the recovery workstream record, not here." ;
@@ -36,6 +51,24 @@ mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:updatedAt "2026-11-18T17:01:58.680146+00:00"^^xsd:dateTime ;
     mem:rationale "Two runtimes work the recovery; one integrator avoids split direction while a separate staffing owner keeps independent challenge." ;
     mem:alternatives "single director for both runtimes,per-lane directors with no integrator" .
+
+mem:decision-01m7qte5g0d98gmdpkvt1bxq86 a mem:Decision ;
+    mem:content "Narsil is not the authority for symbol, reference or call edges in this repository, and is not installed as a standing MCP server for it. Its tree-sitter, name-based graph is acceptable for finding candidate locations only; cross-package TypeScript edges come from the compiler and Nx, and text location from ripgrep. Its semantic (neural) search was not evaluated; revisit only for that, with an embedding backend that keeps source local." ;
+    mem:tag "call-graph" ;
+    mem:tag "code-intel" ;
+    mem:tag "code-search" ;
+    mem:tag "mcp" ;
+    mem:tag "narsil" ;
+    mem:tag "nx" ;
+    mem:tag "tooling" ;
+    mem:tag "typescript" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "AGENTS.md" ;
+    mem:artifactRef "README.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T17:14:27.200947+00:00"^^xsd:dateTime ;
+    mem:rationale "A matched two-question check on the telemetry provider code ran the forked 1.7.0 daemon, stock 1.7.2 and plain ripgrep. Both Narsil builds resolved same-module call edges but missed the production consumer behind a package re-export, could not resolve an optional property callback, returned an empty export map for the SDK barrel, and reported test-file methods as callees. Ripgrep with test globs excluded returned exactly the three right files." ;
+    mem:alternatives "install stock narsil-mcp per client over stdio,rebase the shared-daemon fork onto upstream,keep Narsil as the declared symbol and reference authority" .
 
 mem:fact-01m7qsab9edfzxd3h6emtvsy07 a mem:Fact ;
     mem:content "Habitat invocation continuation fails open: when the Effect fiber carries no continuation, assertAdmission falls back to assertOpen, which passes while the process is open. A lost effect/context lease therefore leaves ordinary oRPC traffic correct. Compatibility oracles for the oRPC-Effect bridge must also witness retained-view expiry or drain, and carry a marker through an authored Effect Context tag." ;

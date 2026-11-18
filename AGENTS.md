@@ -158,7 +158,8 @@
   docs, and Git cannot show live in Fluree project memory, committed as
   `.fluree-memory/repo.ttl`. Recall with specific keywords before substantial
   work. Select the primary checkout's workspace from Git, so the same command
-  works there and in any linked worktree on any machine:
+  works there and in any linked worktree on any machine. It assumes a
+  conventional primary checkout whose linked worktrees share its Git directory:
 
 ```sh
 fluree --config "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")/.fluree/config.toml" memory recall "specific keywords" --limit 5
@@ -177,13 +178,14 @@ fluree --config "$(dirname "$(git rev-parse --path-format=absolute --git-common-
   status, commit hashes, or session notes.
 - Credentials, tokens, and raw sensitive tool responses never go into any
   memory store, project or global; they stay in the approved secret store.
-- This repository is public, so repo memories carry no machine names, home
-  paths, or personal details. Host-local and cross-project context belongs in
+- This repository is public, so machine names, home paths, and personal details
+  stay out of repo memories. Host context specific to this project goes in this
+  workspace's user scope (`--scope user`), stored under `.fluree-memory/.local/`,
+  which the committed `.fluree-memory/.gitignore` excludes, so it stays local to
+  the machine and is never committed. Host facts useful across projects go in
   the machine's shared global memory workspace, which is separate from this
   project store. `--scope` is a partition inside the workspace `--config`
-  selects and does not choose a workspace. `--scope user` captures are stored in
-  `.fluree-memory/.local/`, which the committed `.fluree-memory/.gitignore`
-  excludes, so they stay local to the machine and are never committed.
+  selects and does not choose a workspace.
 - `.fluree/` is local and ignored. Never initialize a second store in a
   worktree, and never delete a lock or storage to get past an error.
 - Snapshots reach Git with the PR the memory belongs to, or in a small
