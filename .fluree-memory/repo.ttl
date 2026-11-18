@@ -52,24 +52,6 @@ mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:rationale "Two runtimes work the recovery; one integrator avoids split direction while a separate staffing owner keeps independent challenge." ;
     mem:alternatives "single director for both runtimes,per-lane directors with no integrator" .
 
-mem:decision-01m7qte5g0d98gmdpkvt1bxq86 a mem:Decision ;
-    mem:content "Narsil is not the authority for symbol, reference or call edges in this repository, and is not installed as a standing MCP server for it. Its tree-sitter, name-based graph is acceptable for finding candidate locations only; cross-package TypeScript edges come from the compiler and Nx, and text location from ripgrep. Its semantic (neural) search was not evaluated; revisit only for that, with an embedding backend that keeps source local." ;
-    mem:tag "call-graph" ;
-    mem:tag "code-intel" ;
-    mem:tag "code-search" ;
-    mem:tag "mcp" ;
-    mem:tag "narsil" ;
-    mem:tag "nx" ;
-    mem:tag "tooling" ;
-    mem:tag "typescript" ;
-    mem:scope mem:repo ;
-    mem:artifactRef "AGENTS.md" ;
-    mem:artifactRef "README.md" ;
-    mem:branch "main" ;
-    mem:createdAt "2026-11-18T17:14:27.200947+00:00"^^xsd:dateTime ;
-    mem:rationale "A matched two-question check on the telemetry provider code ran the forked 1.7.0 daemon, stock 1.7.2 and plain ripgrep. Both Narsil builds resolved same-module call edges but missed the production consumer behind a package re-export, could not resolve an optional property callback, returned an empty export map for the SDK barrel, and reported test-file methods as callees. Ripgrep with test globs excluded returned exactly the three right files." ;
-    mem:alternatives "install stock narsil-mcp per client over stdio,rebase the shared-daemon fork onto upstream,keep Narsil as the declared symbol and reference authority" .
-
 mem:fact-01m7qsab9edfzxd3h6emtvsy07 a mem:Fact ;
     mem:content "Habitat invocation continuation fails open: when the Effect fiber carries no continuation, assertAdmission falls back to assertOpen, which passes while the process is open. A lost effect/context lease therefore leaves ordinary oRPC traffic correct. Compatibility oracles for the oRPC-Effect bridge must also witness retained-view expiry or drain, and carry a marker through an authored Effect Context tag." ;
     mem:tag "bridge" ;
