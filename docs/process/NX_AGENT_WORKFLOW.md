@@ -53,7 +53,15 @@ If the behavior still looks wrong after that, rerun once with `NX_DAEMON=false` 
 
 - **Nx CLI + official Nx skills**: workspace/project truth, targets, generators, task execution conventions
 - **AGENTS lattice**: repository routing, Habitat-vs-Rawr-vs-Marketplace destination rules, domain-specific guardrails
-- **Narsil**: source-level code intelligence, symbol lookups, references, call paths, semantic/code search
+- **Nx**: also establishes project membership and project-level dependencies
+- **TypeScript**: statically resolved symbols, types and imports; for dynamic dispatch, use registration or runtime evidence
+- **ripgrep**: text location
+- **Narsil** (optional): a locator for reference and symbol-usage search and plain-language search, where someone has it running. It is not an authority: verify candidate edges in source; a missing search result does not disprove an edge
+
+Narsil trial note (November 2026): the stock build located one of two
+plain-language targets. Its language-server mode and neural search were not
+evaluated. The decision is recorded in project memory under "narsil"; recall it
+with the command in `AGENTS.md` "Project Memory".
 
 Do not add repo-local `.mcp.json` here.
 

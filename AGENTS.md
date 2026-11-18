@@ -17,7 +17,12 @@
   - `bunx nx show project <project-name> --json`
   - `bunx nx graph`
 - If your downstream agent environment has the official Nx skills installed globally, use them as companion guidance with the Nx CLI.
-- Use Nx for workspace/project truth, this AGENTS lattice for routing/ownership truth, and Narsil for source/symbol/reference truth.
+- Use Nx for workspace/project truth (project membership and project-level
+  dependencies), this AGENTS lattice for routing/ownership truth, TypeScript for
+  statically resolved symbols, types and imports, and ripgrep for text location.
+  For dynamic dispatch, use registration or runtime evidence. Narsil is an
+  optional locator where someone has it running; verify candidate edges in
+  source, because a missing search result does not disprove an edge.
 - Do not add or rely on repo-local `.mcp.json` or repo `CLAUDE.md` here.
 
 ## Boundaries
@@ -131,7 +136,7 @@
 - [Scripts router](scripts/AGENTS.md) for hook and script conventions.
 - [Docs router](docs/AGENTS.md) for canonical documentation entrypoints.
 - [Nx agent workflow](docs/process/NX_AGENT_WORKFLOW.md) for the integrated Nx
-  CLI, Nx skills, and Narsil posture.
+  CLI, Nx skills, and code-search posture.
 
 ## Process Runbooks
 

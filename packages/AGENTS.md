@@ -13,7 +13,7 @@
 
 - Use Nx to identify package project names, roots, tags, and available targets before reading package-local config by hand:
   - `bunx nx show project <project-name> --json`
-- Use Narsil after Nx when the question shifts from package membership to source-level dependencies or symbol usage.
+- When the question shifts from package membership to source-level dependencies or symbol usage, use Nx for project membership and project-level dependencies and TypeScript for statically resolved symbols, types and imports. For dynamic dispatch, use registration or runtime evidence. Locate text with ripgrep, and verify candidate edges in source; a missing search result does not disprove an edge.
 
 ## Boundaries
 

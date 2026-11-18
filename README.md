@@ -18,23 +18,20 @@ bun install
 bun run test
 ```
 
-## Narsil Code Intel
+## Code search
 
-This repo should use a dedicated `narsil-mcp` instance as its primary code-intel MCP server.
-
-- Give this Habitat repository its own Narsil instance instead of folding it into an unrelated shared domain index.
-- Keep the Narsil index outside the repo; do not commit generated cache or index state.
-- Prefer the persistent daemon model with `--persist --git --call-graph --watch --neural`.
-- Verify the repo is present in `list_repos`, then use Narsil tools such as `hybrid_search`, `find_symbols`, `find_references`, and `find_call_path`.
-
-Recommended local flow:
-
-```bash
-# start a dedicated instance for this repo
-narsil-mcp --repos . --git --call-graph --persist --watch --neural
-```
-
-Then verify from your MCP client or HTTP transport by confirming the repo appears in `list_repos`, then running a search such as `hybrid_search` or `find_symbols`.
+- Nx establishes project membership and project-level dependencies; the AGENTS
+  lattice supplies routing and ownership.
+- Use TypeScript for statically resolved symbols, types and imports. For dynamic
+  dispatch, use registration or runtime evidence. Locate text with ripgrep.
+- Narsil is an optional locator for anyone who already has it running: reference
+  and symbol-usage search with test exclusion, and plain-language hybrid search.
+  It is not the authority for symbol, reference, import or call edges. Verify
+  candidate edges from its call-graph, import-graph, export-map and dependency
+  tools in source; a missing search result does not disprove an edge.
+- This repository does not install Narsil as a standing server. Its
+  language-server mode and neural search were not evaluated. The trial note is
+  in [`docs/process/NX_AGENT_WORKFLOW.md`](docs/process/NX_AGENT_WORKFLOW.md).
 
 ## Nx Graph and Skills
 
@@ -51,7 +48,7 @@ bunx nx show project @habitat-ai/cli --json
 bunx nx graph
 ```
 
-- Keep Narsil as the primary code-intel MCP for symbol search, references, and call-path work.
+- Treat Narsil as an optional locator only, and verify its results in source (see Code search above).
 - Do not add repo-local `.mcp.json` here.
 - Do not treat this Habitat repository as the canonical source for managed global Nx skill installation.
 - Nx MCP is intentionally out of scope for the current repo posture. If we bring it back later, it should be as a hosted/managed service rather than per-client local stdio wiring.
