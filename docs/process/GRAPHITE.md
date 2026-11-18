@@ -53,24 +53,30 @@ own stack. Stack branches only when the upper one really builds on the lower.
 
 ### Commits are working material
 
-Commits inside a slice are working material. All of them are squashed when the
-slice merges, so use as many as the work needs and do not tidy them for
-history. Commits do not map one-to-one to PRs. The slice's PR title and
-description become the durable history entry, and the slices, not the commits,
-are the trail.
+Commits inside a slice are working material. Squash is the intended merge
+policy, so use as many commits as the work needs and do not tidy them for
+history. Commits do not map one-to-one to PRs. The slice's PR is the durable
+review record, and the slices, not the commits, are the trail.
+
+Squash is policy, not something `gt merge` guarantees: GitHub here allows merge,
+squash and rebase, and a squash does not necessarily use the PR body as its
+commit message. At merge, verify the squash mode and the final title and body.
+Do not change server settings to enforce it.
 
 - **Title:** `type(scope): summary`, written to read well alone in `git log`
   on `main`. Say the observable change the slice delivers, not how the work
   went.
 - **Description:** the outcome and its proof: why the step exists, what it
-  changes and what it leaves for the next slice, the validation that was run, and any decision or constraint a
-  later reader would otherwise have to rediscover. Do not retell commits,
+  changes and what it leaves for the next slice, the validation that was run,
+  and any decision or constraint a later reader would otherwise have to
+  rediscover. Do not retell commits,
   review rounds or session notes. Graphite's `--ai` drafts are starting
   material: check the title and description before the slice merges, because
-  they are all that remains of it afterward.
+  the PR is the record a reader will return to.
 - **Evidence:** when a commit is cited as evidence elsewhere (a measurement, a
   review, a qualification), keep that original commit reachable and cite it.
-  Never relabel the squash-merge commit as the one that was measured.
+  Preserve cited commit hashes before rewriting or pruning, and never relabel
+  the squash-merge commit as the one that was measured.
 
 ## Quick commands
 
@@ -106,11 +112,16 @@ Build on the commands above:
   `gt checkout` that slice and `gt modify` it (which restacks descendants),
   inspect `gt ls`, use `gt restack --upstack` only where it is still needed,
   then re-verify every affected slice.
-- **Restack only your stack** with `gt restack --upstack` from the slice you
-  changed. Do not run a restack or `gt sync` that could move branches checked
-  out in other worktrees.
-- **Sync** with `gt sync --no-restack`, then restack your own stack. Run `gt ls`
-  first and leave other owners' branches and worktrees alone.
+- **Restack only your stack.** After editing a lower slice, inspect `gt ls`.
+  When a restack is needed, run `gt restack --upstack` from the lowest affected
+  slice you own, not an arbitrary tip. Do not run a restack that could move
+  branches checked out in other worktrees.
+- **Sync with care.** `gt sync --no-restack` does not confine itself to your
+  worktree: it still updates the shared trunk (and may overwrite a divergent
+  one) and can clean up merged branches. Before a sync, inspect
+  `git worktree list --porcelain` and the primary checkout's state, coordinate
+  trunk movement with other owners, or defer the sync. Then restack your own
+  stack and leave other owners' branches and worktrees alone.
 - **Conflicts:** stage the resolution and run `gt continue`, or `gt abort`.
 
 ## Submit and merge
@@ -119,8 +130,9 @@ Submission and merge go through Graphite and
 `docs/process/runbooks/STACK_DRAIN_LOOP.md`. Run `bun run check` first, submit
 the whole stack so every PR diff matches the local stack, and merge from the
 bottom slice up: bottom-up is the dependency and merge order, not a separate
-submit-and-merge cycle per branch. The native stack merge does this, and each
-slice lands as one squashed commit on `main`.
+submit-and-merge cycle per branch. The native stack merge follows that order.
+Each slice is intended to land as one squashed commit on `main`; verify that
+when it merges.
 
 ### When Graphite's hosted service is unavailable
 
