@@ -127,12 +127,13 @@ Build on the commands above:
 ## Submit and merge
 
 Submission and merge go through Graphite and
-`docs/process/runbooks/STACK_DRAIN_LOOP.md`. Run `bun run check` first, submit
-the whole stack so every PR diff matches the local stack, and merge from the
-bottom slice up: bottom-up is the dependency and merge order, not a separate
-submit-and-merge cycle per branch. The native stack merge follows that order.
-Each slice is intended to land as one squashed commit on `main`; verify that
-when it merges.
+`docs/process/runbooks/STACK_DRAIN_LOOP.md`. Run `bun run check` at each final
+slice, on its actual parent, before submission: a pass at the tip alone can hide
+a broken lower slice. Then submit the whole stack so every PR diff matches the
+local stack, and merge from the bottom slice up: bottom-up is the dependency
+and merge order, not a separate submit-and-merge cycle per branch. The native
+stack merge follows that order. Each slice is intended to land as one squashed
+commit on `main`; verify that when it merges.
 
 ### When Graphite's hosted service is unavailable
 
