@@ -34,3 +34,57 @@ mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:createdAt "2026-11-18T16:43:40.244600+00:00"^^xsd:dateTime ;
     mem:rationale "Two runtimes work the recovery; one integrator avoids split direction while a separate staffing owner keeps independent challenge." ;
     mem:alternatives "single director for both runtimes,per-lane directors with no integrator" .
+
+mem:fact-01m7qsab9edfzxd3h6emtvsy07 a mem:Fact ;
+    mem:content "Habitat invocation continuation fails open: when the Effect fiber carries no continuation, assertAdmission falls back to assertOpen, which passes while the process is open. A lost effect/context lease therefore leaves ordinary oRPC traffic correct. Compatibility oracles for the oRPC-Effect bridge must also witness retained-view expiry or drain, and carry a marker through an authored Effect Context tag." ;
+    mem:tag "bridge" ;
+    mem:tag "compatibility-oracle" ;
+    mem:tag "effect" ;
+    mem:tag "effect-context" ;
+    mem:tag "fail-open" ;
+    mem:tag "invocation-continuation" ;
+    mem:tag "orpc" ;
+    mem:tag "process-runtime" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/invocation-tracker.ts" ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/server-request.ts" ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/service-client-assembly.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:54:53.486247+00:00"^^xsd:dateTime ;
+    mem:rationale "Marker-only request tests stay green with the Effect lane dead, so they give false confidence in a dependency change." .
+
+mem:fact-01m7qsabbk5rfgj5553gzc9680 a mem:Fact ;
+    mem:content "The Habitat SDK declares effect, @effect/opentelemetry and @orpc packages as exact dependencies, not peers, so a consumer's root versions or peer resolution cannot select the SDK's runtime cohort. A consumer can show candidate versions at top level while SDK dist and bridge import sites run the pinned cohort. Cohort qualification needs an SDK artifact built for that cohort, with versions resolved from the SDK dist and bridge import sites; name plus version does not identify the artifact." ;
+    mem:tag "artifact-identity" ;
+    mem:tag "cohort" ;
+    mem:tag "effect" ;
+    mem:tag "exact-dependencies" ;
+    mem:tag "mixed-cohort" ;
+    mem:tag "orpc" ;
+    mem:tag "packed-consumer" ;
+    mem:tag "peer-resolution" ;
+    mem:tag "sdk" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/sdk/package.json" ;
+    mem:artifactRef "packages/core/sdk/tsdown.config.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:54:53.555599+00:00"^^xsd:dateTime ;
+    mem:rationale "A consumer-side override test can report the claimed versions while exercising a different or mixed runtime." .
+
+mem:fact-01m7qsabdzp8tffg46vremcefh a mem:Fact ;
+    mem:content "The OpenTelemetry Node provider lazily imports its enabled module and turns any load failure into a degraded lease with PROVIDER_MODULE_LOAD_FAILED, so the process still starts and serves. A vendor export break can be silent at runtime when it gets past tsc. Dependency-compatibility checks that enable telemetry must assert exported oRPC spans and empty diagnostics, and treat a degraded provider as failure." ;
+    mem:tag "PROVIDER_MODULE_LOAD_FAILED" ;
+    mem:tag "degraded-lease" ;
+    mem:tag "false-green" ;
+    mem:tag "getOpenTelemetryConfig" ;
+    mem:tag "opentelemetry" ;
+    mem:tag "orpc" ;
+    mem:tag "packed-consumer" ;
+    mem:tag "telemetry" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/degraded.ts" ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/enabled.ts" ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/index.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T16:54:53.631135+00:00"^^xsd:dateTime ;
+    mem:rationale "Telemetry failure is contained by design, so a server smoke or request oracle cannot detect it." .
