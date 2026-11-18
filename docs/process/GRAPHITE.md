@@ -21,17 +21,21 @@ Work in Habitat is shaped as Graphite stacks of slices.
   from `main`.
 - **Slice:** one branch and one PR. It is an independently reviewable,
   independently meaningful step: a reviewer can understand and accept it from
-  its own diff plus the slices below it, and the repository checks pass at that
-  slice alone.
-- **Single-slice stacks are fine.** A small change is one slice. Once work has
-  more than one coherent step, stack it; stacking is the default.
+  its own diff plus the slices below it. It stands on its parent with its own
+  passing check and never depends on a later slice for correctness.
+- **Single-slice stacks are fine.** A small change, or a feature that is one
+  coherent step, is one slice. Once work has more than one coherent step, stack
+  it; stacking is the default.
+- **Tests travel with behavior.** The tests that prove a behavior normally land
+  in the same slice as the behavior.
 
 ### Drawing slice boundaries
 
 A good boundary is where a reviewer could stop reading and still know what
 changed and why. Each slice has one purpose, depends only on the slices below
 it, and leaves the repository passing its checks. Split along contracts and
-steps, not along files or time.
+steps, not along files or time. Name a slice for the observable change it
+delivers, not for its place in the sequence ("part 2", "follow-up").
 
 A bad boundary is one that needs the next slice to make sense (a type with no
 consumer, a rename half applied), one that is a checkpoint rather than a step
@@ -51,17 +55,22 @@ own stack. Stack branches only when the upper one really builds on the lower.
 
 Commits inside a slice are working material. All of them are squashed when the
 slice merges, so use as many as the work needs and do not tidy them for
-history. The slice's PR title and description become the durable history
-entry, and the slices, not the commits, are the trail.
+history. Commits do not map one-to-one to PRs. The slice's PR title and
+description become the durable history entry, and the slices, not the commits,
+are the trail.
 
 - **Title:** `type(scope): summary`, written to read well alone in `git log`
-  on `main`. Say what the step does, not how the work went.
-- **Description:** why the step exists, what it changes and what it leaves for
-  the next slice, the validation that was run, and any decision or constraint a
+  on `main`. Say the observable change the slice delivers, not how the work
+  went.
+- **Description:** the outcome and its proof: why the step exists, what it
+  changes and what it leaves for the next slice, the validation that was run, and any decision or constraint a
   later reader would otherwise have to rediscover. Do not retell commits,
   review rounds or session notes. Graphite's `--ai` drafts are starting
   material: check the title and description before the slice merges, because
   they are all that remains of it afterward.
+- **Evidence:** when a commit is cited as evidence elsewhere (a measurement, a
+  review, a qualification), keep that original commit reachable and cite it.
+  Never relabel the squash-merge commit as the one that was measured.
 
 ## Quick commands
 
@@ -92,6 +101,11 @@ Build on the commands above:
   commit, or `gt modify` to amend the latest one. Both restack the slices above.
 - **Insert or reorder** with `gt create --insert`, `gt move --onto <parent>` and
   `gt reorder`. `gt absorb` moves staged fixes into the slice they belong to.
+- **Fix the earliest slice that owns the problem**, not the tip, when
+  something must change after later slices exist. Check worktree occupancy,
+  `gt checkout` that slice and `gt modify` it (which restacks descendants),
+  inspect `gt ls`, use `gt restack --upstack` only where it is still needed,
+  then re-verify every affected slice.
 - **Restack only your stack** with `gt restack --upstack` from the slice you
   changed. Do not run a restack or `gt sync` that could move branches checked
   out in other worktrees.
@@ -104,8 +118,9 @@ Build on the commands above:
 Submission and merge go through Graphite and
 `docs/process/runbooks/STACK_DRAIN_LOOP.md`. Run `bun run check` first, submit
 the whole stack so every PR diff matches the local stack, and merge from the
-bottom slice up: the native stack merge does this, and each slice lands as one
-squashed commit on `main`.
+bottom slice up: bottom-up is the dependency and merge order, not a separate
+submit-and-merge cycle per branch. The native stack merge does this, and each
+slice lands as one squashed commit on `main`.
 
 ### When Graphite's hosted service is unavailable
 
