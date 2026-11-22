@@ -98,7 +98,10 @@
 
 - Graphite is required in this repo.
 - Trunk must remain `main` (`gt trunk`).
-- Follow [the Graphite branch and stack workflow](docs/process/GRAPHITE.md).
+- Work is shaped as stacks of slices: a stack is one complete feature set, a
+  slice is one PR that stands as an independent step, and commits inside a
+  slice are working material squashed at merge. A single slice is fine for a
+  small change. Follow [the Graphite branch and stack workflow](docs/process/GRAPHITE.md).
 - `bun install` configures the repository-owned hooks. Before a push, the local
   hook runs `bun run check`. The root command schedules every admitted
   non-root project's public `check` once through one Nx scheduler graph. Shared defaults connect
