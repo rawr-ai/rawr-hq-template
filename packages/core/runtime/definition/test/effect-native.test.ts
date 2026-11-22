@@ -1,4 +1,4 @@
-import "@orpc/experimental-effect/extensions/effect";
+import "@orpc/effect/extensions/effect";
 import { expect, test } from "bun:test";
 import { call, os } from "@orpc/server";
 import { Cause, Context, Exit, Effect as NativeEffect } from "effect";

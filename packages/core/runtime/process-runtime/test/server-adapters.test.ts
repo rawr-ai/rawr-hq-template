@@ -1,9 +1,10 @@
 import { expect, spyOn, test } from "bun:test";
-import "@orpc/experimental-effect/extensions/effect";
+import "@orpc/effect/extensions/effect";
 import { context as otelContext, ROOT_CONTEXT, trace } from "@opentelemetry/api";
+import { middlewareGen } from "@orpc/effect";
 import { OpenAPIGenerator, openapi } from "@orpc/openapi";
 import { createProcedureClient, createRouterClient, ORPCError, os } from "@orpc/server";
-import { Effect } from "effect";
+import { Effect, Option } from "effect";
 
 import { compileRuntimePlan } from "../../compiler/src/compile-runtime-plan";
 import { readRuntimeCompilationServerSources } from "../../compiler/src/runtime-compilation-reference-table";
@@ -442,6 +443,79 @@ test("official Effect bridge preserves defect and abort cleanup while observatio
     nativeEffect: { interrupted: true },
   });
   expect(JSON.stringify(records)).not.toContain("private");
+});
+
+test("native Effect middleware settles without replacing the handler's span or defect observation", async () => {
+  const events: string[] = [];
+  const records: RuntimeObservationRecord[] = [];
+  const passThrough = middlewareGen(function* ({ next }) {
+    const span = Option.getOrUndefined(yield* Effect.option(Effect.currentSpan));
+    events.push(`middleware:${span?.name ?? "no span"}`);
+    return yield* Effect.ensuring(
+      next(),
+      Effect.sync(() => void events.push("middleware cleanup"))
+    );
+  });
+  const procedure = os
+    .$context<ServerPluginContext>()
+    .use(passThrough)
+    .effect(function* ({ context }) {
+      const span = yield* Effect.orDie(Effect.currentSpan);
+      events.push(`handler:${span.name}`);
+      if (context.request.headers.has("defect"))
+        return yield* Effect.die(new Error("private middleware fixture defect"));
+      return "allowed";
+    });
+  const plugin = defineServerApiPlugin.factory()({
+    capability: "effect-middleware",
+    services: {},
+    routeBase: "/api",
+    api: () => ({ run: procedure }),
+  })();
+  const fixture = lowerFixture([plugin], {
+    observation: {
+      publish(record) {
+        events.push("observation");
+        records.push(record);
+      },
+    },
+  });
+  const payload = fixture.lowered[0]!.result.payload;
+  try {
+    for (const defect of [false, true]) {
+      events.length = 0;
+      const result = await payload.handle(
+        new Request("http://local/api/run", {
+          method: "POST",
+          headers: defect ? { defect: "true" } : undefined,
+        })
+      );
+      expect(result.matched).toBe(true);
+      if (!result.matched) throw new Error("Expected a matching procedure.");
+      expect(result.response.status).toBe(defect ? 500 : 200);
+      if (!defect) expect(await result.response.json()).toBe("allowed");
+      expect(events).toEqual([
+        "middleware:no span",
+        "handler:server.operation",
+        "middleware cleanup",
+        "observation",
+      ]);
+    }
+    expect(records).toHaveLength(2);
+    expect(records.map((record) => record.payload)).toMatchObject([
+      {
+        outcome: "returned",
+        nativeEffect: { typedFailure: false, defect: false, interrupted: false },
+      },
+      {
+        outcome: "rejected",
+        nativeEffect: { typedFailure: false, defect: true, interrupted: false },
+      },
+    ]);
+    expect(JSON.stringify(records)).not.toContain("private middleware fixture defect");
+  } finally {
+    await fixture.admission.closeAndDrain();
+  }
 });
 
 test("native declared errors and handler authorization stay native outcomes, not execution descriptors", async () => {

@@ -131,7 +131,7 @@ async function createFixture(): Promise<string> {
       "@effect/opentelemetry",
       "@opentelemetry/api",
       "@orpc/client",
-      "@orpc/experimental-effect",
+      "@orpc/effect",
       "@orpc/contract",
       "@orpc/server",
       "@orpc/openapi",

@@ -9,8 +9,8 @@ facade is exactly one bare static import of the official Effect-oRPC extension
 plus an empty export, and owns no helper, runner, adapter, or alternate
 execution path. The remaining server authoring face and the runtime plugin
 definition must not load the vendor package, execute Effect directly, or
-import `ManagedRuntime`. Erased named type imports from the native bridge root
-are admitted for request context; they install no extension and own no runner.
+import `ManagedRuntime`. Erased named type imports from the selected native bridge
+root are admitted for request context; they install no extension and own no runner.
 
 Grit owns the authored source closure. TypeScript owns module augmentation and
 the build owns emitted artifact assembly. Behavior proof owns the observable
@@ -38,9 +38,9 @@ predicate require_sdk_server_effect_facade_source_is_facade_source($source) {
   $source <: r"^[\"'](?:@habitat-ai/sdk/plugins/server/effect|(?:\./|\.\./)+effect(?:/index)?)(?:\.[cm]?[jt]s)?[\"']$"
 }
 
-// Names every entrypoint of the vendor package hidden behind the facade.
+// Recognizes every named entrypoint of the current and former vendor packages.
 predicate require_sdk_server_effect_facade_source_is_vendor_source($source) {
-  $source <: r"^[\"']@orpc/experimental-effect(?:/[^\"']*)?[\"']$"
+  $source <: r"^[\"']@orpc/(?:effect|experimental-effect)(?:/[^\"']*)?[\"']$"
 }
 
 // Names the Effect root and ManagedRuntime submodule exactly.
@@ -80,7 +80,7 @@ or {
   program() as $program where {
     require_sdk_server_effect_facade_source_is_facade(),
     not {
-      $program <: `import "@orpc/experimental-effect/extensions/effect"; export {};`
+      $program <: `import "@orpc/effect/extensions/effect"; export {};`
     }
   },
   // Outside the facade, vendor loading is forbidden; erased root contract types are inert.
@@ -93,7 +93,7 @@ or {
     require_sdk_server_effect_facade_source_is_guarded_source(),
     not { require_sdk_server_effect_facade_source_is_facade() },
     require_sdk_server_effect_facade_source_is_vendor_source(source=$source),
-    not { $reach <: `import type { $... } from "@orpc/experimental-effect"` }
+    not { $reach <: `import type { $... } from "@orpc/effect"` }
   },
   // The cold authoring and definition faces must not load the bootstrap facade.
   or {
@@ -163,11 +163,19 @@ or {
 
 ```typescript
 // @filename: packages/core/sdk/src/plugins/server/effect/index.ts
-import "@orpc/experimental-effect/extensions/effect";
+import "@orpc/effect/extensions/effect";
 export const run = () => Effect.runPromise(program);
 ```
 
 ## Matches Direct Bridge Mechanics
+
+```typescript
+// @filename: packages/core/sdk/src/plugins/server/index.ts
+import { handlerGen } from "@orpc/effect";
+export const implementEffect = handlerGen;
+```
+
+## Matches Former Bridge Mechanics
 
 ```typescript
 // @filename: packages/core/sdk/src/plugins/server/index.ts
@@ -179,7 +187,7 @@ export const implementEffect = handlerGen;
 
 ```typescript
 // @filename: packages/core/sdk/src/plugins/server/effect/index.ts
-import "@orpc/experimental-effect/extensions/effect";
+import "@orpc/effect/extensions/effect";
 export {};
 ```
 
@@ -187,7 +195,7 @@ export {};
 
 ```typescript
 // @filename: packages/core/runtime/definition/src/plugin.ts
-import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { WithEffectContext } from "@orpc/effect";
 export type ServerContext = WithEffectContext<never>;
 ```
 
@@ -195,5 +203,5 @@ export type ServerContext = WithEffectContext<never>;
 
 ```typescript
 // @filename: packages/core/runtime/definition/src/plugin.ts
-import { WithEffectContext } from "@orpc/experimental-effect";
+import { WithEffectContext } from "@orpc/effect";
 ```

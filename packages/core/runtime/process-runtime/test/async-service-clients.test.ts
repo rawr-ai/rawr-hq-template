@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { type as schemaType } from "@orpc/contract";
-import type { WithEffectContext } from "@orpc/experimental-effect";
-import "@orpc/experimental-effect/extensions/effect";
+import type { WithEffectContext } from "@orpc/effect";
+import "@orpc/effect/extensions/effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Effect } from "effect";
 import { type Static, Type } from "typebox";

@@ -6,11 +6,9 @@ TypeBox Standard Schema bridge into one conventional npm product.
 
 ## Public interface
 
-The package root exposes two names:
-
-- `createHabitatClientForWorkspace(workspaceRoot)` constructs a Habitat client
-  bound to one absolute workspace root.
-- `HabitatClient` is the resulting client type.
+The package root is intentionally empty. Import the subpath that owns the
+operation: `@habitat-ai/sdk/service` for service declarations, and
+`@habitat-ai/sdk/app` for app definitions and the live `startApp` entrypoint.
 
 The isolated `@habitat-ai/sdk/service/schema` entry exposes:
 
@@ -39,8 +37,8 @@ for the service implementation owner; it exports no Habitat runner or helper.
 
 The isolated `@habitat-ai/sdk/plugins/async` entry exposes cold workflow,
 schedule, and consumer plugin builders and declarations plus `useService(...)`.
-`@habitat-ai/sdk/plugins/async/effect` exposes only the cold async-step Effect
-descriptor and its definition function. These entries do not load Inngest or
+`@habitat-ai/sdk/plugins/async/effect` exposes the cold async-step Effect
+descriptor and the invocation-owned `stepEffect` bridge. These entries do not load Inngest or
 construct native functions, clients, registration bundles, loaders, adapters,
 harnesses, or dispatchers; those mechanics remain with later runtime owners.
 
@@ -48,10 +46,10 @@ The isolated `@habitat-ai/sdk/plugins/web` entry exposes the cold web app
 projection builder and route projection contracts. Route-module loaders remain
 lazy definition data and do not enter serializable projection facts. This entry
 does not select a browser runtime or expose a router vendor, DOM mount protocol,
-adapter, build executor, app composition, native harness lifecycle, or Effect
-subpath.
+adapter, build executor, app composition, or native harness lifecycle. The
+separate `@habitat-ai/sdk/plugins/web/effect` subpath declares request-time Effect bodies.
 
-The app, Effect, execution, and definition-owned `runtime/*` entries expose the
+The app declarations, Effect, execution, and definition-owned `runtime/*` entries expose the
 cold runtime-definition authoring contract. They declare app composition,
 finite process catalogs, immutable launch identity, profiles, lazy Effects,
 executable descriptors, resources, providers, observation records, and
@@ -73,15 +71,9 @@ the input, normalized facts, derived plans and tables, portable artifact, and
 findings. The facade directly projects the private owner and exposes no second
 implementation or public derivation error API.
 
-Private runtime compiler blueprints are carried as inert package assets only.
-This package exposes no compiler JavaScript or declaration entry and does
-not bundle or depend on the compiler implementation; task 10.6 owns the later
-real terminal-composition edge.
-
-Private runtime bootgraph blueprints are likewise carried as inert package
-assets only. This package exposes no bootgraph JavaScript or declaration
-entry and does not bundle or depend on the bootgraph implementation; task 10.6
-owns the later real terminal-composition edge.
+Compiler and bootgraph blueprints are inert policy assets, not public
+JavaScript entries. The app terminal bundles the private runtime it needs
+to start the selected process; neither compiler nor bootgraph is a public API.
 
 The isolated `@habitat-ai/sdk/telemetry` entry exposes the provider-neutral
 technical telemetry contract and declarative OpenTelemetry Node configuration.
@@ -106,22 +98,48 @@ import only `@habitat-ai/sdk`; private package identities are not part of the
 published runtime or type interface. Third-party libraries remain ordinary
 dependencies.
 
-The SDK selects the production Node provider profile, resolves the packaged
-policy envelope, and constructs a fresh client for each workspace binding. It
-does not own a controller, package manager, retained store, compatibility
-surface, or public implementation cohort.
-
-The telemetry integration in this package is provider substrate, not the final
-`RuntimeTelemetry` observation bridge. Process provisioning, automatic oRPC,
-Effect, Oclif, and Inngest instrumentation, and app-profile selection land with
-their exact runtime and harness owners; none is repeated by an individual
-service or plugin.
+The application profile selects the provider; the process owns acquisition and
+release. A service or plugin does not install its own exporter, replace the
+request runner, or decide when the process shuts down. The SDK is not a
+workspace policy client, package manager, or retained store.
 
 [habitat-pack.json](habitat-pack.json) is the closed protocol-1 policy envelope
 and declares the current sorted member inventory.
 Version 1 resolves from `dist/blueprints/<id>/blueprint.toml`; later versions
 resolve from `dist/blueprints/<id>/versions/<version>/blueprint.toml`. Presence in
 `dist/blueprints` alone grants no authority.
+
+### Service authoring on the beta.51 oRPC cohort
+
+Read the service's `habitat.toml`, not the first README found under
+`dist/blueprints/service/`. That unversioned directory, including its
+`README.md` and `skill.md`, belongs to **service@1**. It is preserved for
+that version, not a guide to the current bridge. Run `habitat resolve --json`
+from the governed workspace to see the selected rules and their remediation.
+
+For a service upgrading from this SDK's `service@3` or `service@4` policy,
+the service owner must make the corresponding selection in `habitat.toml`:
+
+| Existing selection | Select with this cohort | What stays the same |
+| --- | --- | --- |
+| `blueprintVersion = 3` | `blueprintVersion = 5` | The native base remains required. New services start here. |
+| `blueprintVersion = 4` | `blueprintVersion = 6` | The native base may be absent when unused; all five context lanes remain required. |
+
+Installing the packages does not rewrite a service manifest. An old selection
+can pass its own check without examining direct imports of the renamed vendor
+bridge. Do not treat that pass as beta.51 service qualification. Versions 1
+and 2, custom blueprints and overlays require their own adoption review.
+
+A plain native `.handler(...)` needs no bridge import. For an Effect handler,
+put `import "@habitat-ai/sdk/plugins/server/effect";` once in
+`src/service/impl.ts` and author the operation with the patched native
+`.effect(...)`. Do not import the underlying vendor extension or its runner
+from the service. Use `habitat check --owner <project> --json` and confirm the
+selected `service_v5_effect_bridge` or `service_v6_effect_bridge` rule was
+evaluated. The package includes the [service@5 rule](dist/blueprints/service/versions/5/components/funnel/effect-bridge.md)
+and the [service@6 rule](dist/blueprints/service/versions/6/components/funnel/effect-bridge.md).
+
+### Other blueprint guarantees
 
 The selected SDK package owns each reusable definition, version, runner asset,
 and its policy-pack provenance. A repository remains the authority for its own

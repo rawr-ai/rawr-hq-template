@@ -1,6 +1,6 @@
 import type { ChildProcessResource } from "@habitat-ai/resource-child-process";
-import { Effect, Stream } from "effect";
-import { ChildProcess } from "effect/unstable/process";
+import { Cause, Effect, Stream } from "effect";
+import { ChildProcess } from "effect/process";
 import type { CommandStep } from "../dto";
 
 const STDOUT_LIMIT = 4 * 1024 * 1024;
@@ -89,7 +89,12 @@ export function runCommand(
       exitCode,
       stdout: decode(stdout),
       stderr: decode(stderr),
-      failure: attempt._tag === "Failure" ? failureMessage(attempt.failure) : null,
+      failure:
+        attempt._tag === "Failure"
+          ? Cause.isTimeoutError(attempt.failure)
+            ? attempt.failure._tag
+            : failureMessage(attempt.failure)
+          : null,
     };
   });
 }

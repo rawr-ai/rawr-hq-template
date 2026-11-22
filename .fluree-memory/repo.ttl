@@ -89,7 +89,7 @@ mem:decision-01m7qv68e9c53r97a16nwethmm a mem:Decision ;
     mem:alternatives "keep Narsil as the declared symbol and reference authority,run it as a standing shared daemon for all agents,rely on its call graph with test exclusion" .
 
 mem:decision-01m7r67jpsxdpye3tnqt6ha60s a mem:Decision ;
-    mem:content "Owner-admitted terms for migrating Habitat from oRPC 2.0.0-beta.32 and Effect 4.0.0-beta.101 to beta.51 and 4.1.4: adopt the vendor's native results, not compatibility wrappers. A pending next during early stream return loses its value; unmapped declared error codes answer HTTP 400; declared errors end spans in ERROR. No SDK status-map option is promised: a surface that must keep an old status defers the upgrade. Admission covers the migration and its spec amendment, not release or publish. One pack never certifies another: each candidate gets its own version and a full rerun of checks and installed suites on its own bytes. External telemetry export stays held by D-5; authored Effect middleware is unsupported." ;
+    mem:content "Owner-admitted terms for migrating Habitat from oRPC 2.0.0-beta.32 and Effect 4.0.0-beta.101 to beta.51 and 4.1.4: adopt the vendor's native results, not compatibility wrappers. A pending next during early stream return loses its value; unmapped declared error codes answer HTTP 400; declared errors end spans in ERROR. No SDK status-map option is promised: a surface that must keep an old status defers the upgrade. Admission covers the migration, its spec amendment, and landing it on main through the required check; it does not cover a release tag, publish, deploy or external export. One pack never certifies another: each candidate gets its own version and a full rerun on its own bytes. External telemetry export stays held by D-5; authored Effect middleware is unsupported." ;
     mem:tag "d-5" ;
     mem:tag "declared-error" ;
     mem:tag "effect" ;
@@ -103,7 +103,7 @@ mem:decision-01m7r67jpsxdpye3tnqt6ha60s a mem:Decision ;
     mem:artifactRef "openspec/specs/runtime-harness-boundary/spec.md" ;
     mem:branch "main" ;
     mem:createdAt "2026-11-18T20:40:34.265102+00:00"^^xsd:dateTime ;
-    mem:updatedAt "2026-11-22T22:45:00.597121+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-22T23:04:49.038372+00:00"^^xsd:dateTime ;
     mem:rationale "Design philosophy: vendors keep their semantics; a wrapper must earn its place. Packed and downstream evidence showed the native behaviour is coherent and the old results would need a Habitat shim or a second Effect runner." ;
     mem:alternatives "Hold the old cohort; add a public SDK error-status option; synthesize the trailing stream value; ban Effect middleware platform-wide" .
 

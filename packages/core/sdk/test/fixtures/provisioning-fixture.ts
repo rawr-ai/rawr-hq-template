@@ -1,7 +1,7 @@
 import { closeSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type as schemaType } from "@orpc/contract";
-import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { WithEffectContext } from "@orpc/effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Type } from "typebox";
 import { orderBootgraph } from "../../../runtime/bootgraph/src/index";

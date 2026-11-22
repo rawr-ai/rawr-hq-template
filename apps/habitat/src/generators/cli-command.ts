@@ -113,7 +113,7 @@ function packageWithTestContract(contents: string): string {
   manifest.scripts = { ...manifest.scripts, "test:cli-commands": command };
   manifest.devDependencies = { ...manifest.devDependencies };
   for (const [name, version] of Object.entries({
-    effect: "4.0.0-beta.101",
+    effect: "4.1.4",
     "bun-types": "1.3.14",
   })) {
     const existing = manifest.dependencies?.[name] ?? manifest.devDependencies[name];

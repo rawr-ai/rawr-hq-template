@@ -95,16 +95,20 @@ test.each([
   ]);
 }, 30_000);
 
-test("service@4 admits an author-free Context while service@3 still requires the base value", async () => {
+test("service@5 still requires the base value while service@6 permits an author-free Context", async () => {
   const files = {
     "plain/src/service/base.ts": context,
     "with-type-import/src/service/base.ts": `import type { EffectContext } from "@habitat-ai/sdk/effect/context"; ${context}`,
   };
   expect(await checkLaw(3, files)).toEqual(Object.keys(files).sort());
+  expect(await checkLaw(5, files)).toEqual(Object.keys(files).sort());
   expect(await checkLaw(4, files)).toEqual([]);
+  expect(await checkLaw(6, files)).toEqual([]);
 }, 30_000);
 
-test("service@4 keeps all five lanes mandatory and qualifies every present native base", async () => {
+test.each([
+  4, 6,
+] as const)("service@%i keeps all five lanes mandatory and qualifies every present native base", async (version) => {
   const files: Record<string, string> = {
     "valid-author/src/service/base.ts": `import { os } from "@orpc/server"; ${context} export const base = os.$context<Context>();`,
     "valid-alias/src/service/base.ts": `import { implement, os as native } from '@orpc/server'; ${context} export const base = native.$context<Context>();`,
@@ -143,7 +147,7 @@ test("service@4 keeps all five lanes mandatory and qualifies every present nativ
     files[`invalid-author-missing-${lane}/src/service/base.ts`] =
       `import { os } from "@orpc/server"; ${incomplete} export const base = os.$context<Context>();`;
   }
-  expect(await checkLaw(4, files)).toEqual(
+  expect(await checkLaw(version, files)).toEqual(
     Object.keys(files)
       .filter((filename) => filename.startsWith("invalid-"))
       .sort()
@@ -151,7 +155,7 @@ test("service@4 keeps all five lanes mandatory and qualifies every present nativ
 }, 30_000);
 
 async function checkLaw(
-  version: 1 | 3 | 4,
+  version: 1 | 3 | 4 | 5 | 6,
   files: Readonly<Record<string, string>>
 ): Promise<string[]> {
   const ruleId = `service_v${version}_context_funnel`;

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { NodeServices } from "@effect/platform-node";
 import type { ServiceClientAssembly } from "@habitat-ai/sdk/service";
-import { createEffectClient } from "@orpc/experimental-effect";
+import { createEffectClient } from "@orpc/effect";
 import { Context, Effect, FileSystem, Path } from "effect";
 import { contract, definition, serviceRuntimeExport } from "../../../../src/client";
 

@@ -19,6 +19,8 @@ export function clockInvocation(now: () => Date) {
     currentTimeMillis: Effect.sync(read),
     currentTimeNanosUnsafe: () => live.currentTimeNanosUnsafe(),
     currentTimeNanos: live.currentTimeNanos,
+    monotonicTimeNanosUnsafe: () => live.monotonicTimeNanosUnsafe(),
+    monotonicTimeNanos: live.monotonicTimeNanos,
     sleep: (duration) => live.sleep(duration),
   };
   return { context: { "effect/context": Context.make(Clock.Clock, clock) } };

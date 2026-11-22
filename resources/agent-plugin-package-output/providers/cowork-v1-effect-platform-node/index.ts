@@ -38,14 +38,14 @@ export interface CoworkV1EffectPlatformNodeOptions {
 
 interface CapturedDirectory {
   readonly path: string;
-  readonly dev: number;
-  readonly ino: number;
+  readonly dev: bigint;
+  readonly ino: bigint;
 }
 
 interface CapturedFile {
   readonly path: string;
-  readonly dev: number;
-  readonly ino: number;
+  readonly dev: bigint;
+  readonly ino: bigint;
   readonly mode: number;
   readonly size: number;
   readonly mtime: number;
@@ -55,8 +55,8 @@ interface CapturedFile {
 interface OwnedTemporaryFile {
   readonly parent: CapturedDirectory;
   readonly path: string;
-  readonly dev: number;
-  readonly ino: number;
+  readonly dev: bigint;
+  readonly ino: bigint;
 }
 
 interface CreatedTemporaryFile {
@@ -457,7 +457,7 @@ const captureRegularFile = Effect.fn("agentPluginPackageOutput.captureRegularFil
     info.type !== "File" ||
     info.dev !== parent.dev ||
     ino === undefined ||
-    nlink !== 1 ||
+    nlink !== 1n ||
     mtime === undefined ||
     !Number.isSafeInteger(size) ||
     size < 0 ||
@@ -493,7 +493,7 @@ const captureRegularFile = Effect.fn("agentPluginPackageOutput.captureRegularFil
     after.mode !== info.mode ||
     Number(after.size) !== size ||
     Option.getOrUndefined(after.mtime)?.getTime() !== mtime ||
-    Option.getOrUndefined(after.nlink) !== 1
+    Option.getOrUndefined(after.nlink) !== 1n
   ) {
     return yield* rejected(
       "publish-output",
@@ -561,7 +561,7 @@ const allocateTemporaryFile = Effect.fn("agentPluginPackageOutput.allocateTempor
           fileInfo.type !== "File" ||
           fileInfo.dev !== parent.dev ||
           ino === undefined ||
-          Option.getOrUndefined(fileInfo.nlink) !== 1
+          Option.getOrUndefined(fileInfo.nlink) !== 1n
         ) {
           return yield* rejected(
             "publish-output",
@@ -657,7 +657,7 @@ const revalidateOwnedTemporaryFile = Effect.fn(
     info.type !== "File" ||
     info.dev !== owned.dev ||
     Option.getOrUndefined(info.ino) !== owned.ino ||
-    Option.getOrUndefined(info.nlink) !== expectedLinks
+    Option.getOrUndefined(info.nlink) !== BigInt(expectedLinks)
   ) {
     return yield* rejected(
       operation,
@@ -698,7 +698,7 @@ const admitCreatedTemporaryFile = Effect.fn("agentPluginPackageOutput.admitCreat
       info.type !== "File" ||
       info.dev !== created.parent.dev ||
       ino === undefined ||
-      Option.getOrUndefined(info.nlink) !== 1
+      Option.getOrUndefined(info.nlink) !== 1n
     ) {
       return yield* rejected(
         "cleanup",

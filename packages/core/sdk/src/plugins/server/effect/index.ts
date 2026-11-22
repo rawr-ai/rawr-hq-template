@@ -1,3 +1,3 @@
-import "@orpc/experimental-effect/extensions/effect";
+import "@orpc/effect/extensions/effect";
 
 export {};

@@ -57,7 +57,7 @@ import {
 } from "@opentelemetry/semantic-conventions";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
 import { ORPCInstrumentation } from "@orpc/opentelemetry";
-import { getOpenTelemetryConfig } from "@orpc/shared";
+import { getTracer } from "@orpc/shared";
 import { Effect } from "effect";
 
 import { constructionDiagnostic, makeDegradedOpenTelemetryNodeLease } from "./degraded.js";
@@ -139,7 +139,7 @@ export async function acquireEnabledOpenTelemetryNode(
       constructionDiagnostic("PROVIDER_ALREADY_ACQUIRED")
     );
   }
-  if (getOpenTelemetryConfig() !== undefined) {
+  if (getTracer() !== undefined) {
     return makeDegradedOpenTelemetryNodeLease(
       config,
       constructionDiagnostic("GLOBAL_TELEMETRY_OWNER_PRESENT")
@@ -260,7 +260,7 @@ async function constructRuntime(
     const activeLoggerProvider = loggerProvider;
     const activeContextManager = contextManager;
     const instrumentation = new ORPCInstrumentation({ enabled: false });
-    let installedORPC: ReturnType<typeof getOpenTelemetryConfig>;
+    let installedORPC: ReturnType<typeof getTracer>;
 
     return {
       tracerProvider: activeTracerProvider,
@@ -270,11 +270,10 @@ async function constructRuntime(
       propagator,
       enableORPC: () => {
         instrumentation.enable();
-        installedORPC = getOpenTelemetryConfig();
+        installedORPC = getTracer();
       },
       releaseORPC: () => {
-        if (installedORPC !== undefined && getOpenTelemetryConfig() === installedORPC)
-          instrumentation.disable();
+        if (installedORPC !== undefined && getTracer() === installedORPC) instrumentation.disable();
         installedORPC = undefined;
       },
       ownership: {
@@ -312,7 +311,7 @@ async function constructRuntime(
 }
 
 function registerRuntime(runtime: EnabledRuntime): boolean {
-  if (getOpenTelemetryConfig() !== undefined) return false;
+  if (getTracer() !== undefined) return false;
   const ownership: GlobalOwnership = runtime.ownership;
   ownership.context = context.setGlobalContextManager(runtime.contextManager);
   if (!ownership.context) return false;

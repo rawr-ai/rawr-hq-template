@@ -42,7 +42,7 @@ export default defineConfig({
       "@oclif/core",
       "@opentelemetry/api",
       "@orpc/contract",
-      "@orpc/experimental-effect",
+      "@orpc/effect",
       "@orpc/server",
       "effect",
       "nx",

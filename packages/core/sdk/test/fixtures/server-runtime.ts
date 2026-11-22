@@ -8,7 +8,7 @@ import { createORPCClient, ORPCError } from "@orpc/client";
 import { RPCLink } from "@orpc/client/fetch";
 import { openapi } from "@orpc/openapi";
 import { os, type RouterClient } from "@orpc/server";
-import { getOpenTelemetryConfig } from "@orpc/shared";
+import { getTracer } from "@orpc/shared";
 import { Effect } from "effect";
 import { Type } from "typebox";
 import { decodeOpenTelemetryNodeConfig } from "../../../../../resources/telemetry/providers/opentelemetry-node/index";
@@ -246,14 +246,14 @@ async function run(enabled: boolean) {
     port: secondPort,
     publicDocument: { path: "/openapi.json", info: { title: "No public selection", version: "1" } },
   });
-  let instrumentation: ReturnType<typeof getOpenTelemetryConfig>;
+  let instrumentation: ReturnType<typeof getTracer>;
   let nativeMounts = 0;
   function observeNative(descriptor: typeof firstNative) {
     return {
       ...descriptor,
       async mount(input: Parameters<typeof descriptor.mount>[0]) {
-        if (nativeMounts++ === 0) instrumentation = getOpenTelemetryConfig();
-        else assert.equal(getOpenTelemetryConfig(), instrumentation);
+        if (nativeMounts++ === 0) instrumentation = getTracer();
+        else assert.equal(getTracer(), instrumentation);
         const native = await descriptor.mount(input);
         let stopping: Promise<void> | undefined;
         return {
@@ -283,7 +283,7 @@ async function run(enabled: boolean) {
   try {
     assert.equal(Boolean(instrumentation), enabled);
     assert.equal(nativeMounts, 2);
-    assert.equal(getOpenTelemetryConfig(), instrumentation);
+    assert.equal(getTracer(), instrumentation);
     assert.equal((await fetch(`http://127.0.0.1:${secondPort}/missing`)).status, 404);
     assert.equal(
       await fetch(`http://127.0.0.1:${secondPort}/api/effect`).then((r) => r.json()),
@@ -377,7 +377,7 @@ async function run(enabled: boolean) {
     assert(events.indexOf("held-finalizer") < events.indexOf("release"));
     assert(events.indexOf("native-ended:elysia") < events.indexOf("release"));
     assert(events.indexOf("native-ended:second") < events.indexOf("release"));
-    assert.equal(getOpenTelemetryConfig(), undefined);
+    assert.equal(getTracer(), undefined);
     const catalog = process.catalog();
     const procedures = catalog.diagnostics.filter(
       (record) => record.code === "server.procedure.settled"

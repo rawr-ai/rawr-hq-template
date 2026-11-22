@@ -23,9 +23,22 @@ const effectExecutionTerminals = [
 ] as const;
 
 test.each([
-  3, 4,
+  3, 4, 5, 6,
 ] as const)("service@%i admits only the SDK Effect bootstrap at the service implementation", async (version) => {
+  const selectedVendorReaches = {
+    "invalid-current-extension/src/service/impl.ts": 'import "@orpc/effect/extensions/effect";',
+    "invalid-current-handler/src/service/modules/records/router/read.ts": `
+      import { handlerGen } from "@orpc/effect";
+      export const read = module.read.handler(handlerGen(program));
+    `,
+    "invalid-current-reexport/src/service/router.ts": 'export * from "@orpc/effect";',
+    "invalid-current-dynamic/src/client.ts": 'void import("@orpc/effect/extensions/effect");',
+    "invalid-current-require/src/service/middleware/telemetry.ts": 'require("@orpc/effect");',
+  };
   const findings = await checkLaw(version, {
+    ...selectedVendorReaches,
+    "valid-near-vendor/src/service/base.ts": 'import "@orpc/effect-other";',
+    "valid-nonservice/src/plugin.ts": 'import "@orpc/effect/extensions/effect";',
     "valid-facade/src/service/impl.ts": `
       import "@habitat-ai/sdk/plugins/server/effect";
       export const service = base.use(auth).use(stores);
@@ -221,6 +234,7 @@ test.each([
       "invalid-vendor-root-dynamic/src/service/modules/records/router/read.ts",
       "invalid-vendor-root-require/src/service/modules/records/router/read.ts",
       "invalid-vendor-subpath/src/service/modules/records/router/read.ts",
+      ...(version >= 5 ? Object.keys(selectedVendorReaches) : []),
       ...effectExecutionTerminals.map(
         (terminal) =>
           `invalid-exact-terminal-${terminal}/src/service/modules/records/router/read.ts`
@@ -230,7 +244,7 @@ test.each([
 }, 30_000);
 
 async function checkLaw(
-  version: 3 | 4,
+  version: 3 | 4 | 5 | 6,
   files: Readonly<Record<string, string>>
 ): Promise<string[]> {
   const ruleId = `service_v${version}_effect_bridge`;

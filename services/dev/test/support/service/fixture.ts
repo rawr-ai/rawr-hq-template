@@ -4,10 +4,14 @@ import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { NodeServices } from "@effect/platform-node";
 import { Context, Effect, FileSystem, Layer, Path } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { type CreateClientOptions, createClient } from "../../../src/client";
 
-export type NativeCall = { command: string; args: readonly string[]; cwd: string | undefined };
+export type NativeCall = {
+  command: string;
+  args: ChildProcess.StandardCommand["args"];
+  cwd: string | undefined;
+};
 export type GraphiteProtocol = { state: unknown; submitExit?: number; mergeExit?: number };
 
 /** Owns real temporary Git state and native child scopes; optional Graphite data is only a unit protocol fixture. */

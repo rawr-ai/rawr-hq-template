@@ -13,7 +13,7 @@ import {
   SourceInventoryResultSchema,
 } from "@habitat-ai/resource-source-inventory";
 import { Effect, type PlatformError, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import { ReadonlyObject, type Static, Type } from "typebox";
 import { Validator } from "typebox/schema";
 

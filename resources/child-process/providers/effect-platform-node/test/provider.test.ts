@@ -26,7 +26,7 @@ import {
   type PlatformError,
   Stream,
 } from "effect";
-import { ChildProcess } from "effect/unstable/process";
+import { ChildProcess } from "effect/process";
 import type { ChildProcessResource } from "../../../contract";
 import { ChildProcessRuntimeResource } from "../../../runtime";
 import { defineNodeChildProcessRuntimeProvider } from "../index";

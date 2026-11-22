@@ -87,7 +87,7 @@ describe("Habitat service generator", () => {
     });
     expect(tree.read(`${options.directory}/habitat.toml`, "utf8")).toBe(
       `schemaVersion = 1\nid = "${options.name}"\nownerProject = "${options.name}"\n` +
-        `blueprint = "service"\nblueprintVersion = 3\n\n[roots]\n` +
+        `blueprint = "service"\nblueprintVersion = 5\n\n[roots]\n` +
         `project = "${options.directory}"\n\n[selections]\n`
     );
     expect(tree.read(`${options.directory}/tsconfig.json`, "utf8")).toContain(

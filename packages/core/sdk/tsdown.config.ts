@@ -91,7 +91,7 @@ export default defineConfig({
       "@opentelemetry/semantic-conventions",
       "@orpc/client",
       "@orpc/contract",
-      "@orpc/experimental-effect",
+      "@orpc/effect",
       "@orpc/openapi",
       "@orpc/opentelemetry",
       "@orpc/server",

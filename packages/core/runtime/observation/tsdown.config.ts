@@ -16,7 +16,7 @@ export default defineConfig({
     onlyImport: [
       "@orpc/client",
       "@orpc/contract",
-      "@orpc/experimental-effect",
+      "@orpc/effect",
       "@orpc/server",
       "@standard-schema/spec",
       "effect",

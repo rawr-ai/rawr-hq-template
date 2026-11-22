@@ -12,8 +12,8 @@ import {
   RuleEvaluationRequestSchema,
 } from "@habitat-ai/resource-rule-evaluation";
 import { Effect, FileSystem, Path, type PlatformError, type Scope, Stream } from "effect";
-import { ChildProcess } from "effect/unstable/process";
-import type { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner";
+import { ChildProcess } from "effect/process";
+import type { ChildProcessSpawner } from "effect/process/ChildProcessSpawner";
 import { ReadonlyObject, type Static, Type } from "typebox";
 import Schema from "typebox/schema";
 import { Value } from "typebox/value";

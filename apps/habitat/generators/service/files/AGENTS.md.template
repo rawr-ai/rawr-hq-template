@@ -28,4 +28,7 @@
 
 ## Validation
 
+- Read this package's `habitat.toml` for its service blueprint version. From the workspace root,
+  run `habitat check --owner <%= name %> --json` and confirm the selected bridge rule was evaluated.
+  The unversioned service blueprint README and skill belong to version 1, not this generated service.
 - Run `bunx nx run <%= name %>:typecheck` and `bunx nx run <%= name %>:build`.

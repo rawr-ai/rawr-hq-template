@@ -1,6 +1,6 @@
 import type { ContentWorkspaceFailure } from "@habitat-ai/resource-content-workspace";
 import type { ServiceClientAssembly } from "@habitat-ai/sdk/service";
-import { createEffectClient } from "@orpc/experimental-effect";
+import { createEffectClient } from "@orpc/effect";
 import { Clock, Effect } from "effect";
 import { expect, it } from "vitest";
 

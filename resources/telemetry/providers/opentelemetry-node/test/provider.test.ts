@@ -14,10 +14,14 @@ import {
   InstrumentType,
   MeterProvider,
 } from "@opentelemetry/sdk-metrics";
-import { BasicTracerProvider, InMemorySpanExporter } from "@opentelemetry/sdk-trace-base";
+import {
+  BasicTracerProvider,
+  InMemorySpanExporter,
+  SimpleSpanProcessor,
+} from "@opentelemetry/sdk-trace-base";
 import { ORPCInstrumentation } from "@orpc/opentelemetry";
 import { createRouterClient, os } from "@orpc/server";
-import { getOpenTelemetryConfig, setOpenTelemetryConfig } from "@orpc/shared";
+import { getTracer } from "@orpc/shared";
 import { Effect } from "effect";
 
 import {
@@ -222,7 +226,7 @@ describe("OpenTelemetry Node provider", () => {
   test("refuses a foreign native oRPC configuration without constructing or disabling it", async () => {
     const foreign = new ORPCInstrumentation({ enabled: false });
     foreign.enable();
-    const identity = getOpenTelemetryConfig();
+    const identity = getTracer();
     let constructions = 0;
     try {
       const lease = await acquireEnabledOpenTelemetryNode(enabledConfig, () => {
@@ -232,7 +236,7 @@ describe("OpenTelemetry Node provider", () => {
       expect(lease.telemetry.availability).toBe("degraded");
       expect(constructions).toBe(0);
       await Effect.runPromise(lease.release(deadline()));
-      expect(getOpenTelemetryConfig()).toBe(identity);
+      expect(getTracer()).toBe(identity);
     } finally {
       foreign.disable();
     }
@@ -241,7 +245,7 @@ describe("OpenTelemetry Node provider", () => {
   test("one enabled lease instruments a real native call and releases its exact configuration", async () => {
     const exporters = memoryExporters();
     const lease = await acquireEnabledOpenTelemetryNode(enabledConfig, () => exporters.set);
-    const owned = getOpenTelemetryConfig();
+    const owned = getTracer();
     try {
       expect(owned).toBeDefined();
       const client = createRouterClient({ ping: os.handler(() => "pong") });
@@ -256,24 +260,42 @@ describe("OpenTelemetry Node provider", () => {
         throw Error("duplicate constructed");
       });
       await Effect.runPromise(duplicate.release(deadline()));
-      expect(getOpenTelemetryConfig()).toBe(owned);
+      expect(getTracer()).toBe(owned);
     } finally {
       await Effect.runPromise(lease.release(deadline()));
     }
-    expect(getOpenTelemetryConfig()).toBeUndefined();
+    expect(getTracer()).toBeUndefined();
   });
 
   test("release does not disable a replacement oRPC configuration", async () => {
     const lease = await acquireEnabledOpenTelemetryNode(enabledConfig, () => memoryExporters().set);
-    const owned = getOpenTelemetryConfig();
-    expect(owned).toBeDefined();
-    const replacement = { ...owned! };
-    setOpenTelemetryConfig(replacement);
+    const owned = getTracer();
+    const replacementExporter = new InMemorySpanExporter();
+    const replacementProvider = new BasicTracerProvider({
+      spanProcessors: [new SimpleSpanProcessor(replacementExporter)],
+    });
+    const foreign = new ORPCInstrumentation({ enabled: false });
+    foreign.setTracerProvider(replacementProvider);
     try {
+      expect(owned).toBeDefined();
+      foreign.enable();
+      const replacement = getTracer();
+      expect(replacement).toBeDefined();
+      expect(replacement).not.toBe(owned);
       await Effect.runPromise(lease.release(deadline()));
-      expect(getOpenTelemetryConfig()).toBe(replacement);
+      expect(getTracer()).toBe(replacement);
+      const client = createRouterClient({ ping: os.handler(() => "pong") });
+      expect(await client.ping()).toBe("pong");
+      await replacementProvider.forceFlush();
+      expect(replacementExporter.getFinishedSpans()).toContainEqual(
+        expect.objectContaining({
+          instrumentationScope: expect.objectContaining({ name: "@orpc/opentelemetry" }),
+        })
+      );
     } finally {
-      setOpenTelemetryConfig(undefined);
+      await Effect.runPromise(lease.release(deadline()));
+      foreign.disable();
+      await replacementProvider.shutdown();
     }
   });
 
@@ -292,12 +314,12 @@ describe("OpenTelemetry Node provider", () => {
         foreign.enable();
         return exporters.set;
       });
-      const identity = getOpenTelemetryConfig();
+      const identity = getTracer();
       expect(lease.telemetry.availability).toBe("degraded");
       expect(shutdowns).toBe(1);
       expect(identity).toBeDefined();
       await Effect.runPromise(lease.release(deadline()));
-      expect(getOpenTelemetryConfig()).toBe(identity);
+      expect(getTracer()).toBe(identity);
     } finally {
       if (lease) await Effect.runPromise(lease.release(deadline()));
       foreign.disable();
@@ -584,7 +606,7 @@ describe("OpenTelemetry Node provider", () => {
     });
 
     expect(partial.telemetry.availability).toBe("degraded");
-    expect(getOpenTelemetryConfig()).toBeUndefined();
+    expect(getTracer()).toBeUndefined();
     expect(traceShutdowns).toBe(1);
     expect(metricShutdowns).toBe(1);
     await Effect.runPromise(partial.release(deadline()));

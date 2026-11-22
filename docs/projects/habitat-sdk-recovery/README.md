@@ -1,9 +1,12 @@
 # Habitat SDK Recovery Evidence
 
-Status: documentation consolidated; historical-frame investigation deferred;
-no repair implementation plan admitted.
+Current exception to the original repair hold: the owner admitted the
+[scoped native migration](native-migration-candidate.md) for implementation,
+qualification and landing on `main` through required checks, not for a release,
+package publication or deployment. This is not a general
+reopening of SDK design or a validation of the historical framing method.
 
-Current re-entry view: [completed telemetry source retirement](telemetry-retirement.md),
+Earlier re-entry view: [completed telemetry source retirement](telemetry-retirement.md),
 with a [visual timeline](resources/research/recovery-timeline.html). It separates
 one historical holding from a [recovered backend recipe](backend-reuse.md).
 The earlier [merged-branch cleanup and lineage](cleanup-lineage-map.md) remains

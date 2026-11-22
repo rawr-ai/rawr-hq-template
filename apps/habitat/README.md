@@ -117,6 +117,18 @@ A package-only upgrade may correctly generate no migration file. Do not replay
 an older plan or synthesize one. No consumer copies or independently maintains
 the preset wiring.
 
+**Existing services on the beta.51 oRPC cohort:** updating the CLI/SDK pair
+does not change which service policy a repository selected. For the bundled
+service blueprint, change the service's own `habitat.toml` from version 3
+to 5, or from 4 to 6, preserving its existing base policy. Do not infer the
+selection from the installed package version. From the workspace root, run
+`habitat resolve --json`, then `habitat check --owner <project> --json`.
+Look for the evaluated `service_v5_effect_bridge` or `service_v6_effect_bridge`
+rule. A pass on the older rule does not cover the renamed bridge. Align any
+direct native dependencies with the selected SDK; a single physical oRPC
+and Effect installation is required. Plain handlers need no bootstrap;
+Effect services use only the SDK facade in `src/service/impl.ts`.
+
 Habitat `0.5.3` used Nx `23.1.0`, whose provenance reader predates npm 12. When
 that exact historical pair is upgraded under npm 12, pin the migration CLI and
 scope Nx's documented compatibility flag to both migration commands. The first

@@ -83,7 +83,9 @@ export async function createPublicDocument(
     }
   }
   if (!hasPublic || publication === undefined) return undefined;
+  // Preserve the previously published document version across the native default change.
   const document = await new OpenAPIGenerator().generate(contracts, {
+    version: "3.1.2",
     base: { info: publication.info },
   });
   return JSON.stringify(document);

@@ -55,7 +55,6 @@ type PackedProductManifest = Readonly<Record<string, unknown>>;
 
 const FIXTURE_PREFIX = "habitat-installed-package-";
 const PUBLIC_NPM_REGISTRY = "https://registry.npmjs.org";
-const CANDIDATE_VERSION = "0.6.0";
 const ABSENT_VENDOR_PACKAGES = ["elysia", "inngest"] as const;
 const PACKAGE_DEPENDENCY_FIELDS = [
   "dependencies",
@@ -322,6 +321,57 @@ const IMMUTABLE_SERVICE_CLOSURES = {
     inventoryRoot: "service/versions/3",
     sha256: "d4b8ddf91e8fafb2799d094a445af367698856f2ff3ad6298f4dd6ef666d7cd6",
   },
+  service4: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "service/versions/4/blueprint.toml",
+      "service/versions/4/components/contract/authority.md",
+      "service/versions/4/components/contract/composition.md",
+      "service/versions/4/components/funnel/context.md",
+      "service/versions/4/components/funnel/effect-bridge.md",
+      "service/versions/4/components/funnel/router.md",
+      "service/versions/4/components/funnel/source-boundary.md",
+      "service/versions/4/components/spine/client-lineage.md",
+      "service/versions/4/components/spine/public-face.md",
+      "service/versions/4/structure.toml",
+    ],
+    inventoryRoot: "service/versions/4",
+    sha256: "a18ecd4c93477f1528920a34ed667a39c730b7978bacf33bd39d62996a003118",
+  },
+  service5: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "service/versions/5/blueprint.toml",
+      "service/versions/5/components/contract/authority.md",
+      "service/versions/5/components/contract/composition.md",
+      "service/versions/5/components/funnel/context.md",
+      "service/versions/5/components/funnel/effect-bridge.md",
+      "service/versions/5/components/funnel/router.md",
+      "service/versions/5/components/funnel/source-boundary.md",
+      "service/versions/5/components/spine/client-lineage.md",
+      "service/versions/5/components/spine/public-face.md",
+      "service/versions/5/structure.toml",
+    ],
+    inventoryRoot: "service/versions/5",
+    sha256: "0725eea42d9d447627cfd7a0aacfa3089228c4de9d266e0787e97669521b8051",
+  },
+  service6: {
+    excludedInventoryPrefixes: [],
+    files: [
+      "service/versions/6/blueprint.toml",
+      "service/versions/6/components/contract/authority.md",
+      "service/versions/6/components/contract/composition.md",
+      "service/versions/6/components/funnel/context.md",
+      "service/versions/6/components/funnel/effect-bridge.md",
+      "service/versions/6/components/funnel/router.md",
+      "service/versions/6/components/funnel/source-boundary.md",
+      "service/versions/6/components/spine/client-lineage.md",
+      "service/versions/6/components/spine/public-face.md",
+      "service/versions/6/structure.toml",
+    ],
+    inventoryRoot: "service/versions/6",
+    sha256: "61cece2c813f09c8d6757cc4ba8b4ebebf33e12c29f4820edd9fd2c371b58e1c",
+  },
 } as const;
 const IMMUTABLE_RUNTIME_HARNESS_CLOSURES = {
   runtimeHarnesses1: {
@@ -386,8 +436,12 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
   .filter((name) => name.length > 0);
 const sdkVersion = await readPackageVersion("packages/core/sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
-if (sdkVersion !== CANDIDATE_VERSION || cliVersion !== CANDIDATE_VERSION) {
-  throw new Error(`Habitat acceptance requires the exact ${CANDIDATE_VERSION} CLI/SDK pair.`);
+// The selected pair is an acceptance input, not a value inferred from the artifacts under test.
+const CANDIDATE_VERSION = "0.7.0-rc.1";
+if (cliVersion !== CANDIDATE_VERSION || sdkVersion !== CANDIDATE_VERSION) {
+  throw new Error(
+    `Expected the selected pair at ${CANDIDATE_VERSION}; found CLI ${cliVersion} and SDK ${sdkVersion}.`
+  );
 }
 const publishedRegistryVersion = process.env.HABITAT_ACCEPTANCE_REGISTRY_VERSION?.trim();
 if (
@@ -1568,10 +1622,10 @@ describe("installed Habitat products", () => {
       >;
     };
     expect(sdkManifest.dependencies).toMatchObject({
-      "@orpc/contract": "2.0.0-beta.32",
-      "@orpc/experimental-effect": "2.0.0-beta.32",
-      "@orpc/server": "2.0.0-beta.32",
-      effect: "4.0.0-beta.101",
+      "@orpc/contract": "2.0.0-beta.51",
+      "@orpc/effect": "2.0.0-beta.51",
+      "@orpc/server": "2.0.0-beta.51",
+      effect: "4.1.4",
     });
     expect(Object.values(sdkManifest.dependencies ?? {})).not.toContain("2.0.0-beta.20");
     for (const concrete of [
@@ -1582,7 +1636,7 @@ describe("installed Habitat products", () => {
       "smol-toml",
     ])
       expect(sdkManifest.dependencies).not.toHaveProperty(concrete);
-    expect(cliManifest.dependencies?.["@effect/platform-node"]).toBe("4.0.0-beta.101");
+    expect(cliManifest.dependencies?.["@effect/platform-node"]).toBe("4.1.4");
     expect(
       Object.keys(sdkManifest.dependencies ?? {}).filter((name) => name.startsWith("@habitat-ai/"))
     ).toEqual([]);
@@ -1908,6 +1962,8 @@ describe("installed Habitat products", () => {
       "service@2",
       "service@3",
       "service@4",
+      "service@5",
+      "service@6",
     ]);
 
     const canonicalBlueprintRoot = path.join(workspaceRoot, ".habitat/blueprints");
@@ -1952,6 +2008,8 @@ describe("installed Habitat products", () => {
       "service/versions/2/structure.toml",
       "service/versions/3/structure.toml",
       "service/versions/4/structure.toml",
+      "service/versions/5/structure.toml",
+      "service/versions/6/structure.toml",
     ]);
     const nestedBlueprintResidue = blueprintInventory.filter((relativePath) => {
       const filename = relativePath.split("/").at(-1);
@@ -2229,7 +2287,7 @@ describe("installed Habitat products", () => {
           }),
           expect.objectContaining({
             blueprint: "service",
-            blueprintVersion: 3,
+            blueprintVersion: 5,
             id: "@fixture/greeting-service",
             ownerProject: "@fixture/greeting-service",
           }),
@@ -2519,6 +2577,16 @@ describe("installed Habitat products", () => {
         path: "dist/blueprints/service/versions/4/blueprint.toml",
         version: 4,
       },
+      {
+        id: "service",
+        path: "dist/blueprints/service/versions/5/blueprint.toml",
+        version: 5,
+      },
+      {
+        id: "service",
+        path: "dist/blueprints/service/versions/6/blueprint.toml",
+        version: 6,
+      },
     ]);
     expect(resolvedCatalog.catalog.blueprints).toEqual(
       expect.arrayContaining([
@@ -2682,13 +2750,109 @@ describe("installed Habitat products", () => {
         }),
         expect.objectContaining({
           instanceId: "@fixture/greeting-service",
-          ruleId: "service_v3_client_lineage",
+          ruleId: "service_v5_client_lineage",
           runner: "grit",
           status: "pass",
+        }),
+        expect.objectContaining({
+          instanceId: "@fixture/greeting-service",
+          ruleId: "service_v5_effect_bridge",
+          runner: "grit",
+          status: "pass",
+          findings: [],
         }),
       ]),
       ok: true,
     });
+
+    const serviceImplPath = "services/greeting/src/service/impl.ts";
+    const serviceRoutePath = "services/greeting/src/service/modules/greeting/router/greet.ts";
+    const serviceInstancePath = path.join(consumerRoot, "services/greeting/habitat.toml");
+    const originalInstance = await readFile(serviceInstancePath, "utf8");
+    const generatedPin = "\nblueprintVersion = 5\n";
+    expect(originalInstance).toContain(generatedPin);
+    const selectBridge = (version: number) =>
+      writeFile(
+        serviceInstancePath,
+        originalInstance.replace(generatedPin, `\nblueprintVersion = ${version}\n`)
+      );
+    const originalImpl = await readFile(path.join(consumerRoot, serviceImplPath), "utf8");
+    const originalRoute = await readFile(path.join(consumerRoot, serviceRoutePath), "utf8");
+    const currentRawBridge = 'import "@orpc/effect/extensions/effect";';
+    const officialImpl = `import "@habitat-ai/sdk/plugins/server/effect";\n${originalImpl}`;
+    const officialRoute = originalRoute.replace(
+      ".handler(({ context }) => {",
+      ".effect(function* ({ context }) {"
+    );
+    expect(officialRoute).not.toBe(originalRoute);
+    const checkBridge = async (version: number, rejectedReach?: string) => {
+      const ruleId = `service_v${version}_effect_bridge`;
+      const expectedRefusal = rejectedReach !== undefined;
+      const result = await run(
+        habitat,
+        ["check", "--owner", "@fixture/greeting-service", "--rule", ruleId],
+        { cwd: consumerRoot }
+      );
+      expect(result, result.stderr || result.stdout).toMatchObject({
+        exitCode: expectedRefusal ? 1 : 0,
+      });
+      const report = JSON.parse(result.stdout);
+      expect(report, rejectedReach ?? ruleId).toMatchObject({
+        _tag: "Completed",
+        ok: !expectedRefusal,
+        applications: [
+          {
+            ruleId,
+            runner: "grit",
+            status: expectedRefusal ? "fail" : "pass",
+            disposition: { kind: "evaluated" },
+            ...(version >= 5 && {
+              remediate: expect.stringContaining(
+                "import @habitat-ai/sdk/plugins/server/effect only in src/service/impl.ts"
+              ),
+            }),
+            findings: expectedRefusal ? [expect.objectContaining({ path: serviceRoutePath })] : [],
+          },
+        ],
+      });
+      expect(report.applications).toHaveLength(1);
+      expect(report.applications[0].findings).toHaveLength(expectedRefusal ? 1 : 0);
+    };
+    try {
+      const forbiddenBridgeReaches = [
+        'import "@habitat-ai/sdk/plugins/server/effect";',
+        ...["@orpc/effect", "@orpc/experimental-effect"].flatMap((bridge) => [
+          `import "${bridge}/extensions/effect";`,
+          `import { handlerGen } from "${bridge}";`,
+        ]),
+      ];
+      for (const version of [5, 6]) {
+        if (version === 6) {
+          await selectBridge(version);
+          await writeFile(path.join(consumerRoot, serviceRoutePath), originalRoute);
+          await checkBridge(version);
+        }
+        await writeFile(path.join(consumerRoot, serviceImplPath), officialImpl);
+        await writeFile(path.join(consumerRoot, serviceRoutePath), officialRoute);
+        await checkBridge(version);
+        await writeFile(path.join(consumerRoot, serviceImplPath), originalImpl);
+        for (const reach of version === 5 ? forbiddenBridgeReaches : [currentRawBridge]) {
+          await writeFile(path.join(consumerRoot, serviceRoutePath), `${reach}\n${originalRoute}`);
+          await checkBridge(version, reach);
+        }
+      }
+      // The same forbidden current import escapes the frozen predecessors; this is not compliance.
+      for (const version of [3, 4]) {
+        await selectBridge(version);
+        await checkBridge(version);
+      }
+    } finally {
+      await Promise.all([
+        writeFile(serviceInstancePath, originalInstance),
+        writeFile(path.join(consumerRoot, serviceImplPath), originalImpl),
+        writeFile(path.join(consumerRoot, serviceRoutePath), originalRoute),
+      ]);
+    }
 
     const invalidResourceHelper = path.join(
       consumerRoot,
@@ -4325,8 +4489,8 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   };
   expect(servicePackage.dependencies).toEqual({
     "@habitat-ai/sdk": installVersion,
-    "@orpc/contract": "2.0.0-beta.32",
-    "@orpc/server": "2.0.0-beta.32",
+    "@orpc/contract": "2.0.0-beta.51",
+    "@orpc/server": "2.0.0-beta.51",
     typebox: "1.3.8",
   });
 
@@ -4411,37 +4575,37 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   const serviceRootInput = "{workspaceRoot}/services/greeting";
   const serviceTargetPrefix = "habitat:application:@fixture/greeting-service:";
   const expectedServiceInputsByRule = {
-    service_v3_client_lineage: [`${serviceRootInput}/src/client.ts`],
-    service_v3_context_funnel: [
+    service_v5_client_lineage: [`${serviceRootInput}/src/client.ts`],
+    service_v5_context_funnel: [
       `${serviceRootInput}/src/service/base.ts`,
       `${serviceRootInput}/src/service/impl.ts`,
       `${serviceRootInput}/src/service/middleware/*.ts`,
       `${serviceRootInput}/src/service/modules/*/module.ts`,
       `${serviceRootInput}/src/service/modules/*/router/*.ts`,
     ],
-    service_v3_contract_authority: [`${serviceRootInput}/src/service/modules/*/contract/*.ts`],
-    service_v3_contract_composition: [
+    service_v5_contract_authority: [`${serviceRootInput}/src/service/modules/*/contract/*.ts`],
+    service_v5_contract_composition: [
       `${serviceRootInput}/src/service/contract.ts`,
       `${serviceRootInput}/src/service/modules/*/contract/index.ts`,
     ],
-    service_v3_effect_bridge: [
+    service_v5_effect_bridge: [
       `${serviceRootInput}/src/client.ts`,
       `${serviceRootInput}/src/service/**/*.ts`,
     ],
-    service_v3_public_face: [`${serviceRootInput}/package.json`],
-    service_v3_router_composition: [
+    service_v5_public_face: [`${serviceRootInput}/package.json`],
+    service_v5_router_composition: [
       `${serviceRootInput}/src/service/modules/*/router.ts`,
       `${serviceRootInput}/src/service/modules/*/router/*.ts`,
       `${serviceRootInput}/src/service/router.ts`,
     ],
-    service_v3_source_boundary: [
+    service_v5_source_boundary: [
       `${serviceRootInput}/src/client.ts`,
       `${serviceRootInput}/src/service/**/*.ts`,
     ],
   } as const;
   const expectedServiceTargets = [
     ...Object.keys(expectedServiceInputsByRule).map((ruleId) => `${serviceTargetPrefix}${ruleId}`),
-    `${serviceTargetPrefix}service_v3_structure`,
+    `${serviceTargetPrefix}service_v5_structure`,
   ].sort();
   const habitatLeafTargets = Object.entries(project.targets ?? {}).filter(([target]) =>
     target.startsWith("habitat:")
@@ -4459,7 +4623,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
     expect(serviceInputs, ruleId).not.toContain(`${serviceRootInput}/**/*`);
   }
   const structureInputs = (
-    project.targets?.[`${serviceTargetPrefix}service_v3_structure`]?.inputs ?? []
+    project.targets?.[`${serviceTargetPrefix}service_v5_structure`]?.inputs ?? []
   ).filter(
     (input): input is string => typeof input === "string" && input.startsWith(serviceRootInput)
   );
@@ -4472,8 +4636,8 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
         ...servicePackage,
         dependencies: {
           ...servicePackage.dependencies,
-          "@orpc/experimental-effect": "2.0.0-beta.32",
-          effect: "4.0.0-beta.101",
+          "@orpc/effect": "2.0.0-beta.51",
+          effect: "4.1.4",
         },
       },
       null,
@@ -4490,38 +4654,38 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
   ).toMatchObject({ exitCode: 0 });
 
   const generatedServiceRequire = createRequire(servicePackagePath);
-  const installedSdkManifestPath = await realpath(
-    generatedServiceRequire.resolve("@habitat-ai/sdk/package.json")
+  const consumerRequire = createRequire(path.join(consumerRoot, "package.json"));
+  const cliHostRequire = createRequire(
+    await realpath(consumerRequire.resolve("@habitat-ai/cli/host"))
   );
-  const installedSdkRequire = createRequire(installedSdkManifestPath);
-  const installedEffectExtensionManifestPath = await realpath(
-    installedSdkRequire.resolve("@orpc/experimental-effect/package.json")
+  const sdkFacadePath = await realpath(
+    generatedServiceRequire.resolve("@habitat-ai/sdk/plugins/server/effect")
   );
-  const installedEffectExtensionRequire = createRequire(installedEffectExtensionManifestPath);
+  const installedSdkRequire = createRequire(sdkFacadePath);
   const installedEffectExtensionPath = await realpath(
-    installedSdkRequire.resolve("@orpc/experimental-effect/extensions/effect")
+    installedSdkRequire.resolve("@orpc/effect/extensions/effect")
   );
+  const installedEffectExtensionRequire = createRequire(installedEffectExtensionPath);
   const installedServerManifestPath = await realpath(
     generatedServiceRequire.resolve("@orpc/server/package.json")
   );
   const installedEffectManifestPath = await realpath(
     generatedServiceRequire.resolve("effect/package.json")
   );
-  expect(await realpath(installedSdkRequire.resolve("@orpc/server/package.json"))).toBe(
-    installedServerManifestPath
+  expect(await realpath(cliHostRequire.resolve("@habitat-ai/sdk/plugins/server/effect"))).toBe(
+    sdkFacadePath
   );
-  expect(await realpath(installedSdkRequire.resolve("effect/package.json"))).toBe(
-    installedEffectManifestPath
-  );
-  expect(
-    await realpath(installedSdkRequire.resolve("@orpc/experimental-effect/extensions/effect"))
-  ).toBe(installedEffectExtensionPath);
-  expect(await realpath(installedEffectExtensionRequire.resolve("@orpc/server/package.json"))).toBe(
-    installedServerManifestPath
-  );
-  expect(await realpath(installedEffectExtensionRequire.resolve("effect/package.json"))).toBe(
-    installedEffectManifestPath
-  );
+  for (const owner of [generatedServiceRequire, cliHostRequire]) {
+    expect(await realpath(owner.resolve("@orpc/effect/extensions/effect"))).toBe(
+      installedEffectExtensionPath
+    );
+  }
+  for (const owner of [installedSdkRequire, installedEffectExtensionRequire, cliHostRequire]) {
+    expect(await realpath(owner.resolve("@orpc/server/package.json"))).toBe(
+      installedServerManifestPath
+    );
+    expect(await realpath(owner.resolve("effect/package.json"))).toBe(installedEffectManifestPath);
+  }
 
   const telemetryTypeConsumerPath = path.join(serviceRoot, "src/telemetry-type-consumer.ts");
   const runtimeTypeConsumerPath = path.join(serviceRoot, "src/runtime-type-consumer.ts");
@@ -4551,7 +4715,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       'import { type as schemaType } from "@orpc/contract";',
       'import { Context, Effect as NativeEffect } from "effect";',
       'import { createRouterClient, implement as NativeImplement, type os as NativeOs } from "@orpc/server";',
-      'import { createEffectClient, type WithEffectContext } from "@orpc/experimental-effect";',
+      'import { createEffectClient, type WithEffectContext } from "@orpc/effect";',
       'import type { HabitatEffect } from "@habitat-ai/sdk/effect";',
       'import type { EffectContext } from "@habitat-ai/sdk/effect/context";',
       'import type { EffectWrap } from "@habitat-ai/sdk/effect/wrap";',
@@ -4905,7 +5069,7 @@ async function assertInstalledServiceConsumer(nx: string, fixturePath: string): 
       'import { oc, type as schemaType } from "@orpc/contract";',
       'import { createRouterClient, implement as nativeImplement } from "@orpc/server";',
       'import { Context, Effect as NativeEffect } from "effect";',
-      'import { createEffectClient, type WithEffectContext } from "@orpc/experimental-effect";',
+      'import { createEffectClient, type WithEffectContext } from "@orpc/effect";',
       'import { Type } from "typebox";',
       'import { Effect as HabitatEffect } from "@habitat-ai/sdk/effect";',
       "import {",
@@ -5494,6 +5658,9 @@ async function publishCandidateProducts(registryUrl: string): Promise<void> {
         path.join(acceptanceRoot, "packages", product.filename),
         "--access",
         "public",
+        // npm requires an explicit tag for prereleases; this registry is loopback-only.
+        "--tag",
+        "latest",
         "--ignore-scripts",
         `--registry=${registryUrl}`,
       ],

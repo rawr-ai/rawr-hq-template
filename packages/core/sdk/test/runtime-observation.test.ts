@@ -3,7 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type as schemaType } from "@orpc/contract";
-import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { WithEffectContext } from "@orpc/effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Effect } from "effect";
 import { expect, test } from "vitest";

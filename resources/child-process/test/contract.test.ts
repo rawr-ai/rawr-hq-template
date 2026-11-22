@@ -1,9 +1,6 @@
 import { expect, expectTypeOf, test } from "bun:test";
 import type { Effect, PlatformError, Scope } from "effect";
-import type {
-  ChildProcessHandle,
-  ChildProcessSpawner,
-} from "effect/unstable/process/ChildProcessSpawner";
+import type { ChildProcessHandle, ChildProcessSpawner } from "effect/process/ChildProcessSpawner";
 import type { ChildProcessResource } from "../contract";
 import { ChildProcessRuntimeResource } from "../runtime";
 

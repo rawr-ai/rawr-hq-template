@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { WithEffectContext } from "@orpc/effect";
 import type { Exit } from "effect";
 import { describe, expect, test } from "vitest";
 import type {

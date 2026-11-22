@@ -1,5 +1,5 @@
 import { isSpanContextValid, context as otelContext, trace } from "@opentelemetry/api";
-import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { WithEffectContext } from "@orpc/effect";
 import { ORPCError } from "@orpc/server";
 import type { StandardHandlerOptions } from "@orpc/server/standard";
 import { Cause, Context, Effect, Exit } from "effect";
@@ -63,8 +63,12 @@ export function createNativeServerRequestAssembly(input: {
                 readonly interrupted: boolean;
               }
             | undefined;
-          const wrap: NonNullable<WithEffectContext<never>["effect/wrap"]> = (program) =>
-            withNativeEffectTracing(
+          const wrap: NonNullable<WithEffectContext<never>["effect/wrap"]> = (
+            program,
+            { kind }
+          ) => {
+            if (kind !== "handler") return program;
+            return withNativeEffectTracing(
               Effect.gen(function* () {
                 const span = yield* Effect.orDie(Effect.currentSpan);
                 if (
@@ -95,6 +99,7 @@ export function createNativeServerRequestAssembly(input: {
                 "rpc.method": options.path.join("."),
               }
             );
+          };
           function publish(outcome: "returned" | "rejected", error?: unknown): void {
             try {
               const result: unknown = input.observation?.publish({

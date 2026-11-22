@@ -19,7 +19,7 @@ import {
   VersionedContentTreeEntrySchema,
 } from "@habitat-ai/resource-versioned-content";
 import { Effect, Equal, FileSystem, Path, PlatformError, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import Schema from "typebox/schema";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
