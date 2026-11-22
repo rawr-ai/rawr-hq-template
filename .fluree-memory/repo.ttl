@@ -34,6 +34,23 @@ mem:constraint-01m7qt6zg3g0rjr1gmhest1rcc a mem:Constraint ;
     mem:createdAt "2026-11-18T17:10:31.683239+00:00"^^xsd:dateTime ;
     mem:rationale "A fresh session or a promise not to search does not remove ambient context. In Claude Code 2.1.322 probes, a default launch read canary CLAUDE.md files from its directory and parent, while the locked launch did not; a launch path containing a project name also reached the model." .
 
+mem:constraint-01m7qxq10xjej6mg8q1k3224e2 a mem:Constraint ;
+    mem:content "Before claiming a behaviour is unpromised or removable, read the accepted requirements in openspec/specs/*/spec.md (MUST statements) and the owning project's AGENTS.md Boundaries, not only package READMEs and docs/system. Search by the behaviour's nouns in several phrasings, because contract wording differs from code and test names. A behaviour backed by an accepted MUST changes only through an explicit, owner-approved amendment of that text. Likewise, before raising a new owner decision or gate, read the deferral ledgers (docs/projects/*/deferred-capabilities.md and deferrals.md): an existing hold such as D-5 may already own it." ;
+    mem:tag "authority" ;
+    mem:tag "contract" ;
+    mem:tag "guarantee" ;
+    mem:tag "openspec" ;
+    mem:tag "review" ;
+    mem:tag "search" ;
+    mem:tag "trap" ;
+    mem:scope mem:repo ;
+    mem:severity "should" ;
+    mem:artifactRef "openspec/specs/runtime-harness-boundary/spec.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T18:11:43.261109+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-18T19:41:14.930257+00:00"^^xsd:dateTime ;
+    mem:rationale "A review twice concluded a telemetry guarantee was only a test because searches covered READMEs, system docs and one phrasing; the accepted MUST sat in an openspec spec and the provider AGENTS.md." .
+
 mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:content "Habitat recovery uses one integrating director and a separate staffing-and-challenge director on the other runtime; the owner keeps product intent and admission of repairs and releases. Each working lane pairs a lead who owns the artifact with a lead on the other runtime who challenges it independently before the design is settled. A second runtime agreeing is not an independent verdict, and a director's agreement is not a method review. Current names, topics and routing live in the recovery workstream record, not here." ;
     mem:tag "agent-bus" ;
@@ -51,6 +68,44 @@ mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:updatedAt "2026-11-18T17:01:58.680146+00:00"^^xsd:dateTime ;
     mem:rationale "Two runtimes work the recovery; one integrator avoids split direction while a separate staffing owner keeps independent challenge." ;
     mem:alternatives "single director for both runtimes,per-lane directors with no integrator" .
+
+mem:decision-01m7qv68e9c53r97a16nwethmm a mem:Decision ;
+    mem:content "Narsil is not the authority for symbol, reference, import or call edges in this repository. Verify any edge reported by its call-graph, import-graph, export-map and dependency tools in source, and do not read an absent edge as evidence that no relation exists. It may be used as an optional locator: reference and symbol-usage search with test exclusion, and plain-language hybrid search. Nx identifies the owning project and project dependencies; the TypeScript compiler resolves static symbols, types and imports; neither proves dynamic callbacks. Text location comes from ripgrep. Narsil's language-server mode and neural search were not evaluated." ;
+    mem:tag "call-graph" ;
+    mem:tag "code-intel" ;
+    mem:tag "code-search" ;
+    mem:tag "mcp" ;
+    mem:tag "narsil" ;
+    mem:tag "nx" ;
+    mem:tag "tooling" ;
+    mem:tag "typescript" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "AGENTS.md" ;
+    mem:artifactRef "README.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T17:27:36.649465+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-18T17:35:34.302744+00:00"^^xsd:dateTime ;
+    mem:rationale "Checked on two builds (a shared-daemon fork at 1.7.0 and stock 1.7.2) with the index verified current for the files asked about and the tool driven by its own usage guide, variants included. Direct same-module calls resolve. Optional and property calls are not edges; call targets resolve by bare name to test-file symbols even with test exclusion; re-export barrels have empty import and export maps; imported-by matches on basename and over-reports many times; top-level const initialisers have no caller symbol. Reference search with test exclusion and plain-language hybrid search do find candidate locations, inconsistently." ;
+    mem:alternatives "keep Narsil as the declared symbol and reference authority,run it as a standing shared daemon for all agents,rely on its call graph with test exclusion" .
+
+mem:decision-01m7r67jpsxdpye3tnqt6ha60s a mem:Decision ;
+    mem:content "Owner-admitted terms for migrating Habitat from oRPC 2.0.0-beta.32 and Effect 4.0.0-beta.101 to beta.51 and 4.1.4: adopt the vendor's native results, not compatibility wrappers. A pending next during early stream return loses its value; unmapped declared error codes answer HTTP 400; declared errors end spans in ERROR. No SDK status-map option is promised: a surface that must keep an old status defers the upgrade. Admission covers the migration and its spec amendment, not release or publish. One pack never certifies another: each candidate gets its own version and a full rerun of checks and installed suites on its own bytes. External telemetry export stays held by D-5; authored Effect middleware is unsupported." ;
+    mem:tag "d-5" ;
+    mem:tag "declared-error" ;
+    mem:tag "effect" ;
+    mem:tag "migration" ;
+    mem:tag "orpc" ;
+    mem:tag "owner-decision" ;
+    mem:tag "stream-cancellation" ;
+    mem:tag "upgrade" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "docs/projects/habitat-runtime-realignment/deferred-capabilities.md" ;
+    mem:artifactRef "openspec/specs/runtime-harness-boundary/spec.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T20:40:34.265102+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-22T22:45:00.597121+00:00"^^xsd:dateTime ;
+    mem:rationale "Design philosophy: vendors keep their semantics; a wrapper must earn its place. Packed and downstream evidence showed the native behaviour is coherent and the old results would need a Habitat shim or a second Effect runner." ;
+    mem:alternatives "Hold the old cohort; add a public SDK error-status option; synthesize the trailing stream value; ban Effect middleware platform-wide" .
 
 mem:fact-01m7qsab9edfzxd3h6emtvsy07 a mem:Fact ;
     mem:content "Habitat invocation continuation fails open: when the Effect fiber carries no continuation, assertAdmission falls back to assertOpen, which passes while the process is open. A lost effect/context lease therefore leaves ordinary oRPC traffic correct. Compatibility oracles for the oRPC-Effect bridge must also witness retained-view expiry or drain, and carry a marker through an authored Effect Context tag." ;
@@ -105,3 +160,159 @@ mem:fact-01m7qsabdzp8tffg46vremcefh a mem:Fact ;
     mem:branch "main" ;
     mem:createdAt "2026-11-18T16:54:53.631135+00:00"^^xsd:dateTime ;
     mem:rationale "Telemetry failure is contained by design, so a server smoke or request oracle cannot detect it." .
+
+mem:fact-01m7qx2vmjhsdrtc7h8bwywvxz a mem:Fact ;
+    mem:content "oRPC tracer ownership trap for any upgrade past 2.0.0-beta.32. From upstream PRs 2000 and 2408 and a source reading of beta.51 (not runtime-verified): tracing moved behind a backend-neutral Tracer slot in @orpc/shared; getOpenTelemetryConfig is gone; ORPCInstrumentation.disable() clears any occupant of the slot and isEnabled() reports any occupant, by upstream design. Habitat's exact-owner release then depends on getTracer() identity, an exported but undocumented seam. A replacement-safety test must give the foreign instrumentation its own unregistered provider and assert export, not parentage. Reassess against the then-current release, not beta.51." ;
+    mem:tag "beta" ;
+    mem:tag "compatibility-trap" ;
+    mem:tag "opentelemetry" ;
+    mem:tag "orpc" ;
+    mem:tag "ownership" ;
+    mem:tag "telemetry" ;
+    mem:tag "tracer" ;
+    mem:tag "upgrade" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/enabled.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T18:00:42.386850+00:00"^^xsd:dateTime .
+
+mem:fact-01m7qyd4b75cdebmz3ewy0g0jm a mem:Fact ;
+    mem:content "Habitat's authored Effect spans use the global OpenTelemetry tracer and active context through withNativeEffectTracing, so native oRPC spans do not prove authored tracing works. A host or instrumentation using a tracer provider that is not registered globally can export oRPC spans while habitat.runtime service spans are missing. To qualify a host-owned telemetry setup, require a habitat.runtime span under the native handler span; neither oRPC spans nor a degraded lease shows the host is healthy." ;
+    mem:tag "borrowed-host" ;
+    mem:tag "false-green" ;
+    mem:tag "global-tracer" ;
+    mem:tag "habitat.runtime" ;
+    mem:tag "host-owned" ;
+    mem:tag "opentelemetry" ;
+    mem:tag "telemetry" ;
+    mem:tag "tracer-provider" ;
+    mem:tag "withNativeEffectTracing" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/native-effect-tracing.ts" ;
+    mem:artifactRef "resources/telemetry/providers/opentelemetry-node/AGENTS.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T18:23:47.559551+00:00"^^xsd:dateTime ;
+    mem:rationale "oRPC can use an injected provider while Habitat's Effect tracing reads the global API, so one healthy signal can hide the other being absent." .
+
+mem:fact-01m7r2jdcj9gafak1dhjjw3e8x a mem:Fact ;
+    mem:content "Packed Habitat CLI/SDK candidates must not reuse a published version when installed from local tarballs. @habitat-ai/cli pins an exact @habitat-ai/sdk version, so Bun can satisfy the CLI's dependency from the registry and nest the published SDK with its old oRPC and Effect cohort beside the candidate root SDK. A symptom is '.effect is not a function'; commands that never reach .effect can pass. Use a unique version or a no-uplink registry, and require one SDK, one @orpc/server, one effect, and CLI-resolved SDK integrity equal to the candidate tarball." ;
+    mem:tag "cli" ;
+    mem:tag "effect-extension" ;
+    mem:tag "false-green" ;
+    mem:tag "orpc" ;
+    mem:tag "packed-consumer" ;
+    mem:tag "sdk" ;
+    mem:tag "split-cohort" ;
+    mem:tag "tarball-integrity" ;
+    mem:tag "version-collision" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "apps/habitat/package.json" ;
+    mem:artifactRef "apps/habitat/test/installed-package.test.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T19:36:34.962681+00:00"^^xsd:dateTime .
+
+mem:fact-01m7r2jderbqm214hq8hwvtmas a mem:Fact ;
+    mem:content "oRPC Effect bridge error semantics differ across the upgrade: @orpc/experimental-effect 2.0.0-beta.32 handlerGen converts ORPCError to a success before effect/wrap and oRPC throws the returned error later, while @orpc/effect 2.0.0-beta.51 lets the failure pass through effect/wrap. From source reading, the wire response stays the same but Habitat's nativeEffect.typedFailure and authored server.operation/service.operation span status and exception events change. Upgrade checks need a declared-error case with telemetry, not only status and decoded data." ;
+    mem:tag "beta.51" ;
+    mem:tag "effect-bridge" ;
+    mem:tag "effect-wrap" ;
+    mem:tag "false-green" ;
+    mem:tag "handlergen" ;
+    mem:tag "orpc" ;
+    mem:tag "orpcerror" ;
+    mem:tag "span-status" ;
+    mem:tag "typedfailure" ;
+    mem:tag "upgrade" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/native-effect-tracing.ts" ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/server-request.ts" ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/service-client-assembly.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T19:36:35.032839+00:00"^^xsd:dateTime .
+
+mem:fact-01m7r2jdgnverrxcaff3bstqcg a mem:Fact ;
+    mem:content "The service blueprint's effect-bridge Grit rules match the oRPC Effect bridge package name literally, and the SDK ships those blueprints. Renaming the bridge without updating every blueprint version makes extension-placement and direct-bridge rules stop matching, while embedded examples using the old name can stay green. A bridge rename needs known-bad consumer controls using the new package name." ;
+    mem:tag "blueprint" ;
+    mem:tag "effect-bridge" ;
+    mem:tag "experimental-effect" ;
+    mem:tag "false-green" ;
+    mem:tag "grit" ;
+    mem:tag "orpc-effect" ;
+    mem:tag "package-rename" ;
+    mem:tag "policy" ;
+    mem:scope mem:repo ;
+    mem:artifactRef ".habitat/blueprints/service/components/funnel/effect-bridge.md" ;
+    mem:artifactRef "packages/core/sdk/tsdown.config.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T19:36:35.093282+00:00"^^xsd:dateTime .
+
+mem:fact-01m7r3hmzq0qfjem5kmvepsa3d a mem:Fact ;
+    mem:content "oRPC OpenAPI error status changes across the upgrade: a declared error code with no errorStatusMap entry returns HTTP 500 on 2.0.0-beta.32 and 400 on 2.0.0-beta.51 because DEFAULT_ERROR_STATUS changed, and the error body drops inferable. Common codes such as CONFLICT stay mapped (409). Habitat configures no errorStatusMap, so downstream apps inherit this; compare error-path responses, not only successful traffic, when qualifying the cohort." ;
+    mem:tag "beta.51" ;
+    mem:tag "declared-error" ;
+    mem:tag "error-status" ;
+    mem:tag "false-green" ;
+    mem:tag "openapi" ;
+    mem:tag "orpc" ;
+    mem:tag "upgrade" ;
+    mem:tag "wire" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/server-request.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T19:53:38.551202+00:00"^^xsd:dateTime .
+
+mem:fact-01m7r3hn22dm081wkvg88n8mn8 a mem:Fact ;
+    mem:content "@orpc/effect 2.0.0-beta.51 middlewareGen also calls effect/wrap, with kind middleware. Habitat's server wrap ignores kind, so on that cohort each Effect middleware adds a nested server.operation span and overwrites nativeEffect, outermost exit last. A handler Effect.die behind a pass-through middlewareGen was observed as typedFailure true, defect false, severity warning instead of defect true, severity error." ;
+    mem:tag "beta.51" ;
+    mem:tag "diagnostics" ;
+    mem:tag "effect-wrap" ;
+    mem:tag "middlewaregen" ;
+    mem:tag "nativeeffect" ;
+    mem:tag "orpc" ;
+    mem:tag "server-operation" ;
+    mem:tag "upgrade" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/server-request.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T19:53:38.626857+00:00"^^xsd:dateTime .
+
+mem:fact-01m7r3hn4a5wcc00t3na6s8hmc a mem:Fact ;
+    mem:content "Authored habitat.runtime spans (server.operation, service.operation) change status across the Effect 4.0.0-beta.101 to 4.1.4 cohort move: successful spans go from OK to UNSET, and with the oRPC beta.51 bridge a declared ORPCError goes from OK to ERROR with an exception event. Telemetry queries must not treat status OK as the success signal after this upgrade." ;
+    mem:tag "authored-spans" ;
+    mem:tag "effect" ;
+    mem:tag "habitat-runtime" ;
+    mem:tag "opentelemetry" ;
+    mem:tag "span-status" ;
+    mem:tag "upgrade" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "packages/core/runtime/process-runtime/src/native-effect-tracing.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-18T19:53:38.698311+00:00"^^xsd:dateTime .
+
+mem:fact-01m7v877ytc6ct2mdrh977fkdh a mem:Fact ;
+    mem:content "The root bun run check schedules lint, typecheck, build and Habitat policy only; it runs no behaviour suites (stream closure, cleanup causes, middleware observation, telemetry provider, service command tests). A green check therefore says nothing about runtime behaviour. Qualifying a candidate source needs the focused bun and vitest suites replayed from a frozen clone of the exact commit, plus a falsification that removes each repair and shows its test fail." ;
+    mem:tag "behaviour-tests" ;
+    mem:tag "bun-run-check" ;
+    mem:tag "false-green" ;
+    mem:tag "focused-tests" ;
+    mem:tag "frozen-clone" ;
+    mem:tag "nx" ;
+    mem:tag "qualification" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "package.json" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-20T01:13:03.706790+00:00"^^xsd:dateTime .
+
+mem:fact-01m7v8780qc8s45skressbptz4 a mem:Fact ;
+    mem:content "The files at the service blueprint's kind root (.habitat/blueprints/service/README.md, skill.md, blueprint.toml, components/) are the immutable service@1 version, not editable unversioned guidance. Later versions live under versions/N. Stale wording there, such as a renamed vendor package, is fixed by routing authors of later versions to version-specific guidance, never by rewriting the root files." ;
+    mem:tag "blueprint" ;
+    mem:tag "guidance" ;
+    mem:tag "immutable" ;
+    mem:tag "readme" ;
+    mem:tag "service" ;
+    mem:tag "service-v1" ;
+    mem:tag "skill" ;
+    mem:scope mem:repo ;
+    mem:artifactRef ".habitat/blueprints/service/README.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-20T01:13:03.767674+00:00"^^xsd:dateTime .
