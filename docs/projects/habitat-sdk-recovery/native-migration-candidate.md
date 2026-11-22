@@ -27,6 +27,11 @@ different things. A pass on one is not a pass on another.
 
 ## What changes for a consumer
 
+- **Local catalog discovery:** The existing directory exclusions now apply
+  beneath `.habitat` as well. For example, `.habitat/blueprints/vendor/blueprint.toml`
+  used to register on the old cohort; move it to a blueprint ID that is not
+  an [excluded directory name](../../../services/catalog/src/service/modules/catalog/model/policy/repository-paths.ts)
+  and update its instances. The same rule applies to local compatibility rules.
 - **Cancellation:** returning an in-flight native iterator can close the
   caller's pending result without delivering the old trailing value. Stop
   still waits for the real pull to settle; cleanup runs once and a retained

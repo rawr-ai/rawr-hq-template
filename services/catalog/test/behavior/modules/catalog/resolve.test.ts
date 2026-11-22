@@ -594,6 +594,22 @@ describe("Habitat catalog resolve", () => {
     });
   });
 
+  test("ignores reserved directories inside local blueprint authority", async () => {
+    const result = await resolveFixture({
+      files: {
+        ".habitat/blueprints/package/blueprint.toml": blueprintToml(),
+        ".habitat/blueprints/package/structure.toml": structureToml(),
+        ".habitat/blueprints/vendor/blueprint.toml": blueprintToml({ id: "vendor" }),
+        ".habitat/blueprints/vendor/structure.toml": structureToml(),
+      },
+    });
+
+    expect(result).toMatchObject({ _tag: "Resolved" });
+    if (result._tag !== "Resolved")
+      throw new Error("Expected local blueprint authority to resolve.");
+    expect(result.catalog.blueprints.map(({ definition }) => definition.id)).toEqual(["package"]);
+  });
+
   test("rejects a conflicting local definition at a selected package identity", async () => {
     const fixture = policyPackInstanceFixture();
     const result = await resolveFixture({
