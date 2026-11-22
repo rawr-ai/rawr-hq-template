@@ -437,7 +437,7 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
 const sdkVersion = await readPackageVersion("packages/core/sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
 // The selected pair is an acceptance input, not a value inferred from the artifacts under test.
-const CANDIDATE_VERSION = "0.7.0-rc.1";
+const CANDIDATE_VERSION = "0.7.0-rc.2";
 if (cliVersion !== CANDIDATE_VERSION || sdkVersion !== CANDIDATE_VERSION) {
   throw new Error(
     `Expected the selected pair at ${CANDIDATE_VERSION}; found CLI ${cliVersion} and SDK ${sdkVersion}.`
@@ -1019,6 +1019,29 @@ describe("installed Habitat products", () => {
   ])(
     "migrates CLI %s and its SDK as one native Nx package group",
     async (previousVersion, previousNxVersion) => {
+      const runMigrationStage = async (
+        stage:
+          | "install previous pair"
+          | "plan migration"
+          | "install candidate pair"
+          | "apply migrations"
+          | "verify frozen install",
+        ...command: Parameters<typeof run>
+      ): Promise<CommandResult> => {
+        if (process.platform !== "win32" || previousVersion !== "0.5.6") return run(...command);
+
+        const label = `Windows 0.5.6 migration: ${stage}`;
+        const startedAt = performance.now();
+        const elapsedMs = () => Math.round(performance.now() - startedAt);
+        console.info(`${label} started.`);
+        try {
+          const result = await run(...command);
+          console.info(`${label} closed after ${elapsedMs()}ms (exit ${result.exitCode}).`);
+          return result;
+        } catch (cause) {
+          throw new Error(`${label} failed after ${elapsedMs()}ms.`, { cause });
+        }
+      };
       const root = path.join(
         acceptanceRoot,
         `migration-consumer-${previousVersion.replaceAll(".", "-")}`
@@ -1073,7 +1096,8 @@ describe("installed Habitat products", () => {
       );
 
       // Bun keeps scoped registries above --registry, so the old pair needs a public-only config.
-      const installedPreviousPair = await run(
+      const installedPreviousPair = await runMigrationStage(
+        "install previous pair",
         "bun",
         ["install", "--ignore-scripts", `--registry=${PUBLIC_NPM_REGISTRY}`],
         {
@@ -1091,7 +1115,8 @@ describe("installed Habitat products", () => {
         installedPreviousPair.stderr || installedPreviousPair.stdout
       ).toMatchObject({ exitCode: 0 });
 
-      const migrated = await run(
+      const migrated = await runMigrationStage(
+        "plan migration",
         "bunx",
         ["nx", "migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
         {
@@ -1114,16 +1139,22 @@ describe("installed Habitat products", () => {
         "0-5-7-repository-foundation"
       );
 
-      const installedMigratedPair = await run("bun", ["install", "--ignore-scripts"], {
-        cwd: root,
-        timeoutMs: 120_000,
-      });
+      const installedMigratedPair = await runMigrationStage(
+        "install candidate pair",
+        "bun",
+        ["install", "--ignore-scripts"],
+        {
+          cwd: root,
+          timeoutMs: 120_000,
+        }
+      );
       expect(
         installedMigratedPair,
         installedMigratedPair.stderr || installedMigratedPair.stdout
       ).toMatchObject({ exitCode: 0 });
 
-      const applied = await run(
+      const applied = await runMigrationStage(
+        "apply migrations",
         "bunx",
         ["nx", "migrate", "--run-migrations=migrations.json", "--interactive=false"],
         {
@@ -1158,7 +1189,8 @@ describe("installed Habitat products", () => {
         "@nx/enforce-module-boundaries"
       );
 
-      const frozenMigratedPair = await run(
+      const frozenMigratedPair = await runMigrationStage(
+        "verify frozen install",
         "bun",
         ["install", "--frozen-lockfile", "--ignore-scripts"],
         {

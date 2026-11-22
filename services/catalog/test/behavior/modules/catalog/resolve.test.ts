@@ -15,6 +15,7 @@ const unusedSourceInventory: SourceInventoryResource<never> = {
 
 type Fixture = {
   readonly files: Readonly<Record<string, string>>;
+  readonly workspacePrefix?: string;
   readonly policyPack?: {
     readonly expectedName?: string;
     readonly packageJsonPath?: string;
@@ -411,8 +412,9 @@ describe("Habitat catalog resolve", () => {
     });
   });
 
-  test("resolves coexisting legacy and successor definitions by exact instance version", async () => {
+  test("resolves exact local blueprint versions from a literal workspace root", async () => {
     const result = await resolveFixture({
+      workspacePrefix: "habitat-catalog-test-[authority]-",
       files: {
         ".habitat/blueprints/package/blueprint.toml": blueprintToml({
           version: 1,
@@ -442,7 +444,7 @@ describe("Habitat catalog resolve", () => {
       directories: ["packages/v1/src", "packages/v2/src"],
     });
 
-    expect(result._tag).toBe("Resolved");
+    expect(result).toMatchObject({ _tag: "Resolved" });
     if (result._tag !== "Resolved") throw new Error("Expected both blueprint versions to resolve.");
     expect(
       result.catalog.blueprints.map(({ definition, provenance }) => ({
@@ -1589,7 +1591,7 @@ async function withFixture<T>(fixture: Fixture, use: (client: Client) => Promise
         const fileSystem = yield* FileSystem.FileSystem;
         const path = yield* Path.Path;
         const workspaceRoot = yield* fileSystem.makeTempDirectoryScoped({
-          prefix: "habitat-catalog-test-",
+          prefix: fixture.workspacePrefix ?? "habitat-catalog-test-",
         });
         const fixtureFiles: Record<string, string> = { ...fixture.files };
         const packageJson = fixture.policyPack?.packageJson;

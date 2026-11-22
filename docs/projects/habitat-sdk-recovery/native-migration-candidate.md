@@ -1,6 +1,16 @@
 # Native SDK and CLI migration
 
-**Outcome (November 19, 2026):** The SDK and CLI at `0.7.0-rc.1` qualified
+**Candidate for landing:** `0.7.0-rc.2` replaces RC1. In the
+[hosted Windows check for RC1](https://github.com/rawr-ai/rawr-hq-template/actions/runs/45082705546/job/137394220836),
+the installed CLI missed project-local blueprints. Habitat had joined the
+workspace path to its glob patterns; Effect treated Windows separators as
+escapes. The CLI now passes a literal workspace root and relative patterns.
+A portable catalog test reproduces the failure with brackets in the workspace
+name and passes with the fix. The fix does not change the authority patterns
+or exclusions. A separate legacy migration hit its subprocess deadline in
+that run; its timing is not evidence for or against the catalog fix.
+
+**RC1 result (November 19, 2026):** The SDK and CLI at `0.7.0-rc.1` qualified
 together on a local Darwin ARM64 host. Both product archives from an
 independent rebuild matched byte for byte. The qualification did not publish
 a package, merge a branch, change downstream policy, or enable external export.
@@ -47,8 +57,7 @@ different things. A pass on one is not a pass on another.
 
 ## What was selected
 
-The private pair is `@habitat-ai/sdk@0.7.0-rc.1` and
-`@habitat-ai/cli@0.7.0-rc.1`. It selects Effect 4.1.4, the exact oRPC
+RC1 and RC2 both select Effect 4.1.4, the exact oRPC
 2.0.0-beta.51 family and the renamed `@orpc/effect` bridge. The public
 TypeBox boundary and generated OpenAPI 3.1.2 remain. The repository still
 bootstraps its own governance with the previously released CLI.
@@ -80,7 +89,7 @@ The [deferred-capability register](../habitat-runtime-realignment/deferred-capab
 retains external export. This decision does not claim every app should use
 Habitat, nor that historical examples independently validate a recovery method.
 
-## Private qualification
+## RC1 private qualification
 
 The following results refer to the private qualification builds on November 19.
 Between the first clean producer build and the full installed test, one test
@@ -156,7 +165,8 @@ Claude, Git and Graphite executables as specified in the
 [installed suite](../../../apps/habitat/test/installed-package.test.ts).
 This produces evidence for your checkout, not the historical archives.
 
-The raw receipts and tarballs are private. From the qualification evidence
+The following historical receipts and tarballs are for RC1, not RC2. They
+must not be used as proof of the replacement archives. From the private evidence
 root, run
 `shasum -a 256 -c assembled-rc1.LCWZTP/QUALIFICATION.sha256`. This
 checks 28 entries, including both builds' archives and the independent
