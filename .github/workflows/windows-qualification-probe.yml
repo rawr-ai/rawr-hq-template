@@ -1,0 +1,72 @@
+name: Windows candidate diagnostics
+
+on:
+  push:
+    branches: [habitat-windows-qualification-probe]
+
+permissions:
+  contents: read
+
+env:
+  NX_DAEMON: "false"
+  NX_NO_CLOUD: "true"
+  CI: "1"
+
+jobs:
+  filenames:
+    name: Native filename agreement
+    runs-on: windows-latest
+    timeout-minutes: 6
+    steps:
+      - run: git config --global core.longpaths true
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.18.1
+          package-manager-cache: false
+      - name: Compare native filenames with repository policy expectations
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $out = Join-Path $env:RUNNER_TEMP "habitat-grit-probe"
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $archive = Join-Path $out "grit.tar.gz"
+          Invoke-WebRequest -OutFile $archive -Uri "https://github.com/biomejs/gritql/releases/download/v0.1.0-alpha.1743007075/grit-x86_64-pc-windows-msvc.tar.gz"
+          $sha = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          if ($sha -ne "5c44ee3336514ab8c3fa81c5301bd54fca82a9ddec43f87d7181be757fbab084") { throw "Unexpected Grit archive" }
+          tar -xzf $archive -C $out
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $bin = @(Get-ChildItem $out -Recurse -File -Filter "grit.exe")
+          if ($bin.Count -ne 1) { throw "Expected one pinned native binary" }
+          node .github/habitat-diagnostics/qualify-grit-filename.mjs $bin[0].FullName
+          exit $LASTEXITCODE
+
+  installs:
+    name: Isolated Windows ${{ matrix.case }}
+    runs-on: windows-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        case: [migration, preset]
+    steps:
+      - name: Enable checkout paths
+        run: git config --global core.longpaths true
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24.18.1
+          package-manager-cache: false
+      - run: npm install --global npm@12.0.2
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Build the candidate SDK and CLI manifest
+        run: bunx nx run @habitat-ai/cli:manifest --skip-nx-cache --outputStyle=stream
+      - name: Trace the native consumer
+        run: node .github/habitat-diagnostics/windows-installer-diagnostic.cjs ${{ matrix.case }}
