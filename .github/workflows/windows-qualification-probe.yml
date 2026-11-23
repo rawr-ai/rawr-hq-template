@@ -7,63 +7,13 @@ on:
 permissions:
   contents: read
 
-env:
-  CI: "1"
-  NX_DAEMON: "false"
-  NX_NO_CLOUD: "true"
-  GRIT_TELEMETRY_DISABLED: "true"
-
 jobs:
-  directory:
-    name: Native directory acquisition
+  inventory:
+    name: Measure actual Windows rule directory sizes
     runs-on: windows-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
-      - name: Use the published LF rule text
-        run: |
-          git config --global core.longpaths true
-          git config --global core.autocrlf false
-          git config --global core.eol lf
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24.18.1
-          package-manager-cache: false
-      - name: Check directory and file acquisitions with the pinned binary
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $out = Join-Path $env:RUNNER_TEMP "habitat-grit-probe"
-          New-Item -ItemType Directory -Path $out | Out-Null
-          $archive = Join-Path $out "grit.tar.gz"
-          Invoke-WebRequest -OutFile $archive -Uri "https://github.com/biomejs/gritql/releases/download/v0.1.0-alpha.1743007075/grit-x86_64-pc-windows-msvc.tar.gz"
-          if ((Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant() -ne "5c44ee3336514ab8c3fa81c5301bd54fca82a9ddec43f87d7181be757fbab084") { throw "Unexpected Grit archive" }
-          tar -xzf $archive -C $out
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          $bin = @(Get-ChildItem $out -Recurse -File -Filter "grit.exe")
-          if ($bin.Count -ne 1) { throw "Expected one pinned native binary" }
-          $law = ".habitat/blueprints/service/components/funnel/effect-bridge.md"
-          if ((Get-FileHash -Algorithm SHA256 $law).Hash.ToLowerInvariant() -ne "671f78ad01e840fc0fa7fadab6c44e7b0159c73d3319f03b868aac46532e9248") { throw "Unexpected published law content" }
-          node .github/habitat-diagnostics/directory-agreement.mjs $bin[0].FullName $law
-          exit $LASTEXITCODE
-
-  pack:
-    name: LF producer on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 13
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - name: Select LF before either checkout
-        shell: pwsh
-        run: |
-          git config --global core.longpaths true
-          git config --global core.autocrlf false
-          git config --global core.eol lf
+      - run: git config --global core.longpaths true
       - uses: actions/checkout@v7
         with:
           path: probe
@@ -77,65 +27,18 @@ jobs:
         with:
           node-version: 24.18.1
           package-manager-cache: false
-      - run: npm install --global npm@12.0.2
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.14
-      - name: Record source and toolchain
-        working-directory: product
-        shell: pwsh
-        run: |
-          git rev-parse HEAD
-          git ls-files --eol apps/habitat/README.md packages/core/sdk/README.md apps/habitat/bin/run.js
-          node -p "JSON.stringify({node:process.version,zlib:process.versions.zlib})"
-          npm --version
-          bun --version
-      - run: bun install --frozen-lockfile --ignore-scripts
-        working-directory: product
-      - run: bunx nx run @habitat-ai/cli:manifest --skip-nx-cache --outputStyle=stream
-        working-directory: product
-      - name: Compare product digests without exporting archives
-        working-directory: product
+      - name: Measure Grit's inventory without exporting filenames
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $out = Join-Path $env:RUNNER_TEMP "packed"
+          $out = Join-Path $env:RUNNER_TEMP "native-size-probe"
           New-Item -ItemType Directory -Path $out | Out-Null
-          foreach ($project in @("packages/core/sdk", "apps/habitat")) {
-            Push-Location $project
-            npm pack --ignore-scripts --json --pack-destination $out | Out-Null
-            if ($LASTEXITCODE) { exit $LASTEXITCODE }
-            Pop-Location
-          }
-          python ../probe/.github/habitat-diagnostics/pack-agreement.py $out
+          $archive = Join-Path $out "grit.tar.gz"
+          Invoke-WebRequest -OutFile $archive -Uri "https://github.com/biomejs/gritql/releases/download/v0.1.0-alpha.1743007075/grit-x86_64-pc-windows-msvc.tar.gz"
+          if ((Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant() -ne "5c44ee3336514ab8c3fa81c5301bd54fca82a9ddec43f87d7181be757fbab084") { throw "Unexpected Grit archive" }
+          tar -xzf $archive -C $out
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $bin = @(Get-ChildItem $out -Recurse -File -Filter "grit.exe")
+          if ($bin.Count -ne 1) { throw "Expected one native binary" }
+          node probe/.github/habitat-diagnostics/measure-directory-inventory.mjs $bin[0].FullName product
           exit $LASTEXITCODE
-
-  consumer:
-    name: Windows real consumer stages
-    runs-on: windows-latest
-    timeout-minutes: 32
-    steps:
-      - run: git config --global core.longpaths true
-      - uses: actions/checkout@v7
-        with:
-          ref: e0c0529d53b8354310116baec9438dc64b7d9f9b
-          persist-credentials: false
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24.18.1
-          package-manager-cache: false
-      - run: npm install --global npm@12.0.2
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.3.14
-      - run: bun install --frozen-lockfile --ignore-scripts
-      - run: bunx nx run @habitat-ai/cli:manifest --skip-nx-cache --outputStyle=stream
-      - name: Run real 0.5.6 integration including apply, on its own
-        run: >-
-          bunx vitest run --project habitat-cli-installed-package-acceptance
-          --reporter=verbose --testNamePattern 'migrates CLI 0\.5\.6 '
-      - name: Run the same row after real preset and 0.5.3, in a fresh suite root
-        if: ${{ !cancelled() }}
-        run: >-
-          bunx vitest run --project habitat-cli-installed-package-acceptance
-          --reporter=verbose --testNamePattern 'creates the portable Bun repository|migrates CLI 0\.5\.(3|6) '
