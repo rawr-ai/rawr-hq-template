@@ -10,6 +10,31 @@ name and passes with the fix. The fix does not change the authority patterns
 or exclusions. A separate legacy migration hit its subprocess deadline in
 that run; its timing is not evidence for or against the catalog fix.
 
+The [first hosted RC2 Windows run](https://github.com/rawr-ai/rawr-hq-template/actions/runs/45085721307/job/137403756700)
+found the local blueprints and generated the service. It also exposed an
+LF-only test against valid CRLF TOML. The qualification now reads the numeric
+policy selection rather than treating a line ending as policy. Repository
+creation and legacy migration report their stages separately; the preset's
+compound Windows test no longer has the same ceiling as its first command.
+Individual command deadlines remain enforced.
+
+The migration fixture preserves the published 0.5.3 compatibility recipe:
+Nx 23.1.1 drives its plan and apply. For the ordinary later starting points
+(0.5.6 and 0.5.15) it pins the native migration CLI to 23.3.0 for repeatable
+qualification. Ordinary Nx otherwise resolves a current migration CLI; this
+is not a change to the consumer workspace's installed Nx. The older planner
+could misread npm 12 registry metadata and install whole packages to inspect
+them. See [Nx's metadata fix](https://github.com/nrwl/nx/pull/36901) and
+[loopback registry fix](https://github.com/nrwl/nx/pull/35954). Passing with
+this pinned tool does not certify every newer planner.
+
+In three fresh Darwin fixtures using the same RC2 packages, Nx 23.1.1
+fell back to installing both packages whether the registry hostname was
+`127.0.0.1` or `localhost`; Nx 23.3.0 made neither fallback. All
+three plans selected the right package pair and the same migration.
+This isolates the registry behavior; it does not attribute every second
+of the Windows timeout to it.
+
 **RC1 result (November 19, 2026):** The SDK and CLI at `0.7.0-rc.1` qualified
 together on a local Darwin ARM64 host. Both product archives from an
 independent rebuild matched byte for byte. The qualification did not publish

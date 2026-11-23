@@ -16,6 +16,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
 import * as ts from "typescript";
 import { runServer } from "verdaccio";
 import { afterAll, aroundEach, beforeAll, describe, expect, it } from "vitest";
@@ -489,6 +490,8 @@ const originalRegistryEnvironment = new Map(
   ].map((name) => [name, process.env[name]])
 );
 const installVersion = publishedRegistryVersion ?? CANDIDATE_VERSION;
+// Native migrate normally chooses latest; pin the npm 12/loopback-compatible CLI for repeatability.
+const ORDINARY_MIGRATION_CLI_VERSION = "23.3.0";
 
 aroundEach((runTest, { signal }) => commandSignal.run(signal, runTest));
 
@@ -837,11 +840,19 @@ describe("installed Habitat products", () => {
     await check("imports");
   }, 180_000);
 
-  it("creates the portable Bun repository before activating post-Git hooks", async () => {
+  it(
+    "creates the portable Bun repository before activating post-Git hooks",
+    verifyPortablePreset,
+    process.platform === "win32" ? 360_000 : 180_000
+  );
+
+  async function verifyPortablePreset(): Promise<void> {
+    const runPresetStage = timedStages(process.platform === "win32" ? "Windows preset" : undefined);
     const name = "preset-consumer";
     const root = path.join(acceptanceRoot, name);
     const cliSpecifier = `@habitat-ai/cli@${installVersion}`;
-    const created = await run(
+    const created = await runPresetStage(
+      "create workspace",
       "bunx",
       [
         "--bun",
@@ -906,33 +917,55 @@ describe("installed Habitat products", () => {
     await expect(lstat(path.join(root, ".habitat/blueprints"))).rejects.toMatchObject({
       code: "ENOENT",
     });
-    const inactiveHooks = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
-      cwd: root,
-    });
-    expect(inactiveHooks.exitCode).not.toBe(0);
+    const gitRoot = await runPresetStage(
+      "resolve Git root",
+      "git",
+      ["rev-parse", "--show-toplevel"],
+      {
+        cwd: root,
+      }
+    );
+    expect(gitRoot.exitCode).toBe(0);
+    expect(await realpath(gitRoot.stdout.trim())).toBe(await realpath(root));
+    const inactiveHooks = await runPresetStage(
+      "inspect inactive Git hooks",
+      "git",
+      ["config", "--local", "--get", "core.hooksPath"],
+      { cwd: root }
+    );
+    expect(inactiveHooks.exitCode).toBe(1);
 
     const nx = path.join(root, "node_modules/.bin/nx");
     const fixturePath = `${path.join(root, "node_modules/.bin")}${path.delimiter}${process.env.PATH ?? ""}`;
-    const biome = await run(path.join(root, "node_modules/.bin/biome"), ["--version"], {
-      cwd: root,
-    });
+    const biome = await runPresetStage(
+      "check Biome",
+      path.join(root, "node_modules/.bin/biome"),
+      ["--version"],
+      {
+        cwd: root,
+      }
+    );
     expect(biome, biome.stderr || biome.stdout).toMatchObject({ exitCode: 0 });
-    const initialized = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
-      cwd: root,
-      env: { PATH: fixturePath },
-      timeoutMs: 120_000,
-    });
+    const initialized = await runPresetStage(
+      "initialize workspace",
+      nx,
+      ["generate", "@habitat-ai/cli:init", "--no-interactive"],
+      { cwd: root, env: { PATH: fixturePath }, timeoutMs: 120_000 }
+    );
     expect(initialized, initialized.stderr || initialized.stdout).toMatchObject({ exitCode: 0 });
     const activatedPackage = await readFile(packagePath, "utf8");
-    const activeHooks = await run("git", ["config", "--local", "--get", "core.hooksPath"], {
-      cwd: root,
-    });
+    const activeHooks = await runPresetStage(
+      "inspect active Git hooks",
+      "git",
+      ["config", "--local", "--get", "core.hooksPath"],
+      { cwd: root }
+    );
     expect(activeHooks, activeHooks.stderr || activeHooks.stdout).toMatchObject({
       exitCode: 0,
       stdout: ".husky/_\n",
     });
 
-    const projects = await run(nx, ["show", "projects", "--json"], {
+    const projects = await runPresetStage("list Nx projects", nx, ["show", "projects", "--json"], {
       cwd: root,
       env: { PATH: fixturePath },
       timeoutMs: 60_000,
@@ -941,11 +974,12 @@ describe("installed Habitat products", () => {
     expect([...(JSON.parse(projects.stdout) as readonly string[])].sort()).toEqual(
       [presetPackage.name, "habitat"].sort()
     );
-    const rootProject = await run(nx, ["show", "project", presetPackage.name, "--json"], {
-      cwd: root,
-      env: { PATH: fixturePath },
-      timeoutMs: 60_000,
-    });
+    const rootProject = await runPresetStage(
+      "inspect Nx root project",
+      nx,
+      ["show", "project", presetPackage.name, "--json"],
+      { cwd: root, env: { PATH: fixturePath }, timeoutMs: 60_000 }
+    );
     expect(rootProject, rootProject.stderr || rootProject.stdout).toMatchObject({ exitCode: 0 });
     const rootTargets = (
       JSON.parse(rootProject.stdout) as {
@@ -965,7 +999,8 @@ describe("installed Habitat products", () => {
       expect(rootTargets).not.toHaveProperty(target);
     }
 
-    const repeated = await run(
+    const repeated = await runPresetStage(
+      "repeat preset",
       nx,
       ["generate", "@habitat-ai/cli:preset", "--packageManager=bun", "--no-interactive"],
       { cwd: root, env: { PATH: fixturePath }, timeoutMs: 120_000 }
@@ -975,28 +1010,40 @@ describe("installed Habitat products", () => {
     expect(await readFile(projectPath, "utf8")).toBe(firstProject);
     expect(await readFile(packagePath, "utf8")).toBe(activatedPackage);
 
-    const firstLint = await run(nx, ["run", "habitat:lint", "--outputStyle=static"], {
-      cwd: root,
-      env: {
-        ...process.env,
-        NX_DAEMON: "false",
-        NX_SKIP_NX_CACHE: "false",
-        PATH: fixturePath,
-      },
-      timeoutMs: 60_000,
-    });
+    const firstLint = await runPresetStage(
+      "run workspace lint",
+      nx,
+      ["run", "habitat:lint", "--outputStyle=static"],
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          NX_DAEMON: "false",
+          NX_SKIP_NX_CACHE: "false",
+          PATH: fixturePath,
+        },
+        timeoutMs: 60_000,
+      }
+    );
     expect(firstLint, `${firstLint.stdout}\n${firstLint.stderr}`).toMatchObject({ exitCode: 0 });
-    const repeatedLint = await run(nx, ["run", "habitat:lint", "--outputStyle=static"], {
-      cwd: root,
-      env: {
-        ...process.env,
-        NX_DAEMON: "false",
-        NX_SKIP_NX_CACHE: "false",
-        PATH: fixturePath,
-      },
-      timeoutMs: 60_000,
+    const repeatedLint = await runPresetStage(
+      "verify lint cache",
+      nx,
+      ["run", "habitat:lint", "--outputStyle=static"],
+      {
+        cwd: root,
+        env: {
+          ...process.env,
+          NX_DAEMON: "false",
+          NX_SKIP_NX_CACHE: "false",
+          PATH: fixturePath,
+        },
+        timeoutMs: 60_000,
+      }
+    );
+    expect(repeatedLint, repeatedLint.stderr || repeatedLint.stdout).toMatchObject({
+      exitCode: 0,
     });
-    expect(repeatedLint, repeatedLint.stderr || repeatedLint.stdout).toMatchObject({ exitCode: 0 });
     expect(repeatedLint.stdout).toContain("existing outputs match the cache");
 
     const generatedAuthority = [
@@ -1011,7 +1058,7 @@ describe("installed Habitat products", () => {
     expect(generatedAuthority).not.toContain("rawr");
     expect(generatedAuthority).not.toContain("pnpm");
     expect(generatedAuthority).not.toContain(workspaceRoot);
-  });
+  }
 
   it.each([
     ["0.5.3", "23.1.0"],
@@ -1019,29 +1066,11 @@ describe("installed Habitat products", () => {
   ])(
     "migrates CLI %s and its SDK as one native Nx package group",
     async (previousVersion, previousNxVersion) => {
-      const runMigrationStage = async (
-        stage:
-          | "install previous pair"
-          | "plan migration"
-          | "install candidate pair"
-          | "apply migrations"
-          | "verify frozen install",
-        ...command: Parameters<typeof run>
-      ): Promise<CommandResult> => {
-        if (process.platform !== "win32" || previousVersion !== "0.5.6") return run(...command);
-
-        const label = `Windows 0.5.6 migration: ${stage}`;
-        const startedAt = performance.now();
-        const elapsedMs = () => Math.round(performance.now() - startedAt);
-        console.info(`${label} started.`);
-        try {
-          const result = await run(...command);
-          console.info(`${label} closed after ${elapsedMs()}ms (exit ${result.exitCode}).`);
-          return result;
-        } catch (cause) {
-          throw new Error(`${label} failed after ${elapsedMs()}ms.`, { cause });
-        }
-      };
+      const runMigrationStage = timedStages(
+        process.platform === "win32" && previousVersion === "0.5.6"
+          ? "Windows 0.5.6 migration"
+          : undefined
+      );
       const root = path.join(
         acceptanceRoot,
         `migration-consumer-${previousVersion.replaceAll(".", "-")}`
@@ -1051,6 +1080,8 @@ describe("installed Habitat products", () => {
       // compatibility flag. Local Verdaccio candidates have no provenance.
       const skipNxProvenance =
         publishedRegistryVersion === undefined || previousNxVersion === "23.1.0";
+      const migrationCliVersion =
+        previousVersion === "0.5.3" ? "23.1.1" : ORDINARY_MIGRATION_CLI_VERSION;
       await mkdir(root, { recursive: true });
       await writeFile(
         path.join(root, "nx.json"),
@@ -1122,9 +1153,11 @@ describe("installed Habitat products", () => {
         {
           cwd: root,
           env: {
-            NX_MIGRATE_CLI_VERSION: "23.1.1",
+            NX_MIGRATE_CLI_VERSION: migrationCliVersion,
+            NX_VERBOSE_LOGGING: "true",
             ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
           },
+          reportOutput: reportMigrationPlanInstallFallbacks,
           timeoutMs: 120_000,
         }
       );
@@ -1161,7 +1194,7 @@ describe("installed Habitat products", () => {
           cwd: root,
           env: {
             NX_DAEMON: "false",
-            NX_MIGRATE_CLI_VERSION: "23.1.1",
+            NX_MIGRATE_CLI_VERSION: migrationCliVersion,
             ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
           },
           timeoutMs: 120_000,
@@ -1281,7 +1314,7 @@ describe("installed Habitat products", () => {
     ];
     const foundation = await sha256FileSet(root, foundationFiles);
     const migrationEnvironment = {
-      NX_MIGRATE_CLI_VERSION: "23.1.1",
+      NX_MIGRATE_CLI_VERSION: ORDINARY_MIGRATION_CLI_VERSION,
       // Only the local unpublished Verdaccio cohort lacks npm provenance.
       NX_SKIP_PROVENANCE_CHECK: publishedRegistryVersion === undefined ? "true" : undefined,
     };
@@ -2801,12 +2834,12 @@ describe("installed Habitat products", () => {
     const serviceRoutePath = "services/greeting/src/service/modules/greeting/router/greet.ts";
     const serviceInstancePath = path.join(consumerRoot, "services/greeting/habitat.toml");
     const originalInstance = await readFile(serviceInstancePath, "utf8");
-    const generatedPin = "\nblueprintVersion = 5\n";
-    expect(originalInstance).toContain(generatedPin);
+    const generatedInstance = parseToml(originalInstance);
+    expect(generatedInstance.blueprintVersion).toBe(5);
     const selectBridge = (version: number) =>
       writeFile(
         serviceInstancePath,
-        originalInstance.replace(generatedPin, `\nblueprintVersion = ${version}\n`)
+        stringifyToml({ ...generatedInstance, blueprintVersion: version })
       );
     const originalImpl = await readFile(path.join(consumerRoot, serviceImplPath), "utf8");
     const originalRoute = await readFile(path.join(consumerRoot, serviceRoutePath), "utf8");
@@ -6001,12 +6034,44 @@ async function withInstalledOperation<A>(
   }
 }
 
+function reportMigrationPlanInstallFallbacks({ stdout, stderr }: CommandResult): void {
+  const counts = { cli: 0, sdk: 0 };
+  const indicator = /Failed to get migrations from registry for @habitat-ai\/(cli|sdk)@/gu;
+  for (const output of [stdout, stderr]) {
+    for (const [, name] of output.matchAll(indicator)) {
+      if (name === "cli" || name === "sdk") counts[name] = Math.min(99, counts[name] + 1);
+    }
+  }
+  console.info(
+    `Nx migration plan install fallback indicators: CLI=${counts.cli}, SDK=${counts.sdk} (capped at 99).`
+  );
+}
+
+function timedStages(prefix: string | undefined) {
+  return async (stage: string, ...command: Parameters<typeof run>): Promise<CommandResult> => {
+    if (prefix === undefined) return run(...command);
+
+    const label = `${prefix}: ${stage}`;
+    const startedAt = performance.now();
+    const elapsedMs = () => Math.round(performance.now() - startedAt);
+    console.info(`${label} started.`);
+    try {
+      const result = await run(...command);
+      console.info(`${label} closed after ${elapsedMs()}ms (exit ${result.exitCode}).`);
+      return result;
+    } catch (cause) {
+      throw new Error(`${label} failed after ${elapsedMs()}ms.`, { cause });
+    }
+  };
+}
+
 async function run(
   executable: string,
   args: readonly string[],
   options: {
     readonly cwd?: string;
     readonly env?: NodeJS.ProcessEnv;
+    readonly reportOutput?: (result: CommandResult) => void;
     readonly timeoutMs?: number;
   } = {}
 ): Promise<CommandResult> {
@@ -6074,14 +6139,18 @@ async function run(
         signal?.removeEventListener("abort", abort);
         pendingCommands.delete(pending);
         resolveClosed();
-        if (failure !== undefined) reject(failure);
-        else {
-          resolve({
-            exitCode: exitCode ?? 1,
-            stderr: stderr.join(""),
-            stdout: stdout.join(""),
-          });
+        if (failure !== undefined && options.reportOutput === undefined) {
+          reject(failure);
+          return;
         }
+        const result = {
+          exitCode: exitCode ?? 1,
+          stderr: stderr.join(""),
+          stdout: stdout.join(""),
+        };
+        options.reportOutput?.(result);
+        if (failure !== undefined) reject(failure);
+        else resolve(result);
       });
     });
     const pending = { cancel, closed };
