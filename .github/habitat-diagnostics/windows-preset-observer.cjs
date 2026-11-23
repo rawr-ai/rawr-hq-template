@@ -149,7 +149,8 @@ module.exports = async function observeWindowsPreset({ root, scoped, candidate, 
   function onLine(value) {
     const line = String(value).slice(0, 2048);
     let marker;
-    if (line.includes("Successfully created the workspace: preset-consumer")) marker = "nx-new-complete";
+    if (line.includes("Successfully created the workspace: preset-consumer"))
+      marker = "nx-new-complete";
     else if (line.includes("Creating your workspace in preset-consumer")) marker = "nx-new-started";
     else if (line.includes("Installing dependencies with bun")) marker = "sandbox-setup-entered";
     if (!marker || markers.has(marker)) return;
@@ -187,7 +188,8 @@ module.exports = async function observeWindowsPreset({ root, scoped, candidate, 
               available: true,
               rootAlive: true,
               opaqueCommandLines:
-                Number.isSafeInteger(snapshot.opaqueCommandLines) && snapshot.opaqueCommandLines >= 0
+                Number.isSafeInteger(snapshot.opaqueCommandLines) &&
+                snapshot.opaqueCommandLines >= 0
                   ? Math.min(snapshot.opaqueCommandLines, 99)
                   : null,
               images,
@@ -195,8 +197,14 @@ module.exports = async function observeWindowsPreset({ root, scoped, candidate, 
               sandbox: {
                 observed: snapshot.sandbox?.observed === true,
                 ambiguous: snapshot.sandbox?.ambiguous === true,
-                nxManifest: typeof snapshot.sandbox?.nxManifest === "boolean" ? snapshot.sandbox.nxManifest : null,
-                errorLog: typeof snapshot.sandbox?.errorLog === "boolean" ? snapshot.sandbox.errorLog : null,
+                nxManifest:
+                  typeof snapshot.sandbox?.nxManifest === "boolean"
+                    ? snapshot.sandbox.nxManifest
+                    : null,
+                errorLog:
+                  typeof snapshot.sandbox?.errorLog === "boolean"
+                    ? snapshot.sandbox.errorLog
+                    : null,
               },
             };
           }
@@ -220,13 +228,15 @@ module.exports = async function observeWindowsPreset({ root, scoped, candidate, 
     spawnAt = Date.now();
     report({ probe: "windows-preset", state: "spawn-observed", elapsedMs: elapsed() });
     for (const delay of SAMPLES_MS) {
-      timers.push(setTimeout(() => {
-        const work = sample(pid).catch(() => {
-          report({ probe: "windows-preset", state: "sample-unavailable", elapsedMs: elapsed() });
-        });
-        pending.add(work);
-        void work.finally(() => pending.delete(work));
-      }, delay));
+      timers.push(
+        setTimeout(() => {
+          const work = sample(pid).catch(() => {
+            report({ probe: "windows-preset", state: "sample-unavailable", elapsedMs: elapsed() });
+          });
+          pending.add(work);
+          void work.finally(() => pending.delete(work));
+        }, delay)
+      );
     }
   }
 

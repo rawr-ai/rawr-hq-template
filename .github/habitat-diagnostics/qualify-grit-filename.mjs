@@ -24,7 +24,10 @@ const fixturePath = (relative) => path.resolve(root, "consumer", relative);
 const subjectPath = (relative) => path.resolve(cwd, relative.replaceAll("/", "\\"));
 const frozenBody = (version) => {
   const source = readFileSync(
-    path.join(repo, `.habitat/blueprints/service/versions/${version}/components/funnel/effect-bridge.md`),
+    path.join(
+      repo,
+      `.habitat/blueprints/service/versions/${version}/components/funnel/effect-bridge.md`
+    ),
     "utf8"
   );
   const match = /^\x60\x60\x60grit\r?\n([\s\S]*?)^\x60\x60\x60(?:\r?\n|$)/m.exec(source);
@@ -57,16 +60,37 @@ const env = {
   RAYON_NUM_THREADS: "2",
 };
 const emit = (value) => console.log(JSON.stringify(value));
-const invoke = (args, input) => spawnSync(grit, args, {
-  cwd, env, input, encoding: "utf8", timeout: 15_000, maxBuffer: 2_000_000, windowsHide: true,
-});
-const reportObjects = (output) => (output ?? "").split(/\r?\n/).flatMap((line) => {
-  try { return [JSON.parse(line)]; } catch { return []; }
-});
-const installPatterns = (patterns) => writeFileSync(path.join(gritDir, "grit.yaml"), JSON.stringify({
-  version: "0.0.2",
-  patterns: Object.entries(patterns).map(([name, body]) => ({ name, title: name, body, level: "error" })),
-}));
+const invoke = (args, input) =>
+  spawnSync(grit, args, {
+    cwd,
+    env,
+    input,
+    encoding: "utf8",
+    timeout: 15_000,
+    maxBuffer: 2_000_000,
+    windowsHide: true,
+  });
+const reportObjects = (output) =>
+  (output ?? "").split(/\r?\n/).flatMap((line) => {
+    try {
+      return [JSON.parse(line)];
+    } catch {
+      return [];
+    }
+  });
+const installPatterns = (patterns) =>
+  writeFileSync(
+    path.join(gritDir, "grit.yaml"),
+    JSON.stringify({
+      version: "0.0.2",
+      patterns: Object.entries(patterns).map(([name, body]) => ({
+        name,
+        title: name,
+        body,
+        level: "error",
+      })),
+    })
+  );
 function check(mode, label, file, patterns) {
   installPatterns(patterns);
   const child = invoke(["--json", "check", "--no-cache", "--grit-dir", gritDir, file]);
@@ -75,13 +99,25 @@ function check(mode, label, file, patterns) {
   );
   const valid = child.status === 0 && reports.length === 1 && child.stdout.trim() === "";
   const report = valid ? reports[0] : undefined;
-  const findings = report?.results.map(({ local_name }) =>
-    Object.hasOwn(patterns, local_name) ? local_name : "unexpected-pattern"
-  ).sort() ?? [];
-  const spelling = (subject) => /(?:^|\/)src\/service\/.*\.ts$/.test(subject) ? "slash" :
-    /(?:^|\\)src\\service\\.*\.ts$/.test(subject) ? "backslash" : "other";
+  const findings =
+    report?.results
+      .map(({ local_name }) =>
+        Object.hasOwn(patterns, local_name) ? local_name : "unexpected-pattern"
+      )
+      .sort() ?? [];
+  const spelling = (subject) =>
+    /(?:^|\/)src\/service\/.*\.ts$/.test(subject)
+      ? "slash"
+      : /(?:^|\\)src\\service\\.*\.ts$/.test(subject)
+        ? "backslash"
+        : "other";
   const row = {
-    mode, label, exit: child.status, valid, subjects: report?.paths.length ?? null, findings,
+    mode,
+    label,
+    exit: child.status,
+    valid,
+    subjects: report?.paths.length ?? null,
+    findings,
     subjectSpelling: report?.paths.map(spelling) ?? [],
   };
   emit(row);
@@ -108,7 +144,8 @@ try {
     ["absolute-slash", (relative) => slash(fixturePath(relative)), false],
     ["relative-slash", (relative) => slash(path.relative(cwd, fixturePath(relative))), false],
   ];
-  if (process.platform !== "win32") transports.push(["posix-backslash-name-proxy", subjectPath, true]);
+  if (process.platform !== "win32")
+    transports.push(["posix-backslash-name-proxy", subjectPath, true]);
   const matrices = new Map();
   for (const [name, argument, proxy] of transports) {
     writeSubject(route, clean, proxy);
@@ -122,31 +159,50 @@ try {
 
   // Check does not support stdin in this release. Apply can expose a logical name;
   // this is solely a diagnostic and is not equivalent to check's public contract.
-  for (const [name, file] of [["stdin-logical-slash", route], ["stdin-logical-backslash", route.replaceAll("/", "\\")]]) {
-    for (const [label, input] of [["v5-clean-route", clean], ["v5-misplaced-facade", withImport(facade)]]) {
-      const child = invoke(["--jsonl", "apply", bodies[5], file, "--stdin", "--dry-run", "--grit-dir", gritDir], input);
+  for (const [name, file] of [
+    ["stdin-logical-slash", route],
+    ["stdin-logical-backslash", route.replaceAll("/", "\\")],
+  ]) {
+    for (const [label, input] of [
+      ["v5-clean-route", clean],
+      ["v5-misplaced-facade", withImport(facade)],
+    ]) {
+      const child = invoke(
+        ["--jsonl", "apply", bodies[5], file, "--stdin", "--dry-run", "--grit-dir", gritDir],
+        input
+      );
       const objects = [...reportObjects(child.stdout), ...reportObjects(child.stderr)];
       const matches = objects.filter((item) => item?.__typename === "Match").length;
-      const failure = child.status === 0 ? null :
-        /Language option js does not match pattern language js/.test(child.stderr ?? "")
-          ? "dialect-mismatch" : "native-apply-failed";
+      const failure =
+        child.status === 0
+          ? null
+          : /Language option js does not match pattern language js/.test(child.stderr ?? "")
+            ? "dialect-mismatch"
+            : "native-apply-failed";
       emit({ mode: name, label, exit: child.status, matches, failure });
     }
   }
 
   const native = matrices.get("absolute-native");
-  const expectedMatch = (label) => ![
-    "v5-clean-route", "v5-legal-impl", "v3-current-vendor", "v4-current-vendor",
-  ].includes(label);
-  const allAcquired = (matrix) => matrix.diagnostic.valid && matrix.diagnostic.subjects === 1 &&
-    matrix.diagnostic.findings.includes("syntax") && matrix.rows.every((row) => row.valid && row.subjects === 1);
-  const allDecisionsCorrect = (matrix) => allAcquired(matrix) &&
+  const expectedMatch = (label) =>
+    !["v5-clean-route", "v5-legal-impl", "v3-current-vendor", "v4-current-vendor"].includes(label);
+  const allAcquired = (matrix) =>
+    matrix.diagnostic.valid &&
+    matrix.diagnostic.subjects === 1 &&
+    matrix.diagnostic.findings.includes("syntax") &&
+    matrix.rows.every((row) => row.valid && row.subjects === 1);
+  const allDecisionsCorrect = (matrix) =>
+    allAcquired(matrix) &&
     matrix.rows.every((row) => row.findings.length === Number(expectedMatch(row.label)));
-  const filenameFalseNegative = (matrix) => allAcquired(matrix) &&
+  const filenameFalseNegative = (matrix) =>
+    allAcquired(matrix) &&
     matrix.diagnostic.subjectSpelling.includes("backslash") &&
     matrix.rows.find((row) => row.label === "v5-misplaced-facade")?.findings.length === 0;
-  const nativeResult = allDecisionsCorrect(native) ? "working" :
-    filenameFalseNegative(native) ? "filename-false-negative" : "inconclusive";
+  const nativeResult = allDecisionsCorrect(native)
+    ? "working"
+    : filenameFalseNegative(native)
+      ? "filename-false-negative"
+      : "inconclusive";
   const proxy = matrices.get("posix-backslash-name-proxy");
   emit({
     nativeResult,
@@ -156,8 +212,12 @@ try {
   });
   if (nativeResult === "inconclusive") process.exitCode = 1;
 } catch (error) {
-  emit({ probeError: typeof error?.message === "string" && /^[a-z0-9-]+$/.test(error.message)
-    ? error.message : "unexpected-probe-error" });
+  emit({
+    probeError:
+      typeof error?.message === "string" && /^[a-z0-9-]+$/.test(error.message)
+        ? error.message
+        : "unexpected-probe-error",
+  });
   process.exitCode = 1;
 } finally {
   rmSync(root, { recursive: true, force: true });
