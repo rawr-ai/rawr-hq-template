@@ -557,7 +557,7 @@ afterAll(
 );
 
 describe("installed Habitat products", () => {
-  it("adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-author-sequence]", async () => {
+  it("adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-plan-prefix]", async () => {
     const cliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
     const directSdkRoot = path.join(consumerRoot, "node_modules/@habitat-ai/sdk");
     const initialManifest = JSON.parse(
@@ -999,7 +999,7 @@ describe("installed Habitat products", () => {
   }, 180_000);
 
   it(
-    "creates the portable Bun repository before activating post-Git hooks [probe-author-sequence]",
+    "creates the portable Bun repository before activating post-Git hooks [probe-plan-prefix]",
     verifyPortablePreset,
     process.platform === "win32" ? 360_000 : 180_000
   );
@@ -1234,11 +1234,11 @@ describe("installed Habitat products", () => {
   }
 
   it.each([
-    ["0.5.3", "23.1.0"],
-    ["0.5.6", "23.1.1"],
+    ["0.5.3", "23.1.0", "probe-plan-prefix"],
+    ["0.5.6", "23.1.1", "probe-author-sequence"],
   ] as const)(
-    "migrates CLI %s and its SDK as one native Nx package group [probe-author-sequence]",
-    async (previousVersion, previousNxVersion) => {
+    "migrates CLI %s and its SDK as one native Nx package group from Nx %s [%s]",
+    async (previousVersion, previousNxVersion, _probeSelection) => {
       const runMigrationStage = timedStages(
         process.platform === "win32" ? previousVersion : undefined
       );
@@ -1317,6 +1317,12 @@ describe("installed Habitat products", () => {
         installedPreviousPair.stderr || installedPreviousPair.stdout
       ).toMatchObject({ exitCode: 0 });
 
+      const plannerObserver =
+        previousVersion === "0.5.3" &&
+        process.platform === "win32" &&
+        publishedRegistryVersion === undefined
+          ? await prepareLegacyPlanObserver()
+          : undefined;
       const migrated = await runMigrationStage(
         "plan migration",
         "bunx",
@@ -1326,8 +1332,10 @@ describe("installed Habitat products", () => {
           env: {
             NX_MIGRATE_CLI_VERSION: migrationCliVersion,
             NX_VERBOSE_LOGGING: "true",
+            ...(plannerObserver && { NODE_OPTIONS: plannerObserver.nodeOptions }),
             ...(skipNxProvenance ? { NX_SKIP_PROVENANCE_CHECK: "true" } : {}),
           },
+          plannerObserver,
           reportOutput: reportMigrationPlanInstallFallbacks,
           timeoutMs: 120_000,
         }
@@ -6281,6 +6289,98 @@ async function withInstalledOperation<A>(
   }
 }
 
+// This preload is diagnostic-branch-only and is handed only to the Windows 0.5.3 plan.
+const legacyPlanObserverSource = String.raw`"use strict";
+
+// Probe only. Never print arguments, paths, environment values or child output.
+const target = "@habitat-ai/cli@0.7.0-rc.3";
+if (
+  process.argv.length === 5 &&
+  process.argv[2] === "_migrate" &&
+  process.argv[3] === target &&
+  process.argv[4] === "--interactive=false"
+) {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const mark = (event) => {
+    try { fs.writeSync(2, "HABITAT_NX_CHILD " + event + " " + Date.now() + "\n"); } catch {}
+  };
+  try {
+    const entry = fs.realpathSync(process.argv[1]);
+    const root = path.resolve(path.dirname(entry), "../..");
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+    if (
+      pkg.name !== "nx" || pkg.version !== "23.1.1" ||
+      entry !== path.resolve(root, pkg.bin.nx) || process.versions.bun ||
+      !process.versions.node.startsWith("24.")
+    ) {
+      mark("unsupported");
+    } else {
+      const command = "bun install " + target;
+      const channel = require("node:diagnostics_channel").tracingChannel("child_process.spawn");
+      channel.start.subscribe(({ process: child }) => {
+        const args = child.spawnargs;
+        const posix = args.length === 3 && args[1] === "-c" && args[2] === command;
+        const win = args.length === 5 && /^cmd(?:\.exe)?$/i.test(path.win32.basename(args[0])) &&
+          args[1] === "/d" && args[2] === "/s" && args[3] === "/c" && args[4] === '"' + command + '"';
+        if (!(posix || win)) return;
+        mark("attempt");
+        child.once("spawn", () => mark("spawn"));
+        child.once("exit", (code) => mark(code === 0 ? "exit-ok" : "exit-other"));
+        child.once("close", () => mark("close"));
+      });
+      mark("ready");
+    }
+  } catch { mark("unsupported"); }
+}`;
+
+async function prepareLegacyPlanObserver() {
+  const preload = path.join(acceptanceRoot, "runtime", "observe-nx-fallback.cjs");
+  await writeFile(preload, legacyPlanObserverSource);
+  const nodeOptions = [process.env.NODE_OPTIONS, `--require="${preload.replaceAll("\\", "/")}"`]
+    .filter(Boolean)
+    .join(" ");
+  const start = Date.now();
+  const emit = (event: string, at = Date.now()) =>
+    console.info(`Windows 0.5.3 planner observer: ${event} ${at - start}ms.`);
+  const tails = { stdout: "", stderr: "" };
+  const seen = new Set<string>();
+  const once = (event: string, at?: number) => {
+    if (seen.has(event)) return;
+    seen.add(event);
+    emit(event, at);
+  };
+  emit("requested");
+  return {
+    nodeOptions,
+    capture(stream: keyof typeof tails, chunk: string) {
+      const text = tails[stream] + chunk;
+      if (text.includes("Failed to get migrations from registry for @habitat-ai/cli@")) {
+        once("fallback-marker-received");
+      }
+      const lines = text.split("\n");
+      tails[stream] = (lines.pop() ?? "").slice(-256);
+      for (const line of lines) {
+        const match =
+          /^HABITAT_NX_CHILD (ready|unsupported|attempt|spawn|exit-ok|exit-other|close) (\d{13})\r?$/u.exec(
+            line
+          );
+        if (match) once(match[1], Number(match[2]));
+      }
+    },
+    snapshot(boundary: "deadline" | "outer-close") {
+      const coverage = !seen.has("ready")
+        ? "unavailable"
+        : seen.has("spawn")
+          ? "spawn-observed"
+          : "ready-no-spawn-observed";
+      emit(
+        `${boundary}: ${coverage}; exit-seen=${seen.has("exit-ok") || seen.has("exit-other")}; close-seen=${seen.has("close")}`
+      );
+    },
+  };
+}
+
 function reportMigrationPlanInstallFallbacks({ stdout, stderr }: CommandResult): void {
   const counts = { cli: 0, sdk: 0 };
   const indicator = /Failed to get migrations from registry for @habitat-ai\/(cli|sdk)@/gu;
@@ -6510,6 +6610,7 @@ async function run(
     readonly cwd?: string;
     readonly env?: NodeJS.ProcessEnv;
     readonly reportOutput?: (result: CommandResult) => void;
+    readonly plannerObserver?: Awaited<ReturnType<typeof prepareLegacyPlanObserver>>;
     readonly windowsInstallSample?: WindowsInstallFixture;
     readonly windowsCacheFixture?: WindowsInstallFixture;
     readonly timeoutMs?: number;
@@ -6523,7 +6624,7 @@ async function run(
   const fixture = options.windowsCacheFixture;
   const scope = process.env.HABITAT_PROBE_BUN_CACHE_SCOPE;
   const cacheName =
-    fixture !== undefined && scope === "per-fixture" ? fixtureCacheNames[fixture] : "bun";
+    fixture === "0.5.3" && scope === "legacy-isolated" ? fixtureCacheNames[fixture] : "bun";
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     BUN_INSTALL_CACHE_DIR: path.join(cacheRoot, cacheName),
@@ -6539,7 +6640,7 @@ async function run(
   };
   for (const name of gitLocalEnvironmentVariables) delete env[name];
   Object.assign(env, options.env);
-  if (fixture !== undefined && (scope === "shared" || scope === "per-fixture")) {
+  if (fixture !== undefined && (scope === "shared" || scope === "legacy-isolated")) {
     const effective = env.BUN_INSTALL_CACHE_DIR;
     const role =
       effective === path.join(cacheRoot, "bun-public")
@@ -6608,6 +6709,7 @@ async function run(
     const abort = () => cancel(signal?.reason ?? new Error("Installed-package test was canceled."));
     const closed = new Promise<void>((resolveClosed) => {
       child.once("close", async (exitCode) => {
+        options.plannerObserver?.snapshot("outer-close");
         nativeClosed = true;
         clearTimeout(timer);
         if (stopSample)
@@ -6636,6 +6738,7 @@ async function run(
     const pending = { cancel, closed };
     pendingCommands.add(pending);
     const timer = setTimeout(() => {
+      options.plannerObserver?.snapshot("deadline");
       if (stopSample) exitedAtDeadline = exitMs !== null;
       cancel(new Error(`${executable} exceeded its acceptance timeout.`));
     }, options.timeoutMs ?? 30_000);
@@ -6645,6 +6748,11 @@ async function run(
     child.stderr.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => stdout.push(chunk));
     child.stderr.on("data", (chunk: string) => stderr.push(chunk));
+    const observer = options.plannerObserver;
+    if (observer) {
+      child.stdout.on("data", (chunk: string) => observer.capture("stdout", chunk));
+      child.stderr.on("data", (chunk: string) => observer.capture("stderr", chunk));
+    }
     child.once("error", (error) => {
       failure ??= error;
     });
