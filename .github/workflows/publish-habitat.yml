@@ -1,4 +1,4 @@
-name: Windows installed-package Bun cache comparison
+name: Windows installed-package cache qualification
 
 on:
   pull_request:
@@ -34,13 +34,17 @@ jobs:
 
   installed:
     needs: scope
-    name: Installed package (Windows, ${{ matrix.cache }} cache)
+    name: ${{ matrix.check }}
     runs-on: windows-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        cache: [shared, per-fixture]
+        include:
+          - check: Full installed suite (Windows, isolated fixture caches)
+            cache: per-fixture
+          - check: Five author operations (Windows, one shared cache)
+            cache: shared
 
     steps:
       - name: Preserve repository bytes and enable long paths
@@ -104,7 +108,28 @@ jobs:
           if (Test-Path Env:HABITAT_ACCEPTANCE_REGISTRY_VERSION) {
             throw "The probe requires loopback candidate packages."
           }
-          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package --skip-nx-cache --outputStyle=stream --reporter=verbose
+          $filter = @()
+          if ($env:HABITAT_PROBE_BUN_CACHE_SCOPE -eq 'shared') {
+            $filter = @('--testNamePattern=probe-author-sequence')
+          }
+          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package --skip-nx-cache --outputStyle=stream --reporter=verbose @filter
+
+      - name: Verify the shared sequence against Vitest collection
+        if: ${{ !cancelled() && matrix.cache == 'shared' }}
+        shell: pwsh
+        run: |
+          $collection = bunx vitest list --project habitat-cli-installed-package-acceptance --json --testNamePattern=probe-author-sequence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $actual = @(($collection -join "`n" | ConvertFrom-Json) | ForEach-Object { $_.name })
+          $expected = @(
+            'adopts the packed CLI into one bare Bun Nx repository through one native nx add'
+            'creates the portable Bun repository before activating post-Git hooks'
+            'migrates CLI 0.5.3 and its SDK as one native Nx package group'
+            'migrates CLI 0.5.6 and its SDK as one native Nx package group'
+            'migrates the current 0.5.15 foundation to the exact candidate pair idempotently'
+          ) | ForEach-Object { "installed Habitat products > $_ [probe-author-sequence]" }
+          if (($actual -join "`n") -cne ($expected -join "`n")) { throw 'Vitest did not select the five expected author operations in order.' }
+          $actual
 
       - name: Record free space after the suite
         if: always()

@@ -557,7 +557,7 @@ afterAll(
 );
 
 describe("installed Habitat products", () => {
-  it("adopts the packed CLI into one bare Bun Nx repository through one native nx add", async () => {
+  it("adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-author-sequence]", async () => {
     const cliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
     const directSdkRoot = path.join(consumerRoot, "node_modules/@habitat-ai/sdk");
     const initialManifest = JSON.parse(
@@ -999,7 +999,7 @@ describe("installed Habitat products", () => {
   }, 180_000);
 
   it(
-    "creates the portable Bun repository before activating post-Git hooks",
+    "creates the portable Bun repository before activating post-Git hooks [probe-author-sequence]",
     verifyPortablePreset,
     process.platform === "win32" ? 360_000 : 180_000
   );
@@ -1236,11 +1236,11 @@ describe("installed Habitat products", () => {
   it.each([
     ["0.5.3", "23.1.0"],
     ["0.5.6", "23.1.1"],
-  ])(
-    "migrates CLI %s and its SDK as one native Nx package group",
+  ] as const)(
+    "migrates CLI %s and its SDK as one native Nx package group [probe-author-sequence]",
     async (previousVersion, previousNxVersion) => {
       const runMigrationStage = timedStages(
-        process.platform === "win32" && previousVersion === "0.5.6" ? "0.5.6" : undefined
+        process.platform === "win32" ? previousVersion : undefined
       );
       const root = path.join(
         acceptanceRoot,
@@ -1428,7 +1428,7 @@ describe("installed Habitat products", () => {
     360_000
   );
 
-  it("migrates the current 0.5.15 foundation to the exact candidate pair idempotently", async () => {
+  it("migrates the current 0.5.15 foundation to the exact candidate pair idempotently [probe-author-sequence]", async () => {
     const runMigrationStage = timedStages(process.platform === "win32" ? "0.5.15" : undefined);
     const root = path.join(acceptanceRoot, "migration-consumer-current-foundation");
     const packagePath = path.join(root, "package.json");
@@ -6338,7 +6338,12 @@ function windowsPresetCreateDiagnostic(root: string) {
 
 // Equal-length siblings of "bun" keep path length and volume unchanged. These caches
 // are not preseeded: this compares reuse with independent, initially cold caches.
-const fixtureCacheNames = { preset: "pre", "0.5.6": "m06", "0.5.15": "m15" } as const;
+const fixtureCacheNames = {
+  preset: "pre",
+  "0.5.3": "m03",
+  "0.5.6": "m06",
+  "0.5.15": "m15",
+} as const;
 type WindowsInstallFixture = keyof typeof fixtureCacheNames;
 
 function timedStages(fixture: WindowsInstallFixture | undefined) {
