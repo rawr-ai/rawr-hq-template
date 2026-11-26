@@ -1,6 +1,31 @@
 # Native SDK and CLI migration
 
-**Candidate for landing:** `0.7.0-rc.2` replaces RC1. In the
+**Candidate for landing:** `0.7.0-rc.3` replaces RC2. On November 25 the
+platform owner chose to land with a declared Windows limitation, subject to
+qualification. On Windows, Habitat passes explicit files to Grit with forward
+slashes so filename-scoped rules can match. A Windows workspace selecting a
+directory-scanned Grit rule gets a failed check with the reason
+`cannot evaluate on Windows`; run the selection on macOS or Linux instead.
+This applies to all physical directory subjects, including local rules and
+rules that do not themselves inspect filenames. It does not change selectors,
+published rule text, the engine binary, or POSIX evaluation. This is a
+candidate note, not a release or qualification receipt.
+
+Nine bundled rules pass a directory directly: the eight service v1 Grit rules
+(`client_lineage`, `context_funnel`, `contract_authority`,
+`contract_composition`, `effect_bridge`, `public_face`, `router_composition`,
+and `source_boundary`) and resource v1's `effect_error_authority`. A local
+compatibility rule that names a directory as its scope is different: the
+catalog selects individual files before invoking Grit. The limitation applies
+to the subjects actually passed, not to every policy that declares a root.
+Large explicit file lists still have to fit the
+[Windows native command line](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw).
+For example, the platform's managed-runtime construction rule selected 727
+files in the qualification inventory; even the relative names and separators
+alone exceeded the limit. Such a batch must return an error, not a partial or
+empty success. Habitat does not split scans or drop files to make them fit.
+
+**Earlier candidate:** `0.7.0-rc.2` replaced RC1. In the
 [hosted Windows check for RC1](https://github.com/rawr-ai/rawr-hq-template/actions/runs/45082705546/job/137394220836),
 the installed CLI missed project-local blueprints. Habitat had joined the
 workspace path to its glob patterns; Effect treated Windows separators as

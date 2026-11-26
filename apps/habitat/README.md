@@ -117,6 +117,25 @@ A package-only upgrade may correctly generate no migration file. Do not replay
 an older plan or synthesize one. No consumer copies or independently maintains
 the preset wiring.
 
+**Windows policy checks:** Habitat can check explicit files with Grit on
+Windows. If a selected Grit rule scans a directory, the CLI reports
+`cannot evaluate on Windows`, marks the application as an error, and exits
+nonzero from `habitat check`. This includes rules whose patterns might work
+on Windows in isolation. Run the same selection on macOS or Linux to obtain
+a verdict. The distinction is the input to Grit: a catalog rule that resolves
+a directory or glob to an explicit file list still gets checked. The bundled
+service v1 and resource v1 policies include direct directory scans; a new
+preset does not select them automatically. Native structure checks are
+unaffected. Codex agent-stop runs structure checks, not Grit.
+
+Windows also limits the length of a native command line. A large explicit
+file list may not fit; that check returns an error, not a partial result.
+Run the full selection on macOS or Linux rather than dropping files.
+
+Habitat's inferred Nx policy targets distinguish host platforms when they
+run Grit, even for explicit files. Custom cacheable targets that wrap `habitat check`
+must do the same or run uncached; a cached POSIX pass is not a Windows result.
+
 **Existing services on the beta.51 oRPC cohort:** updating the CLI/SDK pair
 does not change which service policy a repository selected. For the bundled
 service blueprint, change the service's own `habitat.toml` from version 3

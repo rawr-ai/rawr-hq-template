@@ -1,13 +1,15 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { chmod, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { NodeServices } from "@effect/platform-node";
 import type { RuleEvaluationFailure } from "@habitat-ai/resource-rule-evaluation";
-import { Cause, Effect, Exit, Fiber } from "effect";
+import { Cause, Effect, Exit, Fiber, FileSystem, type Layer, Path, PlatformError } from "effect";
+import { ChildProcessSpawner } from "effect/process";
 
-import { makeNodeGritRuleEvaluationResource } from "../index";
+import { makeGritRuleEvaluationResource, makeNodeGritRuleEvaluationResource } from "../index";
 
 const require = createRequire(import.meta.url);
 const gritEntrypoint = require.resolve("@getgrit/cli/run-grit.js");
@@ -49,7 +51,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
           programId: "forbidden",
           findings: [
             {
-              path: subject,
+              path: subject.split(path.sep).join("/"),
               start: { line: 1, column: 1, offset: 0 },
               end: { line: 1, column: 12, offset: 11 },
               message: null,
@@ -59,6 +61,210 @@ describe("grit-effect-platform-node rule evaluation", () => {
       ],
     });
   }, 60_000);
+
+  test("enforces filename-scoped findings with the real Grit executable", async () => {
+    const fixture = await makeFixture();
+    const service = path.join(fixture, "src/service");
+    const other = path.join(fixture, "other");
+    const forbidden = path.join(service, "forbidden.ts");
+    const allowed = path.join(service, "allowed.ts");
+    const outside = path.join(other, "outside.ts");
+    await mkdir(service, { recursive: true });
+    await mkdir(other);
+    await writeFile(forbidden, "forbidden();\r\n");
+    await writeFile(allowed, "allowed();\r\n");
+    await writeFile(outside, "forbidden();\r\n");
+    const program = [
+      "language js(typescript)",
+      "predicate service_source() {",
+      String.raw`  $filename <: r"^(?:.*/)?src/service/.*\.ts$"`,
+      "}",
+      "or {",
+      "  `forbidden()` where { service_source() }",
+      "}",
+    ].join("\n");
+
+    const evaluate = (subjects: readonly string[]) =>
+      makeNodeGritRuleEvaluationResource(gritProviderConfig()).evaluate(
+        evaluationRequest("filename-scope", program, subjects)
+      );
+    const result = await Effect.runPromise(evaluate([outside, allowed, forbidden]));
+    expect(
+      result.results.map(({ findings }) => findings.map((finding) => path.normalize(finding.path)))
+    ).toEqual([[forbidden]]);
+    if (path.sep === "\\") {
+      const rejected = await evaluationFailure(evaluate([fixture]));
+      expect(rejected.reason).toBe("ExecutionFailed");
+      expect(rejected.detail).toContain("cannot evaluate on Windows");
+    } else {
+      expect(await Effect.runPromise(evaluate([fixture]))).toEqual(result);
+    }
+  }, 60_000);
+
+  test("renders Windows subjects for Grit in caller order without rewriting POSIX names", async () => {
+    const fixture = await makeFixture();
+    const { script, capture, resource } = await captureGritArguments(fixture);
+    const program = "language js(typescript)\n`forbidden()`";
+    const windows = [
+      String.raw`D:\folder with spaces\src\service\a.ts`,
+      String.raw`\\server\share\src/service\b.ts`,
+      "C:/workspace/src/service/c.ts",
+    ];
+    await Effect.runPromise(
+      withSubjectPathDialect(
+        resource.evaluate(evaluationRequest("win32", program, windows)),
+        path.win32,
+        (fs) => fs.stat(script)
+      )
+    );
+    expect(JSON.parse(await readFile(capture, "utf8"))).toEqual([
+      "D:/folder with spaces/src/service/a.ts",
+      "//server/share/src/service/b.ts",
+      "C:/workspace/src/service/c.ts",
+    ]);
+
+    const posix = [String.raw`/work/src/service/literal\name.ts`, "/work/src/service/next.ts"];
+    await Effect.runPromise(
+      withSubjectPathDialect(
+        resource.evaluate(evaluationRequest("posix", program, posix)),
+        path.posix
+      )
+    );
+    expect(JSON.parse(await readFile(capture, "utf8"))).toEqual(posix);
+  });
+
+  test("rejects Windows directory and mixed subjects before launching Grit, including directory links", async () => {
+    const fixture = await makeFixture();
+    const { script, capture, resource } = await captureGritArguments(fixture);
+    const directory = path.join(fixture, "looks-like-a-file.ts");
+    const link = path.join(fixture, "link.ts");
+    await mkdir(directory);
+    await symlink(directory, link, "junction");
+    const file = String.raw`C:\work\extensionless`;
+    const dir = String.raw`C:\work\looks-like-a-file.ts`;
+    const linkedDir = String.raw`C:\work\link.ts`;
+    const hostSubjects = new Map([
+      [file, script],
+      [dir, directory],
+      [linkedDir, link],
+    ]);
+    for (const subjects of [[dir], [file, dir], [linkedDir]]) {
+      const rejected = await evaluationFailure(
+        withSubjectPathDialect(
+          resource.evaluate(
+            evaluationRequest("directory", "language js(typescript)\n`forbidden()`", subjects)
+          ),
+          path.win32,
+          (fs, subject) => fs.stat(hostSubjects.get(subject) ?? subject)
+        )
+      );
+      expect(rejected.reason).toBe("ExecutionFailed");
+      expect(rejected.detail).toContain("cannot evaluate on Windows");
+      expect(rejected.detail).toContain("POSIX");
+    }
+    expect(await readdir(fixture)).not.toContain(path.basename(capture));
+  });
+
+  test("reports Windows stat failures and unsupported file types without claiming a directory", async () => {
+    const fixture = await makeFixture();
+    const { script, capture, resource } = await captureGritArguments(fixture);
+    const subject = String.raw`C:\work\subject.ts`;
+    const evaluate = () =>
+      resource.evaluate(
+        evaluationRequest("invalid-type", "language js(typescript)\n`forbidden()`", [subject])
+      );
+    const missing = await evaluationFailure(
+      withSubjectPathDialect(evaluate(), path.win32, (fs) => fs.stat(path.join(fixture, "missing")))
+    );
+    expect(missing.reason).toBe("ExecutionFailed");
+    expect(missing.detail).toContain("Failed to inspect");
+    expect(missing.detail).toContain(subject);
+    expect(missing.detail).not.toContain("cannot evaluate on Windows");
+
+    const special = await evaluationFailure(
+      withSubjectPathDialect(evaluate(), path.win32, (fs) =>
+        fs.stat(script).pipe(Effect.map((info) => ({ ...info, type: "Socket" as const })))
+      )
+    );
+    expect(special.reason).toBe("ExecutionFailed");
+    expect(special.detail).toContain("Socket");
+    expect(special.detail).not.toContain("cannot evaluate on Windows");
+    expect(await readdir(fixture)).not.toContain(path.basename(capture));
+  });
+
+  test("rejects only Windows file arguments already over the UTF-16 command line limit", async () => {
+    const fixture = await makeFixture();
+    const { script, resource } = await captureGritArguments(fixture);
+    let spawnCalls = 0;
+    const spawner = ChildProcessSpawner.make(() => {
+      spawnCalls++;
+      return Effect.fail(PlatformError.badArgument({ module: "test", method: "spawn" }));
+    });
+    const run = (subjects: readonly string[], dialect: typeof path.win32) =>
+      evaluationFailure(
+        withSubjectPathDialect(
+          resource
+            .evaluate(evaluationRequest("argv-limit", "language js(typescript)\n`a()`", subjects))
+            .pipe(Effect.provideService(ChildProcessSpawner.ChildProcessSpawner, spawner)),
+          dialect,
+          (fs) => fs.stat(script)
+        )
+      );
+
+    // 128 paths of 255 UTF-16 units plus 127 separators and the NUL = 32768.
+    const overLimit = Array.from(
+      { length: 128 },
+      (_, i) => `C:/${i}-`.padEnd(250, "x") + "\u{10000}.ts"
+    );
+    const rejected = await run(overLimit, path.win32);
+    expect(rejected.reason).toBe("ExecutionFailed");
+    expect(rejected.detail).toContain("Windows command line limit of 32767 UTF-16 code units");
+    expect(rejected.detail).toContain("selected files: 128; minimum required: 32768");
+    expect(rejected.detail).toContain("POSIX");
+    expect(spawnCalls).toBe(0);
+
+    // The command and quoting add overhead; exactly 32767 subject units must reach the spawner.
+    const atLimit = overLimit.map((p, i) => (i === 0 ? p.slice(0, -1) : p));
+    expect((await run(atLimit, path.win32)).detail).toContain("test.spawn");
+    expect(
+      (
+        await run(
+          overLimit.map((p) => p.replace("C:/", "/p/")),
+          path.posix
+        )
+      ).detail
+    ).toContain("test.spawn");
+    expect(spawnCalls).toBe(2);
+  });
+
+  test("rejects Windows namespace and incomplete subjects before launching Grit", async () => {
+    const fixture = await makeFixture();
+    const resource = makeGritRuleEvaluationResource({
+      command: path.join(fixture, "must-not-start"),
+      args: [],
+      timeoutMs: 1_000,
+    });
+    const invalid = [
+      String.raw`\\?\C:\workspace\subject.ts`,
+      String.raw`\\?\UNC\server\share\subject.ts`,
+      String.raw`\\.\C:\workspace\subject.ts`,
+      "//./PhysicalDrive0",
+      String.raw`\??\C:\workspace\subject.ts`,
+      String.raw`\workspace\subject.ts`,
+      "//server/",
+    ];
+    for (const subject of invalid) {
+      const rejected = await evaluationFailure(
+        withSubjectPathDialect(
+          resource.evaluate(
+            evaluationRequest("invalid", "language js(typescript)\n`forbidden()`", [subject])
+          ),
+          path.win32
+        )
+      );
+      expect(rejected.reason).toBe("InvalidInput");
+    }
+  });
 
   test("evaluates multiple programs sequentially and attributes each finding", async () => {
     const fixture = await makeFixture();
@@ -98,7 +304,7 @@ describe("grit-effect-platform-node rule evaluation", () => {
     expect(
       result.results
         .flatMap(({ findings }) => findings)
-        .every(({ path: findingPath }) => findingPath === subject)
+        .every(({ path: findingPath }) => path.normalize(findingPath) === subject)
     ).toBe(true);
   }, 60_000);
 
@@ -626,6 +832,46 @@ async function writeStderrExecutable(
 
 function evaluationRequest(id: string, program: string, subjectPaths: readonly string[]) {
   return { programs: [{ id, program }], subjectPaths };
+}
+
+async function captureGritArguments(fixture: string) {
+  const capture = path.join(fixture, "argv.json");
+  const script = path.join(fixture, "capture.mjs");
+  await writeFile(
+    script,
+    `import { writeFileSync } from "node:fs";
+const args = process.argv.slice(3);
+const paths = args.slice(args.indexOf("--grit-dir") + 2);
+writeFileSync(process.argv[2], JSON.stringify(paths));
+console.error(JSON.stringify({ paths, results: [] }));
+`
+  );
+  const resource = makeGritRuleEvaluationResource({
+    command: process.execPath,
+    args: [script, capture],
+    timeoutMs: 5_000,
+  });
+  return { script, capture, resource };
+}
+
+function withSubjectPathDialect<A, E>(
+  evaluation: Effect.Effect<A, E, Layer.Success<typeof NodeServices.layer>>,
+  dialect: Pick<Path.Path, "isAbsolute" | "sep">,
+  stat?: (fs: FileSystem.FileSystem, subject: string) => ReturnType<FileSystem.FileSystem["stat"]>
+) {
+  return Effect.gen(function* () {
+    const nativePath = yield* Path.Path;
+    const fs = yield* FileSystem.FileSystem;
+    // Simulate Windows subjects while the scoped catalog uses the host filesystem and paths.
+    return yield* evaluation.pipe(
+      Effect.provideService(Path.Path, {
+        ...nativePath,
+        isAbsolute: dialect.isAbsolute,
+        sep: dialect.sep,
+      }),
+      Effect.provideService(FileSystem.FileSystem, stat ? { ...fs, stat: (p) => stat(fs, p) } : fs)
+    );
+  }).pipe(Effect.provide(NodeServices.layer));
 }
 
 async function evaluationFailure<A>(

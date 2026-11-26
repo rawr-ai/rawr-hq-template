@@ -36,9 +36,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Enable Windows repository paths
+      - name: Preserve repository bytes and enable long paths on Windows
         if: runner.os == 'Windows'
-        run: git config --global core.longpaths true
+        run: |
+          git config --global core.longpaths true
+          git config --global core.autocrlf false
 
       - name: Check out exact candidate
         uses: actions/checkout@v7

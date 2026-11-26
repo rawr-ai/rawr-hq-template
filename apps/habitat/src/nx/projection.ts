@@ -13,6 +13,8 @@ const HABITAT_AUTHORITY_GLOB = `{${HABITAT_CATALOG_PATHS.join(",")}}`;
 const DEFAULT_CHECK_TARGET = "check:policy";
 const HABITAT_EXECUTABLE = "habitat";
 const PORTABLE_OWNER_PROJECT = /^[A-Za-z0-9@][A-Za-z0-9@._/+:-]*$/u;
+// Grit's path semantics and argument limits differ by host, including for exact files.
+const GRIT_PLATFORM_INPUT = { runtime: "node -p process.platform" } as const;
 
 type ResolveCatalogResult = Awaited<ReturnType<Client["catalog"]["resolve"]>>;
 type ResolvedCatalog = Extract<ResolveCatalogResult, { _tag: "Resolved" }>["catalog"];
@@ -358,16 +360,15 @@ function ownerInputs(
   targets: Readonly<Record<string, TargetConfiguration>>,
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): TargetConfiguration["inputs"] {
-  const runtimeStrings = new Set(
-    runtimeInputs.filter((input): input is string => typeof input === "string")
-  );
+  const ownerRuntimeInputs = new Set<TargetInput>(runtimeInputs);
   const corpusInputs = new Set<string>();
   for (const target of Object.values(targets)) {
     for (const input of target.inputs ?? []) {
-      if (typeof input === "string" && !runtimeStrings.has(input)) corpusInputs.add(input);
+      if (typeof input !== "string") ownerRuntimeInputs.add(input);
+      else if (!ownerRuntimeInputs.has(input)) corpusInputs.add(input);
     }
   }
-  return [...runtimeInputs, ...[...corpusInputs].sort(compareText)];
+  return [...ownerRuntimeInputs, ...[...corpusInputs].sort(compareText)];
 }
 
 function applicationInputs(
@@ -375,8 +376,10 @@ function applicationInputs(
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): TargetConfiguration["inputs"] {
   const files = new Set<string>(HABITAT_CATALOG_PATHS.map(workspaceInput));
+  const inputs: TargetInput[] = [...runtimeInputs];
 
   if (application.runner.name === "grit") {
+    inputs.push(GRIT_PLATFORM_INPUT);
     addLocalAssetInput(files, application.runner.pattern);
     for (const entry of application.runner.acquisition.entries) {
       if (entry.source.kind === "root-pattern") {
@@ -392,7 +395,7 @@ function applicationInputs(
     }
   }
 
-  return [...runtimeInputs, ...[...files].sort()];
+  return [...inputs, ...[...files].sort()];
 }
 
 function compatibilityInputs(
@@ -400,11 +403,13 @@ function compatibilityInputs(
   runtimeInputs: HabitatNxBinding["runtimeInputs"]
 ): TargetConfiguration["inputs"] {
   const files = new Set<string>(HABITAT_CATALOG_PATHS.map(workspaceInput));
+  const inputs: TargetInput[] = [...runtimeInputs];
   files.add(workspaceInput(".habitat/**"));
   files.add(workspaceInput(rule.manifestPath));
   addLocalAssetInput(files, rule.baseline);
   for (const pattern of rule.coveragePatterns) files.add(workspaceInput(pattern));
   if (rule.runner.name === "grit") {
+    inputs.push(GRIT_PLATFORM_INPUT);
     addLocalAssetInput(files, rule.runner.pattern);
     for (const entry of rule.runner.acquisition.entries) {
       if (entry.kind === "directory" && entry.path === ".") continue;
@@ -414,7 +419,7 @@ function compatibilityInputs(
     addLocalAssetInput(files, rule.runner.structure);
   }
 
-  return [...runtimeInputs, ...[...files].sort(compareText)];
+  return [...inputs, ...[...files].sort(compareText)];
 }
 
 function addLocalAssetInput(target: Set<string>, asset: ResolvedRuleAsset): void {

@@ -120,7 +120,7 @@ const successorApplication: ResolvedGritApplication = {
   },
 };
 
-const rootPatternApplication: ResolvedApplication = {
+const rootPatternApplication: ResolvedGritApplication = {
   ...gritApplication,
   ruleId: "root-pattern-law",
   runner: {
@@ -347,6 +347,7 @@ const runtimeInputs: HabitatNxBinding["runtimeInputs"] = [
   { env: "HABITAT_COMMAND_TIMEOUT_MS" },
   { env: "NX_WORKSPACE_ROOT_PATH" },
 ];
+const platformInput = { runtime: "node -p process.platform" };
 
 function createHandler(
   clientForWorkspace: FixtureClientForWorkspace
@@ -416,6 +417,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
       { env: "NX_WORKSPACE_ROOT_PATH" },
+      platformInput,
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
@@ -456,6 +458,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/plugins/b/**/*",
       "{workspaceRoot}/plugins/b/habitat.toml",
     ]);
+    expect(pluginTargets?.["check:policy"]?.inputs).toEqual(structureLeaf?.inputs);
   });
 
   it("hashes a successor definition locator and its exact local runner asset", async () => {
@@ -476,6 +479,7 @@ describe("Habitat Nx projection", () => {
 
     expect(inputs).toEqual([
       ...runtimeInputs,
+      platformInput,
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
@@ -556,6 +560,7 @@ describe("Habitat Nx projection", () => {
     });
     expect(leaf?.inputs).toEqual([
       ...runtimeInputs,
+      platformInput,
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
@@ -570,6 +575,47 @@ describe("Habitat Nx projection", () => {
     expect(leaf?.inputs).not.toContain("{workspaceRoot}/**/*");
     expect(targets?.["check:policy"]?.inputs).toEqual(leaf?.inputs);
     expect(targets?.["check:policy"]?.parallelism).toBe(false);
+  });
+
+  it.each([
+    [
+      "a direct file",
+      [
+        {
+          source: { kind: "root-role", id: "manifest" },
+          kind: "file",
+          path: "services/a/package.json",
+        },
+      ],
+    ],
+    [
+      "a root pattern alongside a direct directory",
+      [
+        ...rootPatternApplication.runner.acquisition.entries,
+        ...gritApplication.runner.acquisition.entries,
+      ],
+    ],
+  ] as const)("keys Grit on %s by OS for both the leaf and owner", async (_case, entries) => {
+    const application: ResolvedGritApplication = {
+      ...gritApplication,
+      runner: {
+        ...gritApplication.runner,
+        acquisition: { kind: "check", entries: [...entries] },
+      },
+    };
+    const createNodes = createHandler(() => ({
+      catalog: { resolve: async () => resolvedCatalog([application], [serviceInstance]) },
+    }));
+    const result = await createNodes(configFiles, undefined, {
+      workspaceRoot: "/workspace",
+      nxJsonConfiguration: {},
+    });
+    const targets = projectMap(result)["services/a"]?.targets;
+    for (const name of ["habitat:application:service-a:source-law", "check:policy"]) {
+      expect(
+        targets?.[name]?.inputs?.filter((input) => typeof input === "object" && "runtime" in input)
+      ).toEqual([platformInput]);
+    }
   });
 
   it("projects compatibility-only Grit and structure leaves on exact owner roots", async () => {
@@ -613,6 +659,7 @@ describe("Habitat Nx projection", () => {
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
       { env: "NX_WORKSPACE_ROOT_PATH" },
+      platformInput,
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**",
       "{workspaceRoot}/.habitat/**/rule.json",
@@ -713,6 +760,7 @@ describe("Habitat Nx projection", () => {
     expect(owner?.dependsOn).toBeUndefined();
     expect(owner?.inputs).toEqual([
       ...runtimeInputs,
+      platformInput,
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**",
       "{workspaceRoot}/.habitat/**/rule.json",

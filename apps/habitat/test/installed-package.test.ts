@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  cp,
   lstat,
   mkdir,
   mkdtemp,
@@ -438,7 +439,7 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
 const sdkVersion = await readPackageVersion("packages/core/sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
 // The selected pair is an acceptance input, not a value inferred from the artifacts under test.
-const CANDIDATE_VERSION = "0.7.0-rc.2";
+const CANDIDATE_VERSION = "0.7.0-rc.3";
 if (cliVersion !== CANDIDATE_VERSION || sdkVersion !== CANDIDATE_VERSION) {
   throw new Error(
     `Expected the selected pair at ${CANDIDATE_VERSION}; found CLI ${cliVersion} and SDK ${sdkVersion}.`
@@ -666,6 +667,162 @@ describe("installed Habitat products", () => {
       run,
     });
   }, 360_000);
+
+  it("distinguishes directory and file subjects for the packed service client-lineage law", async () => {
+    const habitat = path.join(consumerRoot, "node_modules/.bin/habitat");
+    const instanceId = "@fixture/greeting-service";
+    const instancePath = path.join(consumerRoot, "services/greeting/habitat.toml");
+    const client = "services/greeting/src/client.ts";
+    const clientPath = path.join(consumerRoot, client);
+    const originalClient = await readFile(clientPath, "utf8");
+    const originalInstance = await readFile(instancePath, "utf8");
+    const selectVersion = (blueprintVersion: number) =>
+      writeFile(instancePath, stringifyToml({ ...parseToml(originalInstance), blueprintVersion }));
+    const finding = expect.objectContaining({ path: client, severity: "error", baselined: false });
+    const checkFile = async (valid: boolean) => {
+      const ruleId = "service_v3_client_lineage";
+      const result = await run(habitat, ["check", "--instance", instanceId, "--rule", ruleId], {
+        cwd: consumerRoot,
+      });
+      expect(result, result.stderr || result.stdout).toMatchObject({
+        exitCode: valid ? 0 : 1,
+        stderr: "",
+      });
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        _tag: "Completed",
+        ok: valid,
+        applications: [
+          {
+            instanceId,
+            ruleId,
+            runner: "grit",
+            disposition: { kind: "evaluated" },
+            status: valid ? "pass" : "fail",
+            findings: valid ? [] : [finding],
+          },
+        ],
+      });
+    };
+    try {
+      await selectVersion(3);
+      await checkFile(true);
+      const detached = originalClient.replace(
+        "createRouterClient(router,",
+        "createRouterClient(preview,"
+      );
+      expect(detached).not.toBe(originalClient);
+      await writeFile(clientPath, detached);
+      await checkFile(false);
+
+      // Same bytes and filename predicate, but service@1 submits the project directory.
+      await selectVersion(1);
+      const result = await run(habitat, ["check"], { cwd: consumerRoot });
+      expect(result, result.stderr || result.stdout).toMatchObject({ exitCode: 1, stderr: "" });
+      const report = JSON.parse(result.stdout);
+      const refusal = {
+        status: "error",
+        disposition: expect.objectContaining({
+          kind: "failed",
+          reason: "ExecutionFailed",
+          detail: expect.stringContaining("cannot evaluate on Windows"),
+        }),
+        findings: [],
+      };
+      expect(report).toMatchObject({
+        _tag: "Completed",
+        ok: false,
+        applications: expect.arrayContaining([
+          expect.objectContaining({
+            instanceId,
+            ruleId: "service_v1_client_lineage",
+            runner: "grit",
+            ...(process.platform === "win32"
+              ? refusal
+              : { status: "fail", disposition: { kind: "evaluated" }, findings: [finding] }),
+          }),
+        ]),
+      });
+      if (process.platform === "win32") {
+        const nonpassing = report.applications.filter(
+          (app: { readonly status: string }) => app.status !== "pass"
+        );
+        // All eight frozen service@1 Grit laws select the directory; no other application should fail.
+        expect(nonpassing).toHaveLength(8);
+        for (const application of nonpassing) {
+          expect(application).toMatchObject({
+            instanceId,
+            ruleId: expect.stringMatching(/^service_v1_/u),
+            runner: "grit",
+            ...refusal,
+          });
+        }
+      }
+    } finally {
+      await writeFile(clientPath, originalClient);
+      await writeFile(instancePath, originalInstance);
+    }
+  }, 120_000);
+
+  it.runIf(process.platform === "win32")(
+    "refuses a real compatibility law whose file batch exceeds the Windows command line",
+    async () => {
+      const cwd = path.join(acceptanceRoot, "oversized-compatibility");
+      const ruleId = "require_managed_runtime_construction_owner";
+      const packet = `.habitat/overlays/repository/rules/${ruleId}`;
+      await mkdir(path.join(cwd, "scripts/habitat"), { recursive: true });
+      await cp(path.join(workspaceRoot, packet), path.join(cwd, packet), { recursive: true });
+      await writeFile(
+        path.join(cwd, ".habitat/index.json"),
+        JSON.stringify({ schemaVersion: 2, ownerRoots: { habitat: "scripts/habitat" } })
+      );
+      const git = await run("git", ["init", "--quiet"], { cwd });
+      expect(git, git.stderr || git.stdout).toMatchObject({ exitCode: 0 });
+      const habitat = path.join(consumerRoot, "node_modules/.bin/habitat");
+      const check = async () => {
+        const result = await run(habitat, ["check", "--owner", "habitat", "--rule", ruleId], {
+          cwd,
+        });
+        expect(result, result.stderr || result.stdout).toMatchObject({ exitCode: 1, stderr: "" });
+        const report = JSON.parse(result.stdout);
+        expect(report).toMatchObject({
+          _tag: "Completed",
+          ok: false,
+          applications: [{ instanceId: null, ownerProject: "habitat", ruleId, runner: "grit" }],
+        });
+        return report.applications[0];
+      };
+      const violation = "scripts/habitat/illegal-runtime.ts";
+      await writeFile(
+        path.join(cwd, violation),
+        'import { ManagedRuntime } from "effect";\nManagedRuntime.make(layer);\n'
+      );
+      expect(await check()).toMatchObject({
+        status: "fail",
+        disposition: { kind: "evaluated" },
+        findings: [{ path: violation }],
+      });
+
+      // Each file is valid individually. Their arguments alone exceed CreateProcessW's limit.
+      const paths = Array.from({ length: 400 }, (_, i) =>
+        path.join(cwd, "scripts/habitat", `source-${i}-${"x".repeat(64)}.ts`)
+      );
+      expect(paths.join(" ").length).toBeGreaterThan(32_767);
+      for (const file of paths) await writeFile(file, "export {};\n");
+      const oversized = await check();
+      expect(oversized).toMatchObject({
+        status: "error",
+        disposition: {
+          kind: "failed",
+          reason: "ExecutionFailed",
+          detail: expect.stringContaining("Windows"),
+        },
+        findings: [],
+      });
+      expect(oversized.disposition.detail).toContain("command line");
+      expect(oversized.disposition.detail).toContain("32767");
+    },
+    120_000
+  );
 
   it.each(
     RUNTIME_POLICY_SUCCESSORS
@@ -2755,6 +2912,16 @@ describe("installed Habitat products", () => {
           instanceId: "grit-acceptance",
           ruleId: "grit_acceptance_no_forbidden",
           runner: "grit",
+          disposition: { kind: "evaluated" },
+          findings: [],
+          status: "pass",
+        }),
+        expect.objectContaining({
+          instanceId: "root-pattern-acceptance",
+          ruleId: "root_pattern_acceptance_no_forbidden",
+          runner: "grit",
+          disposition: { kind: "evaluated" },
+          findings: [],
           status: "pass",
         }),
         expect.objectContaining({
@@ -2829,6 +2996,38 @@ describe("installed Habitat products", () => {
       ]),
       ok: true,
     });
+
+    const selectedFile = gritSubjectPaths[0];
+    if (selectedFile === undefined) throw new Error("Expected an installed Grit file selection.");
+    const originalSelection = await readFile(selectedFile, "utf8");
+    try {
+      await writeFile(selectedFile, "forbidden();\n");
+      const selected = await run(habitat, ["check", "--instance", "grit-acceptance"], {
+        cwd: consumerRoot,
+      });
+      expect(selected, selected.stderr || selected.stdout).toMatchObject({
+        exitCode: 1,
+        stderr: "",
+      });
+      expect(JSON.parse(selected.stdout)).toMatchObject({
+        _tag: "Completed",
+        ok: false,
+        applications: [
+          {
+            instanceId: "grit-acceptance",
+            ruleId: "grit_acceptance_no_forbidden",
+            runner: "grit",
+            status: "fail",
+            disposition: { kind: "evaluated" },
+            findings: [
+              { path: path.relative(consumerRoot, selectedFile).split(path.sep).join("/") },
+            ],
+          },
+        ],
+      });
+    } finally {
+      await writeFile(selectedFile, originalSelection);
+    }
 
     const serviceImplPath = "services/greeting/src/service/impl.ts";
     const serviceRoutePath = "services/greeting/src/service/modules/greeting/router/greet.ts";
