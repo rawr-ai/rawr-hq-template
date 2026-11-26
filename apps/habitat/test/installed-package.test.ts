@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { execFile, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import {
   cp,
   lstat,
@@ -1011,6 +1012,10 @@ describe("installed Habitat products", () => {
     const cliSpecifier = `@habitat-ai/cli@${installVersion}`;
     const diagnostic =
       process.platform === "win32" ? windowsPresetCreateDiagnostic(root) : undefined;
+    const presetObserver =
+      diagnostic && publishedRegistryVersion === undefined
+        ? await preparePresetObserver()
+        : undefined;
     try {
       const created = await runPresetStage(
         "create workspace",
@@ -1028,7 +1033,11 @@ describe("installed Habitat products", () => {
         ],
         {
           cwd: acceptanceRoot,
-          env: { PATH: process.env.PATH ?? "" },
+          env: {
+            PATH: process.env.PATH ?? "",
+            ...(presetObserver && { NODE_OPTIONS: presetObserver.nodeOptions }),
+          },
+          presetObserver,
           ...(diagnostic && {
             reportOutput: diagnostic.capture,
             windowsInstallSample: "preset" as const,
@@ -6394,6 +6403,83 @@ function reportMigrationPlanInstallFallbacks({ stdout, stderr }: CommandResult):
   );
 }
 
+// CNW buffers nx new output; the synchronous install has no Node spawn tracing event.
+const presetObserverSource = String.raw`"use strict";
+if (process.argv[2] === "new" && process.argv.includes("--name=preset-consumer")) {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const owner = path.dirname(__dirname);
+  const rootFlag = process.argv.find((arg) => arg.startsWith("--nxWorkspaceRoot="));
+  if (rootFlag && path.relative(owner, rootFlag.slice("--nxWorkspaceRoot=".length)) === "") {
+    const file = path.join(__dirname, "preset-install.events");
+    const mark = (event) => {
+      try { fs.appendFileSync(file, event + "\n"); } catch {}
+    };
+    try {
+      const entry = fs.realpathSync(process.argv[1]);
+      const root = path.resolve(path.dirname(entry), "../..");
+      const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+      if (process.versions.bun || process.versions.node !== "24.18.1" ||
+          pkg.name !== "nx" || pkg.version !== "23.1.1" ||
+          path.relative(entry, path.resolve(root, pkg.bin.nx)) !== "") {
+        mark("mismatch");
+      } else {
+        const cp = require("node:child_process");
+        const destination = path.join(owner, "preset-consumer");
+        cp.execSync = new Proxy(cp.execSync, {
+          apply(original, receiver, args) {
+            let match = false;
+            if (args[0] === "bun install" && args[1]) {
+              try {
+                const cwd = Object.getOwnPropertyDescriptor(args[1], "cwd")?.value;
+                match = typeof cwd === "string" && path.isAbsolute(cwd) &&
+                  path.relative(destination, cwd) === "";
+              } catch {}
+            }
+            if (!match) return Reflect.apply(original, receiver, args);
+            mark("enter");
+            try {
+              const result = Reflect.apply(original, receiver, args);
+              mark("return");
+              return result;
+            } catch (error) {
+              mark("throw");
+              throw error;
+            }
+          }
+        });
+        require("node:module").syncBuiltinESMExports();
+        mark("ready");
+      }
+    } catch { mark("mismatch"); }
+  }
+}`;
+
+async function preparePresetObserver() {
+  const runtime = path.join(acceptanceRoot, "runtime");
+  const preload = path.join(runtime, "observe-preset-install.cjs");
+  const events = path.join(runtime, "preset-install.events");
+  await writeFile(events, "", { flag: "wx", mode: 0o600 });
+  await writeFile(preload, presetObserverSource, { flag: "wx", mode: 0o600 });
+  return {
+    nodeOptions: [process.env.NODE_OPTIONS, `--require="${preload.replaceAll("\\", "/")}"`]
+      .filter(Boolean)
+      .join(" "),
+    snapshot(boundary: "deadline" | "outer-close") {
+      let state = "unavailable";
+      try {
+        const bytes = readFileSync(events, "utf8");
+        if (bytes === "mismatch\n") state = "runtime-mismatch";
+        if (bytes === "ready\n") state = "ready-no-entry-observed";
+        if (bytes === "ready\nenter\n") state = "entered-no-outcome-observed";
+        if (bytes === "ready\nenter\nreturn\n") state = "returned";
+        if (bytes === "ready\nenter\nthrow\n") state = "threw";
+      } catch {}
+      console.info(`Windows preset install observer: ${boundary}: ${state}.`);
+    },
+  };
+}
+
 function windowsPresetCreateDiagnostic(root: string) {
   const markers = {
     outputObserved: false,
@@ -6611,6 +6697,7 @@ async function run(
     readonly env?: NodeJS.ProcessEnv;
     readonly reportOutput?: (result: CommandResult) => void;
     readonly plannerObserver?: Awaited<ReturnType<typeof prepareLegacyPlanObserver>>;
+    readonly presetObserver?: Awaited<ReturnType<typeof preparePresetObserver>>;
     readonly windowsInstallSample?: WindowsInstallFixture;
     readonly windowsCacheFixture?: WindowsInstallFixture;
     readonly timeoutMs?: number;
@@ -6709,6 +6796,7 @@ async function run(
     const abort = () => cancel(signal?.reason ?? new Error("Installed-package test was canceled."));
     const closed = new Promise<void>((resolveClosed) => {
       child.once("close", async (exitCode) => {
+        options.presetObserver?.snapshot("outer-close");
         options.plannerObserver?.snapshot("outer-close");
         nativeClosed = true;
         clearTimeout(timer);
@@ -6738,6 +6826,7 @@ async function run(
     const pending = { cancel, closed };
     pendingCommands.add(pending);
     const timer = setTimeout(() => {
+      options.presetObserver?.snapshot("deadline");
       options.plannerObserver?.snapshot("deadline");
       if (stopSample) exitedAtDeadline = exitMs !== null;
       cancel(new Error(`${executable} exceeded its acceptance timeout.`));

@@ -1,4 +1,4 @@
-name: Windows legacy migration planner observation
+name: Windows workspace creation observation
 
 on:
   pull_request:
@@ -34,17 +34,11 @@ jobs:
 
   installed:
     needs: scope
-    name: ${{ matrix.check }}
+    name: Workspace creation with the ordinary shared cache (Windows)
     runs-on: windows-latest
     timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - check: Legacy planner (Windows, only upgrade cache isolated)
-            cache: legacy-isolated
-          - check: Legacy planner (Windows, shared cache)
-            cache: shared
+    env:
+      HABITAT_PROBE_PREFIX: 'adopts the packed CLI into one bare Bun Nx repository through one native nx add|creates the portable Bun repository before activating post-Git hooks'
 
     steps:
       - name: Preserve repository bytes and enable long paths
@@ -52,7 +46,7 @@ jobs:
           git config --global core.longpaths true
           git config --global core.autocrlf false
 
-      - name: Check out the same probe commit in both jobs
+      - name: Check out the exact diagnostic commit
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
@@ -103,26 +97,25 @@ jobs:
           GRIT_TELEMETRY_DISABLED: "true"
           OPENSPEC_TELEMETRY: "0"
           HABITAT_PROBE_STDIN_EOF: "0"
-          HABITAT_PROBE_BUN_CACHE_SCOPE: ${{ matrix.cache }}
+          HABITAT_PROBE_BUN_CACHE_SCOPE: shared
         run: |
           if (Test-Path Env:HABITAT_ACCEPTANCE_REGISTRY_VERSION) {
             throw "The probe requires loopback candidate packages."
           }
-          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package --skip-nx-cache --outputStyle=stream --reporter=verbose --testNamePattern=probe-plan-prefix
+          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package --skip-nx-cache --outputStyle=stream --reporter=verbose "--testNamePattern=$env:HABITAT_PROBE_PREFIX"
 
-      - name: Verify the identical three-operation prefix in both arms
+      - name: Verify the two expected operations were selected in order
         if: ${{ !cancelled() }}
         shell: pwsh
         run: |
-          $collection = bunx vitest list --project habitat-cli-installed-package-acceptance --json --testNamePattern=probe-plan-prefix
+          $collection = bunx vitest list --project habitat-cli-installed-package-acceptance --json "--testNamePattern=$env:HABITAT_PROBE_PREFIX"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $actual = @(($collection -join "`n" | ConvertFrom-Json) | ForEach-Object { $_.name })
           $expected = @(
             'adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-plan-prefix]'
             'creates the portable Bun repository before activating post-Git hooks [probe-plan-prefix]'
-            'migrates CLI 0.5.3 and its SDK as one native Nx package group from Nx 23.1.0 [probe-plan-prefix]'
           ) | ForEach-Object { "installed Habitat products > $_" }
-          if (($actual -join "`n") -cne ($expected -join "`n")) { throw 'Vitest did not select the same three expected author operations in order.' }
+          if (($actual -join "`n") -cne ($expected -join "`n")) { throw 'Vitest did not select only adoption and workspace creation in order.' }
           $actual
 
       - name: Record free space after the suite
