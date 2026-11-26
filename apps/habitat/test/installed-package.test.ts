@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
   cp,
@@ -10,9 +10,10 @@ import {
   readFile,
   realpath,
   rm,
+  statfs,
   writeFile,
 } from "node:fs/promises";
-import type { Server } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -1008,27 +1009,42 @@ describe("installed Habitat products", () => {
     const name = "preset-consumer";
     const root = path.join(acceptanceRoot, name);
     const cliSpecifier = `@habitat-ai/cli@${installVersion}`;
-    const created = await runPresetStage(
-      "create workspace",
-      "bunx",
-      [
-        "--bun",
-        "create-nx-workspace@23.1.1",
-        name,
-        `--preset=${cliSpecifier}`,
-        "--packageManager=bun",
-        "--nxCloud=skip",
-        "--interactive=false",
-        "--skipGitHubPush=true",
-        "--trustThirdPartyPreset=true",
-      ],
-      {
-        cwd: acceptanceRoot,
-        env: { PATH: process.env.PATH ?? "" },
-        timeoutMs: 180_000,
+    const diagnostic =
+      process.platform === "win32" ? windowsPresetCreateDiagnostic(root) : undefined;
+    try {
+      const created = await runPresetStage(
+        "create workspace",
+        "bunx",
+        [
+          "--bun",
+          "create-nx-workspace@23.1.1",
+          name,
+          `--preset=${cliSpecifier}`,
+          "--packageManager=bun",
+          "--nxCloud=skip",
+          "--interactive=false",
+          "--skipGitHubPush=true",
+          "--trustThirdPartyPreset=true",
+        ],
+        {
+          cwd: acceptanceRoot,
+          env: { PATH: process.env.PATH ?? "" },
+          ...(diagnostic && {
+            reportOutput: diagnostic.capture,
+            windowsInstallSample: "preset" as const,
+          }),
+          timeoutMs: 180_000,
+        }
+      );
+      if (diagnostic) {
+        expect(created.exitCode, "Windows preset: create workspace exited unsuccessfully.").toBe(0);
+      } else {
+        expect(created, created.stderr || created.stdout).toMatchObject({ exitCode: 0 });
       }
-    );
-    expect(created, created.stderr || created.stdout).toMatchObject({ exitCode: 0 });
+    } catch (error) {
+      await diagnostic?.reportFailure();
+      throw error;
+    }
 
     const packagePath = path.join(root, "package.json");
     const nxPath = path.join(root, "nx.json");
@@ -1335,13 +1351,24 @@ describe("installed Habitat products", () => {
         ["install", "--ignore-scripts"],
         {
           cwd: root,
+          ...(previousVersion === "0.5.6" &&
+            process.platform === "win32" && {
+              windowsInstallSample: "0.5.6" as const,
+            }),
           timeoutMs: 120_000,
         }
       );
-      expect(
-        installedMigratedPair,
-        installedMigratedPair.stderr || installedMigratedPair.stdout
-      ).toMatchObject({ exitCode: 0 });
+      if (previousVersion === "0.5.6" && process.platform === "win32") {
+        expect(
+          installedMigratedPair.exitCode,
+          "Windows 0.5.6 candidate install exited unsuccessfully."
+        ).toBe(0);
+      } else {
+        expect(
+          installedMigratedPair,
+          installedMigratedPair.stderr || installedMigratedPair.stdout
+        ).toMatchObject({ exitCode: 0 });
+      }
 
       const applied = await runMigrationStage(
         "apply migrations",
@@ -1404,6 +1431,9 @@ describe("installed Habitat products", () => {
   );
 
   it("migrates the current 0.5.15 foundation to the exact candidate pair idempotently", async () => {
+    const runMigrationStage = timedStages(
+      process.platform === "win32" ? "Windows 0.5.15 migration" : undefined
+    );
     const root = path.join(acceptanceRoot, "migration-consumer-current-foundation");
     const packagePath = path.join(root, "package.json");
     const migrationPath = path.join(root, "migrations.json");
@@ -1433,7 +1463,8 @@ describe("installed Habitat products", () => {
         2
       )}\n`
     );
-    const installedPreviousPair = await run(
+    const installedPreviousPair = await runMigrationStage(
+      "install previous pair",
       "bun",
       ["install", "--ignore-scripts", `--registry=${PUBLIC_NPM_REGISTRY}`],
       { cwd: root, env: publicEnvironment, timeoutMs: 120_000 }
@@ -1442,14 +1473,17 @@ describe("installed Habitat products", () => {
       installedPreviousPair,
       installedPreviousPair.stderr || installedPreviousPair.stdout
     ).toMatchObject({ exitCode: 0 });
-    const git = await run("git", ["init", "--quiet"], { cwd: root });
+    const git = await runMigrationStage("initialize Git", "git", ["init", "--quiet"], {
+      cwd: root,
+    });
     expect(git, git.stderr || git.stdout).toMatchObject({ exitCode: 0 });
     const nx = path.join(root, "node_modules/.bin/nx");
-    const initialized = await run(nx, ["generate", "@habitat-ai/cli:init", "--no-interactive"], {
-      cwd: root,
-      env: publicEnvironment,
-      timeoutMs: 120_000,
-    });
+    const initialized = await runMigrationStage(
+      "initialize previous foundation",
+      nx,
+      ["generate", "@habitat-ai/cli:init", "--no-interactive"],
+      { cwd: root, env: publicEnvironment, timeoutMs: 120_000 }
+    );
     expect(initialized, initialized.stderr || initialized.stdout).toMatchObject({ exitCode: 0 });
     for (const product of products) {
       expect(
@@ -1479,7 +1513,9 @@ describe("installed Habitat products", () => {
       | { package: string; lock: string; migrations: string | undefined }
       | undefined;
     for (const repeated of [false, true]) {
-      const migrated = await run(
+      const pass = repeated ? "repeat" : "first";
+      const migrated = await runMigrationStage(
+        `${pass} pass: plan migration`,
         nx,
         ["migrate", `@habitat-ai/cli@${installVersion}`, "--interactive=false"],
         { cwd: root, env: migrationEnvironment, timeoutMs: 120_000 }
@@ -1495,16 +1531,20 @@ describe("installed Habitat products", () => {
       // This foundation already contains 0.5.7. Do not fabricate or replay that migration.
       if (migrations !== undefined) expect(JSON.parse(migrations).migrations).toEqual([]);
       if (!repeated) {
-        const installed = await run("bun", ["install", "--ignore-scripts"], {
-          cwd: root,
-          timeoutMs: 120_000,
-        });
+        const installed = await runMigrationStage(
+          "first pass: install candidate pair",
+          "bun",
+          ["install", "--ignore-scripts"],
+          { cwd: root, timeoutMs: 120_000 }
+        );
         expect(installed, installed.stderr || installed.stdout).toMatchObject({ exitCode: 0 });
       }
-      const frozen = await run("bun", ["install", "--frozen-lockfile", "--ignore-scripts"], {
-        cwd: root,
-        timeoutMs: 120_000,
-      });
+      const frozen = await runMigrationStage(
+        `${pass} pass: verify frozen install`,
+        "bun",
+        ["install", "--frozen-lockfile", "--ignore-scripts"],
+        { cwd: root, timeoutMs: 120_000 }
+      );
       expect(frozen, frozen.stderr || frozen.stdout).toMatchObject({ exitCode: 0 });
       for (const product of products) {
         const installedRoot = await realpath(path.join(root, "node_modules", product.name));
@@ -1533,7 +1573,7 @@ describe("installed Habitat products", () => {
       if (repeated) expect(state).toEqual(migratedState);
       else migratedState = state;
     }
-    const projects = await run(nx, ["show", "projects", "--json"], {
+    const projects = await runMigrationStage("show projects", nx, ["show", "projects", "--json"], {
       cwd: root,
       timeoutMs: 120_000,
     });
@@ -6247,6 +6287,48 @@ function reportMigrationPlanInstallFallbacks({ stdout, stderr }: CommandResult):
   );
 }
 
+function windowsPresetCreateDiagnostic(root: string) {
+  const markers = {
+    outputObserved: false,
+    sandboxSetupEntered: false,
+    nxNewStarted: false,
+    nxNewComplete: false,
+  };
+  return {
+    capture({ stdout, stderr }: CommandResult) {
+      const seen = (message: string) => stdout.includes(message) || stderr.includes(message);
+      markers.outputObserved = stdout.length + stderr.length > 0;
+      markers.sandboxSetupEntered = seen("Installing dependencies with bun");
+      markers.nxNewStarted = seen("Creating your workspace in preset-consumer");
+      markers.nxNewComplete = seen("Successfully created the workspace: preset-consumer");
+    },
+    async reportFailure() {
+      // Observe only fixture-owned sentinels after close. Neither output nor paths are logged.
+      const sentinels = {
+        workspace: ".",
+        packageManifest: "package.json",
+        nxManifest: "node_modules/nx/package.json",
+        cliManifest: "node_modules/@habitat-ai/cli/package.json",
+        lockfile: "bun.lock",
+        habitatProject: "scripts/habitat/project.json",
+        gitHead: ".git/HEAD",
+      };
+      const files = await Promise.all(
+        Object.entries(sentinels).map(async ([key, relative]) => {
+          const visible = await lstat(path.join(root, relative)).then(
+            () => true,
+            () => false
+          );
+          return [key, visible] as const;
+        })
+      );
+      console.info(
+        `Windows preset create evidence: ${JSON.stringify({ markers, visible: Object.fromEntries(files) })}`
+      );
+    },
+  };
+}
+
 function timedStages(prefix: string | undefined) {
   return async (stage: string, ...command: Parameters<typeof run>): Promise<CommandResult> => {
     if (prefix === undefined) return run(...command);
@@ -6265,6 +6347,144 @@ function timedStages(prefix: string | undefined) {
   };
 }
 
+// Diagnostic branch only. Sample before the original deadline, never during termination.
+function observeWindowsInstall(
+  stage: "preset" | "0.5.6",
+  pid: number,
+  cwd: string,
+  timeoutMs: number,
+  output: () => string
+) {
+  const started = Date.now();
+  const controller = new AbortController();
+  const samples: object[] = [];
+  const pending: Promise<void>[] = [];
+  const root = stage === "preset" ? path.join(cwd, "preset-consumer") : cwd;
+  const registry = localRegistry;
+  const localFetch = { metadata: 0, tarballs: 0, responses2xx: 0, otherResponses: 0 };
+  const count = (req: IncomingMessage, res: ServerResponse) => {
+    if (req.method !== "GET" && req.method !== "HEAD") return;
+    const pathname = (req.url ?? "").split("?")[0]?.replace(/%2f/giu, "/") ?? "";
+    if (!/^\/@habitat-ai\/(?:cli|sdk)(?:\/|$)/u.test(pathname)) return;
+    if (pathname.includes("/-/")) localFetch.tarballs++;
+    else localFetch.metadata++;
+    res.once("finish", () => {
+      if (res.statusCode >= 200 && res.statusCode < 300) localFetch.responses2xx++;
+      else localFetch.otherResponses++;
+    });
+  };
+  registry?.on("request", count);
+  const candidateInstalled = async (name: "sdk" | "cli") => {
+    try {
+      return (
+        JSON.parse(
+          await readFile(path.join(root, "node_modules/@habitat-ai", name, "package.json"), "utf8")
+        ).version === installVersion
+      );
+    } catch {
+      return false;
+    }
+  };
+  const sample = async () => {
+    const elapsedSeconds = Math.round((Date.now() - started) / 1000);
+    const text = output();
+    const [cli, sdk, freeGiB, processes] = await Promise.all([
+      candidateInstalled("cli"),
+      candidateInstalled("sdk"),
+      statfs(cwd).then(
+        (s) => Math.floor((s.bavail * s.bsize) / 2 ** 30),
+        () => null
+      ),
+      sampleWindowsInstallerTree(pid, started, controller.signal),
+    ]);
+    samples.push({
+      elapsedSeconds,
+      cli,
+      sdk,
+      freeGiB,
+      processes,
+      localFetch: { ...localFetch },
+      outputBytes: Buffer.byteLength(text),
+      resolving: /Resolving dependencies/i.test(text),
+      extracted: /Resolved, downloaded and extracted/i.test(text),
+      savedLock: /Saved lockfile/i.test(text),
+    });
+  };
+  const timers = [0.35, 0.85].map((fraction) =>
+    setTimeout(() => {
+      pending.push(
+        sample().catch(() => {
+          samples.push({ available: false });
+        })
+      );
+    }, timeoutMs * fraction)
+  );
+  return async (
+    failed: boolean,
+    lifecycle: { exitMs: number | null; closeMs: number; exitedAtDeadline: boolean | null }
+  ) => {
+    for (const timer of timers) clearTimeout(timer);
+    registry?.off("request", count);
+    controller.abort();
+    await Promise.all(pending);
+    console.info(
+      `Windows ${stage} child lifecycle: ${JSON.stringify({ ...lifecycle, localFetch })}`
+    );
+    if (failed) console.info(`Windows ${stage} pre-timeout samples: ${JSON.stringify(samples)}`);
+  };
+}
+
+function sampleWindowsInstallerTree(pid: number, started: number, signal: AbortSignal) {
+  // Never request executable paths, command lines, environment or user identities.
+  const script = `
+$ErrorActionPreference = 'Stop'
+$rows = @(Get-CimInstance Win32_Process -Property ProcessId,ParentProcessId,CreationDate,Name,KernelModeTime,UserModeTime,ReadTransferCount,WriteTransferCount)
+$root = $rows | Where-Object ProcessId -eq ${pid} | Select-Object -First 1
+if (!$root -or [Math]::Abs(([DateTimeOffset]$root.CreationDate).ToUnixTimeMilliseconds() - ${started}) -gt 5000) { exit 1 }
+$ids = [System.Collections.Generic.HashSet[int]]::new()
+[void]$ids.Add(${pid})
+do { $n = $ids.Count; foreach ($p in $rows) { if ($p.CreationDate -ge $root.CreationDate -and $ids.Contains([int]$p.ParentProcessId)) { [void]$ids.Add([int]$p.ProcessId) } } } while ($ids.Count -ne $n)
+$b=$n=$c=$g=$o=$cpu=$read=$write=0.0
+foreach ($p in $rows) {
+  if (!$ids.Contains([int]$p.ProcessId)) { continue }
+  switch -Regex ($p.Name) { '^bunx?\\.exe$' { $b++;break } '^node\\.exe$' { $n++;break } '^cmd\\.exe$' { $c++;break } '^git\\.exe$' { $g++;break } default { $o++ } }
+  $cpu += [double]$p.KernelModeTime + [double]$p.UserModeTime
+  $read += [double]$p.ReadTransferCount; $write += [double]$p.WriteTransferCount
+}
+@($b,$n,$c,$g,$o,[math]::Floor($cpu/10000000),[math]::Floor($read/1MB),[math]::Floor($write/1MB)) -join ','`;
+  return new Promise<Record<string, number> | null>((resolve) => {
+    execFile(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-Command", script],
+      { signal, timeout: 6000, maxBuffer: 4096, windowsHide: true },
+      (err, stdout) => {
+        if (err || !/^\d+(?:,\d+){7}$/u.test(stdout.trim())) {
+          resolve(null);
+          return;
+        }
+        const fields = [
+          "bun",
+          "node",
+          "cmd",
+          "git",
+          "other",
+          "liveCpuSeconds",
+          "liveReadMiB",
+          "liveWrittenMiB",
+        ];
+        resolve(
+          Object.fromEntries(
+            stdout
+              .trim()
+              .split(",")
+              .map((v, i) => [fields[i], Number(v)])
+          )
+        );
+      }
+    );
+  });
+}
+
 async function run(
   executable: string,
   args: readonly string[],
@@ -6272,6 +6492,7 @@ async function run(
     readonly cwd?: string;
     readonly env?: NodeJS.ProcessEnv;
     readonly reportOutput?: (result: CommandResult) => void;
+    readonly windowsInstallSample?: "preset" | "0.5.6";
     readonly timeoutMs?: number;
   } = {}
 ): Promise<CommandResult> {
@@ -6305,7 +6526,24 @@ async function run(
     });
     const stdout: string[] = [];
     const stderr: string[] = [];
+    const stopSample =
+      process.platform === "win32" && options.windowsInstallSample && child.pid && options.cwd
+        ? observeWindowsInstall(
+            options.windowsInstallSample,
+            child.pid,
+            options.cwd,
+            options.timeoutMs ?? 30_000,
+            () => stdout.join("") + stderr.join("")
+          )
+        : undefined;
     let nativeClosed = false;
+    const spawnedAt = performance.now();
+    let exitMs: number | null = null;
+    let exitedAtDeadline: boolean | null = null;
+    if (stopSample)
+      child.once("exit", () => {
+        exitMs = Math.round(performance.now() - spawnedAt);
+      });
     let canceled = false;
     let failure: unknown;
     const cancel = (reason: unknown) => {
@@ -6333,9 +6571,15 @@ async function run(
     };
     const abort = () => cancel(signal?.reason ?? new Error("Installed-package test was canceled."));
     const closed = new Promise<void>((resolveClosed) => {
-      child.once("close", (exitCode) => {
+      child.once("close", async (exitCode) => {
         nativeClosed = true;
         clearTimeout(timer);
+        if (stopSample)
+          await stopSample(failure !== undefined || exitCode !== 0, {
+            exitMs,
+            closeMs: Math.round(performance.now() - spawnedAt),
+            exitedAtDeadline,
+          });
         signal?.removeEventListener("abort", abort);
         pendingCommands.delete(pending);
         resolveClosed();
@@ -6356,6 +6600,7 @@ async function run(
     const pending = { cancel, closed };
     pendingCommands.add(pending);
     const timer = setTimeout(() => {
+      if (stopSample) exitedAtDeadline = exitMs !== null;
       cancel(new Error(`${executable} exceeded its acceptance timeout.`));
     }, options.timeoutMs ?? 30_000);
     signal?.addEventListener("abort", abort, { once: true });
