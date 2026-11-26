@@ -3633,6 +3633,7 @@ describe("installed Habitat products", () => {
       "{workspaceRoot}/package.json",
       { env: "HABITAT_COMMAND_TIMEOUT_MS" },
       { env: "NX_WORKSPACE_ROOT_PATH" },
+      { runtime: "node -p process.platform" },
       "{workspaceRoot}/**/habitat.toml",
       "{workspaceRoot}/.habitat/**/rule.json",
       "{workspaceRoot}/.habitat/blueprints/*/blueprint.toml",
