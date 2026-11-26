@@ -9,15 +9,31 @@ permissions:
   contents: read
 
 jobs:
+  scope:
+    name: Verify diagnostic PR identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check the source before scheduling Windows runners
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_RUN_ATTEMPT" = 1
+          jq -ce '
+            .pull_request as $p |
+            {
+              repo: (.repository.full_name == "rawr-ai/rawr-hq-template"),
+              sameRepo: ($p.head.repo.full_name == .repository.full_name),
+              head: ($p.head.ref == "codex/habitat-windows-qualification-probe"),
+              base: ($p.base.ref == "habitat-scoped-native-migration"),
+              candidate: ($p.base.sha == "5df49bfcad419c7b331c517cc2781e87cafdf10f"),
+              sourceOwner: ($p.user.login == "mateicanavra"),
+              draft: ($p.draft == true)
+            } | ., (all(.[]; . == true))
+          ' "$GITHUB_EVENT_PATH"
+
   installed:
-    if: >-
-      github.repository == 'rawr-ai/rawr-hq-template' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'codex/habitat-windows-qualification-probe' &&
-      github.event.pull_request.base.ref == 'habitat-scoped-native-migration' &&
-      github.event.pull_request.base.sha == '5df49bfcad419c7b331c517cc2781e87cafdf10f' &&
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association) &&
-      github.run_attempt == 1
+    needs: scope
     name: Installed package (Windows, ${{ matrix.stdin }})
     runs-on: windows-latest
     timeout-minutes: 45
