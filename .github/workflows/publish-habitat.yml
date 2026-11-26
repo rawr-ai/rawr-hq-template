@@ -1,4 +1,4 @@
-name: Windows installed-package stdin comparison
+name: Windows installed-package Bun cache comparison
 
 on:
   pull_request:
@@ -34,17 +34,13 @@ jobs:
 
   installed:
     needs: scope
-    name: Installed package (Windows, ${{ matrix.stdin }})
+    name: Installed package (Windows, ${{ matrix.cache }} cache)
     runs-on: windows-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - stdin: pipe
-            eof: "0"
-          - stdin: eof
-            eof: "1"
+        cache: [shared, per-fixture]
 
     steps:
       - name: Preserve repository bytes and enable long paths
@@ -102,7 +98,8 @@ jobs:
           CI: "1"
           GRIT_TELEMETRY_DISABLED: "true"
           OPENSPEC_TELEMETRY: "0"
-          HABITAT_PROBE_STDIN_EOF: ${{ matrix.eof }}
+          HABITAT_PROBE_STDIN_EOF: "0"
+          HABITAT_PROBE_BUN_CACHE_SCOPE: ${{ matrix.cache }}
         run: |
           if (Test-Path Env:HABITAT_ACCEPTANCE_REGISTRY_VERSION) {
             throw "The probe requires loopback candidate packages."

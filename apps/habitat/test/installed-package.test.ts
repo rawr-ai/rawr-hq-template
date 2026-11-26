@@ -1005,7 +1005,7 @@ describe("installed Habitat products", () => {
   );
 
   async function verifyPortablePreset(): Promise<void> {
-    const runPresetStage = timedStages(process.platform === "win32" ? "Windows preset" : undefined);
+    const runPresetStage = timedStages(process.platform === "win32" ? "preset" : undefined);
     const name = "preset-consumer";
     const root = path.join(acceptanceRoot, name);
     const cliSpecifier = `@habitat-ai/cli@${installVersion}`;
@@ -1240,9 +1240,7 @@ describe("installed Habitat products", () => {
     "migrates CLI %s and its SDK as one native Nx package group",
     async (previousVersion, previousNxVersion) => {
       const runMigrationStage = timedStages(
-        process.platform === "win32" && previousVersion === "0.5.6"
-          ? "Windows 0.5.6 migration"
-          : undefined
+        process.platform === "win32" && previousVersion === "0.5.6" ? "0.5.6" : undefined
       );
       const root = path.join(
         acceptanceRoot,
@@ -1431,9 +1429,7 @@ describe("installed Habitat products", () => {
   );
 
   it("migrates the current 0.5.15 foundation to the exact candidate pair idempotently", async () => {
-    const runMigrationStage = timedStages(
-      process.platform === "win32" ? "Windows 0.5.15 migration" : undefined
-    );
+    const runMigrationStage = timedStages(process.platform === "win32" ? "0.5.15" : undefined);
     const root = path.join(acceptanceRoot, "migration-consumer-current-foundation");
     const packagePath = path.join(root, "package.json");
     const migrationPath = path.join(root, "migrations.json");
@@ -1535,9 +1531,20 @@ describe("installed Habitat products", () => {
           "first pass: install candidate pair",
           "bun",
           ["install", "--ignore-scripts"],
-          { cwd: root, timeoutMs: 120_000 }
+          {
+            cwd: root,
+            ...(process.platform === "win32" && { windowsInstallSample: "0.5.15" as const }),
+            timeoutMs: 120_000,
+          }
         );
-        expect(installed, installed.stderr || installed.stdout).toMatchObject({ exitCode: 0 });
+        if (process.platform === "win32") {
+          expect(
+            installed.exitCode,
+            "Windows 0.5.15 candidate install exited unsuccessfully."
+          ).toBe(0);
+        } else {
+          expect(installed, installed.stderr || installed.stdout).toMatchObject({ exitCode: 0 });
+        }
       }
       const frozen = await runMigrationStage(
         `${pass} pass: verify frozen install`,
@@ -6329,16 +6336,22 @@ function windowsPresetCreateDiagnostic(root: string) {
   };
 }
 
-function timedStages(prefix: string | undefined) {
-  return async (stage: string, ...command: Parameters<typeof run>): Promise<CommandResult> => {
-    if (prefix === undefined) return run(...command);
+// Equal-length siblings of "bun" keep path length and volume unchanged. These caches
+// are not preseeded: this compares reuse with independent, initially cold caches.
+const fixtureCacheNames = { preset: "pre", "0.5.6": "m06", "0.5.15": "m15" } as const;
+type WindowsInstallFixture = keyof typeof fixtureCacheNames;
 
+function timedStages(fixture: WindowsInstallFixture | undefined) {
+  return async (stage: string, ...command: Parameters<typeof run>): Promise<CommandResult> => {
+    if (fixture === undefined) return run(...command);
+    const prefix = fixture === "preset" ? "Windows preset" : `Windows ${fixture} migration`;
     const label = `${prefix}: ${stage}`;
     const startedAt = performance.now();
     const elapsedMs = () => Math.round(performance.now() - startedAt);
     console.info(`${label} started.`);
     try {
-      const result = await run(...command);
+      const [executable, args, options] = command;
+      const result = await run(executable, args, { ...options, windowsCacheFixture: fixture });
       console.info(`${label} closed after ${elapsedMs()}ms (exit ${result.exitCode}).`);
       return result;
     } catch (cause) {
@@ -6349,7 +6362,7 @@ function timedStages(prefix: string | undefined) {
 
 // Diagnostic branch only. Sample before the original deadline, never during termination.
 function observeWindowsInstall(
-  stage: "preset" | "0.5.6",
+  stage: WindowsInstallFixture,
   pid: number,
   cwd: string,
   timeoutMs: number,
@@ -6492,7 +6505,8 @@ async function run(
     readonly cwd?: string;
     readonly env?: NodeJS.ProcessEnv;
     readonly reportOutput?: (result: CommandResult) => void;
-    readonly windowsInstallSample?: "preset" | "0.5.6";
+    readonly windowsInstallSample?: WindowsInstallFixture;
+    readonly windowsCacheFixture?: WindowsInstallFixture;
     readonly timeoutMs?: number;
   } = {}
 ): Promise<CommandResult> {
@@ -6500,9 +6514,14 @@ async function run(
   const signal = commandSignal.getStore();
   signal?.throwIfAborted();
   const runtimeRoot = path.join(acceptanceRoot, "runtime");
+  const cacheRoot = path.join(runtimeRoot, "cache");
+  const fixture = options.windowsCacheFixture;
+  const scope = process.env.HABITAT_PROBE_BUN_CACHE_SCOPE;
+  const cacheName =
+    fixture !== undefined && scope === "per-fixture" ? fixtureCacheNames[fixture] : "bun";
   const env: NodeJS.ProcessEnv = {
     ...process.env,
-    BUN_INSTALL_CACHE_DIR: path.join(runtimeRoot, "cache", "bun"),
+    BUN_INSTALL_CACHE_DIR: path.join(cacheRoot, cacheName),
     HOME: path.join(runtimeRoot, "home"),
     NO_COLOR: "1",
     NX_DAEMON: "false",
@@ -6515,6 +6534,18 @@ async function run(
   };
   for (const name of gitLocalEnvironmentVariables) delete env[name];
   Object.assign(env, options.env);
+  if (fixture !== undefined && (scope === "shared" || scope === "per-fixture")) {
+    const effective = env.BUN_INSTALL_CACHE_DIR;
+    const role =
+      effective === path.join(cacheRoot, "bun-public")
+        ? "previous-public"
+        : effective === path.join(cacheRoot, "bun")
+          ? "shared"
+          : effective === path.join(cacheRoot, fixtureCacheNames[fixture])
+            ? "fixture"
+            : "other";
+    console.info(`Windows ${fixture} Bun cache role: ${role}.`);
+  }
   delete env.FORCE_COLOR;
   // Release dry-runs must not turn disposable consumer initialization into a no-op.
   delete env.NX_DRY_RUN;
