@@ -37,8 +37,6 @@ jobs:
     name: Workspace creation with the ordinary shared cache (Windows)
     runs-on: windows-latest
     timeout-minutes: 45
-    env:
-      HABITAT_PROBE_PREFIX: 'adopts the packed CLI into one bare Bun Nx repository through one native nx add|creates the portable Bun repository before activating post-Git hooks'
 
     steps:
       - name: Preserve repository bytes and enable long paths
@@ -102,18 +100,18 @@ jobs:
           if (Test-Path Env:HABITAT_ACCEPTANCE_REGISTRY_VERSION) {
             throw "The probe requires loopback candidate packages."
           }
-          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package --skip-nx-cache --outputStyle=stream --reporter=verbose "--testNamePattern=$env:HABITAT_PROBE_PREFIX"
+          bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package --skip-nx-cache --outputStyle=stream --reporter=verbose --testNamePattern=probe-workspace-prefix
 
       - name: Verify the two expected operations were selected in order
         if: ${{ !cancelled() }}
         shell: pwsh
         run: |
-          $collection = bunx vitest list --project habitat-cli-installed-package-acceptance --json "--testNamePattern=$env:HABITAT_PROBE_PREFIX"
+          $collection = bunx vitest list --project habitat-cli-installed-package-acceptance --json --testNamePattern=probe-workspace-prefix
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $actual = @(($collection -join "`n" | ConvertFrom-Json) | ForEach-Object { $_.name })
           $expected = @(
-            'adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-plan-prefix]'
-            'creates the portable Bun repository before activating post-Git hooks [probe-plan-prefix]'
+            'adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-workspace-prefix]'
+            'creates the portable Bun repository before activating post-Git hooks [probe-workspace-prefix]'
           ) | ForEach-Object { "installed Habitat products > $_" }
           if (($actual -join "`n") -cne ($expected -join "`n")) { throw 'Vitest did not select only adoption and workspace creation in order.' }
           $actual

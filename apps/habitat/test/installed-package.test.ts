@@ -558,7 +558,7 @@ afterAll(
 );
 
 describe("installed Habitat products", () => {
-  it("adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-plan-prefix]", async () => {
+  it("adopts the packed CLI into one bare Bun Nx repository through one native nx add [probe-workspace-prefix]", async () => {
     const cliRoot = path.join(consumerRoot, "node_modules/@habitat-ai/cli");
     const directSdkRoot = path.join(consumerRoot, "node_modules/@habitat-ai/sdk");
     const initialManifest = JSON.parse(
@@ -1000,7 +1000,7 @@ describe("installed Habitat products", () => {
   }, 180_000);
 
   it(
-    "creates the portable Bun repository before activating post-Git hooks [probe-plan-prefix]",
+    "creates the portable Bun repository before activating post-Git hooks [probe-workspace-prefix]",
     verifyPortablePreset,
     process.platform === "win32" ? 360_000 : 180_000
   );
