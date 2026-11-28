@@ -51,6 +51,20 @@ mem:constraint-01m7qxq10xjej6mg8q1k3224e2 a mem:Constraint ;
     mem:updatedAt "2026-11-18T19:41:14.930257+00:00"^^xsd:dateTime ;
     mem:rationale "A review twice concluded a telemetry guarantee was only a test because searches covered READMEs, system docs and one phrasing; the accepted MUST sat in an openspec spec and the provider AGENTS.md." .
 
+mem:constraint-01m8g09yspa7ecsny54kj43ys2 a mem:Constraint ;
+    mem:content "The root bun run check schedules only each project's public check target; a project without one is never typechecked or policed by the repository gate, and nothing fails to report it. @habitat-ai/dev-service had no check target and sat outside the gate with a failing structure rule. Every non-root Nx project must declare check." ;
+    mem:tag "check" ;
+    mem:tag "dev-service" ;
+    mem:tag "gate-hole" ;
+    mem:tag "nx" ;
+    mem:tag "scheduler" ;
+    mem:scope mem:repo ;
+    mem:severity "must" ;
+    mem:artifactRef "scripts/habitat/product-separation-absence.test.ts" ;
+    mem:artifactRef "services/dev/project.json" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-28T02:38:47.094068+00:00"^^xsd:dateTime .
+
 mem:decision-01m7qrnstmn6wwwvr0tc64dzp2 a mem:Decision ;
     mem:content "Habitat recovery uses one integrating director and a separate staffing-and-challenge director on the other runtime; the owner keeps product intent and admission of repairs and releases. Each working lane pairs a lead who owns the artifact with a lead on the other runtime who challenges it independently before the design is settled. A second runtime agreeing is not an independent verdict, and a director's agreement is not a method review. Current names, topics and routing live in the recovery workstream record, not here." ;
     mem:tag "agent-bus" ;
@@ -106,6 +120,24 @@ mem:decision-01m7r67jpsxdpye3tnqt6ha60s a mem:Decision ;
     mem:updatedAt "2026-11-22T23:04:49.038372+00:00"^^xsd:dateTime ;
     mem:rationale "Design philosophy: vendors keep their semantics; a wrapper must earn its place. Packed and downstream evidence showed the native behaviour is coherent and the old results would need a Habitat shim or a second Effect runner." ;
     mem:alternatives "Hold the old cohort; add a public SDK error-status option; synthesize the trailing stream value; ban Effect middleware platform-wide" .
+
+mem:decision-01m8g09yqkr5jyv6vzkccgaj7c a mem:Decision ;
+    mem:content "Windows is parked from 0.7.0 by owner decision: not supported and not tested in CI. The installed-package acceptance matrix runs on Linux only and alone gates publication. The last full Windows run passed Habitat's Windows policy behaviour but stalled in workspace creation (over 180 s) and in bun install during an upgrade (over 120 s), cause unidentified. Resuming Windows means restoring its matrix entry and qualifying those setup paths; that is a separate owner decision." ;
+    mem:tag "0.7.0" ;
+    mem:tag "ci" ;
+    mem:tag "owner-decision" ;
+    mem:tag "parked" ;
+    mem:tag "publish" ;
+    mem:tag "release" ;
+    mem:tag "windows" ;
+    mem:scope mem:repo ;
+    mem:artifactRef ".github/workflows/publish-habitat.yml" ;
+    mem:artifactRef "apps/habitat/README.md" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-28T02:38:47.027788+00:00"^^xsd:dateTime ;
+    mem:updatedAt "2026-11-28T02:52:25.663277+00:00"^^xsd:dateTime ;
+    mem:rationale "The owner judged the Windows setup stall not worth further delay; the policy behaviour Habitat owns passes on hosted Windows while the stalls are in third-party install steps." ;
+    mem:alternatives "hold the release until the full Windows suite is green,run the stall down on a disposable Windows machine first" .
 
 mem:fact-01m7qsab9edfzxd3h6emtvsy07 a mem:Fact ;
     mem:content "Habitat invocation continuation fails open: when the Effect fiber carries no continuation, assertAdmission falls back to assertOpen, which passes while the process is open. A lost effect/context lease therefore leaves ordinary oRPC traffic correct. Compatibility oracles for the oRPC-Effect bridge must also witness retained-view expiry or drain, and carry a marker through an authored Effect Context tag." ;
@@ -316,3 +348,15 @@ mem:fact-01m7v8780qc8s45skressbptz4 a mem:Fact ;
     mem:artifactRef ".habitat/blueprints/service/README.md" ;
     mem:branch "main" ;
     mem:createdAt "2026-11-20T01:13:03.767674+00:00"^^xsd:dateTime .
+
+mem:fact-01m8g09yvqkgkc1d4ha1ywjb2p a mem:Fact ;
+    mem:content "In an uncached full check, TypeScript compilation is most of the Habitat task CPU and Grit a minority share concentrated in a few rules (the service Effect-bridge rule is several times slower than comparable rules). Machine saturation came from overlapping cold full runs, not Grit alone. The Grit provider's two-thread setting used about twice the CPU of one thread for the same wall time on the heaviest rules; lowering it needs a verdict-equality comparison first." ;
+    mem:tag "check" ;
+    mem:tag "cpu" ;
+    mem:tag "grit" ;
+    mem:tag "performance" ;
+    mem:tag "rayon" ;
+    mem:scope mem:repo ;
+    mem:artifactRef "resources/rule-evaluation/providers/grit-effect-platform-node/index.ts" ;
+    mem:branch "main" ;
+    mem:createdAt "2026-11-28T02:38:47.159677+00:00"^^xsd:dateTime .
