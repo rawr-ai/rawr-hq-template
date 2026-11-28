@@ -25,23 +25,16 @@ jobs:
     name: Installed package (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: ${{ matrix.timeoutMinutes }}
+    # Windows is parked: not tested in CI and not supported. Restore its matrix entry to resume.
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             timeoutMinutes: 15
-          - os: windows-latest
-            timeoutMinutes: 45
     permissions:
       contents: read
     steps:
-      - name: Preserve repository bytes and enable long paths on Windows
-        if: runner.os == 'Windows'
-        run: |
-          git config --global core.longpaths true
-          git config --global core.autocrlf false
-
       - name: Check out exact candidate
         uses: actions/checkout@v7
 

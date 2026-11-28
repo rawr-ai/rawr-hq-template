@@ -117,6 +117,13 @@ A package-only upgrade may correctly generate no migration file. Do not replay
 an older plan or synthesize one. No consumer copies or independently maintains
 the preset wiring.
 
+**Windows is not supported in 0.7.0.** Habitat is tested and released on
+Linux and macOS only; Windows is not tested in CI. In earlier hosted Windows
+runs, the package-manager install inside `create-nx-workspace` and the install
+of the new pair during an upgrade intermittently stalled past their deadlines,
+with the cause not identified. The Windows policy behaviour described below is
+kept in the CLI but is no longer tested.
+
 **Windows policy checks:** Habitat can check explicit files with Grit on
 Windows. If a selected Grit rule scans a directory, the CLI reports
 `cannot evaluate on Windows`, marks the application as an error, and exits
