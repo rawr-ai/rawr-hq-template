@@ -1,5 +1,9 @@
 # Habitat SDK Recovery Evidence
 
+Latest: the scoped native migration landed on `main`. Its
+[observed qualification](observed-qualification.md) separates the RC1 and RC3
+results, the parked Windows platform and the `0.7.0` release boundary.
+
 Current exception to the original repair hold: the owner admitted the
 [scoped native migration](native-migration-candidate.md) for implementation,
 qualification and landing on `main` through required checks, not for a release,
