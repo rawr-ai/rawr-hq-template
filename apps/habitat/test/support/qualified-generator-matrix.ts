@@ -50,7 +50,7 @@ export async function assertInstalledQualifiedGenerators(input: MatrixInput): Pr
         "@habitat-ai/cli": input.version,
         "@habitat-ai/sdk": input.version,
         "@oclif/core": "4.13.3",
-        effect: "4.0.0-beta.101",
+        effect: "4.1.4",
       },
       devDependencies: {
         nx: "23.1.1",

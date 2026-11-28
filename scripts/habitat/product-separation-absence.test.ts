@@ -947,7 +947,7 @@ describe("cumulative product-separation absence", () => {
     }
     expect(lockWorkspaces["packages/core/sdk"]).toMatchObject({
       name: "@habitat-ai/sdk",
-      version: "0.6.0",
+      version: "0.7.0-rc.3",
     });
     expect(lockPackages["@habitat-ai/sdk"]).toEqual([
       "@habitat-ai/sdk@workspace:packages/core/sdk",

@@ -62,8 +62,11 @@
 
 ## Routing
 
-- [[../.habitat/blueprints/service/skill|Service capability funnel]]
-- [[../.habitat/blueprints/service/README|Service structure law]]
+- Read the service's `habitat.toml` first. From the repository root,
+  `habitat resolve --json` reports the selected rules and their remediation.
+- [Current service authoring and upgrade path](../packages/core/sdk/README.md#service-authoring-on-the-beta51-orpc-cohort)
+  distinguishes the required-base and optional-base versions. The unversioned
+  service README and skill describe the frozen version 1, not today's selection.
 - [[../.habitat/AUTHORITY|Habitat authority]]
 
 ## Validation

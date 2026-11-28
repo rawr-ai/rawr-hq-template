@@ -19,7 +19,7 @@ import {
   type SourceInventoryFailure,
 } from "@habitat-ai/resource-source-inventory";
 import { Cause, Effect, Exit, Fiber } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 
 import { makeGitSourceInventoryResource, makeNodeGitSourceInventoryResource } from "../index";
 

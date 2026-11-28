@@ -6,8 +6,8 @@ import {
   type RouterContractClient,
   type Schema,
 } from "@orpc/contract";
-import type { EffectClient, WithEffectContext } from "@orpc/experimental-effect";
-import { type AnyORPCError, implement, os, type ProcedureClientOptions } from "@orpc/server";
+import type { EffectClient, WithEffectContext } from "@orpc/effect";
+import { implement, os, type ProcedureClientOptions } from "@orpc/server";
 
 import type { RuntimeSchema } from "../../schema/src/runtime-schema";
 import type { RuntimeResource, RuntimeResourceValue } from "./resource";
@@ -123,7 +123,6 @@ export interface ServiceClientAssembly {
         TContext & WithEffectContext<never>,
         Schema<unknown>,
         ErrorMap,
-        AnyORPCError,
         object
       >
     ) => TClient;

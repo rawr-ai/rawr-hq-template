@@ -1,8 +1,8 @@
 import { closeSync, fstatSync, openSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { type as schemaType } from "@orpc/contract";
-import type { WithEffectContext } from "@orpc/experimental-effect";
-import "@orpc/experimental-effect/extensions/effect";
+import type { WithEffectContext } from "@orpc/effect";
+import "@orpc/effect/extensions/effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Effect } from "effect";
 import { Type } from "typebox";

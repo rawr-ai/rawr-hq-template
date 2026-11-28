@@ -36,7 +36,7 @@ import {
   MaterializeContentTreeInputSchema,
 } from "@habitat-ai/resource-content-workspace";
 import { Cause, Effect, Equal, Exit, FileSystem, Option, PlatformError, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import Schema from "typebox/schema";
 
 const decoder = new TextDecoder("utf-8", { fatal: true });
@@ -108,8 +108,8 @@ interface CaptureAuthority {
   readonly handle: string;
   readonly root: string;
   readonly readToken: string;
-  readonly rootDev: number;
-  readonly rootIno: import("effect").Option.Option<number>;
+  readonly rootDev: bigint;
+  readonly rootIno: import("effect").Option.Option<bigint>;
   readonly maxEntries: number;
   readonly maxBytes: number;
   readonly preimages: ReadonlyMap<string, ContentPathImage>;
@@ -643,25 +643,30 @@ export function makeContentWorkspaceResource(
       return Object.freeze({ root }) satisfies MaterializedContentTree;
     }
 
-    return yield* Effect.acquireUseRelease(
-      fs
-        .makeTempDirectory({ directory: parent, prefix: CONTENT_TREE_STAGE_PREFIX })
-        .pipe(mapPlatform("materialize-content-tree", parent)),
-      (stage) =>
-        Effect.gen(function* () {
-          yield* requireContentTreeStage(fs, parent, stage);
-          yield* populateContentTree(fs, stage, input);
-          yield* cutOverContentTree(fs, parent, root, stage, present);
-          return Object.freeze({ root }) satisfies MaterializedContentTree;
-        }),
-      (stage, useExit) => {
-        if (Exit.isSuccess(useExit)) return Effect.void;
-        return cleanupContentTreeStage(fs, parent, stage).pipe(
-          Effect.catchCause((cleanupCause) =>
-            Effect.failCause(Cause.combine(useExit.cause, cleanupCause))
+    return yield* Effect.uninterruptibleMask((restore) =>
+      Effect.gen(function* () {
+        const stage = yield* fs
+          .makeTempDirectory({ directory: parent, prefix: CONTENT_TREE_STAGE_PREFIX })
+          .pipe(mapPlatform("materialize-content-tree", parent));
+        const attempted = yield* Effect.exit(
+          restore(
+            Effect.gen(function* () {
+              yield* requireContentTreeStage(fs, parent, stage);
+              yield* populateContentTree(fs, stage, input);
+              yield* cutOverContentTree(fs, parent, root, stage, present);
+            })
           )
         );
-      }
+        if (Exit.isSuccess(attempted))
+          return Object.freeze({ root }) satisfies MaterializedContentTree;
+
+        // Finalizer defect election would promote the original typed failure to a defect.
+        const cleaned = yield* Effect.exit(cleanupContentTreeStage(fs, parent, stage));
+        const cause = Exit.isFailure(cleaned)
+          ? Cause.combine(attempted.cause, cleaned.cause)
+          : attempted.cause;
+        return yield* Effect.failCause(cause);
+      })
     );
   });
 
@@ -2206,7 +2211,7 @@ function observeGitWorkspaceAnchor(
     return Object.freeze({
       root,
       rootDevice: String(rootInfo.dev),
-      rootInode: String(Option.getOrElse(rootInfo.ino, () => -1)),
+      rootInode: String(Option.getOrElse(rootInfo.ino, () => -1n)),
       refName,
       commit,
       refCommit,

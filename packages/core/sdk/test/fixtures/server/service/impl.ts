@@ -1,6 +1,6 @@
 import "../../../../src/plugins/server/effect/index";
 import { fstatSync } from "node:fs";
-import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { WithEffectContext } from "@orpc/effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Effect } from "effect";
 import { Type } from "typebox";

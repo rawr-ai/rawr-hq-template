@@ -12,8 +12,8 @@ import {
   RuleEvaluationRequestSchema,
 } from "@habitat-ai/resource-rule-evaluation";
 import { Effect, FileSystem, Path, type PlatformError, type Scope, Stream } from "effect";
-import { ChildProcess } from "effect/unstable/process";
-import type { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner";
+import { ChildProcess } from "effect/process";
+import type { ChildProcessSpawner } from "effect/process/ChildProcessSpawner";
 import { ReadonlyObject, type Static, Type } from "typebox";
 import Schema from "typebox/schema";
 import { Value } from "typebox/value";
@@ -25,6 +25,8 @@ const GRIT_PATTERN_PREFIX = "habitat_rule_evaluation_";
 const MAX_GRIT_STDOUT_BYTES = 256 * 1_024;
 const GRIT_REPORT_HEADROOM_BYTES = 256 * 1_024;
 const MAX_GRIT_STDERR_BYTES = 16 * 1_024 * 1_024;
+const WINDOWS_COMMAND_LINE_LIMIT = 32_767;
+const WINDOWS_DISK_SUBJECT_PATH = /^(?:[A-Za-z]:\/|\/\/(?![.?]\/)[^/]+\/[^/]+(?:\/|$))/u;
 
 /** Structural schema for Grit provider construction. */
 export const GritRuleEvaluationProviderConfigSchema = ReadonlyObject(
@@ -159,6 +161,8 @@ export function makeGritRuleEvaluationResource(
     if (new Set(input.programs.map(({ id }) => id)).size !== input.programs.length) {
       return yield* fail("InvalidInput", "Rule-evaluation program identities must be unique");
     }
+    const subjectPaths =
+      path.sep === "\\" ? yield* windowsFileArguments(input.subjectPaths) : input.subjectPaths;
     const programs = [
       materializeProgram(firstProgram, 0),
       ...remainingPrograms.map((program) => materializeProgram(program, 0)),
@@ -168,7 +172,7 @@ export function makeGritRuleEvaluationResource(
       (program) =>
         Effect.scoped(
           withScopedGritCatalog([program], (catalog) =>
-            runGritCheck(config, catalog, [program], input.subjectPaths)
+            runGritCheck(config, catalog, [program], subjectPaths)
           )
         ),
       { concurrency: 1 }
@@ -191,6 +195,47 @@ export function makeNodeGritRuleEvaluationResource(
       resource.evaluate(input).pipe(Effect.provide(NodeServices.layer)),
   });
 }
+
+const windowsFileArguments = Effect.fn(function* (subjectPaths: readonly string[]) {
+  // Grit exposes argv spelling to $filename. Device and extended paths cannot be respelled.
+  const args = subjectPaths.map((subjectPath) => subjectPath.replaceAll("\\", "/"));
+  if (args.some((arg) => !WINDOWS_DISK_SUBJECT_PATH.test(arg))) {
+    return yield* fail(
+      "InvalidInput",
+      "Windows Grit subjects must use drive-absolute or UNC paths outside device namespaces"
+    );
+  }
+  const fs = yield* FileSystem.FileSystem;
+  for (const subjectPath of subjectPaths) {
+    // stat follows links and junctions: Grit would enumerate a directory target itself.
+    const info = yield* fs
+      .stat(subjectPath)
+      .pipe(
+        mapPlatform("ExecutionFailed", `Failed to inspect Windows Grit subject '${subjectPath}'`)
+      );
+    if (info.type === "Directory") {
+      return yield* fail(
+        "ExecutionFailed",
+        `Grit cannot evaluate on Windows when a subject is a directory. Run this check on a POSIX host (macOS or Linux). Directory: '${subjectPath}'`
+      );
+    }
+    if (info.type !== "File") {
+      return yield* fail(
+        "ExecutionFailed",
+        `Unsupported Windows Grit subject type '${info.type}'; expected a regular file: '${subjectPath}'`
+      );
+    }
+  }
+  // Lower bound in UTF-16 code units: one separator per gap and one terminating NUL.
+  const subjectUnits = args.reduce((total, arg) => total + arg.length + 1, 0);
+  if (subjectUnits > WINDOWS_COMMAND_LINE_LIMIT) {
+    return yield* fail(
+      "ExecutionFailed",
+      `Grit file arguments exceed the Windows command line limit of ${WINDOWS_COMMAND_LINE_LIMIT} UTF-16 code units (selected files: ${args.length}; minimum required: ${subjectUnits}). Run this check on a POSIX host (macOS or Linux).`
+    );
+  }
+  return args;
+});
 
 function withScopedGritCatalog<A>(
   programs: readonly [MaterializedProgram, ...MaterializedProgram[]],

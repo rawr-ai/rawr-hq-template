@@ -1,10 +1,6 @@
 import { expect, test } from "bun:test";
 import type { RouterContractClient } from "@orpc/contract";
-import {
-  createEffectClient,
-  type EffectClient,
-  type WithEffectContext,
-} from "@orpc/experimental-effect";
+import { createEffectClient, type EffectClient, type WithEffectContext } from "@orpc/effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Context, Effect } from "effect";
 import { Type } from "typebox";

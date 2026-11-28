@@ -1,5 +1,5 @@
 import { Effect, FileSystem, Path, PlatformError, Semaphore, Stream } from "effect";
-import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import type { Static, TSchema } from "typebox";
 import { Value } from "typebox/value";
 

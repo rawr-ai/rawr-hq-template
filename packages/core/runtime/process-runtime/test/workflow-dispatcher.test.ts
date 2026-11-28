@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import "@orpc/experimental-effect/extensions/effect";
+import "@orpc/effect/extensions/effect";
 import { createProcedureClient, os } from "@orpc/server";
 import { isAsyncIteratorObject } from "@orpc/shared";
 import { Effect } from "effect";

@@ -178,7 +178,7 @@ native oRPC operation
   -> application/process-owned effect/context
   -> application/process-owned effect/wrap
   -> official extension delegates to vendor-internal handlerGen
-  -> Effect.runPromiseExit(effect, { signal: requestSignal })
+  -> vendor-owned Effect.runPromiseExitWith(context)(effect, { signal: requestSignal })
   -> official Cause mapping
   -> Promise returned to native oRPC
 ```
@@ -1185,8 +1185,7 @@ Exactness: normative.
 ```text
 one admitted bootstrap in the selected physical oRPC realm:
   terminal SDK consumers import "@habitat-ai/sdk/plugins/server/effect"
-  an SDK-internal service that cannot depend on the terminal SDK may import
-  "@orpc/experimental-effect/extensions/effect" directly under its selected law
+  only the terminal SDK facade imports "@orpc/effect/extensions/effect"
 
 service and oRPC plugin operation leaves:
   use the patched native implementer's .effect(function* ...) method
@@ -1196,7 +1195,7 @@ service and oRPC plugin operation leaves:
 Community `effect-orpc`, direct bridge `runPromise`, manual `Effect.run*`, and
 custom runner imports remain invalid. The extension is valid only with
 one physical `@orpc/server`/bridge realm proof. A generated plain-handler service
-does not need the experimental package. The extension is installed once by the
+does not need the bridge package. The extension is installed once by the
 implementation owner, not once per operation leaf.
 
 No service, plugin, resource, provider, app, or entrypoint creates or receives
@@ -2740,7 +2739,7 @@ once by the implementation owner in `src/service/impl.ts`. Direct
 `HabitatServiceProcedureImplementer`, translate the operation into
 `HabitatEffect`, or execute it through `ProcessExecutionRuntime`.
 
-File: `node_modules/@orpc/experimental-effect/dist/extensions/effect.mjs`  
+File: `node_modules/@orpc/effect/dist/extensions/effect.js`  
 Layer: exact published Effect-oRPC service authoring extension  
 Exactness: normative for official `.effect(...)` authoring and its delegation
 to the vendor bridge; the shared vendor source remains authoritative for
@@ -3316,10 +3315,18 @@ imitation. Application/process composition supplies a native
 `WithEffectContext`-compatible context containing `effect/context` and optional
 `effect/wrap`; the official bridge consumes it.
 
-File: `node_modules/@orpc/experimental-effect/dist/shared/experimental-effect.C9oJcd5q.mjs`  
+File: `node_modules/@orpc/effect/dist/handler.js` and `dist/runtime.js`  
 Layer: exact published native Effect-oRPC bridge mechanics  
-Exactness: normative for beta.23 internal bridge mechanics, context/wrap order,
+Exactness: normative for the selected beta.51 bridge's context/wrap order,
 signal forwarding, Cause mapping, and Promise ownership; not an authoring import.
+
+The process's observer wraps only the vendor's `handler` kind. Other kinds
+pass through unchanged: a middleware pass is not another Habitat operation.
+This is not a public contract for authored native Effect middleware. Native
+oRPC owns declared errors. A mapped code such as `CONFLICT` keeps status 409;
+a custom code without a native status defaults to 400 in this cohort. The
+stock host exposes no status map and does not restore a removed wire field.
+Habitat's bounded diagnostic projection does not sanitize vendor spans.
 
 File: `plugins/server/api/work-items/src/router.ts`  
 Layer: public server API projection router  
@@ -3394,7 +3401,7 @@ or official .effect(function*) for Effect
   -> native oRPC validation and middleware
   -> application/process-owned effect/context and effect/wrap
   -> extension delegates to vendor-internal handlerGen
-  -> vendor bridge forwards signal and owns runPromiseExit/Cause/Promise
+  -> vendor bridge forwards signal and owns the Effect terminal, Cause mapping and Promise
   -> native oRPC result and transport
 ```
 
@@ -4148,7 +4155,7 @@ must be recovered and observed inside that infallible release Effect; the
 substrate still continues reverse release after a release defect. Raw runtime
 construction, finalizer registration, rollback, and reverse-release mechanics
 stay substrate-only. Native program values remain composable as specified in
-section 9.1. The substrate constructs and uses the real `effect@4.0.0-beta.101`
+section 9.1. The substrate constructs and uses the real `effect@4.1.4`
 `Effect.acquireRelease(acquire, release)` adapter; native default masking keeps
 acquisition and immediate post-success finalizer registration of that same
 release indivisible. Explicit authored interruption retains native meaning and
@@ -6696,7 +6703,7 @@ only after config preflight and that provider's declared dependency resources
 exist. It treats a thrown build or a plan without the private witness as a
 defect. Its one substrate-owned `Layer.effectContext(...)` lifecycle adapter
 reads the exact acquire Effect and release callback behind the plan witness and
-adapts them through the real `effect@4.0.0-beta.101`
+adapts them through the real `effect@4.1.4`
 `Effect.acquireRelease(acquire, release)` operation; it does not reconstruct,
 copy, or expose either body. The adapter executes provider plans in
 bootgraph order and produces the resource Context. Because
@@ -6897,7 +6904,10 @@ Process stop closes admission and waits for admitted native calls and returned
 top-level iterator/stream consumption and cleanup before disposal. Caller
 interruption or initial Promise resolution does not prove native settlement.
 Native stream wrappers retain metadata and track pending pulls as well as
-finish callbacks. Already-admitted consumption may continue during draining;
+finish callbacks. When native iterator `return()` closes a pending pull in
+this cohort, the caller sees `done: true`; Habitat does not synthesize the
+old trailing value. The underlying pull still counts until it actually
+settles, and cleanup runs once. Already-admitted consumption may continue during draining;
 abandoned non-cooperative work can keep stop pending. No synthetic stream
 cancellation or forced provider release is introduced.
 
@@ -7571,7 +7581,7 @@ Layer: native bridge import law
 Exactness: normative for the exact selected package.
 
 ```text
-@orpc/experimental-effect@2.0.0-beta.32 extensions/effect
+@orpc/effect@2.0.0-beta.51 extensions/effect
 vendor-internal handlerGen mechanism (source proof only)
 ```
 
@@ -8977,8 +8987,8 @@ Exactness: normative.
 
 ```text
 admitted terminal-consumer bootstrap: import "@habitat-ai/sdk/plugins/server/effect"
-admitted SDK-internal acyclic bootstrap under an earlier selected service law:
-  import "@orpc/experimental-effect/extensions/effect"
+the terminal SDK facade's only runtime import:
+  import "@orpc/effect/extensions/effect"
 operation leaf: native .handler(...) or official .effect(...); no handlerGen import
 ```
 
@@ -9190,7 +9200,7 @@ handoff. Runtime behavior is not proved by source-string or AST assertions.
 plan/map/context schema is created. `runtime-substrate-effect` owns native Effect
 execution, single managed-runtime construction, config preflight, private
 concrete frozen map assembly and lookup, and construction and use of the real
-`effect@4.0.0-beta.101` `Effect.acquireRelease(acquire, release)` adapter.
+`effect@4.1.4` `Effect.acquireRelease(acquire, release)` adapter.
 Native default masking keeps acquisition and immediate post-success registration
 of the same finalizer indivisible. Explicit authored interruption retains native
 meaning and leaves partial/unreturned work provider-owned. The substrate proves

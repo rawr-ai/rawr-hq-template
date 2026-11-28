@@ -244,11 +244,11 @@ export const middleware = base.middleware(async ({ context, next }) => {
       ]);
     }
     const workspaceRealRoot = workspaceRealPathAttempt.success;
-    const excludes = excludedRepositoryGlobs.map((pattern) => path.resolve(workspaceRoot, pattern));
+    // Only repository-relative strings should be parsed as glob patterns.
     const globResults = yield* Effect.all(
       authorityGlobs.map(({ kind, pattern }) =>
         Effect.result(
-          fileSystem.glob(path.resolve(workspaceRoot, pattern), { exclude: excludes })
+          fileSystem.glob(pattern, { root: workspaceRoot, exclude: excludedRepositoryGlobs })
         ).pipe(Effect.map((result) => ({ kind, result })))
       )
     );

@@ -1,5 +1,5 @@
 import { describe, expect, spyOn, test } from "bun:test";
-import { createEffectClient, type WithEffectContext } from "@orpc/experimental-effect";
+import { createEffectClient, type WithEffectContext } from "@orpc/effect";
 import { createRouterClient, implement } from "@orpc/server";
 import { Context, Effect as NativeEffect } from "effect";
 import { Type } from "typebox";

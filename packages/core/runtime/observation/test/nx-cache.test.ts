@@ -101,7 +101,7 @@ async function createFixture(): Promise<string> {
     await writeNxConfig(fixtureRoot);
     for (const dependency of [
       "@orpc/client",
-      "@orpc/experimental-effect",
+      "@orpc/effect",
       "@orpc/contract",
       "@orpc/server",
       "@orpc/shared",

@@ -28,27 +28,31 @@ const effectExecutionTerminals = [
 test("the SDK server Effect face delegates only to the official extension", async () => {
   const findings = await checkLaw({
     "packages/core/sdk/src/plugins/server/effect/index.ts": `
-      import "@orpc/experimental-effect/extensions/effect";
+      import "@orpc/effect/extensions/effect";
       export {};
     `,
     "valid-comment/packages/core/sdk/src/plugins/server/effect/index.ts": `
       // Installing this side effect patches the shared oRPC module realm.
-      import "@orpc/experimental-effect/extensions/effect"
+      import "@orpc/effect/extensions/effect"
 
       export { }
     `,
-    "invalid-helper/packages/core/sdk/src/plugins/server/effect/index.ts": `
+    "invalid-former-facade/packages/core/sdk/src/plugins/server/effect/index.ts": `
       import "@orpc/experimental-effect/extensions/effect";
+      export {};
+    `,
+    "invalid-helper/packages/core/sdk/src/plugins/server/effect/index.ts": `
+      import "@orpc/effect/extensions/effect";
       const installed = true;
       export {};
     `,
     "invalid-export/packages/core/sdk/src/plugins/server/effect/index.ts": `
-      import "@orpc/experimental-effect/extensions/effect";
+      import "@orpc/effect/extensions/effect";
       export const installed = true;
       export {};
     `,
     "invalid-extra-import/packages/core/sdk/src/plugins/server/effect/index.ts": `
-      import "@orpc/experimental-effect/extensions/effect";
+      import "@orpc/effect/extensions/effect";
       import "effect";
       export {};
     `,
@@ -98,6 +102,13 @@ test("the SDK server Effect face delegates only to the official extension", asyn
     `,
     "packages/core/sdk/src/plugins/server/direct.ts": `
       import "@orpc/experimental-effect/extensions/effect";
+    `,
+    "packages/core/sdk/src/plugins/server/current-direct.ts": `
+      import "@orpc/effect/extensions/effect";
+    `,
+    "packages/core/sdk/src/plugins/server/current-handler.ts": `
+      import { handlerGen } from "@orpc/effect";
+      export const implementEffect = handlerGen;
     `,
     "packages/core/sdk/src/plugins/server/dynamic.ts": `
       void import("@orpc/experimental-effect/extensions/effect");
@@ -221,10 +232,13 @@ test("the SDK server Effect face delegates only to the official extension", asyn
       "invalid-facade-relative-index-require/packages/core/sdk/src/plugins/server/index.ts",
       "invalid-facade-relative-js-dynamic/packages/core/sdk/src/plugins/server/index.ts",
       "invalid-facade-source-extension/packages/core/sdk/src/plugins/server/nested/bridge.ts",
+      "invalid-former-facade/packages/core/sdk/src/plugins/server/effect/index.ts",
       "invalid-helper/packages/core/sdk/src/plugins/server/effect/index.ts",
       "invalid-runtime-managed-subpath/packages/core/runtime/definition/src/plugin.ts",
       "invalid-runtime-managed/packages/core/runtime/definition/src/plugin.ts",
       "invalid-runtime-terminal/packages/core/runtime/definition/src/plugin.ts",
+      "packages/core/sdk/src/plugins/server/current-direct.ts",
+      "packages/core/sdk/src/plugins/server/current-handler.ts",
       "packages/core/sdk/src/plugins/server/direct.ts",
       "packages/core/sdk/src/plugins/server/dynamic.ts",
       "packages/core/sdk/src/plugins/server/handler-alias.ts",
@@ -260,7 +274,7 @@ test("the SDK server Effect face delegates only to the official extension", asyn
   expect(
     await checkLaw({
       "packages/core/sdk/src/plugins/server/effect/index.ts": `
-        import "@orpc/experimental-effect/extensions/effect";
+        import "@orpc/effect/extensions/effect";
         export const run = () => Effect.runPromise(program);
       `,
     })
@@ -271,17 +285,19 @@ test("native request context type imports do not grant vendor bootstrap authorit
   expect(
     await checkLaw({
       "erased/packages/core/runtime/definition/src/plugin.ts":
-        'import type { WithEffectContext as Context, EffectWrapOptions } from "@orpc/experimental-effect";',
+        'import type { WithEffectContext as Context, EffectWrapOptions } from "@orpc/effect";',
+      "former/packages/core/runtime/definition/src/plugin.ts":
+        'import type { WithEffectContext } from "@orpc/experimental-effect";',
       "value/packages/core/runtime/definition/src/plugin.ts":
-        'import { WithEffectContext } from "@orpc/experimental-effect";',
-      "side-effect/packages/core/runtime/definition/src/plugin.ts":
-        'import "@orpc/experimental-effect";',
+        'import { WithEffectContext } from "@orpc/effect";',
+      "side-effect/packages/core/runtime/definition/src/plugin.ts": 'import "@orpc/effect";',
       "subpath/packages/core/runtime/definition/src/plugin.ts":
-        'import type { Unknown } from "@orpc/experimental-effect/extensions/effect";',
+        'import type { Unknown } from "@orpc/effect/extensions/effect";',
       "mixed/packages/core/runtime/definition/src/plugin.ts":
-        'import { type WithEffectContext, handlerGen } from "@orpc/experimental-effect";',
+        'import { type WithEffectContext, handlerGen } from "@orpc/effect";',
     })
   ).toEqual([
+    "former/packages/core/runtime/definition/src/plugin.ts",
     "mixed/packages/core/runtime/definition/src/plugin.ts",
     "side-effect/packages/core/runtime/definition/src/plugin.ts",
     "subpath/packages/core/runtime/definition/src/plugin.ts",

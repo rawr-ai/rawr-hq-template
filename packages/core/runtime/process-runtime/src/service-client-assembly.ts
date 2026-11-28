@@ -1,4 +1,4 @@
-import { createEffectClient } from "@orpc/experimental-effect";
+import { createEffectClient } from "@orpc/effect";
 import { Context } from "effect";
 
 import type { ServiceClientAssembly } from "../../definition/src/service";

@@ -4,7 +4,7 @@ import { defineRuntimeProvider } from "@habitat-ai/sdk/runtime/providers";
 import { providerFx } from "@habitat-ai/sdk/runtime/providers/effect";
 import { requireResource } from "@habitat-ai/sdk/runtime/resources";
 import { Context, Effect, FileSystem, Layer, Path } from "effect";
-import { ChildProcessSpawner } from "effect/unstable/process";
+import { ChildProcessSpawner } from "effect/process";
 import { ChildProcessRuntimeResource } from "../../runtime.js";
 
 /** Captures native spawning capabilities without opening a child or retaining an operation scope. */

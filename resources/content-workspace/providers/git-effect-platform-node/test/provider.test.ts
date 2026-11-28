@@ -19,7 +19,7 @@ import path from "node:path";
 import { NodeServices } from "@effect/platform-node";
 import type { ContentWorkspaceFailure } from "@habitat-ai/resource-content-workspace";
 import { Cause, Effect, Exit, Fiber, FileSystem, PlatformError } from "effect";
-import type { ChildProcessSpawner } from "effect/unstable/process";
+import type { ChildProcessSpawner } from "effect/process";
 import { makeContentWorkspaceResource, makeNodeContentWorkspaceResource } from "../index";
 
 type NodeContentWorkspaceResult<A> =

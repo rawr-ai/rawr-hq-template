@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { getEventMeta, withEventMeta } from "@orpc/client";
-import { createEffectClient } from "@orpc/experimental-effect";
-import "@orpc/experimental-effect/extensions/effect";
+import { createEffectClient } from "@orpc/effect";
+import "@orpc/effect/extensions/effect";
 import { AsyncIteratorClass, createRouterClient, os } from "@orpc/server";
 import { Cause, Effect, Exit } from "effect";
 
@@ -250,7 +250,7 @@ test("native request settlement precedes iterator lifetime and admitted consumpt
   expect(drained).toBe(true);
 });
 
-test("early native return does not release a still-pending next operation", async () => {
+test("early native return closes the pending result without releasing its operation", async () => {
   const tracker = createInvocationTracker();
   const started = gate();
   const releasePull = gate();
@@ -290,8 +290,9 @@ test("early native return does not release a still-pending next operation", asyn
     "nested during pending pull"
   );
   releasePull.resolve();
-  expect(await pull).toEqual({ done: false, value: 7 });
+  expect(await pull).toEqual({ done: true, value: undefined });
   await draining;
+  expect(pullSettled).toBe(true);
   expect(drained).toBe(true);
   expect(cleaned).toBe(1);
   expect(() => tracker.assertAdmission(continuation)).toThrow(TypeError);

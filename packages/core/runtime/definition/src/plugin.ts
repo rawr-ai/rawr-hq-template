@@ -1,4 +1,4 @@
-import type { WithEffectContext } from "@orpc/experimental-effect";
+import type { WithEffectContext } from "@orpc/effect";
 import type { AnyRouter, Router } from "@orpc/server";
 
 import type { AppRole } from "./app";

@@ -12,7 +12,7 @@ const execute = promisify(execFile);
 const nativePackages = [
   "@orpc/client",
   "@orpc/contract",
-  "@orpc/experimental-effect",
+  "@orpc/effect",
   "@orpc/openapi",
   "@orpc/server",
   "effect",

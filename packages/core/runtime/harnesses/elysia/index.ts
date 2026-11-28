@@ -1,4 +1,4 @@
-import type { OpenAPIGeneratorGenerateOptions } from "@orpc/openapi";
+import type { OpenAPIV3_1 } from "@orpc/openapi";
 import type { ElysiaRoutePayload } from "../../process-runtime/src/adapters/elysia";
 import type { MountReadySurfaceRuntimeRecord } from "../../process-runtime/src/mount-ready-process";
 import type {
@@ -18,7 +18,7 @@ export interface ElysiaHarnessConfig {
   readonly port: number;
   readonly publicDocument?: {
     readonly path: string;
-    readonly info: NonNullable<NonNullable<OpenAPIGeneratorGenerateOptions["base"]>["info"]>;
+    readonly info: OpenAPIV3_1.InfoObject;
   };
 }
 

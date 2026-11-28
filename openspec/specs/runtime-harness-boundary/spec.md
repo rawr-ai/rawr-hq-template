@@ -142,6 +142,14 @@ requires its own authority amendment and child-process contract.
 - **AND** no shared coordinator infers app-wide readiness or controls either
   sibling
 
+#### Scenario: An admitted native iterator closes during a pending pull
+
+- **WHEN** the caller returns an iterator while its native pull is in flight
+- **THEN** the selected native iterator reports the closed result (`done: true`);
+  Habitat MUST NOT manufacture a trailing item
+- **AND** the process MUST wait for the actual in-flight work to settle, run
+  cleanup exactly once and reject reuse of the expired continuation
+
 #### Scenario: Adapter lowering fails before mount
 
 - **WHEN** adapter lowering fails before mount
@@ -321,11 +329,12 @@ An adapter-lowered oRPC procedure MUST retain native oRPC validation,
 middleware, context, declared errors, transport, and abort outcomes. A
 synchronous or Promise-returning operation MAY use an inline native
 `.handler(...)`. An Effect-backed Habitat service operation MUST use exact
-`@orpc/experimental-effect@2.0.0-beta.32` implementation-owned `.effect(...)`,
-installed once in `src/service/impl.ts`. The selected bridge MUST alone run the request
-Effect: it provides native `effect/context`, applies native `effect/wrap`,
-forwards the request signal to `Effect.runPromiseExit`, maps the resulting
-Cause, and returns the Promise to oRPC. `ProcessExecutionRuntime`, a manual
+`@orpc/effect@2.0.0-beta.51` implementation-owned `.effect(...)` extension,
+installed once in `src/service/impl.ts` through the SDK facade. Only that
+extension runs the request Effect. It provides the request's native Effect
+context, applies its native wrap, passes the request signal to the vendor-owned
+execution terminal, and returns the vendor-mapped result to oRPC. This version
+uses `Effect.runPromiseExitWith(context)(effect, options)`. `ProcessExecutionRuntime`, a manual
 `Effect.run*` call, a custom runner, and a Habitat imitation MUST NOT execute or
 wrap that oRPC Effect. The extension's underlying `handlerGen` is internal
 vendor machinery. Habitat-authored authoring, adapter, and operation code MUST
@@ -378,7 +387,7 @@ qualification obligations remain separately owned and unretired.
 - **THEN** the loaded extension patches the exact native implementer prototype
   used by the mounted procedure and owns the request terminal
 - **AND** runtime resolution reports one physical `@orpc/server` and one
-  physical `@orpc/experimental-effect` copy for that process boundary
+  physical `@orpc/effect` copy for that process boundary
 - **AND** Habitat-authored authoring, adapter, and operation code directly
   imports, calls, wraps, or reimplements no internal `handlerGen`; the official
   extension's internal call remains admitted
@@ -389,6 +398,23 @@ qualification obligations remain separately owned and unretired.
 - **THEN** the native builder invokes its implementation-owned `.handler(...)`
 - **AND** neither `.effect`, `handlerGen`, nor `ProcessExecutionRuntime` is
   introduced as a second terminal
+
+#### Scenario: The bridge also wraps native middleware
+
+- **WHEN** the vendor invokes the process wrap for a kind other than `handler`
+- **THEN** Habitat MUST return the original program without adding an operation
+  observation or classifying the handler's failure a second time
+- **AND** this defensive behavior does not admit authored Effect middleware as
+  a supported Habitat API
+
+#### Scenario: A declared error crosses the stock HTTP host
+
+- **WHEN** a procedure fails with a declared native `CONFLICT`, or with a
+  custom declared code without a native status mapping
+- **THEN** the stock host preserves native code, message and status: 409 for
+  `CONFLICT` and 400 for the unmapped custom code in the selected cohort
+- **AND** it MUST NOT simulate the previous wire representation or expose a
+  Habitat-specific status mapping
 
 ### Requirement: Inngest harness preserves durable execution ownership
 

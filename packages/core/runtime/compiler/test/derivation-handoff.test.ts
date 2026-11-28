@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { createEffectClient } from "@orpc/experimental-effect";
+import { createEffectClient } from "@orpc/effect";
 import { Context, Effect } from "effect";
 import { requireResource, type ServiceClientAssembly } from "../../definition/src/index";
 import {

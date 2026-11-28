@@ -2,11 +2,11 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ChildProcessResource } from "@habitat-ai/resource-child-process";
 import { Cause, Deferred, Effect, Exit, Fiber, Stream } from "effect";
-import { ChildProcess } from "effect/unstable/process";
+import { ChildProcess } from "effect/process";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createClient } from "../../../src/client";
-import { runCommand } from "../../../src/service/model/policy/command-execution";
-import { createFixture, type Fixture } from "../../support/service/fixture";
+import { createClient } from "../../src/client";
+import { runCommand } from "../../src/service/model/policy/command-execution";
+import { createFixture, type Fixture } from "../support/service/fixture";
 
 const fixtures: Fixture[] = [];
 afterEach(async () => {
