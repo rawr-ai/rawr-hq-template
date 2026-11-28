@@ -439,7 +439,7 @@ const gitLocalEnvironmentVariables = execFileSync("git", ["rev-parse", "--local-
 const sdkVersion = await readPackageVersion("packages/core/sdk");
 const cliVersion = await readPackageVersion("apps/habitat");
 // The selected pair is an acceptance input, not a value inferred from the artifacts under test.
-const CANDIDATE_VERSION = "0.7.0-rc.3";
+const CANDIDATE_VERSION = "0.7.0";
 if (cliVersion !== CANDIDATE_VERSION || sdkVersion !== CANDIDATE_VERSION) {
   throw new Error(
     `Expected the selected pair at ${CANDIDATE_VERSION}; found CLI ${cliVersion} and SDK ${sdkVersion}.`

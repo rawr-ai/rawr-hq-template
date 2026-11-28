@@ -1,5 +1,13 @@
 # Native SDK and CLI migration
 
+**Release `0.7.0`:** derived from the qualified RC3 source; the stable
+archives have their own identities, and the shipped CLI README adds the
+Windows statement below. On November 27 the platform owner parked Windows:
+it is not supported in 0.7.0 and is no longer tested in CI. On the full RC3
+Windows run, the policy behaviour below passed, but workspace creation
+exceeded 180 s and `bun install` during the 0.5.6 upgrade exceeded 120 s. The
+internal wait and its cause were not identified.
+
 **Candidate for landing:** `0.7.0-rc.3` replaces RC2. On November 25 the
 platform owner chose to land with a declared Windows limitation, subject to
 qualification. On Windows, Habitat passes explicit files to Grit with forward
