@@ -69,7 +69,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/habitat-cli-v')
     needs: acceptance
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     permissions:
       contents: read
       id-token: write
@@ -120,17 +120,18 @@ jobs:
         shell: bash
         run: |
           release_version="${GITHUB_REF_NAME#habitat-cli-v}"
-          for attempt in 1 2 3 4 5 6; do
+          # npm can take several minutes to list a new version (0.7.0's CLI took about four).
+          for attempt in $(seq 1 12); do
             cli_version="$(npm view "@habitat-ai/cli@${release_version}" version 2>/dev/null || true)"
             sdk_version="$(npm view "@habitat-ai/sdk@${release_version}" version 2>/dev/null || true)"
             if [[ "${cli_version}" = "${release_version}" && "${sdk_version}" = "${release_version}" ]]; then
               break
             fi
-            if [[ "${attempt}" = 6 ]]; then
+            if [[ "${attempt}" = 12 ]]; then
               printf 'Habitat %s was not visible from the npm registry after %s attempts.\n' "${release_version}" "${attempt}" >&2
               exit 1
             fi
-            sleep "$((attempt * 5))"
+            sleep 30
           done
           HABITAT_ACCEPTANCE_REGISTRY_VERSION="${release_version}" \
             bunx nx run @habitat-ai/cli:acceptance:oclif-installed-package \
